@@ -4,11 +4,11 @@
   "note_47": "#47 — 깊이의 정본은 faces45_web2.json scene_depth다(전 = 차례 의존: 나쁜 차례 33/33 · 좋은 차례 0/33 · 후 = 0/33)",
   "brush": {
     "ink_before": 251,
-    "ink_after": 3436,
+    "ink_after": 534,
     "paints": 3
   },
   "orbit": {
-    "ink_after_orbit": 3170
+    "ink_after_orbit": 1021
   },
   "fill": {
     "segs_screen": 13,

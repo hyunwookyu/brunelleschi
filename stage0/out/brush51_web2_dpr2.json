@@ -32,17 +32,26 @@
   },
   "constants_used": {
     "PAINT51_DPR_W_TOL": 0.15,
-    "PAINT51_SWATCH_W_TOL": 0.25
+    "PAINT51_SWATCH_W_TOL": 0.25,
+    "PAINT51_DENSITY_SLOPE": 0.9,
+    "PAINT51_WIDTH_SLOPE": 0.45,
+    "PAINT51_GATE_MARGIN": 0.1,
+    "PAINT51_TIP_MIN_RATIO": 1.05,
+    "PAINT51_SPLIT_MIN_RATIO": 1.1,
+    "PAINT51_FLOW_CV_MIN": 0.05,
+    "PAINT51_CP_COVER_MARGIN": 0.03,
+    "PAINT51_GRAIN_ZOOM_K": 0.45,
+    "PAINT51_GRAIN_ZOOM_FLOOR": 1.4
   },
   "gate_pressure": {
-    "registered": "농도 비 > 굵기 비(부등식 — 문턱 없는 순서 판정 · 프로필 상수는 C.PAINT51_*_SLOPE, 단위가 같은 함수로 잰다 #54)",
+    "registered": "농도 비 > 굵기 비 + C.PAINT51_GATE_MARGIN(값은 constants_used) · 프로필 상수 C.PAINT51_*_SLOPE(값도 constants_used — 단위가 같은 함수로 잰다 #54)",
     "value": "pressure.density_ratio ↔ width_ratio",
-    "reachability": "평탄화 재굽기가 같은 실행에서 두 비를 1 대역으로 낸다",
-    "reachability_value": "pressure.flat.density_ratio",
+    "reachability": "평탄화 재굽기가 같은 실행에서 **등재 술어 그 자체**를 거짓으로 만든다(1차 [3] 대응 — 같은 지표 반전)",
+    "reachability_value": "pressure.flat — density_ratio ↔ width_ratio(여유 아래)",
     "reachability_source": "이 파일의 pressure.flat ↔ pressure"
   },
   "marker_tip": {
-    "def": "마커 가로획 — 끝 상자(578..592) ↔ 몸통 상자(540..554)의 픽셀당 안료. 문 1.05배. 반증 = setMarkerFlatForTest(팁이 안 찍힌다)",
+    "def": "마커 가로획 — 끝 상자(578..592) ↔ 몸통 상자(540..554)의 픽셀당 안료. 문 C.PAINT51_TIP_MIN_RATIO(값은 constants_used). 반증 = setMarkerFlatForTest(팁이 안 찍힌다 — 같은 술어가 죽는다)",
     "tip": {
       "px": 445,
       "pigPerPx": 267.8,
@@ -69,22 +78,56 @@
     }
   },
   "grain_zoom": {
-    "def": "연필 획 가운데 행(70css px 창)의 결 상관 길이(물리 px · 40 회차의 그 자) — 줌 전/후. 결이 면 고정이면 비 ≈ z(view.s) · 화면 고정이면 1. 반증 = 결 끔에서 상관 길이 0(요동 소멸)",
+    "def": "연필 획 가운데 행(70css px 창)의 결 상관 길이(물리 px · 40 회차의 그 자 #54) — 줌 전/후 + 궤도 회전 후. 결이 면 고정이면 비가 z 대역 · 화면 고정이면 1. 반증 = 결 끔에서 상관 길이 0(요동 소멸). 초판 두 자의 실패값(재설계의 사유): (1) «세로 어디든 채색» 이진 — 띠가 촘촘해 전 열 참, 전이 0(포화) (2) 전이 수 — 픽셀 잡음 지배로 줌 전후 비가 정확히 1.000",
     "corr_len_z1": 9,
     "corr_len_zoomed": 19,
     "corr_len_grain_off": 0,
     "zoom": 1.8221188003905093,
-    "ratio": 2.111
+    "ratio": 2.111,
+    "corr_len_rotated": 15,
+    "rotated_probe_at": {
+      "x": 565.6208374496805,
+      "y": 432.38607051523365
+    }
   },
   "swatch": {
-    "def": "마커 w=20 자국의 띠 두께(채색 행 ÷ dpr) ↔ 견본 20(트레이 원 지름 — 구성 · 48-2 문법). 문 = 상대 편차 < C.PAINT51_SWATCH_W_TOL",
-    "tray_px": 20,
-    "stroke_px": 21.5,
+    "def": "다섯 칸 전수(#12 · 34-3의 전수 규약) — 견본 원의 «렌더» 지름(getBoundingClientRect)과 그은 자국의 띠 두께(채색 행 / dpr). 문 = 상대 편차 < C.PAINT51_SWATCH_W_TOL(2.5 칸은 물리 행 눈금이 거칠어 기록만 — 판정은 5 이상 네 칸). 반증 = 틀린 짝(20 자국 <-> 40 견본)이 같은 자로 문 밖(cross_mismatch)",
+    "swatch_rendered_px": [
+      2.5,
+      5,
+      10,
+      20,
+      40
+    ],
+    "tray_px": [
+      2.5,
+      5,
+      10,
+      20,
+      40
+    ],
+    "stroke_px": [
+      3,
+      5,
+      10.5,
+      20.5,
+      43
+    ],
     "tol": 0.25,
-    "note_5": "견본 쪽이 «지름 = w»인 것은 SVG의 구성이다(#5) — 재는 쪽은 자국이다. 잰 자리는 벽 가운데(그은 그 자리 — 원근 환산의 원점)"
+    "cross_mismatch": 0.487
+  },
+  "pencil_row_340": {
+    "title": "연필 — 종이 결에 걸린다. 세게 누르면 진해진다",
+    "disabled": false,
+    "clickable": true
   },
   "injector": {
-    "def": "실제 탭(마우스 클릭 — 행위 #94)이 짚은 마커 획의 (i, c, w)를 paintSel에 싣는다 · 허공 탭은 불변. 도구 넷 전수는 단위(brush51.test)가 잰다",
+    "def": "실제 탭(행위 #94)이 짚은 마커 획의 (i, c, w)를 paintSel에 싣는다 · 허공 탭 불변. expected = 짚은 획을 그렸을 때의 값(대조군). 도구 넷 전수는 단위(brush51.test — 왕복 1% 안). ⚠ «모든 속성»의 현행 외연은 (i, c, w)다 — 불투명도는 도구 상수라 획별 값이 없다(생기는 날 Injector도 늘린다 — DEFERRED)",
+    "expected": {
+      "i": "marker",
+      "hex": "#1e7fd0",
+      "w": 20
+    },
     "after_tap": {
       "hex": "#1e7fd0",
       "i": "marker",
@@ -93,14 +136,14 @@
     "after_empty_tap": "cp"
   },
   "brush_flow": {
-    "def": "붓 가로획 — 끝(578..594) ↔ 몸통(540..556)의 어두운 행 수(갈라짐 · 문 1.1배) · 열별 안료 변동 계수(흐름 — 기록·눈 판정은 실기기)",
+    "def": "붓 가로획 — 끝(578..594) ↔ 몸통(540..556)의 어두운 행 수(갈라짐 · 문 C.PAINT51_SPLIT_MIN_RATIO) · 열별 안료 변동 계수(흐름 · 문 C.PAINT51_FLOW_CV_MIN — 눈 판정은 실기기)",
     "mid_rows": 28,
     "end_rows": 40,
     "split_ratio": 1.429,
     "flow_cv": 0.159
   },
   "cp_coverage": {
-    "def": "같은 색·같은 굵기의 색연필(필압 0.7)·마커 — 띠 bbox 안 «빈 픽셀» 비율. 판별 = cp > 마커 + 0.03",
+    "def": "같은 색·같은 굵기의 색연필(필압 0.7)·마커 — 띠 내부(가장자리 AA 깎음)의 «덜 덮인 픽셀»(중앙값 60% 아래 + 맨살) 비율. 판별 = cp > 마커 + C.PAINT51_CP_COVER_MARGIN. 초판 두 판의 실패값(재설계의 사유): (1) «채색 아님» 이진 — 건너뜀 도장(옅은 알파)도 채색으로 세어 cp 0.098 / mk 0.084(무변별) (2) 도장 건너뜀 구현 — 이웃 번짐이 칸을 메워 내부 맨살 0. 현행을 가른 값은 frac(0.23/0.39 대역 / 마커 0)이다",
     "cp": {
       "frac": 0.3944,
       "band": 26,
@@ -115,6 +158,30 @@
       "bare": 0,
       "total": 1520
     }
+  },
+  "perf": {
+    "def": "네 도구 x 3획(합성 펜 필압 0.4/0.6/0.8)이 든 방 — 프레임 dt(중앙·p90 · #82: 차는 before2 기준, 잡음 바닥 = |before−before2| 중앙값 차) · 재굽기 ms(rebakePaintTex 5회 — rAF+30ms 대기 포함이라 상한 기록). 판정은 실기기 몫(rep49 frame20의 유보 그대로 — 헤드리스 소프트웨어 GL)",
+    "paint_strokes": 12,
+    "before_ms": {
+      "median": 31.09999990463257,
+      "p90": 32.89999961853027
+    },
+    "before2_ms": {
+      "median": 29.5,
+      "p90": 32.30000019073486
+    },
+    "noise_floor_ms": 1.6,
+    "after_ms": {
+      "median": 30.100000381469727,
+      "p90": 39.299999713897705
+    },
+    "delta_median_ms": 0.6,
+    "delta_p90_ms": 7,
+    "bake_ms": {
+      "median": 48.8,
+      "max": 59.4
+    },
+    "note_20faces": "스무 면 축은 paint50 tex_budget(마커 40획 · 면 17)이 든다 — 이 팔은 «도구 넷» 축이다(#12의 축 배분)"
   },
   "no_constants_snapshot": true,
   "pitfall_citations": [

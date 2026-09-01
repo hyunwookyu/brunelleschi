@@ -451,7 +451,11 @@
     .sizebtn { display: flex; align-items: center; justify-content: flex-start;
                background: transparent; border: 0; padding: 2px 3px; margin: 0;
                color: #4a463f; cursor: pointer; touch-action: none; border-radius: 3px; }
-    .sizebtn svg { display: block; height: auto; }
+    /* ⚠ web2-51: 특이도를 #paint-sizes로 올린다 — 아래 462행의 전역 `.rrow svg`(15px 캡)가
+       뒤에 선언돼 이 규칙을 이겼고, 20·40 칸 견본이 26.5px 단추에 눌려 원이 16.1·18.8px로
+       렌더됐다(«1:1» 문면 위반 — 48-2부터의 선재 결함 · #97의 그 기제 + 케스케이드 순서.
+       brush51 ⑤의 «견본 렌더 실측»이 잡았다). flex-shrink:0은 #97 ②의 처방 그대로. */
+    #paint-sizes .sizebtn svg { display: block; height: auto; flex-shrink: 0; }
     .sizebtn.on { background: rgba(60, 56, 49, .16); }
     /* 롤통 줄(web2-34 6번) — 연필통·촉통 줄과 같은 크기·같은 어법. 앞의 롤 그림 +
        이름. 옐로의 색 예외는 **통 안**에만 산다(`instrument-icons.md` 정본). */

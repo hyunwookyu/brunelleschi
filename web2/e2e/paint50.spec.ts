@@ -27,6 +27,28 @@ const OUT: Record<string, unknown> = {
   note_5: '곱이 어둡게만 하는 것은 합성식의 구성이다 — 그래서 판은 «합성 화면»(#gl)에서 재고, 반증 스위치(보통 합성)가 같은 실행에서 밝기 증가를 실제로 낸다(D-3)',
 }
 
+
+// ⚠⚠ **#99의 근본 수리** — 원장을 «팔마다 병합-쓰기»한다. 누산기(OUT)는 워커 재시작
+// (파일·프로젝트 경계 · 비결정)에서 초기화되므로, 마지막 「원장」 팔 하나가 쓰는 구조는
+// 초록인데 빈 원장을 낸다(paint50 dpr2가 파일 단위 호출에서도 비었다 — 그 실측).
+// 병합이라 이전 실행의 같은 이름 열쇠는 덮이고, **필드를 개명하면 파일을 지우고 재생성**
+// 해야 유령 열쇠가 안 남는다(그 유보는 이 주석이 든다).
+import { readFileSync } from 'node:fs'
+const LEDGER_OF = (projectName: string) =>
+  resolve(HERE, `../../stage0/out/paint50_web2_dpr${projectName === 'dpr2' ? 2 : 1}.json`)
+test.afterEach(async ({}, info) => {
+  const f = LEDGER_OF(info.project.name)
+  let prev: Record<string, unknown> = {}
+  let readFailed = false
+  try { prev = JSON.parse(readFileSync(f, 'utf8')) } catch { readFailed = true /* 첫 실행 또는 읽기 실패 */ }
+  // 방어 — 파일이 «있는데» 못 읽었으면 쓰지 않는다(빈 prev로 덮으면 누산이 통째로 지워진다)
+  if (readFailed) {
+    try { if (readFileSync(f, 'utf8').length > 0) return } catch { /* 진짜 첫 실행 */ }
+  }
+  mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
+  writeFileSync(f, JSON.stringify({ ...prev, ...OUT }, null, 2))
+})
+
 async function drawLine(page: Page, x0: number, y0: number, x1: number, y1: number) {
   await page.mouse.move(x0, y0)
   await page.mouse.down()
@@ -612,9 +634,13 @@ test('옛 칠 알림 — 45~48 형식의 문서를 «열면» 화면에 한 줄�
   const { putSaved, bootDone } = await import('./store43')
   await putSaved(page, JSON.stringify(j))
   await page.goto('/')                       // ⚠ reload면 ?reset이 다시 붙어 저장소가 비워진다
+  // 알림은 2.5s 창이라(#notice — notify의 그 수명) 이동 «직후부터» 문구를 기다린다 —
+  // 부팅 뒤 고정 대기(초판)는 dpr2의 느린 부팅에서 창을 놓쳤다(실측 — 빈 문자열).
+  const noticeText = await page.waitForFunction(() => {
+    const s = document.getElementById('notice')?.textContent ?? ''
+    return s.includes('옛 칠') ? s : null
+  }, null, { timeout: 8000 }).then(h => h.jsonValue() as Promise<string>).catch(() => '')
   await bootDone(page)
-  await page.waitForTimeout(400)
-  const noticeText = await page.evaluate(() => document.getElementById('notice')?.textContent ?? '')
   expect(noticeText, '여는 순간 화면의 한 줄이 «옛 칠»을 말한다').toContain('옛 칠')
   const kept = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
   expect(kept, '나머지(선·면)는 그대로 열렸다').toBe(j.strokes.length - 1)

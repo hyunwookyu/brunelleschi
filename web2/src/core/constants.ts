@@ -814,6 +814,18 @@ export const C = {
   PAINT51_DPR_W_TOL: 0.15,
   /** 51 게이트 — 트레이 견본 굵기 ↔ 그은 자국 굵기의 허용(상대 편차). */
   PAINT51_SWATCH_W_TOL: 0.25,
+  /** 51 게이트 — 압력 부등식의 여유: density_ratio > width_ratio + 이 값(1차 리뷰어 [3] —
+   *  여유 없는 부등식은 평탄화 반증에서도 참(0.955 > 0.9)이라 반증이 못 뒤집었다.
+   *  0.1: 출하 차(0.24 대역)의 절반 아래 · 평탄화 잡음 차(0.05 대역)의 배 위). */
+  PAINT51_GATE_MARGIN: 0.1,
+  /** 51 게이트 — 마커 팁/몸통 안료 비의 문 · 붓 갈라짐(끝/몸통 행 수) 문 · 붓 흐름
+   *  변동 계수 하한 · 색연필 «덜 덮임» 여유 · 결 줌 비의 계수(바닥 1.4와 max). */
+  PAINT51_TIP_MIN_RATIO: 1.05,
+  PAINT51_SPLIT_MIN_RATIO: 1.1,
+  PAINT51_FLOW_CV_MIN: 0.05,
+  PAINT51_CP_COVER_MARGIN: 0.03,
+  PAINT51_GRAIN_ZOOM_K: 0.45,
+  PAINT51_GRAIN_ZOOM_FLOOR: 1.4,
 } as const
 
 /** **시점 스냅 임계의 상한(rad)** — 실제 임계는 `level.ts`의

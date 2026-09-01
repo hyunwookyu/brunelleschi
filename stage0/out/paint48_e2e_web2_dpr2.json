@@ -18,11 +18,11 @@
     },
     "shipped": {
       "px": 18000,
-      "lumaMean": 233,
+      "lumaMean": 236,
       "lighterThanPaper": 0
     },
     "warm_on_gl": {
-      "warm": 11547,
+      "warm": 10224,
       "any": 52081
     },
     "note_50": "48-1의 장막(p5.brush가 흰 종이 전제로 불투명하게 쓰는 것 — AS-C158)은 수리된 것이 아니라 **병소가 구조에서 빠진 것**이다. 곱의 반증 스위치는 paint50_web2_*.json의 falsify_over가 든다"
@@ -35,12 +35,12 @@
         "f": 10,
         "s": 1,
         "c": "#d9a08a",
-        "w": 0.2656887439899176,
+        "w": 0.1867774778799764,
         "i": 1
       }
     ],
     "near_box": {
-      "warm": 11547,
+      "warm": 10224,
       "any": 52081
     },
     "far_whole_screen": {
@@ -54,9 +54,9 @@
     "note_92": "판정자는 픽셀이다 — `paintVisible`의 반환값(이름표)이 아니라 렌더가 그것을 존중하는가를 재는다. 순수 함수 쪽은 단위 팔(test/mats46.test.ts ④)이 따로 재고, 저장 왕복은 test/roundtrip43(게이트 ①·②)과 test/mats46(46-4 ①)이 재다"
   },
   "sizes": {
-    "rows_w2_5": 10,
-    "rows_w20": 65,
-    "ratio": 6.5
+    "rows_w2_5": 8,
+    "rows_w20": 45,
+    "ratio": 5.625
   },
   "reveal": {
     "withPencil": {
@@ -85,7 +85,7 @@
       "touched": 4800,
       "opaque": 4800,
       "opaqueLighter": 0,
-      "lumaMean": 219
+      "lumaMean": 226
     },
     "box": {
       "x": 530,
@@ -126,28 +126,28 @@
   },
   "orbit": {
     "before": {
-      "warm": 4411,
+      "warm": 3078,
       "any": 44917
     },
     "during": [
-      4151,
-      3873,
-      3582,
-      3286,
-      2983
+      2897,
+      2703,
+      2504,
+      2302,
+      2103
     ],
     "after": {
-      "warm": 2983,
+      "warm": 2103,
       "any": 30958
     },
     "tileStats": {
       "active": true,
       "tiles": 7,
       "frames": 5,
-      "bakeMs": 70,
+      "bakeMs": 69.5,
       "bakePasses": 1,
       "bakeClamped": 0,
-      "frameMsMedian": 0.1,
+      "frameMsMedian": 0.2,
       "frameMsMax": 2.3,
       "paintFrames": 0,
       "paintMsMedian": 0,
@@ -220,7 +220,7 @@
       {
         "id": "btn-paint-cp",
         "present": true,
-        "tip": "색연필 — 가늘게 결을 남긴다",
+        "tip": "색연필 — 결이 굵고 색이 완전히 덮이지 않는다",
         "targetable": true
       },
       {
