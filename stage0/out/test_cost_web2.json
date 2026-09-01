@@ -1,22 +1,22 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "web2-49",
+  "measured_at": "2026-09-02 (web2-50 마감 · 사슬 2 세션)",
   "unit": {
     "command": "npx vitest run (web2/)",
-    "files": 123,
-    "tests": 1010,
-    "wall_s": 32.9,
-    "passed": 1010,
+    "files": 124,
+    "tests": 1016,
+    "wall_s": 30.1,
+    "passed": 1016,
     "failed": 0,
-    "note": "web2-49 — 파일 121 → 123(rep49 9 · rep49_measure 8) · 팔 993 → 1010. roundtrip43 게이트 ②가 rep 필드 누락을 실제로 잡았다(그 기계의 세 번째 발화)."
+    "note": "web2-50 — 파일 123 → 124(facetex 7) · 팔 1010 → 1016(facetex +7 · mats46 왕복 재작성 −2+1 등 — 순증 6). roundtrip43 게이트 ②가 paint.uv/press 누락을 실제로 잡았다(그 기계의 네 번째 발화)."
   },
   "e2e": {
     "command": "npx playwright test --workers=1 (dpr1+dpr2)",
-    "cells": 608,
-    "passed": null,
-    "failed": null,
-    "wall_s": null,
-    "note": "web2-49 — 596 → 608(rep49 6칸 × dpr 둘). 마감 전량 실행의 값이 이 칸에 들어간다 — 비워 두지 않고 null로 적어 «안 재음»을 드러낸다(#43)."
+    "cells": 624,
+    "passed": 624,
+    "failed": 0,
+    "wall_m": 60,
+    "note": "web2-50 마감 전량 — 608 → 624(paint50 9칸×2dpr 추가 · 이관 재작성은 칸 수 중립 대역). 벽시계 1.0h — 49 마감(608칸 1.0h)과 같은 대역(이 기기 · 디스크 여유 3~4GB). ⚠ 49 마감 몫(608/0 · 1.0h)도 이 세션이 채웠다(49 세션이 비워 둔 칸)."
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",

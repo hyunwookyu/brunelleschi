@@ -21302,3 +21302,37 @@ WebGLState가 blend 상태를 **안 세팅하고**(콘솔 error 한 줄) 이전 
 - **[11] 알림의 부정 대조 없음**: 맞다(D-3) — 성한 저장물의 같은 절차에서 문구가 «없다»를
   같은 팔이 잰다(`notice_clean`).
 - **[12] 평면 덮어쓰기의 잔여 계단**: AA 몫임을 원장 note로 적었다(`note_flat_residual`).
+
+### 마감 — **web2-50** (2026-09-02)
+
+**도는 백그라운드**(#81 ㉤ — 값):
+
+```
+상한 없는 대기       0
+도는 개발 서버       0   ← 전량 전에 미리보기 서버를 내렸고(#70) playwright가 띄운 것은 스스로 내렸다(실측 netstat 0)
+```
+
+```
+main af6994b · cd web2 && node tools/deploy-check.mjs
+  $ git ls-remote origin main
+  af6994b624dc3bd6cb4c76278264688aa964c8a7  refs/heads/main
+  내 커밋   af6994b624dc3bd6cb4c76278264688aa964c8a7
+  원격 main af6994b624dc3bd6cb4c76278264688aa964c8a7      ✓
+  Pages 실행 completed / success (attempt 1)
+    https://github.com/hyunwookyu/brunelleschi/actions/runs/33563981231
+  화면 빌드 식별자 af6994b == 배포 커밋                    ✓
+  결과: **배포됨**
+```
+
+**⚠ 무엇이 초록인가**(#89 — 세 줄이 **다른 것**을 말한다):
+
+| 무엇이 돌았나 | 어디서 | 결과 |
+|---|---|---|
+| 타입 · 단위 · 빌드 · `static_deploy.spec` **하나** | **CI**(`pages.yml`) | 실행 33563981231 success · 화면 식별자 `af6994b` |
+| 타입 · 단위 · 빌드 | **사람이 손으로** | 타입 **0** · 단위 **1016 / 0 / 1016**(124파일 · 30.1s) · 빌드 통과(3.0s) |
+| **전량 e2e**(dpr1+dpr2 · `--workers=1` · **1.0h**) | **사람이 손으로** | **624 / 0 / 624** |
+
+⚠ 전량 e2e는 병합 대상 트리(`af6994b`) 그대로에서 돌았다(빨리감기 — 트리 동일).
+LEDGER 없이 돌았고 `git status stage0/out`이 비어 있었다(#90 — 관문이 지킨다).
+⚠ 벽시계 1.0h — 49 마감과 같은 대역(이 기기). 칸 608 → **624**(paint50 9×2dpr — 비용은
+`test_cost_web2.json`에 남겼다, A-4).
