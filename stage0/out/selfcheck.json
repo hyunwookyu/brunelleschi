@@ -1,5 +1,5 @@
 {
-  "n_flags": 6209,
+  "n_flags": 6213,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -7600,6 +7600,26 @@
     },
     {
       "path": "materials_visible_web2_dpr2.json:classic.2B.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "mats46_e2e_web2_dpr1.json:depth_pixel.threshold_sweep.th16.mean_on",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "mats46_e2e_web2_dpr1.json:depth_pixel.threshold_sweep.th16.mean_off",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "mats46_e2e_web2_dpr2.json:depth_pixel.threshold_sweep.th16.mean_on",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "mats46_e2e_web2_dpr2.json:depth_pixel.threshold_sweep.th16.mean_off",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -31263,12 +31283,12 @@
       "path": "scan_citation_hashes",
       "val": [
         "assumptions.md:199 test_cost.json",
+        "assumptions.md:381 mats46_e2e_web2_dpr1.json",
+        "DECISIONS.md:3632 mats46_web2.json",
         "DEFERRED.md:946 test_cost.json",
-        "progress.md:11820 test_cost.json",
-        "progress.md:13857 test_cost.json",
-        "progress.md:14037 test_cost.json"
+        "progress.md:11820 test_cost.json"
       ],
-      "flag": "**없는 원장을 인용한다**(8건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
+      "flag": "**없는 원장을 인용한다**(14건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
     },
     {
       "path": "stage0/out/inklayer_web2_before.json",
@@ -31549,7 +31569,7 @@
         ".md": 41,
         ".py": 4,
         ".html": 1,
-        ".ts": 113
+        ".ts": 114
       }
     },
     {
@@ -31611,7 +31631,7 @@
       "unit": "인용",
       "targets": 377,
       "hits": 1,
-      "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 8건"
+      "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 14건"
     },
     {
       "scan": "scan_cited_values",
@@ -31623,7 +31643,7 @@
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 189,
+      "targets": 190,
       "hits": 3,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
@@ -32257,10 +32277,15 @@
       47
     ],
     "mats46_e2e_web2_dpr1.json": [
+      26,
       92
     ],
     "mats46_e2e_web2_dpr2.json": [
+      26,
       92
+    ],
+    "mats46_web2.json": [
+      5
     ],
     "measure34_web2.json": [
       14,
