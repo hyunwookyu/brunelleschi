@@ -211,7 +211,12 @@
     .ltab.ladd.disabled { opacity: .3; cursor: default; }
     .ldel { font: 13px/1 system-ui, sans-serif; }
     /* 롤 버튼(web2-21 3-a) — 카메라 닫히기 전 비활성. 클릭은 살아 있다(이유를 말해야 한다 — 2-a) */
-    #btn-roll.disabled { opacity: .3; }   /* 롤통 — 카메라가 닫히기 전(2-a · web2-34 6번) */
+    #btn-roll.disabled { opacity: .3; }
+    /* ⚠ web2-48 48-4 — `#btn-grip`은 `disabled`를 **달고 있었는데 그려지지 않았다**
+       (main.ts가 classList를 토글하는데 `.t.disabled` 규칙이 없었다). 그래서 «잡은 것이
+       없다»가 화면에 한 톨도 안 나왔고, 통을 열어 «흐린 줄 여덟»을 보고나서야 알 수 있었다.
+       값은 롤 버튼과 같게 둔다(새 수 ⛔ — 같은 뜻은 같은 표현, #54). */
+    .t.disabled { opacity: .3; }
     .lctl { background: none; border: 0; padding: 2px; margin: 0; cursor: pointer; color: inherit; opacity: .75; }
     .lctl:hover { opacity: 1; }
     #layer-pop {
@@ -264,7 +269,7 @@
     /* 축 스냅 자리(3-b) — 컨트롤이 없다: 끄는 토글은 이 회차에 없다(대응표 §4 — 자리만) */
     #axis-snap-slot { color: var(--ui-faint); }
     /* 되돌리기와 도구를 가르는 선(3-a) — 공백이 아니라 채널이다(3-c) */
-    .bar-divider { width: 30px; height: 1px; background: var(--ui-faint); margin: 5px 1px; opacity: .55; }
+    .bar-divider { width: 30px; height: 1px; background: var(--ui-faint); margin: 2px 1px; opacity: .55; }
     /* 자(삼각자) — 정사각 viewBox(32×32)라 지우개 급(ico-h 48px)이면 폭이 48이 된다.
        손 띠 폭 규약(39px — ①')에 맞는 전용 급: 높이 = 26px × 배수 = 39. */
     .ico-sq svg { height: calc(26px * var(--ui-scale)); width: auto; }
@@ -276,7 +281,11 @@
        ⚠ web2-34 6번으로 **파일·설정 서랍이 위 띠(#eyebar) 안으로 올라왔다** — 그 줄도
        #eyebar 하나가 덮는다(옛 자리는 세로바 안이었다). */
     body.fs #topleft, body.fs #eyebar, body.fs #sidebar,
+    /* ⚠ web2-48 48-4 — `#griptray`·`#painttray`가 **이 목록에서 빠져 있었다**(44·46이
+       더하면서 안 적었다) — 전체화면에서 그 둘만 떠 있었다.
+       「규칙을 세워도 새로 추가되는 것에는 안 쓸린다」의 또 한 사례다(48-10이 그것을 규칙으로 박았다). */
     body.fs #tray, body.fs #pentray, body.fs #etray, body.fs #rolltray,
+    body.fs #griptray, body.fs #painttray,
     body.fs #dimpanel, body.fs #display-pop, body.fs #snap-pop, body.fs #layer-pop, body.fs #face-pop,
     body.fs #lens-pop { display: none; }
     #fs-exit {
@@ -352,7 +361,14 @@
     #sidebar, #sidebar-body, #sidebar-body .bar-row { pointer-events: none; }
     #sidebar button { pointer-events: auto; }
     #sidebar.folded #sidebar-body { display: none; }
-    .bar-gap { height: 10px; }
+    /* ⚠⚠ **web2-48 48-11이 이 값을 다시 내렸다**(21 → 10 → **4**). 기록을 남긴다:
+       44가 자와 손통을 짝 줄로 눌힌 것은 **세로 37px을 벌기 위해서**였고(grip44 ⑥의
+       그 주석), 48-11이 그 짝을 되돌리면서 **46px을 다시 썼다** — 세로바 밑이
+       778 → **824**가 돼 화면(800)을 넘졌고 세로바 팔 여섯이 빨개졌다.
+       **그러나 배열은 무리를 말하는 채널이고**(R9) 그것을 돈으로 살 수 있는 자리는
+       여기다 — 그룹 사이 여백은 **사이를 말하기만 하면 된다**(그룹 안 간격이 1px이므로
+       4px이면 네 배라 채널이 산다). 아래 `.bar-divider`의 여백도 같은 이유로 줄였다. */
+    .bar-gap { height: 4px; }
     /* 띠 재편(web2-44) — **한 줄에 짝으로 눕는 무리**. 손잡이가 처음으로 늘어나는 회차라
        (그리고 45·46·47이 더 더한다) 세로 한 줄로는 자리가 안 난다 — 같은 무리(시점 셋 ·
        실행취소 둘)를 가로로 눕혀 세로 자리를 비운다. 버튼 크기·패딩은 그대로다(표적
@@ -376,7 +392,16 @@
     .ico-m  svg { height: calc(20px * var(--ui-scale)); width: auto; }  /* 실행취소·시점·치수·질감 */
     .ico-f  svg { height: calc(19px * var(--ui-scale)); width: auto; }  /* 파일·설정 */
     .ico-h  svg { height: calc(32px * var(--ui-scale)); width: auto; }  /* 지우개·면 */
-    .ico-t  svg { height: calc(62px * var(--ui-scale)); width: auto; }  /* (옛) 세로 연필·펜 */
+    /* ⚠⚠ **web2-48 48-11이 62 → 55로 내렸다**(렌더 높이 93 → 82.5px). 그림은 한 톨도
+       안 바뀌었다 — `docs/instrument-icons.md`의 path와 viewBox 그대로고 **배율만** 줄였다.
+       기록: 44가 자와 손통을 짝 줄로 눌힌 것은 **세로 37px을 벌기 위해서**였고(grip44 ⑥),
+       48-11이 그 짝을 되돌리면서 46px을 다시 썼다 — 세로바 밑이 778 → **824**로 화면(800)을
+       넘어 세로바 팔 여섯이 빨개졌다. **배열은 무리를 말하는 채널이므로**(R9) 되돌린 것을
+       지키고 **높이를 다른 데서 샀다**: 그룹 여백(10 → 4) · 구분선 여백(5 → 2) · 그리고 이 줄.
+       연필·펌이 대상인 이유는 **띄에서 가장 큰 두 항목**이기 때문이고(93px · 다음이 54px),
+       줄이면 띄의 크기 대역이 **오히려 고르게** 된다. 밑은 `sidebar.spec`의
+       「접힌 연필·펌은 80px 이상」이고 82.5는 그 위다. */
+    .ico-t  svg { height: calc(55px * var(--ui-scale)); width: auto; }  /* 접힌 연필·펌 */
     /* 연필통(web2-12 6번 → web2-19 3-b' **접힘**) — 가로로 누운 행 여섯. 연필을 누른
        동안만 펼쳐진다(평소 손 띠는 39px 정사각 대역만 남는다 — 폭 불일치의 답).
        ⚠ 기본 display를 none으로 두는 이 줄이 **정본**이다 — 같은 선택자의 규칙을 앞에
@@ -1085,7 +1110,7 @@
              docs/instrument-icons.md 「접힌 연필」 정본). 누르면 아래 #tray(여섯 줄)가
              펼쳐지고 하나를 고르면 접힌다. 경도 문자·심 색은 main.ts가 MAT에서 갱신(#54). -->
         <button id="btn-pencil" class="t tool ico-t" title="연필 — 누르면 연필통이 열린다" aria-label="연필">
-          <svg width="39" height="93" viewBox="0 0 26 62">
+          <svg width="39" height="82" viewBox="0 0 26 62">
             <path d="M8 3h10v40H8z" fill="#cfc7b6"/><path d="M8 3h3.4v40H8z" fill="#e0d9ca"/><path d="M14.6 3H18v40h-3.4z" fill="#bbb2a0"/><rect id="fold-lead-win" x="8" y="11" width="10" height="13" fill="#faf8f3"/><text id="fold-lead-text" x="13" y="21" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">HB</text><path d="M8 43 L13 57 L18 43 Z" fill="#e6dfd0"/><path id="fold-lead" d="M11.75 53.5 L13 57 L14.25 53.5 Z" fill="#5a5a5a"/>
           </svg>
         </button>
@@ -1097,7 +1122,7 @@
              `textLength`로 가로만 좁혔다 — 정본은 `docs/instrument-icons.md`의
              「접힌 펜 — 촉 각인이 붙는다」. 몸통·물림쇠·원뿔·촉 path는 안 바뀌었다. -->
         <button id="btn-pen" class="t tool ico-t" title="펜 — 누르면 촉통이 열린다" aria-label="펜">
-          <svg width="39" height="93" viewBox="0 0 26 62">
+          <svg width="39" height="82" viewBox="0 0 26 62">
             <path d="M8.6 3h8.8v32H8.6z" fill="#7f7a72"/><path d="M8.6 3h3v32h-3z" fill="#98938a"/><rect id="fold-nib-win" x="8.6" y="11" width="8.8" height="13" fill="#faf8f3"/><text id="fold-nib-text" x="13" y="21" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">.35</text><path d="M9.4 35h7.2v6H9.4z" fill="#5d5952"/><path d="M10.2 36.4h5.6M10.2 38.2h5.6" stroke="#837f78" stroke-width=".7"/><path d="M9.4 41h7.2l-3.6 8z" fill="#6e6a63"/><rect id="fold-nib" x="12.2" y="49" width="1.6" height="7" fill="#101014"/>
           </svg>
         </button>

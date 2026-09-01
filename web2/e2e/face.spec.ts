@@ -143,7 +143,14 @@ test('면 — 선을 안 가린다. 경계를 지우면 칠이 사라지고 실�
   await settle(page)
   s = await summary(page)
   expect(s.faces).toHaveLength(1)
-  expect(await countPixels(page, 'gl', ...win)).toBeGreaterThan(1000)
+  // ⚠⚠ **web2-48 48-9가 이 줄의 전제를 바꿨다**: 안 칠한 면은 이제 **칠·면 도구를
+  // 든 동안만** 드러난다(「제도에서 면은 칠하기 전까지 존재하지 않는다」). 이 자리의
+  // 도구는 **지우개**라 면이 안 보이는 것이 이제 올바른 거동이다 — 그것까지 재고,
+  // 대상 도구를 들면 돌아오는 것을 이어서 재다(«면이 살아돌았다»의 판정자는 그쪽이다).
+  expect(await countPixels(page, 'gl', ...win), '지우개를 든 채로는 면이 안 보인다(48-9)').toBe(0)
+  await page.click('#btn-face')
+  await settle(page)
+  expect(await countPixels(page, 'gl', ...win), '면 도구를 들면 돌아온다').toBeGreaterThan(1000)
 })
 
 test('면 — 루프가 아닌 자리를 탭하면 알림 한 줄이 뜬다', async ({ page }) => {

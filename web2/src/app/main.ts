@@ -1914,10 +1914,14 @@ registerBox({
 /** 줄의 활성 조건 — 값으로 판정한다(#54: 실행 함수가 보는 그 상태를 그대로 본다). */
 function gripRowGate(key: string): string | null {
   const g = app.grip
-  if (!g || g.ids.length === 0) return '선을 꾹 눌러 잡은 뒤에 쓴다'
+  // ⚠ web2-48 48-4 — 문구가 **도구를 안 말했다**. 잡기(누름 진입)는 면·칠·치수·재기·
+  // 지우개를 든 채로는 아예 안 걸리는데(`input.ts`의 그 문), 사람은 면을 만든 **직후**
+  // (= 면 도구를 든 채) 「정면」을 찾는다 — 그래서 「꾹 눌러 잡으라」를 읽고 눌러도
+  // 아무 일이 안 났다. 「손통이 없다」로 읽힌 것의 절반이 이것이다(48-4의 답).
+  if (!g || g.ids.length === 0) return '연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)'
   if (key === 'join' && g.ids.length !== 2) return '맺기는 **두 선**을 잡아야 한다'
   if ((key === 'front' || key === 'cls' || key === 'fill' || key === 'fmat' || key === 'farea') && g.faceId === null) {
-    return `${key === 'front' ? '정면' : key === 'cls' ? '분류' : key === 'fill' ? '채움' : key === 'fmat' ? '재료' : '면적'}은 **면**을 잡아야 한다(면 안을 꾹 누른다)`
+    return `${key === 'front' ? '정면' : key === 'cls' ? '분류' : key === 'fill' ? '채움' : key === 'fmat' ? '재료' : '면적'}은 **면**을 잡아야 한다 — 연필을 든 채로 면 안쪽(경계에서 떨어진 자리)을 꾹 누른다`
   }
   return null
 }
@@ -2099,9 +2103,21 @@ function setPaintHex(hex: string, why: string) {
     b.className = 'sizebtn'
     b.dataset.act = 'state'
     b.title = `자국 굵기 ${w}px`
-    b.innerHTML = `<svg width="44" height="${Math.max(12, Math.ceil(w) + 6)}" viewBox="0 0 44 ${Math.max(12, Math.ceil(w) + 6)}">`
-      + `<line x1="4" y1="${Math.max(12, Math.ceil(w) + 6) / 2}" x2="40" y2="${Math.max(12, Math.ceil(w) + 6) / 2}"`
-      + ` stroke="currentColor" stroke-width="${w}" stroke-linecap="round"/></svg>`
+    // ⚠⚠ **자국의 문법은 지우개 크기통(34-3)을 그대로 따른다**(A-3 · 지시 문면이
+    // 그 둘을 짝으로 가리킨다): **라벨 + 그 크기의 동그라미**다. 지우개는 윤곽 원이고
+    // 칠은 **채운 점**이다 — 지우개는 «닿는 범위»이고 칠은 «남는 자국»이기 때문이다.
+    // 지름 = 그 굵기 px이므로 **1:1이 문면이 아니라 기하로 참**이다.
+    // ⚠ **초판은 둥근 끝의 막대였고 팔이 빨개 잡았다**: 44×46 상자의 40px 막대가
+    // 채운 `camera-slash` 견본과 **IoU 0.9145**를 냈다(`papericon31.spec` ① · 문 0.75).
+    // 문을 무르지 않고 **도형을 선례 있는 것으로 바꿨다** — 같은 문법의 지우개 줄은
+    // 그 팔 아래에 이미 살고 있다(새 모양을 지어 문을 다시 시험하지 않는다).
+    const rmax = Math.max(...C.PAINT_W_PX) / 2
+    const bh = Math.max(2 * (w / 2) + 8, 22)
+    const bw = 34 + 2 * rmax + 8
+    b.innerHTML = `<svg width="${bw}" height="${bh}" viewBox="0 0 ${bw} ${bh}">`
+      + `<text x="28" y="${(bh / 2 + 4).toFixed(1)}" text-anchor="end"`
+      + ` font-family="system-ui, sans-serif" font-size="11" fill="#3c3831">${w}</text>`
+      + `<circle cx="${(34 + rmax).toFixed(1)}" cy="${(bh / 2).toFixed(1)}" r="${w / 2}" fill="currentColor"/></svg>`
     b.addEventListener('click', () => {
       app.paintSel.w = w
       if (app.tool !== 'paint') setTool('paint')
