@@ -11,6 +11,7 @@ import type { Page } from '@playwright/test'
 
 /** 예약된 저장을 앞당기고 **지금 문서의 저장물**을 낸다(없으면 빈 문자열) */
 export async function savedText(page: Page): Promise<string> {
+  await bootDone(page)
   return page.evaluate(async () => {
     const d = (window as any).__b2.diag
     await d.storeFlush()
@@ -21,6 +22,9 @@ export async function savedText(page: Page): Promise<string> {
 
 /** 지금 문서의 저장물을 **그 바이트로 바꾼다** — 「같은 바이트를 다시 넣고 연다」의 자리 */
 export async function putSaved(page: Page, text: string): Promise<void> {
+  // ⚠ **앱이 설 때까지 기다린다** — 앞선 `reload()`가 아직 안 끝났으면 `page.evaluate`가
+  //   「Execution context was destroyed」로 죽는다(dpr2 전량에서 실제로 그랬다).
+  await bootDone(page)
   await page.evaluate(async (t: string) => {
     const d = (window as any).__b2.diag
     const cur = d.docNow()

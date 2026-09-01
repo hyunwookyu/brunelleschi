@@ -156,6 +156,12 @@ test('㉡ 썸네일 — 목록에 뜨고 · 도면과 일치하고 · UI가 안 
   // 그 띠는 «몇 화소»가 아니라 통째로 달라진다 — 판별력은 그 폭에서 나온다.
   expect(px.uiInk - blank.uiInk, `세로바 자리가 안 바뀌었다 — UI가 안 찍힌다(빈 ${blank.uiInk} → ${px.uiInk})`)
     .toBeLessThanOrEqual(2)
+
+  // **반증(D-3)** — 「그 시점 도면과 일치한다」가 무조건 참이 아니다:
+  // **다른 그림의 썸네일**(여기서는 빈 종이의 것)을 같은 자에 넣으면 그 문이 무너진다.
+  expect(blank.ink, '다른 그림(빈 종이)의 썸네일은 이 문을 못 넘는다')
+    .not.toBeGreaterThan(blank.ink + 20)
+  expect(blank.ink < px.ink - 20, '두 썸네일이 이 자로 실제로 갈린다').toBe(true)
 })
 
 test('㉢ 열기 전 자동저장 — 다른 문서를 열어도 현재 문서가 안 사라진다', async ({ page }) => {
@@ -298,6 +304,7 @@ test('㉦ 상한 거동 — 큰 문서 여럿을 실제로 넣어 본다(원장)
   })
   const one = await dump(page)
   const bytes = one.data!.length
+  const oneBytes = await page.evaluate((t: string) => new TextEncoder().encode(t).length, one.data!)
 
   // 그 문서를 **여러 벌** 저장소에 넣는다 — 이름만 다르고 내용은 같다(크기 대역이 목적)
   const N = 12
@@ -320,7 +327,9 @@ test('㉦ 상한 거동 — 큰 문서 여럿을 실제로 넣어 본다(원장)
   expect(after.docs.length).toBe(N + 1)
   // 목록은 **보이는 수**만 자른다(저장소에는 다 있다)
   await openFilePane(page)
-  await expect(page.locator('#recent .rrow')).toHaveCount(Math.min(N + 1, 8))
+  // 보이는 수는 **상수**다(`C.RECENT_LIMIT`) — 앱에서 읽는다(팔이 수를 다시 적지 않는다 · #88)
+  const shown = await page.evaluate(() => (window as any).__b2.diag.recentLimit() as number)
+  await expect(page.locator('#recent .rrow')).toHaveCount(Math.min(N + 1, shown))
 
   const est = await page.evaluate(async () => {
     if (!navigator.storage?.estimate) return null
@@ -333,16 +342,28 @@ test('㉦ 상한 거동 — 큰 문서 여럿을 실제로 넣어 본다(원장)
     writeFileSync(out, JSON.stringify({
       what: 'web2-43 ㉦ — 큰 문서 여럿을 실제 저장소(IndexedDB)에 넣었을 때의 거동. files43.spec가 매 실행 다시 쓴다.',
       run: { note: '정본 명령: LEDGER=1 npx playwright test files43 --workers=1', project: info.project.name },
-      one_doc_bytes: bytes,
+      conditions: {
+        fixture: '작도 셋(마우스) + **종이에 직접** 그린 손 획 100(획당 241점 · press 실림 · rawIn press만) · 1200x800 · dpr1',
+        why_paper: '종이·트레이싱지 획은 **안 솎인다**(27-3 ⑤) — 옐로만 RDP로 준다. 실사용의 큰 쪽이 이 갈래다.',
+        rawIn: 'press만 싣는다(마우스·손가락은 안 싣는다 — types.ts). tiltX/tiltY/twist 없음.',
+        harness: 'playwright(files43.spec) — ⚠ filesize27_web2.json은 **vitest**의 다른 픽스처다(#27: 두 하네스의 값을 한 비로 나누지 않는다)',
+        unit: 'units = UTF-16 코드 유닛(문자열 length). 이 문서는 거의 ASCII라 바이트와 거의 같다 — 그래도 **둘 다 적는다**(#28).',
+      },
+      one_doc_units: bytes,
+      one_doc_bytes_utf8: oneBytes,
       docs_written: res.put,
       total_docs: after.docs.length,
-      approx_total_bytes: bytes * (res.put + 1),
+      sum_of_doc_units: bytes * (res.put + 1),
+      sum_note: '이것은 **곱셈**이다(같은 저장물을 여러 벌 넣었다). 실제로 디스크에 든 양은 storage_estimate.usage이고 둘은 다르다 — IndexedDB는 압축·오버헤드가 있다.',
       localstorage_limit_units: 5241856,
       would_fit_in_localstorage: Math.floor(5241856 / bytes),
+      fit_note: '분자·분모가 **둘 다 코드 유닛**이다(one_doc_units ÷ localstorage_limit_units).',
       storage_estimate: est,
+      estimate_note: 'quota는 실행마다 흔들린다(디스크 여유에 딸린 값) — 대역으로만 읽는다. usage는 **이 쓰기 뒤**에 읽었다.',
       put_error: res.error,
-      shown_in_list: Math.min(after.docs.length, 8),
+      shown_in_list: shown,
+      shown_note: '목록에 보이는 수는 상수 C.RECENT_LIMIT이다 — **저장소에는 다 있다**(total_docs).',
     }, null, 2))
-    console.log(`[43 ㉦] 한 문서 ${bytes} · ${res.put + 1}개 = ${bytes * (res.put + 1)} · localStorage였으면 ${Math.floor(5241856 / bytes)}개`)
+    console.log(`[43 ㉦] 한 문서 ${bytes} units(${oneBytes} B) · ${res.put + 1}개 곱 ${bytes * (res.put + 1)} · 실제 usage ${est?.usage} · localStorage였으면 ${Math.floor(5241856 / bytes)}개 · 목록 ${shown}칸`)
   }
 })

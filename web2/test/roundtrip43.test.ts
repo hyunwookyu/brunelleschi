@@ -168,6 +168,15 @@ describe('43-1 ① 바이트 동일성 — 저장 → 로드 → 재저장', () 
 // 그것이 「왕복에서 조용히 사라지는 후보」의 탐지기다(D-5의 픽스처 대역 물음의 자동판).
 const SRC = ['types.ts', 'measure.ts', 'press.ts'] as const
 
+/** `types.ts`가 자료형을 들여오는데 **위 목록에 없는** 파일 — 그 까닭이 여기 적혀 있어야 한다.
+ *  ⚠ 왜 필요한가(리뷰어 [12]): 목록이 손으로 박혀 있으면 **네 번째 파일이 생기는 날 전수가
+ *  조용히 좁아진다**. 아래 팔이 `types.ts`의 import를 읽어 이 표와 대조하므로, 새 파일에
+ *  자료형을 두면 «여기에 까닭을 적거나 SRC에 넣거나» 둘 중 하나를 하게 된다. */
+const SRC_OUTSIDE: Record<string, string> = {
+  'vec.ts': 'Pt·V3·Quat는 좌표 원시형이고 그 필드(x·y·z·w)는 SRC 셋의 인터페이스 안에서 이미 요구된다',
+  'dim.ts': 'Unit(문자열 리터럴)만 들여온다 — DimSkew는 저장물이 아니라 화면 계산이다',
+}
+
 /** 소스에서 인터페이스 필드 이름을 긁는다.
  *  ⚠ **중괄호를 세서** 몸통을 잡는다 — `/\{[\s\S]*?\n\}/`로 잡던 초판은 한 줄짜리
  *  인터페이스(`RawInput` · `ViewOffset`)에서 **다음 인터페이스를 통째로 삼켰다**
@@ -238,6 +247,18 @@ describe('43-1 ② 종류 전수 — 픽스처가 types.ts의 필드를 안 빠�
     const have = keysIn(ser(fullDocPlus()))
     expect(have.has('그런열쇠는없다')).toBe(false)
   })
+
+  it('SRC 목록이 types.ts의 의존을 다 덮는다 — **네 번째 파일이 생기면 여기서 빨개진다**', () => {
+    const src = readFileSync(join(__dirname, '../src/core/types.ts'), 'utf8')
+    const deps = [...src.matchAll(/from '\.\/(\w+)'/g)].map(m => `${m[1]}.ts`)
+    expect(deps.length, 'import를 실제로 읽었다').toBeGreaterThan(2)
+    const uncovered = [...new Set(deps)].filter(f => !SRC.includes(f as never) && !SRC_OUTSIDE[f])
+    expect(uncovered, '이 파일의 자료형이 전수 대조 밖에 있다 — SRC에 넣거나 SRC_OUTSIDE에 까닭을 적어라')
+      .toEqual([])
+    // 반증(D-3) — 이 거르개가 **실제로 무엇을 잡는다**: 모르는 파일을 끼우면 걸린다
+    const probe = [...deps, 'zzz.ts'].filter(f => !SRC.includes(f as never) && !SRC_OUTSIDE[f])
+    expect(probe).toEqual(['zzz.ts'])
+  })
 })
 
 describe('43-1 ③ 세대 — 저장 → 열기 → 저장 5회에서 크기·좌표가 안 변한다', () => {
@@ -259,6 +280,12 @@ describe('43-1 ③ 세대 — 저장 → 열기 → 저장 5회에서 크기·�
     // 그래서 **첫 복원부터** 견준다(27-3 ④의 그 규율 그대로).
     for (let i = 2; i < sizes.length; i++) expect(sizes[i], `세대 ${i}`).toBe(sizes[1])
     for (let i = 1; i < coords.length; i++) expect(coords[i], `세대 ${i}`).toBe(coords[0])
+    // **양성 대조**(#69 ㉣ · 리뷰어 [13]) — 「불변」이 «척도가 0»이 아님을 보인다.
+    // 같은 문서를 **반올림 없이** 저장하면 바이트가 실제로 달라진다: 이 자가 움직인다.
+    const rawBytes = serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView },
+      { round: false }).length
+    expect(rawBytes, '반올림을 끄면 크기가 달라진다 — 이 자는 실제로 움직인다').not.toBe(sizes[1])
+    expect(rawBytes).toBeGreaterThan(sizes[1]!)
   })
 })
 

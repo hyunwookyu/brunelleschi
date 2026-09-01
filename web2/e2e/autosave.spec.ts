@@ -50,7 +50,7 @@ test('①④ — %가 오른다(값) · 작은 문서는 조용하다', async ({
   const s1 = await savedBytes(page)
   expect(s1.bytes).toBeGreaterThan(0)
   expect(s1.pct).toBeLessThan(0.01)                    // ④ 작은 문서 — 임계에서 멀다
-  await expect(page.locator('#notice')).not.toContainText('상한 가정')
+  await expect(page.locator('#notice')).not.toContainText('이 문서가')
   // 획을 여럿 더하면 바이트·%가 실제로 오른다(①) — raw 점렬이 실리는 손 획
   for (let k = 0; k < 6; k++) await drawLine(page, 200 + k * 30, 200, 500 + k * 30, 300 + k * 10)
   await page.waitForFunction((b0) => {
@@ -71,13 +71,13 @@ test('①④ — %가 오른다(값) · 작은 문서는 조용하다', async ({
     const perStroke = (s2.bytes - s1.bytes) / 6
     mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
     writeFileSync(resolve(HERE, '../../stage0/out/autosave_web2.json'), JSON.stringify({
-      what: 'web2-22 3부 — 자동 저장 직렬화 바이트(작은 문서·획 6 증분·획당 근사)와 70% 도달 추정.',
+      what: 'web2-22 3부 — 자동 저장 직렬화 바이트(작은 문서·획 6 증분·획당 근사)와 70% 도달 추정. ⚠ web2-43이 저장 자리를 IndexedDB로 옮겼다 — 아래 5MB는 **저장소 상한이 아니라 한 문서의 눈금**이다(C.AUTOSAVE_LIMIT_BYTES 주석이 정본).',
       run: { note: '정본 명령: LEDGER=1 npx playwright test autosave --workers=1(dpr1 판만 쓴다 — 바이트는 dpr 무관)', date: '2026-08-28' },
       small_doc_bytes: s1.bytes,
       after_6_strokes_bytes: s2.bytes,
       approx_bytes_per_stroke: Math.round(perStroke),
       strokes_to_warn_at_70pct: Math.round((5 * 1024 * 1024 * 0.7 - s1.bytes) / perStroke),
-      note: '획당 바이트는 raw 점렬 길이에 비례(이 팔의 획은 8이동 손 획 — 실사용 손 획은 점이 더 많아 더 크다). 상한 5MB는 가정(AS-C80).',
+      note: '획당 바이트는 raw 점렬 길이에 비례(이 팔의 획은 8이동 손 획 — 실사용 손 획은 점이 더 많아 훨씬 크다: files43_web2.json의 종이 손 획 100획 문서가 966530 units다). ⚠ 5MB는 web2-43부터 **한 문서의 눈금**이고 저장소 상한이 아니다 — localStorage 실측 상한은 store43_web2.json(5241856 units)이다.',
       flags_explained: { 'constants/metric_defs 스냅샷 없음': 'web2 라인 공통 형태' },
     }, null, 1))
   }
@@ -108,7 +108,7 @@ test('② — 임계(70%)를 넘으면 실패 전에 알린다 (작은 상한 �
     const l = (window as any).__b2.diag.autosaveLast()
     return l && l.pct >= 0.7
   }, undefined, { timeout: 5000 })
-  await expect(page.locator('#notice')).toContainText('상한 가정')
+  await expect(page.locator('#notice')).toContainText('이 문서가')
   await expect(page.locator('#notice')).toContainText('파일로 저장')
 })
 

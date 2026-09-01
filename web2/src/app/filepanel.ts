@@ -54,7 +54,7 @@ export interface FilePanel {
   dump: () => Promise<{ current: string; docs: DocMeta[]; data: string | null; thumb: string | null }>
   /** 파일에서 연 문서를 **새 문서로** 앉힌다(이름은 파일 이름) */
   adoptOpened: (name: string) => void
-  /** 상한 가정 손잡이(e2e) */
+  /** 한 문서 눈금 손잡이(e2e) */
   limitForTest: (n: number | null) => void
 }
 
@@ -116,7 +116,9 @@ export function initFilePanel(deps: FileDeps): FilePanel {
     last = { bytes: data.length, pct: data.length / limit() }
     if (last.pct >= C.AUTOSAVE_WARN_RATIO && !warned) {
       warned = true
-      notify(`문서가 상한 가정(${(limit() / 1024 / 1024).toFixed(1)}MB)의 ${Math.round(last.pct * 100)}%다 — 파일로 저장해 두라`)
+      // ⚠ 문구가 바뀌었다(web2-43): 「상한 가정」은 «저장소가 찬다»는 말이었고 그 위험은
+      //   이전과 함께 사라졌다. 남은 것은 **이 문서가 커졌다**이고 답은 그대로다.
+      notify(`이 문서가 ${(limit() / 1024 / 1024).toFixed(1)}MB의 ${Math.round(last.pct * 100)}%다 — 파일로 저장해 두라`)
     }
     const rec = { ...cur, updated: now(), bytes: data.length, data }
     try {

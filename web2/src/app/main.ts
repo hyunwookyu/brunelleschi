@@ -144,12 +144,12 @@ const diagPanel = initDiagPanel(
           + `(A못줌 ${app.touchStats.aNot3d}·카메라 ${app.touchStats.noCam}·시점 ${app.touchStats.pose}·방향 ${app.touchStats.axis}·리프팅 ${app.touchStats.lift}·왕복 ${app.touchStats.roundtrip}·층 ${app.touchStats.layer})`
         : '사슬(대체 — 설정에서 껐다)'],
       // 자동 저장 잔량(web2-22 3부) — 조용히 차지 않게: 상한 «가정» 대비 %가 상시 보인다
-      // ⚠ web2-43부터 저장 자리는 IndexedDB이고 이 «상한 가정»은 **한 문서의 눈금**으로
-      // 남았다(저장소 예산은 6GiB 대역 — §0). 파일로 저장해 두라는 말의 근거는 그대로다.
+      // ⚠ web2-43부터 저장 자리는 IndexedDB이고 이 5MB는 **한 문서의 눈금**이다(저장소
+      // 예산은 GiB 대역 — §0). 뜻과 근거는 `C.AUTOSAVE_LIMIT_BYTES`의 주석 하나다(#54).
       ['자동 저장', (() => {
         const l = filePanelRef?.last()
         return l
-          ? `${(l.bytes / 1024).toFixed(0)} KB / 상한 가정 ${(C.AUTOSAVE_LIMIT_BYTES / 1024 / 1024).toFixed(1)} MB — ${(l.pct * 100).toFixed(1)}%`
+          ? `${(l.bytes / 1024).toFixed(0)} KB / 문서 눈금 ${(C.AUTOSAVE_LIMIT_BYTES / 1024 / 1024).toFixed(1)} MB — ${(l.pct * 100).toFixed(1)}%`
           : '아직 없음'
       })()],
       // 마지막 획의 교점 단계(web2-14 2번 — 지시 ①~④): 실기기에서 «왜 안 붙었나»를
@@ -2275,6 +2275,8 @@ const diag = {
   },
   /** 최근 목록을 다시 그린다 — 팔이 저장소를 직접 만졌을 때 화면을 맞춘다 */
   recentSync: () => filePanelRef?.sync(),
+  /** 목록에 **보이는** 수(저장소에는 다 있다) — 팔이 상수를 다시 안 적게 한다(#88) */
+  recentLimit: () => C.RECENT_LIMIT,
   /** 오스냅 판정 그대로(web2-12 8번) — 넘김 꼬리가 스냅 대상이 아님을 팔이 잰다 */
   osnapAt: (x: number, y: number) =>
     osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / viewScale(app) },
