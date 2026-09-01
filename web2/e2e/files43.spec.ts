@@ -84,6 +84,7 @@ test('㉠ 복구 — 획 → 강제 종료 → 다시 열기 → 그대로(마�
     n: (window as any).__b2.app.doc.strokes.length,
     id: (window as any).__b2.diag.docNow().id,
   }))
+  console.log(`[43 ㉠] 강제 종료 전 획 ${strokes} · 다시 열고 ${after.n} · 열쇠 ${after.id === before.current ? '같다' : '다르다'}`)
   expect(after.n, '마지막 커밋까지 그대로다').toBe(4)
   expect(after.id, '같은 문서로 돌아온다 — 열쇠가 살아 있다').toBe(before.current)
   // 그리고 **저장물이 바이트로 같다**(왕복이 실제 저장소에서도 닫힌다 — 43-1의 e2e 판)
@@ -156,6 +157,8 @@ test('㉡ 썸네일 — 목록에 뜨고 · 도면과 일치하고 · UI가 안 
   // 그 띠는 «몇 화소»가 아니라 통째로 달라진다 — 판별력은 그 폭에서 나온다.
   expect(px.uiInk - blank.uiInk, `세로바 자리가 안 바뀌었다 — UI가 안 찍힌다(빈 ${blank.uiInk} → ${px.uiInk})`)
     .toBeLessThanOrEqual(2)
+  console.log(`[43 ㉡] 썸네일 ${px.w}x${px.h} · 상자 자리 잉크 빈 ${blank.ink} → 그린 뒤 ${px.ink}`
+    + ` · 세로바 자리 ${blank.uiInk} → ${px.uiInk} · 바이트 ${d.thumb!.length}`)
 
   // **반증(D-3)** — 「그 시점 도면과 일치한다」가 무조건 참이 아니다:
   // **다른 그림의 썸네일**(여기서는 빈 종이의 것)을 같은 자에 넣으면 그 문이 무너진다.
@@ -246,6 +249,7 @@ test('㉤-반증(D-3) 이전이 실패하면 **옛 데이터가 살아 있다**'
   await page.evaluate(() => (window as any).__b2.diag.storeFailForTest('verify'))
   const res = await page.evaluate(async () =>
     (window as any).__b2.diag.store.migrate(Date.now()) as Promise<{ moved: number; failed: string[] }>)
+  console.log(`[43 ㉤-반증] 검증 단계를 실패시켰다 — 옮긴 것 ${res.moved} · 실패 ${res.failed.length}`)
   expect(res.moved, '한 건도 못 옮겼다').toBe(0)
   expect(res.failed.length, '실패로 셌다').toBeGreaterThan(0)
   // **옛것이 그대로 있다** — 이전은 복사 → 검증 → 삭제 순서다
@@ -285,6 +289,8 @@ test('㉥ 깨진 파일 — 잘린 저장물이 「읽은 데까지 + 알림」�
   expect(n, '조용히 «다 읽었다»고 하지 않는다').toBeLessThan(whole)
   // **알린다** — 무엇을 못 읽었는지가 화면에 있다
   await expect(page.locator('#notice')).toContainText('잘렸다')
+  console.log(`[43 ㉥] 잘린 저장물 — 온전한 획 ${whole} 중 ${n}개까지 읽었다`
+    + ` · 알림 "${(await page.textContent('#notice'))?.trim()}"`)
 })
 
 test('㉦ 상한 거동 — 큰 문서 여럿을 실제로 넣어 본다(원장)', async ({ page }, info) => {
