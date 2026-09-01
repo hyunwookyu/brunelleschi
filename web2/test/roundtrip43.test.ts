@@ -115,6 +115,14 @@ export function fullDocPlus() {
   // 잠금(web2-44) — text와 같은 규격(값 1 하나). 게이트 ②가 이 줄이 없으면 빨개진다 —
   // 그것이 43-1이 세운 그 기계다(새 필드는 픽스처·KEY_ORDER에 같이 적는다).
   d.strokes[0]!.lock = 1
+  // 칠 획·분류 정정·채움(web2-45) — 같은 기계가 그대로 잡았다(paint.f · cls · fill).
+  const pw = hand(37, pt(700, 500), pt(760, 520), 5)
+  d.strokes.push({
+    id: app.nextId++, a: pw[0]!, b: pw[pw.length - 1]!, raw: pw,
+    paint: { f: d.faces[0]!.id }, mat: { grade: 'HB' },
+  })
+  d.faces[0]!.cls = 'wall'
+  d.faces[0]!.fill = 1
   // 평행 사영이 실린 포즈로 그린 획(web2-42) — `view.proj` · 잉크 니브 굵기
   const par: Stroke = {
     id: app.nextId++, a: pt(960, 300), b: pt(1040, 340),

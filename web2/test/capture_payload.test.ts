@@ -71,7 +71,11 @@ describe('점별 입력 저장 비용(1-c 원장)', () => {
     //    다른 표본) — 그래서 raw 유무가 «되는가»를 안 가르고 «어느 후보인가»만 가른다.
     // ⛔ **문을 없애지 않는다**: 권한 밖은 여전히 0이고, 예외가 «죽으면»(0이 되면) 그것도
     //    빨개진다 — 규칙이 남아 있는데 아무도 안 쓰는 자리를 남기지 않기 위해서다.
-    const RAW_READERS = new Set(['lift.ts'])
+    // ⚠ **둘째 예외 — `paint.ts`**(web2-45 45-3 · 2026-09-01): 칠 획은 **raw가 정본
+    //    기하다**(옐로·글씨의 규격 — 두 끝점이 아니라 점렬이 획이다). liftPaint가 그
+    //    점렬을 면 평면에 역투영한다 — 「판정·렌더가 손떨림을 읽는」 자리가 아니라
+    //    「그 매체의 기하 그 자체」다. 이 예외도 죽으면(0이면) 아래 줄이 잡는다.
+    const RAW_READERS = new Set(['lift.ts', 'paint.ts'])
     const coreDir = resolve(__dirname, '../src/core')
     let coreRawRefs = 0, authorizedRawRefs = 0
     for (const f of readdirSync(coreDir)) {

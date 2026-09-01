@@ -87,6 +87,11 @@ export interface Stroke {
    *  ⚠ `Layer.locked`(겹 잠금)과 **다른 축**이다: 그쪽은 겹 전체의 편집 차단이고 이쪽은
    *  획 하나의 보호다. 저장한다(사람의 결정 — 면·치수와 같은 급). */
   lock?: 1
+  /** **칠 획**(web2-45 45-3) — 이 면 위에 얹힌 잉크. `raw`가 정본 기하(그은 시점의 문서
+   *  좌표)이고 3D 점렬은 파생이다(`core/paint.ts liftPaint` — 원칙 b). 소실점·리프팅·
+   *  오스냅에 안 낀다(옐로·글씨의 자리에서 같이 걸러진다 — `isPaint`). 면이 못 풀리면
+   *  안 보인다(면의 규약 — 버리지 않고 빠진다). */
+  paint?: { f: number }
 }
 
 // ── 종이(web2-19 2부) — **명명된 뷰가 「종이」다**(도면집의 한 장) ─────────────
@@ -158,6 +163,10 @@ export const yellowIds = (doc: Pick<Doc, 'layers'>): Set<number> =>
 
 /** «글씨로 판정된 획인가»(web2-32 1번) — 출처는 `Stroke.text` 하나다(#54). */
 export const isText = (s: Stroke): boolean => s.text === 1
+
+/** «칠 획인가»(web2-45) — 출처는 `Stroke.paint` 하나다(#54). 여기(types) 있는 이유:
+ *  camera(소실점 제외)와 paint(역투영 — camera를 들여온다)가 둘 다 읽는다 — 순환 방지. */
+export const isPaint = (s: Stroke): boolean => s.paint !== undefined
 
 /** «2D 획인가» — 옐로 겹의 획이거나 글씨 획. 읽는 자리: lift(3D 제외) ·
  *  analyze(소실점 제외) · brushlayer/filmlayer(2D 표시). 둘을 한 술어로 묶은 이유는
@@ -256,4 +265,10 @@ export interface FaceLoop {
 export interface Face {
   id: number
   loops: FaceLoop[]
+  /** **분류 정정**(web2-45 45-2) — 사람이 고친 값. 없으면 법선 계산이 답이다
+   *  (`core/paint.ts classOf` — 출처 한 자리 #54). 사람의 결정이라 저장한다. */
+  cls?: 'slab' | 'wall' | 'slope'
+  /** **프리셋 채움**(web2-45 45-4) — 값 1 = 해칭. **면의 함수다**(지시: 픽셀로 굽지 않고
+   *  경계에서 매번 만든다 — 개구부가 바뀌면 자동으로 따라 잘린다). 사람의 결정이라 저장한다. */
+  fill?: 1
 }

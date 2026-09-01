@@ -491,7 +491,7 @@ export function draw2d(
       // 옐로 프리핸드(web2-24 4-b) — 미리보기도 **손이 지나간 점렬**을 따른다(확정이
       // raw 정본이므로 원칙 d: 보이는 그대로 확정된다). 머무름(held)이 서면 반듯
       // 미리보기(start→end 직선)로 갈아탄다 — 22 2부의 어법 그대로.
-      if (yellowActive(app) && !draft.held && draft.raw.length > 1) {
+      if ((yellowActive(app) || app.tool === 'paint') && !draft.held && draft.raw.length > 1) {
         ctx.moveTo(draft.raw[0]!.x, draft.raw[0]!.y)
         for (let i = 1; i < draft.raw.length; i++) ctx.lineTo(draft.raw[i]!.x, draft.raw[i]!.y)
         ctx.lineTo(draft.end.x, draft.end.y)
