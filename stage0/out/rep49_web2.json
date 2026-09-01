@@ -2,7 +2,7 @@
   "what": "web2-49 재료 표현 — ①여섯 무늬 상호 판별 ②축척 통과 ③원근 축소(확인) ④밀도 하한 ⑤⚑ 원점·방향 자동 규칙 스윕. 픽셀 몫은 rep49_e2e_web2_*.json",
   "when_cmd": "npx vitest run test/rep49_measure.test.ts",
   "pattern_wall": {
-    "def": "3m×2.5m 벽(mmPerUnit 100 · 시드 7) — 재료별 생성 선분 수·특성 간격 mm. 판별은 (major·minor·stepMm) 서명",
+    "def": "3m×2.5m 벽(mmPerUnit 100 · 시드 7) — 재료별 생성 선분 수·특성 간격 mm. 판별은 (major·minor·stepMm) 서명. ⚠ stepMm은 공칭(석재는 상수 구간 중점 — LOD 판정용)이고 석재의 실측 켜 높이는 stone_measured가 든다(리뷰어 [14])",
     "rows": {
       "brick": {
         "major": 37,
@@ -40,7 +40,48 @@
         "majorStepMm": 600,
         "minorStepMm": 600
       }
+    },
+    "note_zero": "tile·conc의 minor 0은 설계다(부선 계열이 없는 재료 — 격자가 전부 주선) — selfcheck 카운터 0 의심의 정체. degenerate_n의 «정확히 1»은 비율이 아니라 개수(슬라브 하나)다",
+    "stone_measured": {
+      "course_heights_mm": [
+        260.3,
+        367,
+        375.1,
+        343.2,
+        296.9,
+        399.5
+      ],
+      "band": [
+        250,
+        400
+      ],
+      "distinct": 6
     }
+  },
+  "seed": {
+    "def": "선분 좌표 FNV 서명(1e-6 반올림) — 같은 (면·재료·시드)는 같고 시드가 갈리면 다르다. 켜 수열은 눈으로 대조할 값",
+    "stone_seed7_sig": "c6b5d420",
+    "stone_seed7_again": "c6b5d420",
+    "stone_seed8_sig": "7fb017f0",
+    "wood_seed7_sig": "8f5714ec",
+    "wood_seed8_sig": "55e4f710",
+    "stone_courses_seed7": [
+      260.3,
+      367,
+      375.1,
+      343.2,
+      296.9,
+      399.5
+    ],
+    "stone_courses_seed8": [
+      336.6,
+      315,
+      370,
+      275.5,
+      387.1,
+      355.3
+    ],
+    "falsify_run": "이 세션에서 시드를 상수로 바꿔(`rng32(seed)` → `rng32(1)`) 단위 팔 1이 실제로 빨개진 것을 확인하고 되돌렸다(test/rep49.test.ts 「시드」 팔 — D-3)"
   },
   "scale_pass": {
     "def": "같은 벽 기하에서 mmPerUnit 100→200 — 켜의 세계 간격(비 0.5)과 mm 환산(불변 67)",
@@ -48,11 +89,100 @@
     "world_step_at_200": 0.335,
     "mm_at_100": 67,
     "mm_at_200": 67,
-    "note": "「mm 환산 == 67」 단독은 생성기 구성의 귀결이다(#5) — 측정의 몫은 두 축척이 **같은 67을 다른 세계 간격으로** 낸다는 것(축척이 실제로 지나간다)"
+    "note": "「mm 환산 == 67」 단독은 생성기 구성의 귀결이다(#5) — 측정의 몫은 두 축척이 **같은 67을 다른 세계 간격으로** 낸다는 것(축척이 실제로 지나간다)",
+    "falsify_run": "이 세션에서 환산을 실제로 부쉈다(D-3 · 리뷰어 [7]): u축(`p.x / mmPerUnit` → `p.x`)은 막힌줄눈 팔 1이, v축(`p.y / mmPerUnit` → `p.y`)은 실치수·축척 팔 3이 빨개졌다 — 되돌리고 전량 초록 확인"
+  },
+  "gen_cost": {
+    "def": "벽돌 생성 — 3×2.5m(작은 벽) vs 15×12.5m(면적 25배). 프레임(e2e frame20)의 부하 축은 «면 수»가 아니라 **무늬가 덮는 면적 ÷ 축척**이고, 생성은 docVersion 캐시라 프레임이 아니라 편집 순간의 비용이다. 화면에 «보이는» 선분 밀도는 밀도 하한(REP_MIN_PX)이 구성적으로 묶는다",
+    "small": {
+      "segments": 588,
+      "ms": 0.7
+    },
+    "big": {
+      "segments": 14117,
+      "ms": 13.6
+    },
+    "note_82": "시간은 비가 아니라 값으로 적는다 — 러너 고정 몫이 섞인다(#82). 뜻은 자릿수다"
   },
   "foreshorten": {
-    "def": "원근 벽의 켜 선 투영 — 이 벽은 깊이가 크지 않아 값이 작다. 무늬가 세계 좌표라 원근을 «받는» 것 자체는 사영의 구성 귀결(#5) — 게이트를 안 건다. 픽셀 판은 e2e가 한다",
+    "def": "원근 벽의 켜 선 투영 — 무늬가 세계 좌표라 원근을 «받는» 것 자체는 사영의 구성 귀결(#5) — 게이트를 안 건다. 픽셀 판은 e2e ③(rep49_e2e의 foreshorten_px)이 한다",
     "n_courses": 37,
+    "gaps_left_px": [
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.14,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41
+    ],
+    "gaps_right_px": [
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.41,
+      2.49,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22,
+      3.22
+    ],
     "note_5": "확인이지 측정 게이트가 아니다"
   },
   "lod_gate": {
@@ -81,73 +211,67 @@
     "falsify": "계층을 끄면(repFamilyVisible만 쓰면) orphan_band에서 minor가 살아난다 — minor_alone_would_be가 그 값"
   },
   "flag_origin_direction": {
-    "def": "⚑ 자동 규칙(u = up×n · v = n×u · 위상 = (u,v) 최소 모서리)의 스윕 — 벽 8방위·경사 30/60·슬라브·박공",
+    "def": "⚑ 자동 규칙(u = up×n · v = n×u · 위상 = (u,v) 최소 모서리)의 스윕 — 벽 8방위·경사 30/60·슬라브·박공·마름모(13픽스처)",
     "rows": {
       "wall_yaw0": {
         "degenerate": false,
-        "uHorizontal": true,
-        "vUp": true
+        "phaseOnBottomEdge": true
       },
       "wall_yaw45": {
         "degenerate": false,
-        "uHorizontal": true,
-        "vUp": true
+        "phaseOnBottomEdge": true
       },
       "wall_yaw90": {
         "degenerate": false,
-        "uHorizontal": true,
-        "vUp": true
+        "phaseOnBottomEdge": true
       },
       "wall_yaw135": {
         "degenerate": false,
-        "uHorizontal": true,
-        "vUp": true
+        "phaseOnBottomEdge": true
       },
       "wall_yaw180": {
         "degenerate": false,
-        "uHorizontal": true,
-        "vUp": true
+        "phaseOnBottomEdge": true
       },
       "wall_yaw225": {
         "degenerate": false,
-        "uHorizontal": true,
-        "vUp": true
+        "phaseOnBottomEdge": true
       },
       "wall_yaw270": {
         "degenerate": false,
-        "uHorizontal": true,
-        "vUp": true
+        "phaseOnBottomEdge": true
       },
       "wall_yaw315": {
         "degenerate": false,
-        "uHorizontal": true,
-        "vUp": true
+        "phaseOnBottomEdge": true
       },
       "slope_30": {
         "degenerate": false,
-        "uHorizontal": true,
-        "vUp": true
+        "phaseOnBottomEdge": true
       },
       "slope_60": {
         "degenerate": false,
-        "uHorizontal": true,
-        "vUp": true
+        "phaseOnBottomEdge": true
       },
       "slab": {
         "degenerate": true,
-        "uHorizontal": true,
-        "vUp": true
+        "phaseOnBottomEdge": true
       },
       "gable": {
         "degenerate": false,
-        "uHorizontal": true,
-        "vUp": true
+        "phaseOnBottomEdge": true
+      },
+      "diamond": {
+        "degenerate": false,
+        "phaseOnBottomEdge": false
       }
     },
     "degenerate_n": 1,
-    "of": 12,
-    "what_this_measures": "규칙이 «방향을 고르지 못하는»(퇴화) 자리와, 벽·경사에서 켜가 수평으로 서는가(uHorizontal — 처마 나란)",
-    "what_this_cannot_measure": "「사람 의도와 다른가」 — 오라클이 없다(#92: 이름표가 아니라 결과를 재려면 의도가 값이어야 한다). 그 판정은 실기기 관측 판정자다",
+    "phase_ambiguous_n": 1,
+    "of": 13,
+    "note_5": "초판의 uHorizontal·vUp는 공식의 항등이라 지웠다(리뷰어 [2] — 무엇을 넣어도 참인 지표는 측정이 아니다). 남긴 phaseOnBottomEdge는 픽스처 «모양»의 술어라 마름모에서 실제로 거짓이 된다",
+    "what_this_measures": "규칙이 «방향을 고르지 못하는» 형태(퇴화 — 슬라브)와 «위상의 기대가 자연스럽지 않은» 형태(밑변 없는 벽)의 존재. 벽·경사의 수평 켜는 규칙의 구성이라 세지 않는다(#5)",
+    "what_this_cannot_measure": "「사람 의도와 다른 실사용 빈도」 — 오라클이 없다(#92). 슬라브 타일의 격자 방향·박공의 위상 정렬 같은 의도는 실기기 ⑳이 판정자다",
     "verdict_stop": "지시 문면대로 자동판까지 세우고 여기서 멈춘다 — 조절 UI(원점 끌기·방향 돌리기)는 사람의 답을 기다린다"
   },
   "constants_used": {

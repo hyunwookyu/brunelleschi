@@ -1,22 +1,22 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "web2-48",
+  "measured_at": "web2-49",
   "unit": {
     "command": "npx vitest run (web2/)",
-    "files": 121,
-    "tests": 993,
-    "wall_s": 40.2,
-    "passed": 993,
+    "files": 123,
+    "tests": 1008,
+    "wall_s": 28.7,
+    "passed": 1008,
     "failed": 0,
-    "note": "web2-48 — 파일 121 그대로 · 팔 990 → 993(mats46의 48-3 단색 채움 둘 + 칠의 면의 쪽 하나). 46의 팔 여럿은 견눠을 옷겼다(수가 아니라 뜻이 바뀜다 — 48-7·48-8·48-9)."
+    "note": "web2-49 — 파일 121 → 123(rep49 9 · rep49_measure 6) · 팔 993 → 1008. roundtrip43 게이트 ②가 rep 필드 누락을 실제로 잡았다(그 기계의 세 번째 발화)."
   },
   "e2e": {
     "command": "npx playwright test --workers=1 (dpr1+dpr2)",
-    "cells": 596,
-    "passed": 596,
-    "failed": 0,
-    "wall_s": 3066,
-    "note": "web2-48 — 576 → 596(paint48 10칸 × dpr 둘). ⚠ 이 회차는 `--workers=1`로 돌렸다(직렬 · 51.1m) — 47의 --workers=2 1800s와 견줄 수 없다. 값은 마감 검증 실행(e2e_48_verify.log · HEAD 0d9244c)의 것이다."
+    "cells": 606,
+    "passed": null,
+    "failed": null,
+    "wall_s": null,
+    "note": "web2-49 — 596 → 606(rep49 5칸 × dpr 둘). 마감 전량 실행의 값이 이 칸에 들어간다 — 비워 두지 않고 null로 적어 «안 재음»을 드러낸다(#43)."
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",
@@ -318,6 +318,13 @@
       "e2e": 596,
       "e2e_wall_s": 3066,
       "note": "벽시계는 마감 검증 실행으로 채웠다(596/596 · 51.1분 · --workers=1 직렬 — 47의 workers=2와 비교 불가)"
+    },
+    {
+      "at": "web2-49",
+      "unit": 1008,
+      "e2e": 606,
+      "e2e_wall_s": null,
+      "note": "벽시계는 마감 전량 실행으로 채운다(null = 안 재음 · #43)"
     }
   ],
   "environment": {

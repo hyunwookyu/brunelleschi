@@ -1,0 +1,62 @@
+
+Running 12 tests using 1 worker
+
+  x   1 [dpr1] › e2e\rep49.spec.ts:129:1 › ①② 무늬가 선다(켬/끔 차) — 그리고 무늬도 면의 한쪽에만(48-5 무회귀) (4.6s)
+  ok  2 [dpr1] › e2e\rep49.spec.ts:219:1 › ③ 면 고정 + 원근 — 수직 줄눈의 화면 간격이 깊은 쪽으로 갈수록 좁아진다 (4.7s)
+  ok  3 [dpr1] › e2e\rep49.spec.ts:277:1 › ④ 밀도 하한 — 줌 아웃에서 접히고 줌 인에서 돌아온다(실배관) (5.1s)
+  ok  4 [dpr1] › e2e\rep49.spec.ts:316:1 › ⑤ 스무 면 — 분할 벽 전부에 무늬 · 프레임 시간(#82 — 같은 장면 켬/끔의 차) (19.5s)
+  ok  5 [dpr1] › e2e\rep49.spec.ts:391:1 › ⑥ 실 UI 경로 — 꾹 잡기 → 손통 「표현」 클릭이 실제로 눌리고 실제로 붙인다 (#97·#96) (5.2s)
+  ok  6 [dpr1] › e2e\rep49.spec.ts:437:1 › 원장 쓰기 (477ms)
+  x   7 [dpr2] › e2e\rep49.spec.ts:129:1 › ①② 무늬가 선다(켬/끔 차) — 그리고 무늬도 면의 한쪽에만(48-5 무회귀) (9.9s)
+  ok  8 [dpr2] › e2e\rep49.spec.ts:219:1 › ③ 면 고정 + 원근 — 수직 줄눈의 화면 간격이 깊은 쪽으로 갈수록 좁아진다 (10.7s)
+  ok  9 [dpr2] › e2e\rep49.spec.ts:277:1 › ④ 밀도 하한 — 줌 아웃에서 접히고 줌 인에서 돌아온다(실배관) (11.7s)
+  ok 10 [dpr2] › e2e\rep49.spec.ts:316:1 › ⑤ 스무 면 — 분할 벽 전부에 무늬 · 프레임 시간(#82 — 같은 장면 켬/끔의 차) (49.8s)
+  ok 11 [dpr2] › e2e\rep49.spec.ts:391:1 › ⑥ 실 UI 경로 — 꾹 잡기 → 손통 「표현」 클릭이 실제로 눌리고 실제로 붙인다 (#97·#96) (10.5s)
+  ok 12 [dpr2] › e2e\rep49.spec.ts:437:1 › 원장 쓰기 (738ms)
+
+
+  1) [dpr1] › e2e\rep49.spec.ts:129:1 › ①② 무늬가 선다(켬/끔 차) — 그리고 무늬도 면의 한쪽에만(48-5 무회귀) ───────────────
+
+    Error: 돌아본 포즈에서 면 중심이 화면 안에 든다(사영 확인)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      193 |     return { sd: +sd.toFixed(6), lookat_center_px: pr ? { x: +pr.x.toFixed(1), y: +pr.y.toFixed(1) } : null, onScreen }
+      194 |   }, faceId)
+    > 195 |   expect(flipped.onScreen, '돌아본 포즈에서 면 중심이 화면 안에 든다(사영 확인)').toBe(true)
+          |                                                              ^
+      196 |   await page.waitForTimeout(300)
+      197 |   const farVis = await page.evaluate(() =>
+      198 |     (window as any).__b2.diag.rep49().children.map((c: any) => c.visible))
+        at C:\Users\home\Downloads\SKETCH2SPACE\web2\e2e\rep49.spec.ts:195:62
+
+    Error Context: test-results\rep49-①②-무늬가-선다-켬-끔-차-—-그리고-무늬도-면의-한쪽에만-48-5-무회귀--dpr1\error-context.md
+
+  2) [dpr2] › e2e\rep49.spec.ts:129:1 › ①② 무늬가 선다(켬/끔 차) — 그리고 무늬도 면의 한쪽에만(48-5 무회귀) ───────────────
+
+    Error: 돌아본 포즈에서 면 중심이 화면 안에 든다(사영 확인)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      193 |     return { sd: +sd.toFixed(6), lookat_center_px: pr ? { x: +pr.x.toFixed(1), y: +pr.y.toFixed(1) } : null, onScreen }
+      194 |   }, faceId)
+    > 195 |   expect(flipped.onScreen, '돌아본 포즈에서 면 중심이 화면 안에 든다(사영 확인)').toBe(true)
+          |                                                              ^
+      196 |   await page.waitForTimeout(300)
+      197 |   const farVis = await page.evaluate(() =>
+      198 |     (window as any).__b2.diag.rep49().children.map((c: any) => c.visible))
+        at C:\Users\home\Downloads\SKETCH2SPACE\web2\e2e\rep49.spec.ts:195:62
+
+    Error Context: test-results\rep49-①②-무늬가-선다-켬-끔-차-—-그리고-무늬도-면의-한쪽에만-48-5-무회귀--dpr2\error-context.md
+
+  2 failed
+    [dpr1] › e2e\rep49.spec.ts:129:1 › ①② 무늬가 선다(켬/끔 차) — 그리고 무늬도 면의 한쪽에만(48-5 무회귀) ────────────────
+    [dpr2] › e2e\rep49.spec.ts:129:1 › ①② 무늬가 선다(켬/끔 차) — 그리고 무늬도 면의 한쪽에만(48-5 무회귀) ────────────────
+  10 passed (2.3m)
+EXIT=1

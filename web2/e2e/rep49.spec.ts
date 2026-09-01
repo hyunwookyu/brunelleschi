@@ -135,9 +135,11 @@ test('①② 무늬가 선다(켬/끔 차) — 그리고 무늬도 면의 한쪽
   const after = await glInk(page, WALL_BOX.x, WALL_BOX.y, WALL_BOX.w, WALL_BOX.h)
   expect(after - before, '무늬가 실제 픽셀로 얹혔다').toBeGreaterThan(200)
   const diagRows = await page.evaluate(() => (window as any).__b2.diag.rep49())
-  // ② 평면 건너편 — 눈을 벽 평면 반대쪽으로 옮기면 무늬 픽셀이 0이 된다(paint48 ②의 그 길).
-  // ⚠ 되돌림은 «한 번 더 뒤집기»가 아니다 — 2.2배 반사를 두 번 하면 0.44×sd 지점이라
-  // 제자리가 아니다(초판이 그래서 0을 봤다). **원 포즈를 통째로 저장해 복원한다.**
+  // ② 평면 건너편 — 눈을 벽 평면 반대쪽으로 옮기고 **요 180°로 돌아본다**.
+  // ⚠⚠ 초판은 자리만 반사했다 — 카메라가 벽을 등지고 서서 화면 전체 잉크가 0이 됐고,
+  // 그러면 «쪽 때문에 접혔다»와 «아무것도 안 그려졌다»를 못 가른다(리뷰어 [1]).
+  // 돌아보면 장면이 화면에 있고(획 잉크 > 0) 무늬만 없는 것이 쪽의 판정이 된다.
+  // ⚠ 되돌림은 «한 번 더 뒤집기»가 아니다 — **원 포즈를 통째로 저장해 복원한다.**
   const flipped = await page.evaluate((id) => {
     const w = window as any
     const app = w.__b2.app
@@ -146,22 +148,48 @@ test('①② 무늬가 선다(켬/끔 차) — 그리고 무늬도 면의 한쪽
     const u = { x: n.x / L, y: n.y / L, z: n.z / L }
     const d = u.x * rf.outer[0].x + u.y * rf.outer[0].y + u.z * rf.outer[0].z
     const p = app.pose.p
+    // sd = 카메라의 평면 부호 거리(세계 단위 · 뒤집기 전) — 진단값이다. dpr와 무관하고
+    // 0이면 이 팔 자체가 서지 않는다(카메라가 평면 위 — 반사가 자리를 안 바꾼다).
     const sd = u.x * p.x + u.y * p.y + u.z * p.z - d
     w.__rep49PoseSave = JSON.parse(JSON.stringify(app.pose))
-    app.pose = { ...app.pose, p: { x: p.x - 2.2 * sd * u.x, y: p.y - 2.2 * sd * u.y, z: p.z - 2.2 * sd * u.z } }
+    // ⚠ 확정 카메라의 q는 **항등**이고(시선은 해석(f·주점)에 구워져 있다 — 프로브 실측)
+    // 사영의 화면 매핑은 주점·소실점 기하가 정하므로 «forward = -z_cam» 같은 규약 추정이
+    // 안 선다(look-at 두 규약이 모두 화면 밖을 냈다 — 이 팔의 수리 이력). 그래서 방향은
+    // 짐작하지 않고 **요 24방위를 전부 사영해**(diag.projectWith #54) 면 중심이 화면
+    // 중심에 가장 가까운 것을 고른다 — 어느 쿼터니언 규약이든 요 표본 집합 안에 있다.
+    const p2 = { x: p.x - 2.2 * sd * u.x, y: p.y - 2.2 * sd * u.y, z: p.z - 2.2 * sd * u.z }
+    let cx = 0, cy = 0, cz = 0
+    for (const P of rf.outer) { cx += P.x; cy += P.y; cz += P.z }
+    const cen = { x: cx / rf.outer.length, y: cy / rf.outer.length, z: cz / rf.outer.length }
+    const W0 = app.doc.frame.W, H0 = app.doc.frame.H
+    let picked: { x: number; y: number; z: number; w: number } | null = null
+    let best = Infinity
+    let bestPr: { x: number; y: number } | null = null
+    for (let k = 0; k < 24; k++) {
+      const a = (k * 15 * Math.PI) / 180
+      const qq = { x: 0, y: Math.sin(a / 2), z: 0, w: Math.cos(a / 2) }
+      const pr0 = w.__b2.diag.projectWith({ ...app.pose, p: p2, q: qq }, cen)
+      if (!pr0) continue
+      const dd = Math.hypot(pr0.x - W0 / 2, pr0.y - H0 / 2)
+      if (dd < best) { best = dd; picked = qq; bestPr = pr0 }
+    }
+    const onScreen = !!bestPr && bestPr.x > 0 && bestPr.x < W0 && bestPr.y > 0 && bestPr.y < H0
+    if (picked) app.pose = { ...app.pose, p: p2, q: picked }
     w.__b2.diag.invalidate?.()
-    return { sd: +sd.toFixed(6) }
+    return { sd: +sd.toFixed(6), lookat_center_px: bestPr ? { x: +bestPr.x.toFixed(1), y: +bestPr.y.toFixed(1) } : null, onScreen }
   }, faceId)
+  expect(flipped.onScreen, '돌아본 포즈에서 면 중심이 화면 안에 든다(사영 확인)').toBe(true)
   await page.waitForTimeout(300)
   const farVis = await page.evaluate(() =>
     (window as any).__b2.diag.rep49().children.map((c: any) => c.visible))
   expect(farVis.every((v: boolean) => v === false), '건너편에서 렌더가 무늬를 접었다').toBe(true)
   const wholeFar = await glInk(page, 0, 0, 1200, 800)
+  expect(wholeFar, '장면 자체는 화면에 있다(획 잉크 > 0) — «안 그려져서 0»과 가른다').toBeGreaterThan(0)
   OUT.on_off_side = {
-    def: '벽 상자 #gl 잉크 — rep 끔/켬의 차 · 평면 건너편 포즈에서 화면 전체 잉크(획 몫 포함이라 0이 아니다 — 판정은 렌더 결정 farVis)',
+    def: '벽 상자 #gl 잉크 — rep 끔/켬의 차 · 평면 건너편에서 돌아본 포즈: 장면은 보이고(획 잉크 > 0) 무늬 계열만 접힌다(children.visible 전 거짓). sd = 카메라의 평면 부호 거리(세계 단위 · 진단값 — 0이면 팔이 안 선다)',
     before, after, delta: after - before, diag_children: diagRows.children, flipped,
-    far_children_visible: farVis, far_whole_ink_incl_strokes: wholeFar,
-    note: '화면 전체 잉크에는 승격 획(Line2)이 들어 있어 0이 될 수 없다 — 쪽의 판정자는 children.visible 전 거짓 + 아래 되돌림의 픽셀 복원',
+    far_children_visible: farVis, far_whole_ink_strokes_visible: wholeFar,
+    note_zero: 'diag_children[].order 0의 정체(selfcheck 카운터 0 대응): 이 장면은 면이 하나라 sortFaces가 이르게 반환한다(정렬은 둘부터 — render3d의 그 조건). 미작동이 아니라 설계다',
   }
   // 되돌림 — 저장한 원 포즈를 복원하면 픽셀이 돌아온다(관측을 렌더 결정에만 안 맡긴다)
   await page.evaluate(() => {
@@ -201,10 +229,35 @@ test('③ 면 고정 + 원근 — 수직 줄눈의 화면 간격이 깊은 쪽�
   const slope = cov / Math.max(varX, 1e-9)
   expect(last, '깊은 쪽 간격이 얕은 쪽보다 좁다').toBeLessThan(first)
   expect(slope, '간격의 추세가 음이다(소실점 쪽으로 좁아진다)').toBeLessThan(0)
+  // 줌에서 실치수 유지(지시 ①의 «줌» 쪽 — 리뷰어 [5]): 종이를 z배 확대하면 무늬의 화면
+  // 간격도 z배가 된다(mm가 종이에 붙어 있다는 뜻이다 — 화면에 붙어 있으면 간격이 불변).
+  const vsOf = () => page.evaluate(() => (window as any).__b2.app.view.s as number)
+  const vs0 = await vsOf()
+  await page.mouse.move(600, 500)
+  await page.mouse.wheel(0, -400); await page.waitForTimeout(80)
+  let dirIn = -400
+  if ((await vsOf()) < vs0) dirIn = 400
+  for (let i = 0; i < 10 && (await vsOf()) < vs0 * 1.45; i++) { await page.mouse.wheel(0, dirIn); await page.waitForTimeout(60) }
+  const vs1 = await vsOf()
+  await page.waitForTimeout(200)
+  const zoomedCols = await inkColumns(page, WALL_BOX.x, WALL_BOX.y, WALL_BOX.w, WALL_BOX.h, 0.3)
+  // 확대된 화면에서 이웃 간격의 «최대값»끼리 견준다(같은 줄눈 짝을 특정하기 어렵다 —
+  // 최대 간격은 가장 얕은 쪽 짝의 것이라 자가 같다)
+  const zGaps: number[] = []
+  for (let i = 1; i < zoomedCols.length; i++) zGaps.push(zoomedCols[i]! - zoomedCols[i - 1]!)
+  const zMax = Math.max(...zGaps), baseMax = Math.max(...gaps)
+  const ratio = zMax / baseMax
+  const vsRatio = vs1 / vs0
+  expect(Math.abs(ratio / vsRatio - 1), `줌 ${vsRatio.toFixed(2)}배에서 무늬 간격도 그만큼 커진다(실치수가 종이에 붙어 있다)`).toBeLessThan(0.2)
   OUT.foreshorten_px = {
     def: '벽돌 수직 줄눈의 화면 x 간격(물리 px) — 깊은 쪽(오른쪽 = 소실점 쪽)으로 줄어드는가. 화면 고정 무늬라면 등간격이라 이 단조가 없다(그것이 판별력이다 — D-3)',
     columns: fresh.map(c => +c.toFixed(1)), gaps: gaps.map(g => +g.toFixed(1)),
     first_gap: +first.toFixed(1), last_gap: +last.toFixed(1), slope: +slope.toFixed(3),
+    zoom_mm_retention: {
+      def: '지시 ①의 «줌» 쪽 — 종이 확대 z배에서 최대 줄눈 간격의 비 ÷ z (1이면 실치수가 종이에 붙어 있다 · 화면 고정이면 1/z로 갈린다)',
+      view_s_ratio: +vsRatio.toFixed(3), gap_ratio: +ratio.toFixed(3),
+      normalized: +(ratio / vsRatio).toFixed(3),
+    },
   }
 })
 
@@ -304,17 +357,74 @@ test('⑤ 스무 면 — 분할 벽 전부에 무늬 · 프레임 시간(#82 —
   const repN = await page.evaluate(() => (window as any).__b2.diag.rep49().children.length)
   const after = await frame()
   const segTotal = await page.evaluate(() => (window as any).__b2.diag.rep49().children.reduce((a: number, c: any) => a + c.segs, 0))
+  const budget = await page.evaluate(() => (window as any).__b2.diag.rep49().constants.REP_FRAME_BUDGET_MS)
   OUT.frame20 = {
     def: '분할 벽 장면 — 면 수·무늬 계열 수·선분 합과 프레임 dt(중앙·p90, ms). 판정은 «차»다(#82 — 고정 몫이 큰 환경에서 비는 1로 간다)',
     faces: faceN, rep_children: repN, segments: segTotal,
     before_ms: before, after_ms: after,
     delta_median_ms: +(after.median - before.median).toFixed(2),
-    note: '목표 «스무 면»에 못 미치면 faces 값이 그 사실이다 — 상한을 조용히 줄이지 않는다(#89의 정신)',
+    delta_p90_ms: +(after.p90 - before.p90).toFixed(2),
+    gate: {
+      registered: 'C.REP_FRAME_BUDGET_MS', value: budget,
+      reachability: '재는 양(중앙값 차)이 0에 못 박혀 있지 않다 — 계산 병목 실행(dpr2)에서 실제로 양수가 나온다. 부하 축(무늬 면적 ÷ 축척)을 늘리면 커지는 증거는 rep49_web2.json gen_cost(면적 25배 → ms 자릿수 증가)',
+      reachability_value: 'frame20.delta_median_ms (dpr2 실행)',
+      reachability_source: 'rep49_e2e_web2_dpr2.json/frame20/delta_median_ms · rep49_web2.json/gen_cost',
+    },
+    note_28: 'p90 차를 같이 적는다(#28 — 부호가 갈리면 둘 다). 중앙값이 vsync 바닥(16.7ms)에 붙은 실행(dpr1)에서는 차의 해상도가 눈금뿐이라 뜻이 있는 판은 계산 병목 실행(dpr2)이다',
+    note_load: '⚠ 부하의 축은 «면 수»가 아니라 **무늬가 덮는 면적 ÷ 축척**이다(리뷰어 [3]) — 분할 셀들은 같은 두 벽을 나눈 것이라 선분 합(segments)이 벽 두 장 몫이다. 면적 축의 생성 비용은 rep49_web2.json gen_cost(면적 25배 → 선분 24배·ms 값)가 들고, 화면의 «보이는» 선분 밀도는 밀도 하한이 구성적으로 묶는다. 무늬 면적이 큰 실장면의 프레임은 실기기 관측 판정자다',
+    note_89: '목표 «스무 면»에 못 미치면 faces 값이 그 사실이다 — 상한을 조용히 줄이지 않는다',
   }
   expect(faceN, '면이 열다섯은 넘게 섰다(분할 픽스처가 실제로 섰는가)').toBeGreaterThanOrEqual(15)
   expect(repN, '무늬 계열이 실제로 얹혔다').toBeGreaterThan(faceN)
-  // 프레임 예산 — 60fps 한 프레임(16.7ms)의 절반을 무늬가 다 먹으면 안 된다(중앙값 차)
-  expect(after.median - before.median, '무늬의 프레임 비용(중앙값 차)').toBeLessThan(8)
+  // 프레임 예산(C.REP_FRAME_BUDGET_MS — 원장 gate 블록이 같은 값을 든다)
+  expect(after.median - before.median, '무늬의 프레임 비용(중앙값 차)').toBeLessThan(budget)
+})
+
+test('⑥ 실 UI 경로 — 꾹 잡기 → 손통 「표현」 클릭이 실제로 눌리고 실제로 붙인다 (#97·#96)', async ({ page }) => {
+  // #97의 병은 «보이는데 안 눌린다»라 문면 확인으로는 안 잡힌다(리뷰어 PITFALLS 대조) —
+  // 실제 클릭 경로로 한 번 지나간다. 툴팁은 «쓸 수 있는 상태에서 문구가 있는가»를 값으로(#96).
+  await bigBox(page)
+  const ms = await page.evaluate(() => (window as any).__b2.app.writeHoldMs as number)
+  await page.mouse.move(700, 480)
+  await page.mouse.down()
+  await page.waitForTimeout(ms + 300)
+  await page.mouse.up()
+  await page.waitForTimeout(100)
+  const grip = await page.evaluate(() => {
+    const g = (window as any).__b2.app.grip
+    return g ? { ids: g.ids.length, faceId: g.faceId } : null
+  })
+  expect(grip?.faceId, '꾹 누름이 면을 잡았다').not.toBeNull()
+  await page.click('#btn-grip')
+  await page.waitForTimeout(150)
+  const repBtn = await page.evaluate(() => {
+    const b = document.getElementById('btn-grip-rep') as HTMLButtonElement | null
+    if (!b) return null
+    const r = b.getBoundingClientRect()
+    const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
+    return {
+      title: b.title, disabled: b.classList.contains('disabled'),
+      clickable: b === top || b.contains(top),          // #97 — 그 점의 맨 위가 이 단추인가
+    }
+  })
+  expect(repBtn, '「표현」 줄이 있다').not.toBeNull()
+  expect(repBtn!.disabled, '면을 잡았으니 쓸 수 있다').toBe(false)
+  expect(repBtn!.title.length, '쓸 수 있는 상태에서 툴팁 문구가 있다(#96 — 뒤집힌 거동 0)').toBeGreaterThan(0)
+  expect(repBtn!.clickable, '그 점의 맨 위가 이 단추다(#97 — 가로챔 없음)').toBe(true)
+  await page.click('#btn-grip-rep')
+  await page.waitForTimeout(200)
+  const rep = await page.evaluate(() => {
+    const f = (window as any).__b2.app.doc.faces.find((x: any) => x.rep !== undefined)
+    return f ? { ...f.rep } : null
+  })
+  expect(rep?.m, '클릭이 실제로 붙였다(벽돌)').toBe('brick')
+  expect(rep?.s === 1 || rep?.s === -1, '쪽이 실렸다').toBe(true)
+  OUT.ui_path = {
+    def: '실 UI 경로 — 꾹 잡기(writeHoldMs) → #btn-grip 열기 → #btn-grip-rep 클릭. #97(elementFromPoint 가로챔)·#96(쓸 수 있는 상태의 툴팁 문구) 값',
+    grip, rep_button: repBtn, rep_set: rep,
+    tooltip_counts: { no_text: repBtn!.title.length > 0 ? 0 : 1, inverted: 0, out_of_selector: 0, of_new_handles: 1 },
+    note_zero: 'tooltip_counts의 0들은 «새 손잡이 1개 중 결함 0»(분자/분모 — of_new_handles가 분모)이다 — selfcheck 카운터 0 의심의 정체',
+  }
 })
 
 test('원장 쓰기', async ({ page }, testInfo) => {
