@@ -127,6 +127,7 @@ describe('① 잡기 정확도 — 획 40개 이상의 장면(D-5)', () => {
     for (const j of [2, 3, 5, 8]) for (const seed of [4401, 4402]) rows.push(accuracyRow(s, ids, j, seed))
     OUT.grab_accuracy = {
       scene_strokes: ids.length, points_per_stroke: 3,
+      miss_rows_cap: 8,   // miss_rows는 표본이다(원장 크기) — miss 수가 정본이고 행은 앞 8개
       rows: rows.map(r => ({ ...r, miss_rows: r.miss_rows.slice(0, 8) })),
       note_92: '#92 — same_line은 오답이 아니다(어느 쪽을 잡아도 옮김 결과가 같은 3D 직선). 이 장면에서 0회 발화 — 겹친 직선이 없는 픽스처다',
       note_46: '#46 — 비율은 픽스처의 획 간격 대 떨림 폭의 함수다. 간격이 좁은 실장면의 값은 실기기 확인이 판정자다',
@@ -304,8 +305,9 @@ describe('③ 맺기 — 같은 평면 판정의 경계 훑기', () => {
       rows.push({ offset_rel: off, rel, would: rel > C.PLANAR_RATIO ? 'skew' : 'join' })
     }
     OUT.join_boundary = {
-      gate: C.PLANAR_RATIO, denominator: 'size3 = 10 (이 훑기의 정규화 — #16)',
+      gate: C.PLANAR_RATIO, denominator: 'size3 = 10 (이 훑기의 정규화 — 분모를 적는다: #11 · CLAUDE.md §2 표기로는 #16)',
       rows,
+      note_5: '#5 — rel ≡ offset_rel(입력을 되돌리는 항등 — 0행의 1.78e-16은 기계 엡실론)이다. 이 블록이 재는 것은 «같은 평면 판정의 정확도»가 아니라 **문턱(PLANAR_RATIO) 비교의 배선**이다 — 경계 양옆(0.009/0.011)이 실제로 갈리는가. 참 동일평면/비동일평면 표본에서의 정확도는 실측 미결(실기기 ⑬ 계열)',
       wired_by: 'joinGrip 네 갈래(수용·skew·parallel·dim)는 grip44.test.ts 「맺기」가 앱 경로로 잠근다',
     }
     // 문 아래는 맺고 위는 거부한다 — 경계 양옆(0.009 / 0.011)이 실제로 갈린다
@@ -351,9 +353,11 @@ describe('④ 잠금 전수 — 지우개 세 갈래 · 해제 반증(수로)', 
     delete s.app.doc.strokes.find(x => x.id === col.id)!.lock
     const eAfterUnlock = tryErase({ x: 500, y: 420 })
     OUT.lock_sweep = {
+      // 분모(#11 · #43): 잠긴 획 3개(3D·글씨·옐로 각 1) · 각 획을 겨눈 지우개 시도 각 1회
+      locked_strokes: 3, erase_attempts: 3,
       branches: { yellow_blocked: eYellow === 0, text_blocked: eText === 0, lifted_blocked: e3d === 0 },
-      erased_while_locked: `${eYellow + eText + e3d}/0허용`,
-      erased_after_unlock: `${eAfterUnlock}/1이상`,
+      erased_while_locked: `${eYellow + eText + e3d}/3시도`,
+      erased_after_unlock: `${eAfterUnlock}/1시도`,
       note: '잡기·맺기 갈래는 구성상 차단(잠긴 획은 잡히지 않는다 — grip44.test가 locked 갈래로 잠근다)',
     }
     expect(eYellow).toBe(0)

@@ -231,9 +231,13 @@
     }
     #display-pop[hidden], #snap-pop[hidden], #face-pop[hidden], #lens-pop[hidden] { display: none; }
     #display-pop { top: 48px; right: var(--top-lane); }   /* 위 띠의 길(R5) — 치수 기둥의 왼쪽 */
-    #snap-pop { right: 54px; }
-    #face-pop { right: 54px; }
-    #lens-pop { right: 54px; }
+    /* 팝업의 둘째 열(웹2-19의 «오른쪽 54px» 규약) — **web2-44 띠 재편이 100px로 옮겼다**:
+       짝 줄([자|손통] 91px)이 세로바를 왼쪽으로 키워, 54px 자리의 팝업이 **자기를 연
+       단추(자)를 덮었다** — 열린 채로 그 단추를 다시 눌러 닫는 길이 막혔다(zones.spec ②가
+       실측: snap-pop subtree intercepts pointer events). 100 = 줄 폭 91 + 여백. */
+    #snap-pop { right: 100px; }
+    #face-pop { right: 100px; }
+    #lens-pop { right: 100px; }
     .lens-reset { background: none; border: 0; padding: 2px 0; cursor: pointer; color: var(--ui); font: 12px system-ui, sans-serif; text-align: left; text-decoration: underline; opacity: .75; }
     .lens-reset:hover { opacity: 1; }
     #btn-lens[disabled] { opacity: .3; cursor: default; }
@@ -321,6 +325,12 @@
       z-index: 10; display: flex; flex-direction: column; gap: var(--btn-gap); align-items: flex-end;
     }
     #sidebar-body { display: flex; flex-direction: column; gap: var(--btn-gap); align-items: flex-end; }
+    /* 띠 재편(web2-44) — **상자는 히트에서 뺀다**: 짝 줄이 상자를 왼쪽으로 키우면서
+       투명한 컨테이너(#sidebar-body)가 뷰 큐브의 오른쪽 가장자리 히트를 삼켰다
+       (turn31.spec 실측 — elementFromPoint가 'sidebar-body'를 냈다). 닿는 것은 버튼이지
+       상자가 아니다 — 버튼 사이·왼쪽의 빈 자리는 캔버스(큐브·그림)로 지나간다. */
+    #sidebar, #sidebar-body, #sidebar-body .bar-row { pointer-events: none; }
+    #sidebar button { pointer-events: auto; }
     #sidebar.folded #sidebar-body { display: none; }
     .bar-gap { height: 10px; }
     /* 띠 재편(web2-44) — **한 줄에 짝으로 눕는 무리**. 손잡이가 처음으로 늘어나는 회차라

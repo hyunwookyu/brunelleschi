@@ -4,6 +4,7 @@
   "grab_accuracy": {
     "scene_strokes": 41,
     "points_per_stroke": 3,
+    "miss_rows_cap": 8,
     "rows": [
       {
         "jitter_px": 2,
@@ -304,7 +305,7 @@
   },
   "join_boundary": {
     "gate": 0.01,
-    "denominator": "size3 = 10 (이 훑기의 정규화 — #16)",
+    "denominator": "size3 = 10 (이 훑기의 정규화 — 분모를 적는다: #11 · CLAUDE.md §2 표기로는 #16)",
     "rows": [
       {
         "offset_rel": 0,
@@ -342,16 +343,19 @@
         "would": "skew"
       }
     ],
+    "note_5": "#5 — rel ≡ offset_rel(입력을 되돌리는 항등 — 0행의 1.78e-16은 기계 엡실론)이다. 이 블록이 재는 것은 «같은 평면 판정의 정확도»가 아니라 **문턱(PLANAR_RATIO) 비교의 배선**이다 — 경계 양옆(0.009/0.011)이 실제로 갈리는가. 참 동일평면/비동일평면 표본에서의 정확도는 실측 미결(실기기 ⑬ 계열)",
     "wired_by": "joinGrip 네 갈래(수용·skew·parallel·dim)는 grip44.test.ts 「맺기」가 앱 경로로 잠근다"
   },
   "lock_sweep": {
+    "locked_strokes": 3,
+    "erase_attempts": 3,
     "branches": {
       "yellow_blocked": true,
       "text_blocked": true,
       "lifted_blocked": true
     },
-    "erased_while_locked": "0/0허용",
-    "erased_after_unlock": "1/1이상",
+    "erased_while_locked": "0/3시도",
+    "erased_after_unlock": "1/1시도",
     "note": "잡기·맺기 갈래는 구성상 차단(잠긴 획은 잡히지 않는다 — grip44.test가 locked 갈래로 잠근다)"
   }
 }

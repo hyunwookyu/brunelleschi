@@ -70,10 +70,16 @@ test('① 꾹 누름이 잡는다 — 잡음 + 글씨 상태(39 보존) · 빈 �
   const n1 = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
   expect(n1, '그 탭이 획을 안 만든다').toBe(n0)
   OUT.hold = {
-    // #93 — 이 팔의 시간 여유를 값으로: 시계는 writeHoldMs이고 우리는 +300ms를 기다린다.
-    // 끌기 팔에는 머무름 문이 없다(움직임이 시계를 끈다 — 판별 ①이 «아니오»인 몸짓).
+    // #93 — 이 팔의 시간 여유를 값으로. 방향: 누름 팔은 시계(writeHoldMs) **위**로 300ms를
+    // 더 기다린 뒤 발화를 기대한다(느린 프레임이 시계를 늦춰도 안 빗나간다).
+    // ⚠ 끌기(옮김) 팔에도 누름 문이 «걸려는 있다»(#93 판별 ① 예): 누른 자리에서
+    //   driftAllowPx(≈3px@450ms) 안에 450ms 머물면 시계가 발화해 «이어잡기»가 된다 —
+    //   그것이 설계다(꾹 한 번 더 = 연결 성분). 실제 끌기는 첫 수 px 이동이 시계를 끄고,
+    //   조작 문턱(8px)이 발화 전 기하를 안 건드리므로 변환은 안 샌다.
+    // ⚠ 이 값은 dpr1+dpr2의 것이다 — #93이 실제로 터진 dpr3 대역은 이 회차 밖(선재 유보).
     writeHoldMs: await page.evaluate(() => (window as any).__b2.app.writeHoldMs),
     wait_margin_ms: 300,
+    margin_direction: 'above-threshold(누름 팔이 450+300ms 대기) · 끌기 팔은 이동이 시계를 끈다 · dpr1+dpr2만',
     far_press: { strokes_before: n0, strokes_after: n1, session_released: g2.ids === null },
   }
 })

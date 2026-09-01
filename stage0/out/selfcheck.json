@@ -1,5 +1,5 @@
 {
-  "n_flags": 6187,
+  "n_flags": 6189,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -4596,6 +4596,16 @@
       "path": "grip44_web2.json:dependency.b3_waiting.kept_in_place",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "grip44_web2.json:join_boundary.rows[0].offset_rel",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "grip44_web2.json:join_boundary.rows[0].rel",
+      "val": 1.7763568394002506e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "ground_rule_web2.json:ground_residual_max_y",
@@ -31509,7 +31519,7 @@
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 182,
+      "targets": 184,
       "hits": 3,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
@@ -31926,6 +31936,19 @@
     "graphite_web2.json": [
       40,
       68
+    ],
+    "grip44_e2e_web2.json": [
+      5,
+      12,
+      46
+    ],
+    "grip44_web2.json": [
+      5,
+      11,
+      16,
+      32,
+      46,
+      92
     ],
     "ground_anchor.json": [
       12,
