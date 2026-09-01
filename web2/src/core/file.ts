@@ -81,7 +81,7 @@ export const setSaveRoundForTest = (v: boolean): void => { roundDefault = v }
 const KEY_ORDER: string[] = [
   'format', 'version', 'frame', 'W', 'H',
   'strokes', 'id', 'a', 'b', 'x', 'y', 'z', 'raw', 'rawIn',
-  'name', 'pose', 'p', 'q', 'proj', 'view', 'mat', 'dim', 'layer', 'own3', 'axis', 'text',
+  'name', 'pose', 'p', 'q', 'proj', 'view', 'mat', 'dim', 'layer', 'own3', 'axis', 'text', 'lock',
   'faces', 'loops', 'edges', 'kind', 's', 't', 'ox', 'oy',
   'unit', 'scaleRef', 'grade', 'press', 'w', 'h', 'D', 'tiltX', 'tiltY', 'twist',
   'nextId', 'sheets', 'thumb',
@@ -207,6 +207,9 @@ export function parseBrnl(text: string): BrnlData | null {
     // 글씨 획(web2-32 1번) — **선택**이고 값은 1 하나다. 없으면(옛 파일) 작도선이다.
     // 모양이 틀리면 **그 필드만 버린다**(own3와 같은 규약 — 판정은 다시 설 수 있다).
     if (s.text === 1) st.text = 1
+    // 잠금(web2-44) — text와 같은 규격(값 1 하나 · 모양이 틀리면 그 필드만 버린다:
+    // 잃어도 «안 잠김»일 뿐이라 조용히 틀린 기하가 안 난다).
+    if (s.lock === 1) st.lock = 1
     if (s.own3 && isV3(s.own3.a) && isV3(s.own3.b) &&
         (s.own3.axis === null || typeof s.own3.axis === 'string')) {
       st.own3 = { a: { ...s.own3.a }, b: { ...s.own3.b }, axis: s.own3.axis ?? null }

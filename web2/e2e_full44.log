@@ -1,0 +1,41 @@
+[31-3 ①] 좌하 (1171,110) → svg · 내 것 true
+[31-3 ①] 우하 (1189,110) → path · 내 것 true
+  ok 542 [dpr2] › e2e\zoom31.spec.ts:117:1 › 31-3 ① 돋보기 단추 — 그려지고, 그 자리가 실제로 눌린다 (elementFromPoint) (531ms)
+  ok 541 [dpr2] › e2e\zones.spec.ts:405:1 › ⑥ 전체 화면 — 크롬 0 · 뼈대 그대로 · 손잡이로 나온다 · 새로 고치면 꺼짐 (+반증) (6.5s)
+[31-3 ②] 여백 28.46% → 10.00% (x 10.00% · y 20.63%) · 화면 안 true
+[31-3 ③] f 387.2983346207417 → 387.2983346207417 · fSource two-vp → two-vp · view.s 1 → 1 · 카메라 이동 4.459
+  ok 543 [dpr2] › e2e\zoom31.spec.ts:171:1 › 31-3 ②③ 궤도 뒤에 누르면 채워진다 — 여백 10%±3% · 렌즈 불변 · 카메라만 움직인다 (6.9s)
+[31-3 ②'] 작도 시점 — view.s 1 → 4.784489 · 여백 10.00% · 카메라 이동 0.000000
+  ok 544 [dpr2] › e2e\zoom31.spec.ts:218:1 › 31-3 ② 작도 시점에서 누르면 화면이 움직인다 — 카메라는 그대로 (5.5s)
+[31-3 ④] 빈 문서에서 두 번 · 작도 획만 있을 때 한 번 눌렀다 — 오류 0 · 승격 0 → 3
+  ok 545 [dpr2] › e2e\zoom31.spec.ts:240:1 › 31-3 ④ 아무것도 없을 때 눌러도 안 깨진다 (4.4s)
+[31-3 ⑤] 세로바 720px / 뷰포트 800 — 남는 여유 68px · 돋보기가 먹은 자리 37px
+[31-3 ⑤] 손 띠 순서: btn-draw-view · btn-zoom-fit · btn-lens · btn-pencil · btn-pen · btn-eraser-pencil · btn-eraser-ink · dim-toggle · btn-roll · btn-face
+[31-3 dpr] devicePixelRatio 2 · 캔버스 뒷면 2400×1600 / CSS 1200×800 → 배수 2
+  ok 546 [dpr2] › e2e\zoom31.spec.ts:275:1 › 31-3 ⑤ 자리 — 34-6이 남긴 여유 안이다 (여유는 실측에서 유도한다) (440ms)
+
+
+  1) [dpr2] › e2e\waitink37.spec.ts:226:1 › 37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는다(두 선이 안 남는다) ─────────
+
+    Error: expect(received).toBeGreaterThan(expected)
+
+    Expected: > 10.373408769448373
+    Received:   10.373408769448373
+
+      272 |   expect(before.shift).toBeGreaterThan(scale * WAIT_HUE.WAIT_MIN)   // 대기였다
+      273 |   expect(during.settling.map((x: { id: number }) => x.id)).toContain(id)  // 전이가 실제로 걸렸다
+    > 274 |   expect(midHue.shift).toBeGreaterThan(after.shift)                  // 전이 중이 더 청색이다
+          |                        ^
+      275 |   expect(after.painted).toBeGreaterThan(10)                          // 획이 사라지지 않는다
+      276 |   expect(Math.abs(after.shift)).toBeLessThan(scale * WAIT_HUE.CONF_MAX)  // 청색이 남지 않았다
+      277 | })
+        at C:\Users\home\Downloads\SKETCH2SPACE\web2\e2e\waitink37.spec.ts:274:24
+
+    Error Context: test-results\waitink37-37-2-③-정착-전이-—-청색이-사라지고-흑연-하나만-남는다-두-선이-안-남는다--dpr2\error-context.md
+
+    Error Context: test-results\waitink37-37-2-③-정착-전이-—-청색이-사라지고-흑연-하나만-남는다-두-선이-안-남는다--dpr2\error-context.md
+
+  1 failed
+    [dpr2] › e2e\waitink37.spec.ts:226:1 › 37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는다(두 선이 안 남는다) ──────────
+  545 passed (27.7m)
+EXIT_CODE=0

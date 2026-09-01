@@ -1,0 +1,45 @@
+{
+  "what": "web2-44 — 화면 몫: 꾹 잡기 · 원칙 d · 축 제한 · 손통 · 정면 · 띠",
+  "hold": {
+    "writeHoldMs": 450,
+    "wait_margin_ms": 300,
+    "far_press": {
+      "strokes_before": 4,
+      "strokes_after": 4,
+      "session_released": true
+    }
+  },
+  "move": {
+    "moved_units": 1.3566987520509404,
+    "min_sin_to_axis": 8.183268562360045e-17,
+    "principle_d_px": 0,
+    "note_5": "#5 — min_sin_to_axis와 principle_d_px 0은 측정이 아니라 설계 보장(applyMove가 dir·t로 옮기고 뗌이 기하를 안 바꾼다). 팔의 뜻은 배선·회귀 게이트이고, 자의 판별력은 D-3 팔(자를 1px 틀면 값이 난다)이 확인했다"
+  },
+  "tub": {
+    "dup": 1,
+    "locked_then_unlocked": true
+  },
+  "front": {
+    "normal_to_view_deg": 0,
+    "parallel": true,
+    "read": "축척 미정",
+    "note_5": "#5 — 각도 0은 구성상 보장(faceFrontPose가 법선으로 자세를 짓는다). 이 팔이 재는 것은 «보간이 실제로 그 목표에 정착했는가»(glide 완주·투영 전환)다"
+  },
+  "bar": {
+    "at_800": {
+      "top": 12,
+      "bottom": 732,
+      "width": 91,
+      "winH": 800,
+      "spare_px": 68
+    },
+    "at_700": {
+      "bottom": 732,
+      "winH": 700,
+      "spare_px": -32
+    },
+    "undo_row_left_offset_px": 37,
+    "note_46": "#46·#12 — 여유는 창 높이가 정한 값이다. 두 점(800·700)을 남긴다",
+    "at_700_overflow_note": "선재 — 재편 전 −69px(= −32 − 37 절약분), 이 회차가 37px 줄였다. 게이트는 800에만"
+  }
+}

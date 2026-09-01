@@ -163,12 +163,16 @@ test('34-3 ③ 리본의 길이가 안 변한다 · 통끼리 서로 닫는다 �
       !after[k] || Math.abs(after[k]![0] - before[k]![0]) > 0.01 || Math.abs(after[k]![1] - before[k]![1]) > 0.01)
     console.log(`[34-3 ③] ${btn} — 줄 ${rows.length} · 움직인 버튼 ${moved.length} ${JSON.stringify(moved)}`)
     expect(moved, '리본 안의 무엇도 리본의 길이를 바꾸지 않는다').toEqual([])
-    // 통이 세로바 **왼쪽**에 겹쳐 뜬다 — 화면 안이다
-    const bar = (await page.locator('#sidebar').boundingBox())!
+    // 통이 **그 통을 연 단추** 왼쪽에 겹쳐 뜬다 — 화면 안이다.
+    // ⚠ 기준이 «세로바 상자 왼쪽» → **«연 단추의 왼쪽»**으로 갈렸다(web2-44 띠 재편 —
+    //   짝 줄이 상자를 왼쪽으로 91px까지 키워 상자 왼쪽이 실체(단추 열)보다 넓어졌다.
+    //   sidebar.spec의 같은 자리와 같은 정정 — #92의 형태: 상자 폭은 규칙의 대리였다).
+    const anchorLeft = await page.evaluate((sel) =>
+      document.querySelector(sel)!.getBoundingClientRect().left, btn)
     const vp = page.viewportSize()!
     for (const r of rows) {
       expect(r.x, `${r.id} 왼쪽`).toBeGreaterThanOrEqual(0)
-      expect(r.x + r.w, `${r.id} 세로바 왼쪽`).toBeLessThanOrEqual(bar.x + 1)
+      expect(r.x + r.w, `${r.id} 연 단추 왼쪽`).toBeLessThanOrEqual(anchorLeft + 1)
       expect(r.y, `${r.id} 위쪽`).toBeGreaterThanOrEqual(0)
       expect(r.y + r.h, `${r.id} 아래쪽`).toBeLessThanOrEqual(vp.height)
     }

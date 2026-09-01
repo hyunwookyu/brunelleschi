@@ -1,0 +1,361 @@
+{
+  "what": "web2-44 — 잡기 정확도(획 40+) · 의존 갈래 셋(⚑) · 맺기 판정 스윕",
+  "when_cmd": "npx vitest run test/grip44_measure.test.ts",
+  "grab_accuracy": {
+    "scene_strokes": 41,
+    "points_per_stroke": 3,
+    "miss_rows_cap": 8,
+    "rows": [
+      {
+        "jitter_px": 2,
+        "seed": 4401,
+        "presses": 123,
+        "hit": 123,
+        "same_line": 0,
+        "miss": 0,
+        "none": 0,
+        "ok_ratio": "123/123",
+        "miss_rows": []
+      },
+      {
+        "jitter_px": 2,
+        "seed": 4402,
+        "presses": 123,
+        "hit": 120,
+        "same_line": 0,
+        "miss": 3,
+        "none": 0,
+        "ok_ratio": "120/123",
+        "miss_rows": [
+          {
+            "id": 10,
+            "got": 23
+          },
+          {
+            "id": 15,
+            "got": 18
+          },
+          {
+            "id": 18,
+            "got": 14
+          }
+        ]
+      },
+      {
+        "jitter_px": 3,
+        "seed": 4401,
+        "presses": 123,
+        "hit": 119,
+        "same_line": 0,
+        "miss": 4,
+        "none": 0,
+        "ok_ratio": "119/123",
+        "miss_rows": [
+          {
+            "id": 15,
+            "got": 18
+          },
+          {
+            "id": 15,
+            "got": 18
+          },
+          {
+            "id": 18,
+            "got": 14
+          },
+          {
+            "id": 25,
+            "got": 8
+          }
+        ]
+      },
+      {
+        "jitter_px": 3,
+        "seed": 4402,
+        "presses": 123,
+        "hit": 119,
+        "same_line": 0,
+        "miss": 4,
+        "none": 0,
+        "ok_ratio": "119/123",
+        "miss_rows": [
+          {
+            "id": 9,
+            "got": 23
+          },
+          {
+            "id": 10,
+            "got": 23
+          },
+          {
+            "id": 15,
+            "got": 18
+          },
+          {
+            "id": 18,
+            "got": 14
+          }
+        ]
+      },
+      {
+        "jitter_px": 5,
+        "seed": 4401,
+        "presses": 123,
+        "hit": 119,
+        "same_line": 0,
+        "miss": 4,
+        "none": 0,
+        "ok_ratio": "119/123",
+        "miss_rows": [
+          {
+            "id": 15,
+            "got": 18
+          },
+          {
+            "id": 15,
+            "got": 18
+          },
+          {
+            "id": 25,
+            "got": 8
+          },
+          {
+            "id": 36,
+            "got": 9
+          }
+        ]
+      },
+      {
+        "jitter_px": 5,
+        "seed": 4402,
+        "presses": 123,
+        "hit": 116,
+        "same_line": 0,
+        "miss": 7,
+        "none": 0,
+        "ok_ratio": "116/123",
+        "miss_rows": [
+          {
+            "id": 4,
+            "got": 31
+          },
+          {
+            "id": 9,
+            "got": 23
+          },
+          {
+            "id": 10,
+            "got": 23
+          },
+          {
+            "id": 15,
+            "got": 18
+          },
+          {
+            "id": 18,
+            "got": 14
+          },
+          {
+            "id": 21,
+            "got": 11
+          },
+          {
+            "id": 22,
+            "got": 37
+          }
+        ]
+      },
+      {
+        "jitter_px": 8,
+        "seed": 4401,
+        "presses": 123,
+        "hit": 110,
+        "same_line": 0,
+        "miss": 13,
+        "none": 0,
+        "ok_ratio": "110/123",
+        "miss_rows": [
+          {
+            "id": 6,
+            "got": 27
+          },
+          {
+            "id": 8,
+            "got": 35
+          },
+          {
+            "id": 9,
+            "got": 23
+          },
+          {
+            "id": 13,
+            "got": 39
+          },
+          {
+            "id": 15,
+            "got": 18
+          },
+          {
+            "id": 15,
+            "got": 18
+          },
+          {
+            "id": 15,
+            "got": 18
+          },
+          {
+            "id": 21,
+            "got": 11
+          }
+        ]
+      },
+      {
+        "jitter_px": 8,
+        "seed": 4402,
+        "presses": 123,
+        "hit": 110,
+        "same_line": 0,
+        "miss": 13,
+        "none": 0,
+        "ok_ratio": "110/123",
+        "miss_rows": [
+          {
+            "id": 4,
+            "got": 31
+          },
+          {
+            "id": 6,
+            "got": 27
+          },
+          {
+            "id": 9,
+            "got": 23
+          },
+          {
+            "id": 15,
+            "got": 18
+          },
+          {
+            "id": 15,
+            "got": 18
+          },
+          {
+            "id": 18,
+            "got": 14
+          },
+          {
+            "id": 21,
+            "got": 11
+          },
+          {
+            "id": 22,
+            "got": 37
+          }
+        ]
+      }
+    ],
+    "note_92": "#92 — same_line은 오답이 아니다(어느 쪽을 잡아도 옮김 결과가 같은 3D 직선). 이 장면에서 0회 발화 — 겹친 직선이 없는 픽스처다",
+    "note_46": "#46 — 비율은 픽스처의 획 간격 대 떨림 폭의 함수다. 간격이 좁은 실장면의 값은 실기기 확인이 판정자다"
+  },
+  "dependency": {
+    "fixture": "벽 밑변(내용 획) + 기둥 둘(끝점 공유) + 문설주(밑변 몸통 위 시작) — 픽스처가 이동량·시점을 정한다(#46)",
+    "move": {
+      "axis": "vp1",
+      "units": 1.423926908758645,
+      "screen_px_of_gap": 58.459057673177234
+    },
+    "gap_sweep_12": {
+      "rows": [
+        {
+          "units": 0.1423926908758645,
+          "gap_screen_px": 4.828475852926836
+        },
+        {
+          "units": 0.7119634543793225,
+          "gap_screen_px": 26.16639592194603
+        },
+        {
+          "units": 1.423926908758645,
+          "gap_screen_px": 58.459057673177234
+        }
+      ],
+      "px_per_unit_note": "#46 — px/유닛 환산은 이 픽스처의 시점·깊이가 정한 값이다(≈41). 다른 깊이·줌에서는 다르다"
+    },
+    "b2_stay": {
+      "contacts_before": 3,
+      "contacts_after": 0,
+      "broken": 3,
+      "gap_units": 1.423926908758645,
+      "note": "딸린 획은 제 3D를 쥔 채 서 있다 — 틈의 화면 크기는 gap_sweep_12가 든다"
+    },
+    "b1_follow_geometry": {
+      "contacts_after": 3,
+      "broken": 0,
+      "note_5": "#5 — 끊김 0은 **구성상 보장**이다(같은 변환을 전부에 걸었다 — 따라가면 접점이 사는 것은 정의다). 이 팔이 재는 것은 «이어잡기(connectedIds)가 실제로 그 집합을 모으는가»다(위 expect가 그 판정)",
+      "mechanism": "이어진 것 잡기(같은 선 꾹 한 번 더) — ㉠의 기하에 도달하는 이 회차의 도구. «자동» 갈래는 앱에 없다(D-W8 — 측정이 아니라 설계 근거)"
+    },
+    "b3_waiting": {
+      "dropped_to_waiting": 2,
+      "relifted_elsewhere": 1,
+      "kept_in_place": 0,
+      "max_reanchor_err_units": 2.3440712846569194,
+      "note": "own3를 걷는 갈래 — 자리가 조용히 바뀌거나(잘못 놓임) 대기로 떨어진다. kept 0은 의미 있는 0(셋 다 자리를 잃었다)"
+    },
+    "verdict": "⚑ 판정의 경계(#32): 측정이 가른 것은 «㉢가 정보를 파괴한다»(대기 2·조용한 오배치 1)와 «㉡의 틈 크기»뿐이다. ㉠의 접점 보존은 구성상이라 우열의 증거가 아니고, ㉠ 기각의 근거는 측정이 아니라 설계(D-W8 — 출처 기록 없음·잡지 않은 것이 움직임)다. 「㉠이 낫다」로 읽히는 측정은 없으므로 멈춤 조건 불발 — 지시문 필자의 ㉡ 판단대로 간다"
+  },
+  "join_boundary": {
+    "gate": 0.01,
+    "denominator": "size3 = 10 (이 훑기의 정규화 — 분모를 적는다: #11 · CLAUDE.md §2 표기로는 #16)",
+    "rows": [
+      {
+        "offset_rel": 0,
+        "rel": 1.7763568394002506e-16,
+        "would": "join"
+      },
+      {
+        "offset_rel": 0.002,
+        "rel": 0.002,
+        "would": "join"
+      },
+      {
+        "offset_rel": 0.005,
+        "rel": 0.005,
+        "would": "join"
+      },
+      {
+        "offset_rel": 0.009,
+        "rel": 0.009,
+        "would": "join"
+      },
+      {
+        "offset_rel": 0.011,
+        "rel": 0.011,
+        "would": "skew"
+      },
+      {
+        "offset_rel": 0.02,
+        "rel": 0.02,
+        "would": "skew"
+      },
+      {
+        "offset_rel": 0.05,
+        "rel": 0.05,
+        "would": "skew"
+      }
+    ],
+    "note_5": "#5 — rel ≡ offset_rel(입력을 되돌리는 항등 — 0행의 1.78e-16은 기계 엡실론)이다. 이 블록이 재는 것은 «같은 평면 판정의 정확도»가 아니라 **문턱(PLANAR_RATIO) 비교의 배선**이다 — 경계 양옆(0.009/0.011)이 실제로 갈리는가. 참 동일평면/비동일평면 표본에서의 정확도는 실측 미결(실기기 ⑬ 계열)",
+    "wired_by": "joinGrip 네 갈래(수용·skew·parallel·dim)는 grip44.test.ts 「맺기」가 앱 경로로 잠근다"
+  },
+  "lock_sweep": {
+    "locked_strokes": 3,
+    "erase_attempts": 3,
+    "branches": {
+      "yellow_blocked": true,
+      "text_blocked": true,
+      "lifted_blocked": true
+    },
+    "erased_while_locked": "0/3시도",
+    "erased_after_unlock": "1/1시도",
+    "note": "잡기·맺기 갈래는 구성상 차단(잠긴 획은 잡히지 않는다 — grip44.test가 locked 갈래로 잠근다)"
+  }
+}

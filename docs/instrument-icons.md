@@ -317,3 +317,19 @@
 (원장 `papericon31_web2_dpr1.json` `roundtrip_dpr1.add_not_update`). SketchUp으로 치면 *Add Scene*이고,
 *Update Scene*은 탭을 길게 눌러 나오는 「이 시점으로 갱신」이다. 그림은 둘이 **같은 계열**임을
 말하고(종이 + 갱신 화살표), 말은 **어느 장인지**를 지우지 않는다.
+
+## 핀셋(손통) — web2-44 추가 (자작 · 선 문법)
+
+잡기 손잡이 통(복제·잠금·맺기·정면)의 입구. 실물은 제도판 위의 **핀셋**(집는 도구)이다.
+선 문법 그대로: `fill:none · stroke:currentColor · 1.6/32 · round`.
+
+```html
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 C10.8 12 10.8 19 12.4 27 L14.6 25 C13.6 18.6 13.8 12 15.2 6 Z"/><path d="M19 4 C21.2 12 21.2 19 19.6 27 L17.4 25 C18.4 18.6 18.2 12 16.8 6 Z"/><path d="M13 4 A 3.2 3.2 0 0 1 19 4"/></svg>
+```
+
+통 안의 줄 넷(15px 대역 · `.rrow` 문법 그대로):
+
+- **복제** — 겹친 사각 둘: `<svg viewBox="0 0 32 32" …><rect x="5" y="5" width="15" height="15"/><rect x="12" y="12" width="15" height="15"/></svg>`
+- **잠금** — Phosphor `lock-simple`의 선 판(몸통 사각 + 고리): `<svg viewBox="0 0 32 32" …><rect x="7" y="14" width="18" height="13" rx="1.5"/><path d="M11 14 V10 a5 5 0 0 1 10 0 V14"/></svg>`
+- **맺기** — R=0으로 만나는 두 선(ㄴ 모서리): `<svg viewBox="0 0 32 32" …><path d="M6 26 H23 V9"/><path d="M23 26 l3 3 M23 9 l-3 -3" stroke-width="1.1"/></svg>`
+- **정면** — 면과 법선 눈금: `<svg viewBox="0 0 32 32" …><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg>`

@@ -4,6 +4,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
   handwritingGroup, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
+  beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
@@ -439,16 +440,41 @@ inputApi = initInput(ink, app, {
     // 알림은 **오류가 있을 때만**이다(4-b) — 만들어졌으면 화면이 이미 말한다.
     if (r === 'none') notify('닫힌 루프가 아니다 — 둘러싸인 자리를 탭한다')
   },
-  // ── 글씨는 선을 꾹 눌러 시작한다(web2-39) ────────────────────────────────
+  // ── 꾹 누름 — 글씨(web2-39)이자 잡기(web2-44)다. 배선은 `beginHold` 하나(#54) ────
   onWriteHold(p) {
-    const via = beginWriting(app, p, performance.now())
-    if (via === null) return false          // 잡히는 것이 없다 — 아무 일도 안 한다
-    // **알림은 오류가 있을 때만**이다(4-b) — 들어간 것은 화면이 말한다(고른 선 강조 +
-    // 다음 획이 축에 안 붙는 것). 무엇을 하는 자리인지 한 줄만 상태 줄에 둔다.
-    status(via === 'dim' ? '글씨 — 그 자리에 다시 쓴다' : '글씨 — 이 선의 치수를 쓴다')
+    const r = beginHold(app, p, performance.now())
+    if (r === null) return false            // 잡히는 것이 없다 — 아무 일도 안 한다
+    // **알림은 오류가 있을 때만**이다(4-b) — 상태 줄 한 줄로 무엇이 잡혔는지만 말한다.
+    switch (r.kind) {
+      case 'write':
+        status(r.kind === 'write' && r.via === 'dim'
+          ? '글씨 — 그 자리에 다시 쓴다'
+          : '잡음 — 끌면 옮긴다 · 끝을 끌면 돌린다 · 숫자를 쓰면 치수다')
+        break
+      case 'grip-add': status(`${r.n}개 잡음 — 같은 선을 또 누르면 이어진 것까지`); break
+      case 'grip-connect': status(`이어진 것까지 ${r.n}개 잡음`); break
+      case 'face': status('면을 잡음 — 손통에서 「정면」이 열린다'); break
+      case 'manip-edit': status('값 — 그 곁에 숫자를 쓴다'); break
+      case 'locked':
+        // 잠긴 선 — 조용히 안 잡히면 고장으로 읽힌다. 여는 길을 같은 줄에 둔다.
+        ask('잠긴 선이다', [{ key: 'unlock', label: '해제', onPick: () => {
+          unlockStroke(app, r.id)
+          notify('잠금을 풀었다')
+          invalidate()
+        } }])
+        invalidate()
+        return true
+    }
     armWriteIdle()
     invalidate()
     return true
+  },
+  // ── 조작이 끝났다(web2-44) — 값 표찰이 섰다. 고치는 길을 한 줄로 말한다 ────────
+  onManip(kind) {
+    const label = manipLabel(app)
+    status(`${kind === 'move' ? '옮김' : '돌림'} ${label ?? ''} — 값을 꾹 누르면 고친다`)
+    armWriteIdle()
+    invalidate()
   },
   onWriteStroke(pts) {
     // ⚠ **종료 판정은 여기가 아니라 «획이 시작될 때»다**(`input.ts`) — 그래야 작도로
@@ -711,6 +737,7 @@ window.addEventListener('resize', () => {
   if (pentrayOpen) placeFlyout(pentrayEl, penBtn)
   if (etrayOpen && etrayAnchor) placeFlyout(etrayEl, etrayAnchor)   // 크기통도 같다(34-3)
   if (rolltrayOpen) placeFlyout(rolltrayEl, rollBtn)                // 롤통도 같다(34-6)
+  if (griptrayOpen) placeFlyout(griptrayEl, gripBtn)                // 손통도 같다(web2-44)
 
 })
 if (!TRAY) {   // 되돌리기(A-4) — 옛 세로 버튼·슬라이더로
@@ -1804,6 +1831,83 @@ const syncRolls = () => {
 }
 app.listeners.push(syncRolls)
 syncRolls()
+
+// ── 손통(web2-44) — 잡은 것을 다루는 손잡이 넷. 문법은 롤통 그대로다(#54 — 새 기제 ⛔).
+// 줄은 전부 **명령**이라 누르면 접힌다(R3 · R6 비대상). 잡은 것이 없으면 비활성이고
+// 누르면 이유가 보인다(롤통의 2-a 문법). 그림 정본은 docs/instrument-icons.md.
+const gripBtn = document.getElementById('btn-grip')!
+const griptrayEl = document.getElementById('griptray')!
+const GRIP_ROWS = [
+  { key: 'dup', name: '복제', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="15" height="15"/><rect x="12" y="12" width="15" height="15"/></svg>' },
+  { key: 'lock', name: '잠금', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="14" width="18" height="13" rx="1.5"/><path d="M11 14 V10 a5 5 0 0 1 10 0 V14"/></svg>' },
+  { key: 'join', name: '맺기', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 26 H23 V9"/><path d="M23 26 l3 3 M23 9 l-3 -3" stroke-width="1.1"/></svg>' },
+  { key: 'front', name: '정면', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg>' },
+] as const
+const gripRow = new Map<string, HTMLButtonElement>()
+for (const r of GRIP_ROWS) {
+  const b = document.createElement('button')
+  b.id = `btn-grip-${r.key}`
+  b.className = 'rrow'
+  b.dataset.act = 'cmd'
+  b.innerHTML = `${r.svg}<span>${r.name}</span>`
+  b.addEventListener('click', () => { setGriptrayOpen(false); doGripAction(r.key) })
+  griptrayEl.append(b)
+  gripRow.set(r.key, b)
+}
+let griptrayOpen = false
+function setGriptrayOpen(v: boolean) {
+  griptrayOpen = v
+  griptrayEl.classList.toggle('open', v)
+  if (v) { syncGripRows(); closeOtherBoxes('#griptray'); placeFlyout(griptrayEl, gripBtn) }
+}
+gripBtn.addEventListener('click', () => setGriptrayOpen(!griptrayOpen))
+registerBox({
+  id: '#griptray', isOpen: () => griptrayOpen, close: () => setGriptrayOpen(false),
+  zone: () => [griptrayEl, gripBtn],
+})
+/** 줄의 활성 조건 — 값으로 판정한다(#54: 실행 함수가 보는 그 상태를 그대로 본다). */
+function gripRowGate(key: string): string | null {
+  const g = app.grip
+  if (!g || g.ids.length === 0) return '선을 꾹 눌러 잡은 뒤에 쓴다'
+  if (key === 'join' && g.ids.length !== 2) return '맺기는 **두 선**을 잡아야 한다'
+  if (key === 'front' && g.faceId === null) return '정면은 **면**을 잡아야 한다(면 안을 꾹 누른다)'
+  return null
+}
+function syncGripRows() {
+  for (const r of GRIP_ROWS) {
+    const why = gripRowGate(r.key)
+    const b = gripRow.get(r.key)!
+    b.classList.toggle('disabled', why !== null)
+    b.title = why ?? ''
+  }
+  gripBtn.classList.toggle('disabled', !app.grip || app.grip.ids.length === 0)
+}
+app.listeners.push(() => { if (griptrayOpen) syncGripRows() })
+function doGripAction(key: string) {
+  const why = gripRowGate(key)
+  if (why !== null) { notify(why.replace(/\*\*/g, '')); return }
+  if (key === 'dup') {
+    const n = duplicateGrip(app)
+    if (n > 0) status(`${n}개 복제됨 — 잡은 채로 끌어 자리를 준다`)
+  } else if (key === 'lock') {
+    const n = lockGrip(app)
+    if (n > 0) notify(`${n}개 잠금 — 꾹 누르면 「해제」가 뜬다`)
+  } else if (key === 'join') {
+    const r = joinGrip(app)
+    if (r.ok) {
+      if (r.changed === 0) notify('이미 만나 있다 — 연장할 것이 없다')
+      // 맺어졌으면 화면이 말한다(4-b) — 알림 없음
+    } else if (r.why === 'parallel') notify('평행한 두 선은 만나지 않는다')
+    else if (r.why === 'skew') notify('같은 평면이 아니다 — 꼬인 위치라 맺을 수 없다')
+    else if (r.why === 'dim') notify('치수가 길이를 쥐고 있다 — 치수를 지우면 맺는다')
+    else if (r.why === 'notLifted') notify('아직 3D로 올라가지 않은 선이다')
+  } else if (key === 'front') {
+    const to = faceFrontTarget(app)
+    if (!to) { notify('정면은 면을 잡아야 한다'); return }
+    autolevel.glide(to)   // 42와 같은 길로 보간한다(즉시 튀면 어디로 갔는지 잃는다)
+  }
+  invalidate()
+}
 let lastSheetForYellow = app.activeSheet
 const paperbar = initPaperbar(app, document.getElementById('paperbar')!, {
   capture: captureSheet,
@@ -2399,6 +2503,24 @@ const diag = {
       settling: [...app.settledAt.entries()]
         .filter(([, t]) => now - t < SETTLE_ANIM_MS)
         .map(([id, t]) => ({ id, elapsed: now - t })),
+    }
+  },
+  /** **잡기**(web2-44) — 팔이 화면과 같은 상태를 읽는다(#88: 값을 손으로 안 짓는다). */
+  grip44: () => {
+    const sb = document.getElementById('sidebar')!.getBoundingClientRect()
+    return {
+      ids: app.grip?.ids ?? null,
+      faceId: app.grip?.faceId ?? null,
+      manip: app.grip?.manip
+        ? { kind: app.grip.manip.kind, amount: app.grip.manip.amount, axis: app.grip.manip.axis, label: manipLabel(app) }
+        : null,
+      live: app.grip?.live ?? null,
+      writeOn: writeActive(app),
+      writeManip: app.write?.manip === 1,
+      writeTarget: app.write?.target ?? null,
+      locked: app.doc.strokes.filter(s => s.lock === 1).map(s => s.id),
+      // 띠 재편의 판정자 — 세로바 상자와 화면 높이(여유는 팔이 이 둘로 계산한다)
+      bar: { top: sb.top, bottom: sb.bottom, left: sb.left, right: sb.right, winH: window.innerHeight, winW: window.innerWidth },
     }
   },
   summary: () => ({

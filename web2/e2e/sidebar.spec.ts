@@ -22,7 +22,7 @@ let ovErase = { overlaps: -1, n: 0, ids: [] as string[] }
 /** 크기 줄의 id — main.ts가 짓는 규칙 그대로(표를 팔에 복제하지 않는다 — #54) */
 const ERASE_ROW_IDS = C.ERASER_R_PX.map(r => `erase-${String(r).replace('.', '_')}`)
 const ALL = ['sidebar-toggle', 'dim-toggle',   // btn-save-view: 종이 탭 「+」가, btn-draw-view: 눈(#eyebar)이 대신한다(web2-19)
-  'btn-zoom-fit', 'btn-lens', 'btn-undo', 'btn-redo', 'btn-snap', 'btn-pencil',
+  'btn-zoom-fit', 'btn-lens', 'btn-undo', 'btn-redo', 'btn-snap', 'btn-grip', 'btn-pencil',
   'tray-2H', 'tray-H', 'tray-F', 'tray-HB', 'tray-B', 'tray-2B', 'btn-pen',
   // 펜 촉통 다섯(web2-30 2번) — 펜 상태에서만 뜬다. `overlapCount`가 display:none을 거른다.
   'nib-0_18', 'nib-0_25', 'nib-0_35', 'nib-0_5', 'nib-0_7',
@@ -67,8 +67,12 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
   // ⚠ `nib-`도 뺀다(web2-30 2번) — 촉통은 **흐름 밖 겹침(overlay)**이라 리본의 오른쪽
   // 정렬 규칙을 안 탄다(30-3: 펼침은 왼쪽으로 겹쳐 뜬다). 연필통 줄이 빠지는 것과 같은 이유다.
   // ⚠ `erase-`도 같다(web2-34 3번) — 크기통도 왼쪽으로 겹쳐 뜨는 펼침이다.
+  // ⚠ **짝 줄의 왼쪽 구성원도 뺀다**(web2-44 띠 재편) — [실행취소|다시실행]·[자|손통]이
+  //   한 줄에 눕는다. 줄 자체의 오른쪽 가장자리는 축에 서고(오른쪽 구성원이 그 값을 진다)
+  //   왼쪽 구성원(btn-undo·btn-snap)은 정의상 왼쪽으로 밀려 있다 — 규칙이 바뀐 것이지
+  //   무른 것이 아니다(그 줄이 세로 자리를 비워 44의 손통·45~47의 손잡이가 선다).
   }), ALL.filter(id => !id.startsWith('tray-') && !id.startsWith('nib-') && !id.startsWith('erase-')
-    && id !== 'btn-pen' && id !== 'btn-pencil'))
+    && id !== 'btn-pen' && id !== 'btn-pencil' && id !== 'btn-undo' && id !== 'btn-snap'))
   const r0 = rights[0]!.right
   for (const r of rights) expect(Math.abs(r.right - r0), `#${r.id} 오른쪽 가장자리`).toBeLessThanOrEqual(1)
 
@@ -253,12 +257,19 @@ test('연필통 — 진하기 순 세로 배열·행 선택이 도구+경도·�
   expect(barPen.bottom, '펜 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
   expect(barPencil.bottom, '연필 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
   expect(barEraser.bottom, '지우개 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
-  expect(etray.x + etray.width, '크기통이 세로바 왼쪽').toBeLessThanOrEqual(vw.w - barEraser.w - 2)
+  // ⚠ 기준이 «세로바 상자 폭»에서 **«그 통을 연 단추의 왼쪽»**으로 바뀌었다(web2-44 재편):
+  //   짝 줄이 상자 폭을 키웠지만 규칙의 실체는 「통이 그 단추(와 그 열)를 안 덮는다」였다.
+  //   상자 폭은 그 실체의 대리였고 재편에서 대리가 실체보다 넓어졌다(#92의 형태).
+  const eraserLeft = await page.evaluate(() =>
+    document.getElementById('btn-eraser-pencil')!.getBoundingClientRect().left)
+  expect(etray.x + etray.width, '크기통이 연 단추 왼쪽').toBeLessThanOrEqual(eraserLeft - 2)
   expect(etray.y, '크기통이 화면 위 안').toBeGreaterThanOrEqual(0)
   expect(etray.y + etray.height, '크기통이 화면 아래 안').toBeLessThanOrEqual(vw.h)
   // 펜 상태에서는 촉통이 **왼쪽으로 겹쳐** 뜬다(30-3) — 세로바를 안 민다
   const pentray = (await page.locator('#pentray').boundingBox())!
-  expect(pentray.x + pentray.width, '촉통이 세로바 왼쪽').toBeLessThanOrEqual(vw.w - barPen.w - 2)
+  const penLeft = await page.evaluate(() =>
+    document.getElementById('btn-pen')!.getBoundingClientRect().left)
+  expect(pentray.x + pentray.width, '촉통이 연 단추 왼쪽').toBeLessThanOrEqual(penLeft - 2)
   await page.click('#btn-pencil'); await page.waitForTimeout(150)   // 연필통을 연 채로 잰다
   const tray = (await page.locator('#tray').boundingBox())!
   const rightEdge = await page.evaluate(() =>

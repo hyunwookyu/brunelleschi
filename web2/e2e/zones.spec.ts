@@ -111,9 +111,12 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   //   내려갔다 — 쓰는 빈도가 낮고 무엇보다 **작도 도구가 아니다**. 이 팔이 지키는 요구
   //   (「자리별로 무엇이 어느 순서로 있는지가 값으로 못 박혀 있다」)는 그대로이고 **표가
   //   갈렸다**(#75 ㉣ — 예시를 옮기는 것이 아니라 표를 고친다).
+  // ⚠ **web2-44 띠 재편이 짝 줄(.bar-row)을 넣었다** — [실행취소|다시실행]·[자|손통]이
+  //   한 줄에 눕는다. 이 팔이 지키는 요구(「자리별 전수가 값으로 못 박혀 있다」)는 그대로이고
+  //   **표와 선택자가 갈렸다**(#75 ㉣): 줄 안의 버튼도 문서 순서 그대로 전수에 든다.
   expect(await page.evaluate(() =>
-    [...document.querySelectorAll('#sidebar-body > button, #sidebar-body > details')].map(e => e.id)))
-    .toEqual(['btn-draw-view', 'btn-zoom-fit', 'btn-lens', 'btn-undo', 'btn-redo', 'btn-snap', 'btn-pencil', 'btn-pen',
+    [...document.querySelectorAll('#sidebar-body > button, #sidebar-body > details, #sidebar-body > .bar-row > button')].map(e => e.id)))
+    .toEqual(['btn-draw-view', 'btn-zoom-fit', 'btn-lens', 'btn-undo', 'btn-redo', 'btn-snap', 'btn-grip', 'btn-pencil', 'btn-pen',
       'btn-eraser-pencil', 'btn-eraser-ink', 'dim-toggle', 'btn-roll', 'btn-face'])
   // 되돌리기와 도구 사이에 **구분선**이 실제로 있다(공백이 아니라 채널 — 3-c)
   expect(await page.evaluate(() => {

@@ -231,9 +231,13 @@
     }
     #display-pop[hidden], #snap-pop[hidden], #face-pop[hidden], #lens-pop[hidden] { display: none; }
     #display-pop { top: 48px; right: var(--top-lane); }   /* 위 띠의 길(R5) — 치수 기둥의 왼쪽 */
-    #snap-pop { right: 54px; }
-    #face-pop { right: 54px; }
-    #lens-pop { right: 54px; }
+    /* 팝업의 둘째 열(웹2-19의 «오른쪽 54px» 규약) — **web2-44 띠 재편이 100px로 옮겼다**:
+       짝 줄([자|손통] 91px)이 세로바를 왼쪽으로 키워, 54px 자리의 팝업이 **자기를 연
+       단추(자)를 덮었다** — 열린 채로 그 단추를 다시 눌러 닫는 길이 막혔다(zones.spec ②가
+       실측: snap-pop subtree intercepts pointer events). 100 = 줄 폭 91 + 여백. */
+    #snap-pop { right: 100px; }
+    #face-pop { right: 100px; }
+    #lens-pop { right: 100px; }
     .lens-reset { background: none; border: 0; padding: 2px 0; cursor: pointer; color: var(--ui); font: 12px system-ui, sans-serif; text-align: left; text-decoration: underline; opacity: .75; }
     .lens-reset:hover { opacity: 1; }
     #btn-lens[disabled] { opacity: .3; cursor: default; }
@@ -321,8 +325,19 @@
       z-index: 10; display: flex; flex-direction: column; gap: var(--btn-gap); align-items: flex-end;
     }
     #sidebar-body { display: flex; flex-direction: column; gap: var(--btn-gap); align-items: flex-end; }
+    /* 띠 재편(web2-44) — **상자는 히트에서 뺀다**: 짝 줄이 상자를 왼쪽으로 키우면서
+       투명한 컨테이너(#sidebar-body)가 뷰 큐브의 오른쪽 가장자리 히트를 삼켰다
+       (turn31.spec 실측 — elementFromPoint가 'sidebar-body'를 냈다). 닿는 것은 버튼이지
+       상자가 아니다 — 버튼 사이·왼쪽의 빈 자리는 캔버스(큐브·그림)로 지나간다. */
+    #sidebar, #sidebar-body, #sidebar-body .bar-row { pointer-events: none; }
+    #sidebar button { pointer-events: auto; }
     #sidebar.folded #sidebar-body { display: none; }
     .bar-gap { height: 10px; }
+    /* 띠 재편(web2-44) — **한 줄에 짝으로 눕는 무리**. 손잡이가 처음으로 늘어나는 회차라
+       (그리고 45·46·47이 더 더한다) 세로 한 줄로는 자리가 안 난다 — 같은 무리(시점 셋 ·
+       실행취소 둘)를 가로로 눕혀 세로 자리를 비운다. 버튼 크기·패딩은 그대로다(표적
+       무회귀 — 줄은 배치만 바꾼다). 여유는 e2e가 실측한다(#88 — 여기 수를 안 적는다). */
+    .bar-row { display: flex; flex-direction: row; gap: var(--btn-gap); align-items: center; }
 
     /* 눌리는 것 전부의 바탕 — 배경도 테두리도 라운드도 없다(4-a).
        패딩 = 투명한 누름 여유(3번 관측 ②) — 보이는 크기는 svg가, 닿는 넓이는 이것이 정한다.
@@ -353,11 +368,11 @@
        (사람 관측). 펼침은 전부 **왼쪽으로 겹쳐 뜬다**(overlay) — 자리는 main.ts가
        누른 버튼의 줄에 맞춘다. 선례(A-3): 프로크리에이트 브러시·크기 팝오버, 크리타
        팝업 팔레트, 스케치업 플라이아웃 — 전부 겹쳐 뜨지 밀어내지 않는다. */
-    #tray, #pentray, #etray, #rolltray {
+    #tray, #pentray, #etray, #rolltray, #griptray {
       display: none; position: fixed; z-index: 12;
       flex-direction: column; gap: var(--btn-gap); align-items: flex-end;
     }
-    #tray.open, #pentray.open, #etray.open, #rolltray.open { display: flex; }
+    #tray.open, #pentray.open, #etray.open, #rolltray.open, #griptray.open { display: flex; }
     /* 롤통 줄(web2-34 6번) — 연필통·촉통 줄과 같은 크기·같은 어법. 앞의 롤 그림 +
        이름. 옐로의 색 예외는 **통 안**에만 산다(`instrument-icons.md` 정본). */
     .rrow { display: flex; flex-direction: row; align-items: center; gap: 7px;
@@ -901,6 +916,11 @@
              web2-31이 그것에 90° 화살표와 축 기준 틀을 얹는다 — 단추 자리를 안 먹는다.
              그래도 34-6의 문면대로 **자리 둘을 비워 계산에 넣었고** 시험 삽입으로 쟀다
              (`e2e/ui34place.spec.ts` — 31의 돋보기·예비 하나). -->
+        <!-- 띠 재편(web2-44) — **짝 줄은 상단 140px(뷰 큐브 대역) 아래에서만 눕는다.**
+             초판은 시점 셋을 맨 윗줄에 눕혔는데 그 줄이 왼쪽으로 자라 **뷰 큐브(캔버스
+             그림쇠 · cx W−110 · cy 60 · size 80)를 덮었다** — flow.spec의 가운데(투시)
+             누름이 버튼에 먹혀 평행 전환이 통째로 죽었다(실측). 시점 셋은 홑 배치
+             그대로 두고(34-6의 「맨 위」 유지) 짝 줄은 그 아래부터다. -->
         <button id="btn-draw-view" class="t ico-m" title="작도 시점으로" aria-label="작도 시점">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
             <path d="M3 9.4 10 3.6l7 5.8" /><path d="M5.2 8.6V16h9.6V8.6" />
@@ -936,6 +956,7 @@
              ⚠ web2-34 6번이 「작도 시점으로」를 **이 묶음 안**에 넣었다: 구분선을 하나 더
              긋는 것이 아니라 **같은 무리**다 — 셋 다 «제도용구가 아닌 것»이고 구분선 아래가
              제도용구다. (초판은 구분선을 하나 더 그었는데 그 11px가 31의 여유를 먹었다.) -->
+        <div class="bar-row">
         <button id="btn-undo" class="t ico-m" title="실행취소 (Ctrl+Z)" aria-label="실행취소">
           <svg width="30" height="30" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
             <path d="M6.4 5.2 3.2 8.4l3.2 3.2" /><path d="M3.2 8.4h7.6a4.4 4.4 0 0 1 0 8.8H7" />
@@ -946,12 +967,16 @@
             <path d="M13.6 5.2 16.8 8.4l-3.2 3.2" /><path d="M16.8 8.4H9.2a4.4 4.4 0 0 0 0 8.8H13" />
           </svg>
         </button>
+        </div>
 
         <div class="bar-divider"></div>
 
         <!-- 자(삼각자) = **스냅 묶음의 입구**(3-b — 이 회차의 핵심): 오스냅 종류·반경이
              여기서 열린다. 「기능적 도구」 층위가 처음으로 화면에 존재하게 됐다.
              SVG는 docs/instrument-icons.md 「삼각자」 정본 그대로다(path 수정 금지). -->
+        <!-- 짝 줄(web2-44 재편) — 자와 손통이 한 줄에 눕는다: 둘 다 「기능 도구」이고
+             이 높이(상단 140px 아래)는 뷰 큐브 대역 밖이라 왼쪽으로 자라도 안전하다. -->
+        <div class="bar-row">
         <button id="btn-snap" class="t ico-sq" title="자 — 오스냅 종류·반경" aria-label="자(스냅)">
           <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 26 L26 26 L6 6 Z"/>
@@ -959,6 +984,16 @@
             <path d="M8.50 8.50 l-1.70 1.70 M11.00 11.00 l-1.06 1.06 M13.50 13.50 l-1.70 1.70 M16.00 16.00 l-1.06 1.06 M18.50 18.50 l-1.70 1.70 M21.00 21.00 l-1.06 1.06 M23.50 23.50 l-1.70 1.70" stroke-width="1.1"/>
           </svg>
         </button>
+
+        <!-- 손통(web2-44) — 잡은 것을 다루는 손잡이 넷(복제·잠금·맺기·정면)의 입구.
+             실물은 핀셋이다(docs/instrument-icons.md 「핀셋(손통)」이 정본 — path 그대로).
+             문법은 롤통과 같다(#54): 누르면 왼쪽으로 통이 겹쳐 뜨고, 줄은 **명령**이라
+             누르면 접힌다(R3 · R6 비대상 — 고른 것이 없다). 잡은 것이 없으면 줄이
+             비활성이고 누르면 이유가 보인다(롤통의 2-a 문법 그대로). -->
+        <button id="btn-grip" class="t ico-sq" title="손 — 잡은 것을 다룬다 (복제 · 잠금 · 맺기 · 정면)" aria-label="손(잡기)">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 C10.8 12 10.8 19 12.4 27 L14.6 25 C13.6 18.6 13.8 12 15.2 6 Z"/><path d="M19 4 C21.2 12 21.2 19 19.6 27 L17.4 25 C18.4 18.6 18.2 12 16.8 6 Z"/><path d="M13 4 A 3.2 3.2 0 0 1 19 4"/></svg>
+        </button>
+        </div>
 
         <div class="bar-gap"></div>
 
@@ -1118,6 +1153,9 @@
     <!-- 롤통 줄 둘(web2-34 6번) — 행은 main.ts가 짓는다(#54: 롤 그림의 출처는
          `layerbar.ts`의 정본 상수 하나다). -->
     <div id="rolltray"></div>
+
+    <!-- 손통 줄 넷(web2-44) — 행은 main.ts가 짓는다(#54: 그림 정본은 instrument-icons.md). -->
+    <div id="griptray"></div>
 
     <div id="pentray"></div>
 

@@ -4,12 +4,16 @@
 // 팜 리젝션: 펜이 닿아 있는 동안 터치를 무시한다(잉크·카메라 양쪽).
 // 데스크톱 선례(SketchUp): 중버튼 궤도, 우버튼 팬, 휠 줌.
 
-import type { App } from './state'
 import {
   orbitPivot, orbitBy, dollyBy, panBy, setPose, beginErase, eraseAt, endErase, fingerPans,
   screenToDoc, isEraser, yellowActive, toggleFaceAt, facePreview, excludeCandidateAt, beginNavHold, endNavHold,
-  viewScale, writeActive, writeTargetAt, writeFarPts, writeIdleNow, resetViewLens,
+  viewScale, writeActive, writeFarPts, writeIdleNow, resetViewLens,
+  holdTargetAt, gripDragStartAt, gripBase, applyMove, applyRotate, finishManip, manipLabelOf,
+  type App, type GripGeom,
 } from './state'
+import { solveMove, solveAlong, planePointAt, yawOf } from '../core/grip'
+import type { AxisId } from '../core/camera'
+import type { V3 } from '../core/vec'
 import { osnap, type OsnapHit } from '../core/osnap'
 import { updateExtTrip, beginExtTrip } from '../core/extacq'
 import { isLevel, pitchSnaps } from '../core/level'
@@ -72,6 +76,8 @@ export interface InputCallbacks {
   /** **글씨 상태가 끝났다**(web2-39 3번) — 사유는 「멈춤」이거나 「먼 곳의 새 획」이다.
    *  ⛔ 종료 «제스처»가 아니다: 둘 다 사람이 어차피 하는 동작이라 배울 것이 없다. */
   onWriteEnd: (why: 'idle' | 'far') => void
+  /** **조작이 끝났다**(web2-44) — 옮김·돌림 끌기가 값을 남겼다. 알림은 main이 낸다(#54). */
+  onManip: (kind: 'move' | 'rotate') => void
 }
 
 export function initInput(
@@ -148,18 +154,91 @@ export function initInput(
   let writeEntered = false
   /** 쓰고 있는 글씨 한 획(web2-39) — 뗄 때 `cb.onWriteStroke`로 넘긴다 */
   let writeInk: Pt[] | null = null
+  // ── 잡기 끌기(web2-44) — 글씨 상태 안에서 «잡힌 것 위에서 시작한 끌기»는 손이다 ──
+  // 몸통 = 옮기기(축 제한) · 끝점 = 돌리기(수직축 · 축점은 반대 끝). 끌기가 첫 문턱
+  // (오스냅 반경 — 몸짓이 방향을 정하는 눈금·새 숫자 ⛔)을 넘으면 축이 잠기고, 그 뒤로는
+  // 잠긴 축을 따라만 푼다 — 매 이동마다 다시 고르면 경계 방향에서 축이 튄다.
+  let manipDrag: {
+    mode: 'move' | 'rotate'
+    start: Pt
+    anchor3?: V3
+    pivot?: V3
+    yaw0?: number
+    base: { base: Map<number, GripGeom>; base3: Map<number, { a3: V3; b3: V3 }> }
+    axis: { id: AxisId; dir: V3 } | null
+    amount: number
+    after: Map<number, GripGeom> | null
+  } | null = null
+
+  function dragManip(e: PointerEvent) {
+    const md = manipDrag
+    if (!md) return
+    const cur = toPt(e)
+    const movedPx = Math.hypot(cur.x - md.start.x, cur.y - md.start.y) * viewScale(app)
+    const engaged = md.axis !== null || md.yaw0 !== undefined
+    if (!engaged && movedPx < C.OSNAP_RADIUS_PX) return
+    if (md.mode === 'move') {
+      if (!md.axis) {
+        const sol = solveMove(app.lift.an, app.pose, md.anchor3!, cur)
+        if (!sol) return
+        md.axis = { id: sol.axis, dir: sol.dir }
+      }
+      const s = solveAlong(app.lift.an, app.pose, md.anchor3!, md.axis.dir, cur)
+      if (!s) return
+      const after = applyMove(app, md.base.base, md.base.base3, md.axis.dir, s.t)
+      if (!after) return
+      md.amount = s.t
+      md.after = after
+      if (app.grip) app.grip.live = { label: manipLabelOf(app, 'move', s.t), at: cur }
+    } else {
+      if (md.yaw0 === undefined) {
+        const p0 = planePointAt(app.lift.an, app.pose, md.pivot!, md.start)
+        if (!p0) return
+        md.yaw0 = yawOf(md.pivot!, p0)
+      }
+      const pc = planePointAt(app.lift.an, app.pose, md.pivot!, cur)
+      if (!pc) return
+      let ang = yawOf(md.pivot!, pc) - md.yaw0
+      while (ang > Math.PI) ang -= 2 * Math.PI
+      while (ang < -Math.PI) ang += 2 * Math.PI
+      const after = applyRotate(app, md.base.base, md.base.base3, md.pivot!, ang)
+      if (!after) return
+      md.amount = ang
+      md.after = after
+      if (app.grip) app.grip.live = { label: manipLabelOf(app, 'rotate', ang), at: cur }
+    }
+    cb.onDraftChange(null)          // 다시 그리기(값 채널 재사용 — rect 끌기의 선례)
+  }
+
+  function endManipDrag(e: PointerEvent) {
+    const md = manipDrag
+    if (!md) return
+    manipDrag = null
+    if (app.grip) app.grip.live = null
+    const done = md.after !== null && Math.abs(md.amount) > 1e-12
+    if (done) {
+      const cur = toPt(e)
+      finishManip(app, md.mode, md.base.base, md.base.base3, md.after!, {
+        axis: md.axis?.id ?? null, dir: md.axis?.dir ?? null, pivot: md.pivot ?? null,
+        amount: md.amount, labelAt: cur,
+      })
+      cb.onManip(md.mode)
+    }
+    cb.onDraftChange(null)
+  }
 
   function cancelHoldPress() {
     if (holdTimerId !== undefined) { clearTimeout(holdTimerId); holdTimerId = undefined }
     holdPress = null
   }
-  /** 누름 시계를 켠다 — 이미 글씨 상태면 안 켠다(상태 안에서는 획이 곧 글씨다). */
+  /** 누름 시계를 켠다 — web2-44부터 **글씨 상태 안에서도 켠다**(잡음에 더하기 · 이어진
+   *  것까지 잡기 · 값 표찰 수정이 전부 «한 번 더 꾹»이다). 상태 밖·안의 판정은
+   *  `holdTargetAt` 하나가 든다(#54 — 순서: 치수 숫자 > 값 표찰 > 선 > 잠긴 선 > 면). */
   function armHoldPress(p: Pt, sp: Pt) {
     cancelHoldPress()
-    if (writeActive(app)) return
     // **잡히는 것이 없으면 시계를 안 켠다**(빈 곳 경로 ⛔ — 39-1 문면). 판정을 여기서
     // 미리 한 번 하는 이유는 그리기 도중에 아무 일도 안 일어나게 하기 위해서다.
-    if (!writeTargetAt(app, p)) return
+    if (!holdTargetAt(app, p)) return
     holdPress = { p, sp }
     holdTimerId = window.setTimeout(() => {
       holdTimerId = undefined
@@ -167,10 +246,12 @@ export function initInput(
       const q = holdPress.p
       holdPress = null
       if (!cb.onWriteHold(q)) return
-      // 들어갔다 — 그리던 초안을 버린다(이 몸짓은 그리기가 아니었다).
+      // 들어갔다 — 그리던 초안·쓰던 잉크·잡기 끌기를 버린다(이 몸짓은 그것들이 아니었다).
       writeEntered = true
       draft = null
       suggestTap = null
+      manipDrag = null
+      if (writeInk) { writeInk = null; cb.onDimInk(null) }
       cb.onDraftChange(null)
     }, app.writeHoldMs)
   }
@@ -541,6 +622,19 @@ export function initInput(
     // ⚠ 상태에 들어간 뒤에는 꾹 누름 시계를 안 켠다 — 이미 대상이 정해져 있다.
     if (writeActive(app) && !app.tipErase && !isEraser(app.tool)) {
       const wp = toPt(e)
+      // ── 잡기 끌기(web2-44) — **잡힌 것 위에서 시작하면 손이다**(글씨보다 먼저 본다:
+      // 이것이 「같은 제스처의 두 뜻」을 가르는 문이다 — 잡힌 선 위 = 조작 · 밖 = 글씨).
+      const gd = gripDragStartAt(app, wp)
+      if (gd) {
+        manipDrag = {
+          mode: gd.kind, start: wp, base: gripBase(app), axis: null, amount: 0, after: null,
+          ...(gd.kind === 'move' ? { anchor3: gd.anchor3 } : { pivot: gd.pivot }),
+        }
+        drawingPointer = e.pointerId
+        drawingType = e.pointerType
+        canvas.setPointerCapture(e.pointerId)
+        return
+      }
       // **종료 판정은 여기서 한다**(39-3) — 둘 중 **먼저 오는 것**이고, 둘 다 「이 획이
       // 글씨인가」를 묻기 **전에** 답이 난다. 그래야 작도로 돌아간 획이 아래 보통 경로로
       // 흘러가 오스냅·축을 지난다(끝난 뒤에 판정하면 그 획은 아무데도 안 붙은 선이 된다).
@@ -614,6 +708,7 @@ export function initInput(
     if (drawingPointer === e.pointerId) {
       moveHoldPress(toScreen(e))     // 움직였으면 그리기다 — 꾹 누름 시계를 끈다(web2-39)
       if (writeEntered) return       // 이 몸짓은 글씨 진입으로 소진됐다
+      if (manipDrag) { dragManip(e); return }   // 잡기 끌기(web2-44) — 손이다
       if (erasingNow()) {
         eraseAt(app, toPt(e), eraseKind())
         cb.onEraserMove(toPt(e))
@@ -665,6 +760,12 @@ export function initInput(
       writeEntered = false
       drawingPointer = null
       suggestTap = null
+      return
+    }
+    if (manipDrag && drawingPointer === e.pointerId) {   // 잡기 끌기가 끝났다(web2-44)
+      drawingPointer = null
+      suggestTap = null
+      endManipDrag(e)
       return
     }
     if (writeInk) {                  // 글씨 한 획이 끝났다(web2-39 2번)
