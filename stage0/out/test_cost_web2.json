@@ -13,10 +13,10 @@
   "e2e": {
     "command": "npx playwright test --workers=1 (dpr1+dpr2)",
     "cells": 596,
-    "passed": 576,
+    "passed": 596,
     "failed": 0,
-    "wall_s": 1800,
-    "note": "web2-48 — 576 → 596(paint48 10칸 × dpr 둘). ⚠ 이 회차는 `--workers=1`로 돌렸다(직렬) — 47의 1800s와 견줄 수 없다. 마감 실행의 값이 이 칸에 들어간다."
+    "wall_s": 3066,
+    "note": "web2-48 — 576 → 596(paint48 10칸 × dpr 둘). ⚠ 이 회차는 `--workers=1`로 돌렸다(직렬 · 51.1m) — 47의 --workers=2 1800s와 견줄 수 없다. 값은 마감 검증 실행(e2e_48_verify.log · HEAD 0d9244c)의 것이다."
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",
@@ -316,8 +316,8 @@
       "at": "web2-48",
       "unit": 993,
       "e2e": 596,
-      "e2e_wall_s": null,
-      "note": "벙시계는 마감 전쟉 실행으로 채운다 — 비워 두지 않고 null로 적어 «안 재음»을 드러낸다(#43)"
+      "e2e_wall_s": 3066,
+      "note": "벽시계는 마감 검증 실행으로 채웠다(596/596 · 51.1분 · --workers=1 직렬 — 47의 workers=2와 비교 불가)"
     }
   ],
   "environment": {
