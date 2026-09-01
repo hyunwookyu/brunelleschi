@@ -152,24 +152,27 @@ test('① 48-1 칠이 안 뜬다 — 곱 합성 · D-3 반증(끄면 흰 장막�
 
   const brushc = await layerStats(page, 'brushc', BOX.x, BOX.y, BOX.w, BOX.h)
   const on = await shotStats(page, BOX.x, BOX.y, BOX.w, BOX.h)
-  // **수리 전 상태를 실제로 되살린다**(D-3 · A-4 「버그를 되살려 잡는지 확인한다」)
-  await page.evaluate(() => (window as any).__b2.diag.setInkBlend(false))
-  await page.waitForTimeout(150)
-  const off = await shotStats(page, BOX.x, BOX.y, BOX.w, BOX.h)
+  // ⚠⚠ **48-1은 진단까지만 끝냈고 수리는 되돌렸다** — 그래서 이 팔이 재는 것도 바뀜다.
+  // 셋을 **같은 실행에서** 낸다: ㄱ 증상이 살아 있다(출하 상태) ㄴ 수리가 실재한다
+  // (곱을 걸면 장막이 0) ㄷ 되돌리면 출하 상태로 간다. 왜 안 실었는가는 note_reverted에
+  // 있고 그 **비용은 `press26.spec` ②이 따로 재다**(흑연이 두 번 어두워진다).
   await page.evaluate(() => (window as any).__b2.diag.setInkBlend(true))
+  await page.waitForTimeout(150)
+  const mul = await shotStats(page, BOX.x, BOX.y, BOX.w, BOX.h)
+  await page.evaluate(() => (window as any).__b2.diag.setInkBlend(false))
   await page.waitForTimeout(150)
   const back = await shotStats(page, BOX.x, BOX.y, BOX.w, BOX.h)
 
-  // 칠 층 자체는 여전히 불투명 흰 장막을 낸다 — **고친 것은 합성이지 라이브러리가 아니다**.
-  // 이 줄이 D-1 소견을 팔로 못 박는다: 원인은 그대로 있고 우리가 그 위를 곱으로 덮는다.
-  expect(brushc.opaqueLighter, '칠 층(#brushc) 자체에는 여전히 종이보다 밝은 불투명 픽셀이 있다').toBeGreaterThan(0)
-  // 합성에서는 하나도 안 남는다
-  expect(on.lighterThanPaper, '합성 화면에 종이보다 밝은 픽셀이 없다').toBe(0)
-  // 반증 — 끄면 되살아나고, 되돌리면 다시 사라진다(둘 다 같은 실행에서)
-  expect(off.lighterThanPaper, '곱을 끄면 흰 장막이 되살아난다(반증 조건)').toBeGreaterThan(0)
-  expect(back.lighterThanPaper, '되돌리면 다시 없다').toBe(0)
-  expect(on.lumaMean, '곱이 켜지면 상자가 더 어둡다(안료가 남고 흰 장막이 간다)').toBeLessThan(off.lumaMean)
-  OUT.blend = { box: BOX, brushc_layer_alone: brushc, composite_on: on, composite_off: off, composite_back: back }
+  expect(brushc.opaqueLighter, 'ㄱ 칠 층(#brushc) 자체가 불투명 흰 장막을 깔아 놓는다(AS-C158)').toBeGreaterThan(0)
+  expect(on.lighterThanPaper, 'ㄱ 출하 상태에는 그 장막이 합성에도 남아 있다 — 48은 진단까지다').toBeGreaterThan(0)
+  expect(mul.lighterThanPaper, 'ㄴ 곱을 걸면 장막이 실제로 사라진다(수리는 실재한다)').toBe(0)
+  expect(back.lighterThanPaper, 'ㄷ 되돌리면 출하 상태다').toBe(on.lighterThanPaper)
+  OUT.blend = {
+    def: '칠 상자의 «종이보다 밝은 픽셀» — 칠 층 단독(#brushc 버퍼) · 출하 합성 · 곱을 걸은 합성 · 되돌린 합성',
+    box: BOX, brushc_layer_alone: brushc, shipped: on, with_multiply: mul, restored: back,
+    note_reverted: '⚠⚠ **48-1은 진단만 끝냈고 수리는 되돌렸다.** 곱은 장막을 지우지만 이 겹이 «종이 위의 잉크»가 아니라 **#gl의 몸체 위에 얹히는 질감**이라 질감 × 몸체로 흑연이 두 번 어두워진다 — press26 ②(dpr2 · p=0.20): 꺼짐 185.3 → 128.9 · 켬 196.0 → 127.1로 보정의 순서까지 뒤집혔다. 올바른 수리는 칠에게 제 겹을 주는 것이다(DEFERRED)',
+    note_73: '#73 ㉐의 범위 정정은 그대로 산다(AS-C157) — 이 겹에서 곱은 **발화한다**(with_multiply가 그 증거). 되돌린 이유는 «곱이 안 선다»가 아니라 «이 겹이 곱의 대상이 아니다»이다',
+  }
 })
 
 test('② 48-5 칠은 면의 한쪽에만 — 반대쪽에서 **픽셀이 0**이고 · 양쪽을 다르게 칠하고 · 저장 왕복', async ({ page }) => {

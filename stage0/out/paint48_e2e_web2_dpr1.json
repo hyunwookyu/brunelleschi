@@ -2,6 +2,7 @@
   "what": "web2-48 — 화면 몫: 칠 합성(곱) · 면의 쪽 · 크기 트레이 · 면 표시와 가림 · 궤도 중 칠 · 툴팁 · 배열 · 큐브 톤",
   "note_92": "#92 — 판정자는 픽셀(종이보다 밝은 불투명 픽셀 수 · 자국 폭 · 면 알파)이다. 「곱을 켰다」는 이름표라 안 센다",
   "blend": {
+    "def": "칠 상자의 «종이보다 밝은 픽셀» — 칠 층 단독(#brushc 버퍼) · 출하 합성 · 곱을 걸은 합성 · 되돌린 합성",
     "box": {
       "x": 505,
       "y": 405,
@@ -15,21 +16,23 @@
       "opaqueLighter": 948,
       "lumaMean": 248
     },
-    "composite_on": {
-      "px": 4500,
-      "lumaMean": 241,
-      "lighterThanPaper": 0
-    },
-    "composite_off": {
+    "shipped": {
       "px": 4500,
       "lumaMean": 244,
       "lighterThanPaper": 918
     },
-    "composite_back": {
+    "with_multiply": {
       "px": 4500,
       "lumaMean": 241,
       "lighterThanPaper": 0
-    }
+    },
+    "restored": {
+      "px": 4500,
+      "lumaMean": 244,
+      "lighterThanPaper": 918
+    },
+    "note_reverted": "⚠⚠ **48-1은 진단만 끝냈고 수리는 되돌렸다.** 곱은 장막을 지우지만 이 겹이 «종이 위의 잉크»가 아니라 **#gl의 몸체 위에 얹히는 질감**이라 질감 × 몸체로 흑연이 두 번 어두워진다 — press26 ②(dpr2 · p=0.20): 꺼짐 185.3 → 128.9 · 켬 196.0 → 127.1로 보정의 순서까지 뒤집혔다. 올바른 수리는 칠에게 제 겹을 주는 것이다(DEFERRED)",
+    "note_73": "#73 ㉐의 범위 정정은 그대로 산다(AS-C157) — 이 겹에서 곱은 **발화한다**(with_multiply가 그 증거). 되돌린 이유는 «곱이 안 선다»가 아니라 «이 겹이 곱의 대상이 아니다»이다"
   },
   "side": {
     "def": "칠한 쪽의 상자 칠 픽셀 ↔ 평면 건너편 포즈의 **화면 전체** 칠 픽셀. 둘째가 0이어야 한다",
@@ -147,13 +150,13 @@
       "active": true,
       "tiles": 7,
       "frames": 5,
-      "bakeMs": 19.1,
+      "bakeMs": 17.6,
       "bakePasses": 1,
       "bakeClamped": 0,
-      "frameMsMedian": 0,
-      "frameMsMax": 0.8,
+      "frameMsMedian": 0.1,
+      "frameMsMax": 0.6,
       "paintFrames": 5,
-      "paintMsMedian": 0.5,
+      "paintMsMedian": 0.4,
       "paintMsMax": 0.5
     }
   },

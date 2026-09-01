@@ -3003,13 +3003,16 @@ const diag = {
     paints: app.doc.strokes.filter(s => s.paint !== undefined)
       .map(s => ({ id: s.id, f: s.paint!.f, s: s.paint!.s ?? null, c: s.paint!.c ?? null, w: s.paint!.w ?? null, i: s.paint!.i ?? null })),
   }),
-  /** D-3 반증 손잡이(web2-48 48-1) — 잉크 겹의 **곱 합성**을 끈다(= 수리 전 상태).
-   *  끄면 p5.brush의 «흰 종이 전제»가 그대로 화면에 나와 칠이 하얗게 뜬다 —
-   *  `e2e/paint48.spec.ts` ①이 그 값을 실제로 되살려 잡는다(반증 조건이 있는 검사다). */
+  /** **안 실린 수리를 손으로 걸어 보는 손잡이**(web2-48 48-1 — 수리는 되돌렸다).
+   *  `true` = 잉크 겹을 **곱**으로 얹는다(흰 장막이 사라진다) · `false` = **출하 상태**.
+   *  왜 안 실었는가: 이 겹은 «종이 위의 잉크»가 아니라 **#gl의 몸체 위에 얹히는 질감**
+   *  이라 통짜로 곱하면 질감 × 몸체로 **흑연이 두 번 어두워진다** — `press26.spec` ②
+   *  실측(dpr2 · p=0.20): 꺼짐 185.3 → 128.9 · 켬 196.0 → 127.1로 **보정의 순서까지 뒤집혔다**.
+   *  `paint48.spec` ①이 증상·수리·되돌림 셋을 **같은 실행에서** 낸다. */
   setInkBlend: (v: boolean) => {
     for (const id of ['brushc', 'brushsnap']) {
       const el = document.getElementById(id)
-      if (el) (el as HTMLElement).style.mixBlendMode = v ? '' : 'normal'
+      if (el) (el as HTMLElement).style.mixBlendMode = v ? 'multiply' : ''
     }
   },
   /** D-3 반증 손잡이(45 DEFERRED 「픽셀 순서 판별은 46 몫」) — 화가 알고리즘을 끈다.
