@@ -1,26 +1,22 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "web2-42 (2026-09-01)",
+  "measured_at": "web2-44",
   "unit": {
     "command": "npx vitest run (web2/)",
-    "files": 112,
-    "tests": 893,
-    "wall_s": 32.4,
-    "passed": 893,
+    "files": 115,
+    "tests": 935,
+    "wall_s": 29.7,
+    "passed": 935,
     "failed": 0,
-    "note": "web2-42 — 파일 110 → 112 · 팔 870 → 893(신설 `test/view42.test.ts` 17건 · `test/read42.test.ts` 7건. 그 전 회차 대비 수는 회차마다 조금씩 다르다). 폐기 없음.",
-    "wall_s_note": "앞 회차 54.3s → 32.4s. ⚠ **이 회차가 빨라진 것이 아니라 기기가 놀고 있었다** — 같은 트리에서 배치를 돌리는 동안 잰 값이 아니다(아래 e2e의 두 실행이 그 차를 보인다)."
+    "note": "web2-44 — 파일 112 → 115 · 팔 893 → 935. ⚠ 43이 이 원장을 안 갱신했다(43 NOTES 실측 113파일 910건 — 그 사이 몫은 43의 새 팔 16건 + 44의 25건. #34 재발: 19·22·24·31·43에 이어. 44가 행으로 남긴다)."
   },
   "e2e": {
-    "command": "npx playwright test --workers=1 (dpr1+dpr2)",
-    "cases": 518,
-    "arms": 259,
-    "wall_s": 2532,
-    "passed": 517,
+    "command": "npx playwright test --workers=2 (dpr1+dpr2)",
+    "cells": 546,
+    "passed": 545,
     "failed": 1,
-    "arms_source": "실행 요약 「1 failed · 517 passed (42.2m)」 — dpr1+dpr2 두 벌이라 팔은 259",
-    "note": "web2-42 — 케이스 506 → 518(팔 253 → 259 · **+6**). 신설 `e2e/view42.spec.ts` 여섯(면·가운데 / 확정 전 아홉 자리 클릭 / 축측 / 읽는 값 / 이름 픽셀 / GL ↔ 사영).",
-    "failed_note": "**그 하나는 이 회차의 것이었고 고쳤다** — `underlay ①`(dpr1)이 web2-40의 겹 슬라이드(300 ms)를 안 기다리고 막을 읽고 있었다(`settleSlide` 미호출). 끊기는 칸이 실행마다 240 ↔ 333으로 옮겨 다닌 것이 그 증거다. 고친 뒤 그 스펙 dpr1+dpr2 14/14. ⚠ 위 517/1은 **고치기 전** 전량이고, 고친 뒤 전량은 마감 블록이 낸다."
+    "wall_s": 1662,
+    "note": "web2-44 — 518 → 546(grip44 10칸 + 띠 두 점 등). 빨강 1 = waitink37 ③ dpr2(43 등재 선재 · 단독 3/3 · #93). 워커 2 — 43의 관측(워커 수가 판정을 흔든다 · #71 ㉠) 그대로 둔다."
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",
@@ -291,6 +287,12 @@
       "unit": 893,
       "e2e": 518,
       "e2e_wall_s": 2532
+    },
+    {
+      "at": "web2-44",
+      "unit": 935,
+      "e2e": 546,
+      "e2e_wall_s": 1662
     }
   ],
   "environment": {
