@@ -3,6 +3,7 @@
 // 각 단계에서 픽셀이 실제로 그려졌는지 확인한다. (단계가 늘면 이 흐름도 는다)
 
 import { test, expect, type Page } from '@playwright/test'
+import { savedText } from './store43'
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -477,8 +478,12 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   // 지평선 띠는 상시로 그려진다 — «빈 화면 0»은 지평선 띠 밖에서 잰다
   expect(await inkPixels(page, 0, 0, 1200, 380)).toBe(0)
   expect(await inkPixels(page, 0, 397, 1200, 404)).toBeGreaterThan(100)
+  // ⚠⚠ **web2-43이 「비우기」의 뜻을 바꿨다**: 이제 지금 그림을 **굳히고** 새 문서로 간다
+  // (최근 목록에 남는다 — 칸이 여럿이 됐으므로 옛 손실은 까닭 없는 손실이었다).
+  // 그래서 판정도 바뀐다: 「저장소가 비었다」가 아니라 **「지금 문서는 새 열쇠이고 비었다」**다.
   expect(await page.evaluate(() => localStorage.getItem('b2-autosave'))).toBeNull()
   expect(await page.evaluate(() => localStorage.getItem('b2-autosave2'))).toBeNull()
+  expect(await savedText(page), '새 문서에는 저장물이 없다').toBe('')
 
   // 빈 화면에서 다시 그리기가 처음처럼 된다
   await drawLine(page, 100, 400, 1100, 402)

@@ -1,0 +1,19 @@
+{
+  "what": "web2-43 ㉦ — 큰 문서 여럿을 실제 저장소(IndexedDB)에 넣었을 때의 거동. files43.spec가 매 실행 다시 쓴다.",
+  "run": {
+    "note": "정본 명령: LEDGER=1 npx playwright test files43 --workers=1",
+    "project": "dpr1"
+  },
+  "one_doc_bytes": 966530,
+  "docs_written": 12,
+  "total_docs": 13,
+  "approx_total_bytes": 12564890,
+  "localstorage_limit_units": 5241856,
+  "would_fit_in_localstorage": 5,
+  "storage_estimate": {
+    "quota": 5373924878,
+    "usage": 5215758
+  },
+  "put_error": "",
+  "shown_in_list": 8
+}

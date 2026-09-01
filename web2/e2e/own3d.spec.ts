@@ -9,6 +9,7 @@
 // 기전의 팔은 test/own3d.test.ts(단위 — 4-a~4-d·4-g·반증). 여기는 사람이 만지는 표면.
 
 import { test, expect, type Page } from '@playwright/test'
+import { savedText, waitSaved, clearStore } from './store43'
 
 /** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
  *  `pointer-events: none`인 표시가 됐고, 여는 자리는 **설정 패널의 「진단」**이다. */
@@ -82,7 +83,8 @@ test('기본은 켜짐(자립이 정본) — 진단이 말한다 · 끄면 사�
   await openDiag(page)
   await page.click('#chk-own3d')
   expect(await page.evaluate(() => (window as any).__b2.app.own3d)).toBe(true)
-  await page.evaluate(() => { localStorage.removeItem('b2-own3d'); localStorage.removeItem('b2-autosave'); localStorage.removeItem('b2-autosave2') })
+  await page.evaluate(() => localStorage.removeItem('b2-own3d'))
+  await clearStore(page)
 })
 
 test('이행 — own3 없는 옛 저장 파일을 기본 켜짐으로 열면 사슬로 올리고 그 자리에서 굳는다', async ({ page }) => {
@@ -101,14 +103,11 @@ test('이행 — own3 없는 옛 저장 파일을 기본 켜짐으로 열면 사
   })
   expect(old.own3, '옛 파일 판별력 — own3가 없어야 이행을 잰다').toBe(0)
   expect(old.lifted).toBeGreaterThan(0)
-  // 자동 저장을 기다린다(400ms 디바운스) — **획 수가 최종본과 같아질 때까지**
+  // 자동 저장을 기다린다(지연 병합) — **획 수가 최종본과 같아질 때까지**
   // (존재만 기다리면 중간 저장본을 잡아 리로드가 옛 상태를 연다 — 첫 실행이 그랬다)
-  await page.waitForFunction((n) => {
-    const s = localStorage.getItem('b2-autosave2')   // web2-17: 새 앱은 새 열쇠에 쓴다(D-W4)
-    if (!s) return false
-    try { return JSON.parse(s).strokes.length === n } catch { return false }   // .brnl은 최상위 strokes다(file.ts)
-  }, old.strokes)
-  const saved = await page.evaluate(() => localStorage.getItem('b2-autosave2')!)
+  // ⚠ web2-43: 저장 자리가 IndexedDB다 — 읽는 자리는 `e2e/store43.ts` 하나다.
+  await waitSaved(page, old.strokes)
+  const saved = await savedText(page)
   expect(saved.includes('own3'), '저장 파일에 own3 필드가 없다').toBe(false)
   await page.evaluate(() => localStorage.removeItem('b2-own3d'))
 
@@ -124,7 +123,8 @@ test('이행 — own3 없는 옛 저장 파일을 기본 켜짐으로 열면 사
   expect(mig.strokes, '획이 그대로 열렸다').toBe(old.strokes)
   expect(mig.lifted, '사슬 리프팅이 정상으로 돈다').toBe(old.lifted)
   expect(mig.frozen, '열면서 굳는다(이행)').toBe(old.lifted)
-  await page.evaluate(() => { localStorage.removeItem('b2-autosave'); localStorage.removeItem('b2-autosave2'); localStorage.removeItem('b2-own3d') })
+  await page.evaluate(() => localStorage.removeItem('b2-own3d'))
+  await clearStore(page)
 })
 
 test('4-g 가시성(2차 [17]) — 대기선 몸통 위 호버에 오스냅 기호가 화면(픽셀)에 뜬다', async ({ page }) => {

@@ -9,6 +9,7 @@
 // ⚠⚠ 절대 밝기 임계를 안 쓴다(#74 ㉡) — **두 화면의 차**로만 판정한다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { savedText, putSaved, waitSaved, clearStore } from './store43'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -98,11 +99,8 @@ test('③ 그림이 안 바뀐다 — 반올림 있는 문서와 없는 문서�
     }
     // ⚠ 자동 저장은 **디바운스**(400ms)라 마지막 획이 payload에 들어갈 때까지 기다린다 —
     //   안 그러면 복원한 문서가 한 획 모자라고 팔이 «사라졌다»로 오독한다(#71 ㉤의 형태).
-    await page.waitForFunction(() => {
-      const t = localStorage.getItem('b2-autosave2') ?? localStorage.getItem('b2-autosave')
-      if (!t) return false
-      try { return (JSON.parse(t).strokes ?? []).length >= 6 } catch { return false }
-    }, undefined, { timeout: 8000 })
+    // ⚠ web2-43: 저장 자리가 IndexedDB다 — 읽는 자리는 `e2e/store43.ts` 하나다.
+    await waitSaved(page, 6)
   }
   /** ⚠⚠ **복원 뒤에 저장 형식을 다시 못 박는다.** `saveRound(false)`는 그 페이지의
    *  런타임 손잡이라 `reload()`에 리셋된다 — 그대로 두면 복원 직후의 자동 저장이
@@ -114,10 +112,7 @@ test('③ 그림이 안 바뀐다 — 반올림 있는 문서와 없는 문서�
     // ⚠⚠ **같은 바이트를 다시 넣고** 연다 — 그래야 「잡음 바닥」이 잡음만 잰다.
     //   복원 직후의 자동 저장이 저장소를 덮어쓰므로(그 판은 반올림된 것이다) 손잡이를
     //   다시 박는 것만으로는 **경주가 남는다**(dpr2에서 실제로 0.035%가 났다).
-    if (payload) {
-      await page.evaluate(([k, v]) => { try { localStorage.setItem(k, v) } catch { /* 없음 */ } },
-        ['b2-autosave2', payload] as const)
-    }
+    if (payload) await putSaved(page, payload)
     await page.reload()
     await page.waitForFunction(() => (window as any).__b2)
     if (round !== undefined) await page.evaluate((r) => (window as any).__b2.diag.saveRound(r), round)
@@ -129,7 +124,7 @@ test('③ 그림이 안 바뀐다 — 반올림 있는 문서와 없는 문서�
   // ── 갈래 ㉠: **반올림 없이** 저장한다(web2-24까지의 형식 — 반증 손잡이) ──────────
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 저장소 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   await page.evaluate(() => (window as any).__b2.diag.saveRound(false))
@@ -139,8 +134,7 @@ test('③ 그림이 안 바뀐다 — 반올림 있는 문서와 없는 문서�
     (window as any).__b2.app.doc.strokes.reduce((n: number, s: any) => n + (s.raw?.length ?? 0), 0))
   expect(rawPts).toBeGreaterThan(40)
   // 저장된 것이 **실제로 배정밀도**인가(손잡이가 일했다는 증거 — 실패 가능한 격자)
-  const savedRaw = await page.evaluate(() =>
-    localStorage.getItem('b2-autosave2') ?? localStorage.getItem('b2-autosave') ?? '')
+  const savedRaw = await savedText(page)
   expect(strokeCoordsRounded(savedRaw), '반올림 **없이** 저장됐다').toBe(false)
   const shotLive = await shot(page)        // **생으로 그린** 화면 — 아래 «재그리기 몫»의 기준
   const shotNoRound = await reloadShot(false, savedRaw)   // **같은 바이트**로 연다
@@ -149,12 +143,11 @@ test('③ 그림이 안 바뀐다 — 반올림 있는 문서와 없는 문서�
   // ── 갈래 ㉡: **반올림하고** 저장한다(지금 앱의 형식) ─────────────────────────────
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 저장소 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   await draw()
-  const savedRound = await page.evaluate(() =>
-    localStorage.getItem('b2-autosave2') ?? localStorage.getItem('b2-autosave') ?? '')
+  const savedRound = await savedText(page)
   expect(strokeCoordsRounded(savedRound), '반올림하고 저장됐다').toBe(true)
   expect(savedRound.length).toBeLessThan(savedRaw.length)     // 실제로 줄었다
   const shotRound = await reloadShot()

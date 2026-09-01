@@ -12,7 +12,9 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, type Draft } from './render2d'
 import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost } from './render3d'
-import { serializeBrnl, setSaveRoundForTest, parseBrnl } from '../core/file'
+import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
+import { initFilePanel, type FilePanel } from './filepanel'
+import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
 import { recognizeStrokes } from '../core/handwriting'
@@ -142,9 +144,14 @@ const diagPanel = initDiagPanel(
           + `(A못줌 ${app.touchStats.aNot3d}·카메라 ${app.touchStats.noCam}·시점 ${app.touchStats.pose}·방향 ${app.touchStats.axis}·리프팅 ${app.touchStats.lift}·왕복 ${app.touchStats.roundtrip}·층 ${app.touchStats.layer})`
         : '사슬(대체 — 설정에서 껐다)'],
       // 자동 저장 잔량(web2-22 3부) — 조용히 차지 않게: 상한 «가정» 대비 %가 상시 보인다
-      ['자동 저장', lastAutosave
-        ? `${(lastAutosave.bytes / 1024).toFixed(0)} KB / 상한 가정 ${(autosaveLimit() / 1024 / 1024).toFixed(1)} MB — ${(lastAutosave.pct * 100).toFixed(1)}%`
-        : '아직 없음'],
+      // ⚠ web2-43부터 저장 자리는 IndexedDB이고 이 «상한 가정»은 **한 문서의 눈금**으로
+      // 남았다(저장소 예산은 6GiB 대역 — §0). 파일로 저장해 두라는 말의 근거는 그대로다.
+      ['자동 저장', (() => {
+        const l = filePanelRef?.last()
+        return l
+          ? `${(l.bytes / 1024).toFixed(0)} KB / 상한 가정 ${(C.AUTOSAVE_LIMIT_BYTES / 1024 / 1024).toFixed(1)} MB — ${(l.pct * 100).toFixed(1)}%`
+          : '아직 없음'
+      })()],
       // 마지막 획의 교점 단계(web2-14 2번 — 지시 ①~④): 실기기에서 «왜 안 붙었나»를
       // 단계로 읽는 자리. ① 미승격인데 닿았으면 그 사유(A못줌)가 여기 보인다(2-b).
       ...(app.own3d && app.touchLast ? [[
@@ -195,8 +202,11 @@ try { if (localStorage.getItem(OWN3D_KEY) === 'off') app.own3d = false } catch {
 // 덮어써** 새 앱의 그림이 소실된다(옛 코드의 «빈 문서는 지운다» 경로 포함). 새 앱은 새
 // 열쇠에만 쓰고, 옛 열쇠는 읽기(이행)만 한다 — 옛 PWA는 새 열쇠를 모르므로 못 건드린다.
 // 대가: 두 판을 오가며 쓰면 서로의 자동 저장을 못 본다(새 열쇠가 이긴다) — 파일 저장이 답.
-const AUTOSAVE_KEY_OLD = 'b2-autosave'
-const AUTOSAVE_KEY = 'b2-autosave2'
+// ⚠⚠ **web2-43 5번이 저장소를 옮겼다** — 문서는 이제 IndexedDB(`core/store.ts`)에 산다.
+// 위 두 문단의 「열쇠를 판으로 가른다」는 **그 이전의 사실**이고, 옛 열쇠 둘은 이제
+// **이전(migration)의 입력**으로만 남는다: `migrateFromLocal`이 복사 → 검증 → 삭제로
+// 옮기고 실패하면 옛것이 그대로 있다(팔이 실제로 실패시켜 잰다).
+// 근거는 §0의 실측 — localStorage 상한 5241856 units vs 실사용 문서 238456 B(21.9개면 참).
 function fitViewToFrame() {
   const fw = app.doc.frame.W, fh = app.doc.frame.H
   const draw = app.drawView ?? { s: 1, ox: 0, oy: 0 }
@@ -204,17 +214,8 @@ function fitViewToFrame() {
   const s = Math.min(W / fw, H / fh)
   app.view = composeView({ s, ox: (W - fw * s) / 2, oy: (H - fh * s) / 2 }, draw)
 }
-try {
-  // 새 열쇠 우선 — 없으면 옛 열쇠(v1)를 읽어 이행한다(변환은 parseBrnl 안이다).
-  const saved = localStorage.getItem(AUTOSAVE_KEY) ?? localStorage.getItem(AUTOSAVE_KEY_OLD)
-  if (saved) {
-    const data = parseBrnl(saved)
-    if (data && data.doc.strokes.length > 0) {
-      loadDoc(app, data)
-      fitViewToFrame()
-    }
-  }
-} catch { /* 저장소가 없으면 그냥 새 문서 */ }
+// 복원은 이제 **비동기**다(IndexedDB) — 아래 `filePanel.boot()`가 돈다.
+// ⚠ 그 사이에 사람이 그리기 시작했으면 **안 덮는다**(boot 안의 그 조항).
 
 let draft: Draft | null = null
 let hover: OsnapHit | null = null
@@ -238,49 +239,18 @@ app.listeners.push(() => {
   invalidate()
 })
 
-// 자동 저장 — 문서·시점이 바뀌면 잠시 뒤 localStorage로
-let autosaveTimer: number | undefined
-let autosaveWarned = false
+// 자동 저장(web2-43 2번) — **커밋마다**다(주기가 아니라 사건: `app.docVersion` 변화).
+// 짧은 지연 병합만 남고 그 값은 상수다(`C.AUTOSAVE_DEBOUNCE_MS` — 종전 코드에 박혀 있던
+// 400을 꺼낸 것이고 값은 안 바꿨다). 저장 자체와 이름·최근 목록은 `filepanel.ts`에 산다.
+//
 // ⚠⚠ **복원한 판은 이미 저장소의 것이다**(web2-32 · 전량 e2e가 잡은 **선재 결함**):
-// 초기화가 리스너를 울리므로 부팅 직후 400ms 뒤에 **방금 읽은 것을 도로 쓰는** 저장이
-// 예약된다. 그 창 안에 저장소를 비우면(사람이 지우거나 팔이 `localStorage.clear()`) 비운
-// 뒤에 옛 문서가 **되살아난다** — 실측: 비운 지 50ms 만에 2849B가 돌아왔고, 그래서
-// `roundsave.spec ③`이 무작위로 빨개졌다. ⚠ **web2-30 트리에서도 같은 자국으로 실패한다**
-// (같은 팔·같은 추적을 두 트리에서 돌려 확인했다 — 이 회차가 만든 결함이 아니다).
-// 자동 저장은 **바뀐 것**을 남기는 일이므로 판본이 그대로면 아무 일도 안 한다.
-let savedVersion = app.docVersion
-// ── 자동 저장 잔량(web2-22 3부) — **쓰기 전에 재고, 임계를 넘으면 실패 전에 말한다** ──
-// 상한은 가정(5MB — AS-C80·알아낼 표준 없음)이고 진단 패널이 상한 대비 %를 상시 보인다.
-let lastAutosave: { bytes: number; pct: number } | null = null
-let quotaWarned = false
-let autosaveLimitOverride: number | null = null   // 테스트 손잡이(diag) — e2e가 임계를 실제로 넘겨 본다
-const autosaveLimit = () => autosaveLimitOverride ?? C.AUTOSAVE_LIMIT_BYTES
-app.listeners.push(() => {
-  clearTimeout(autosaveTimer)
-  autosaveTimer = window.setTimeout(() => {
-    if (app.docVersion === savedVersion) return   // 안 바뀐 판은 안 쓴다(위 ⚠⚠)
-    try {
-      // 빈 문서는 **지운다** — 비우기 뒤에 늦게 도는 이 타이머가 빈 것을 도로 써 두면
-      // 열쇠가 남는다. 새로고침이 안 되살리는 것(복원 조건)과 별개로 자리를 안 남긴다.
-      // 옛 열쇠도 같이 지운다 — 안 지우면 다음 부팅의 «옛 열쇠 이행»이 비운 그림을 되살린다
-      if (app.doc.strokes.length === 0) { localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(AUTOSAVE_KEY_OLD); lastAutosave = null; savedVersion = app.docVersion; return }
-      const payload = serializeBrnl({
-        doc: app.doc, nextId: app.nextId, drawView: app.drawView,
-      })
-      // 쓰기 전에 직렬화 바이트를 잰다(3부) — 임계(70%)를 넘으면 **실패 전에** 알린다.
-      lastAutosave = { bytes: payload.length, pct: payload.length / autosaveLimit() }
-      if (lastAutosave.pct >= C.AUTOSAVE_WARN_RATIO && !quotaWarned) {
-        quotaWarned = true
-        notify(`자동 저장이 상한 가정(${(autosaveLimit() / 1024 / 1024).toFixed(1)}MB)의 ${Math.round(lastAutosave.pct * 100)}%다 — 파일로 저장해 두라`)
-      }
-      localStorage.setItem(AUTOSAVE_KEY, payload)
-      savedVersion = app.docVersion
-    } catch {
-      // 큰 문서로 quota가 넘칠 수 있다 — **조용히 넘어가지 않는다**(한 번만 알린다)
-      if (!autosaveWarned) { autosaveWarned = true; notify('자동 저장이 안 된다 — 파일로 저장한다') }
-    }
-  }, 400)
-})
+// 초기화가 리스너를 울리므로 부팅 직후 지연 병합 뒤에 **방금 읽은 것을 도로 쓰는** 저장이
+// 예약된다. 자동 저장은 **바뀐 것**을 남기는 일이므로 판본이 그대로면 아무 일도 안 한다
+// (그 조항은 `filepanel.ts`의 `saveNow` 첫 줄이다).
+// ⚠ 늦은 묶기 — layerbarRef와 같은 까닭이다(이 리스너는 초기화에서도 울리고 그때
+// `filePanel`은 아직 없다). 참조가 서면 그때부터 예약한다.
+let filePanelRef: FilePanel | null = null
+app.listeners.push(() => { filePanelRef?.schedule() })
 
 // **접힐 자세(임계 안 기울임)일 때 무엇이 다른지** — 잠깐 뒤 정렬로 돌아가므로 그리기가
 // 유예된다. 그것이 보여야 한다. **임계 밖(머무는 자세)에서는 이 줄이 안 뜬다** — 거기서는
@@ -1600,15 +1570,21 @@ fileOpen.addEventListener('change', async () => {
   const f = fileOpen.files?.[0]
   fileOpen.value = ''
   if (!f) return
-  const data = parseBrnl(await f.text())
-  if (!data) { notify('.brnl 파일이 아니거나 손상됐다'); return }
-  // 열기도 지금 그림을 통째로 버린다(실행취소 스택까지) — 비우기와 같은 급이므로
-  // 같은 확인을 받는다. 빈 화면이면 버릴 것이 없으니 그냥 연다.
+  // **읽을 수 있는 데까지 읽는다**(web2-43 1번) — 잘렸거나 필드가 깨졌으면 못 읽은 것을
+  // 말하고 나머지를 연다. 조용히 빈 문서를 열지도, 통째로 버리지도 않는다.
+  const { data, report } = readBrnl(await f.text())
+  const msg = reportNotice(report)
+  if (!data) { notify(msg ?? '.brnl 파일이 아니거나 손상됐다'); return }
+  // 파일에서 연 것은 **새 문서**다(web2-43 3번) — 이름은 파일 이름이다. 그래서 지금
+  // 그림을 버리지 않는다: 열기 전에 저장되고 최근 목록에 그대로 남는다.
+  const name = f.name.replace(/\.(brnl|json)$/i, '').replace(/\.brnl$/i, '')
+  const go = () => { void filePanel.flush().then(() => { applyOpen(data); filePanel.adoptOpened(name); if (msg) notify(msg) }) }
+  if (app.doc.strokes.length === 0) { go(); return }
   // 확인은 누른 버튼 곁이다(web2-12 4번 — 상부 알림줄 왕복을 없앤다).
-  if (app.doc.strokes.length === 0) { applyOpen(data); return }
+  // ⚠ 문구가 바뀌었다 — 이제 **안 잃는다**(먼저 저장하고 새 문서로 연다).
   confirmNear(document.getElementById('btn-open')!,
-    '지금 그림을 파일로 바꾼다 — 실행취소로 못 돌아온다.',
-    { label: '연다', onPick: () => applyOpen(data) })
+    '지금 그림을 저장하고 파일을 새 문서로 연다.',
+    { label: '연다', onPick: go })
 })
 document.getElementById('btn-obj')!.addEventListener('click', () => {
   if (!hasGeometry()) return
@@ -1634,15 +1610,24 @@ function hasGeometry(): boolean {
 // 같은 자리를 연타해도 안 지워진다(그 연타를 e2e가 실제로 한다 — D-3).
 document.getElementById('btn-clear')!.addEventListener('click', () => {
   if (app.doc.strokes.length === 0) { notify('이미 비어 있다'); return }
+  // ⚠⚠ **web2-43이 이 문구를 바꿨다**(그리고 뜻을 바꿨다): 비우기는 이제 **새 문서로
+  // 가는 일**이고 지금 그림은 **최근 목록에 남는다**. 종전에는 「실행취소로 못 돌아온다」가
+  // 사실이었다 — 자동 저장 칸이 하나뿐이라 비우면 그 그림이 정말로 사라졌기 때문이다.
+  // 이제 칸이 여럿이므로 그 손실은 **까닭 없는 손실**이다. 지우고 싶으면 최근 목록의
+  // ×가 그 자리이고(거기에 되돌릴 수 없는 것의 확인이 붙어 있다), 여기는 「새로 시작」이다.
+  // 확인을 남겨 둔 이유: 화면의 그림이 사라지는 것은 여전히 사람이 놀랄 일이다(R4 예외).
   confirmNear(document.getElementById('btn-clear')!,
-    '전부 비운다 — 실행취소로 못 돌아온다.', { label: '비운다', onPick: doClear })
+    '지금 그림을 저장하고 빈 종이로 간다.', { label: '새로 시작', onPick: doClear })
 })
 function doClear() {
   // 볼일이 여기서 끝난다 — **그때 접는다**(web2-28 1번의 `data-fold="late"` 짝).
   ;(document.getElementById('pane-file') as HTMLDetailsElement).open = false
+  // **비우기 전에 굳힌다** — 순서가 곧 「잃지 않는다」이다(비운 뒤에 저장하면 그 저장이
+  // 빈 문서를 쓰는 일이 되고, 빈 문서는 저장소에서 지워진다). `detach`는 **지금 바이트를
+  // 그 자리에서 떠서** 뒤에 쓰므로 화면이 저장소를 안 기다린다.
+  filePanel.detach()
   clearAll(app, window.innerWidth, window.innerHeight)
   unitSel.value = app.doc.unit
-  try { localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(AUTOSAVE_KEY_OLD) } catch { /* 저장소가 없으면 지울 것도 없다 */ }
   draft = null; hover = null; eraserPos = null; facePrev = null // 지운 획을 가리키던 표식이 남지 않게
   paperbar.sync()
   layerbar.sync()
@@ -1678,7 +1663,11 @@ document.getElementById('sidebar-toggle')!.addEventListener('click', () => {
  *  저장 시점에 굽는다(㉮ — addSheet 머리주석). JPEG: 사진형 합성이라 PNG보다 훨씬 작다. */
 function captureThumb(): string {
   const t = document.createElement('canvas')
-  const ratio = H / W
+  // ⚠ **비가 유한하지 않을 수 있다**(web2-43에서 실측): 화면이 아직(또는 전혀) 안 그려진
+  // 창에서는 `W`가 0이라 `H/W`가 NaN이 되고, `Math.max(1, NaN)`은 **NaN**이라 캔버스
+  // 높이가 0이 된다 — 그때 `toDataURL`이 `"data:,"`를 낸다(그림이 아니다).
+  // 종전에는 그 값이 종이 썸네일에 **조용히** 들어갔다. 이제 비를 4:3으로 물린다.
+  const ratio = W > 0 && H > 0 ? H / W : 0.75
   t.width = C.THUMB_W
   t.height = Math.max(1, Math.round(C.THUMB_W * ratio))
   const g = t.getContext('2d')!
@@ -1838,6 +1827,24 @@ const paperbar = initPaperbar(app, document.getElementById('paperbar')!, {
   },
 })
 paperbarRef = paperbar
+
+// ── 문서 저장소(web2-43 2·3·4·5번) — 자동저장 · 이름 · 최근 드로잉 ────────────────
+// **여기가 «지금 문서가 무엇인가»의 유일한 출처다**(#54). 앱 상태는 그림만 들고 있고
+// 열쇠·이름·시각은 이 패널이 든다 — 그래야 이름을 바꾸는 일이 그림을 안 건드린다.
+const filePanel = initFilePanel({
+  app,
+  serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
+  // **UI 없이 도면만**(지시 4번) — 종이 썸네일과 **같은 함수**다(새 경로 ⛔ · #54)
+  thumb: captureThumb,
+  notify,
+  applyDoc: applyOpen,
+  confirmNear,
+  now: () => Date.now(),
+})
+filePanelRef = filePanel
+// 부팅 복원 — 이전(localStorage → IndexedDB) 뒤 가장 최근 문서를 연다.
+// ⚠ **상한 있는 비동기다**: 실패해도 앱은 그대로 서고(빈 문서), 실패 사실을 알린다.
+void filePanel.boot()
 
 // **되돌리기의 자리**(web2-17 1-d) — 규칙은 안 바꾼다(작도 획은 스택 밖·비우기가 답이다).
 // 새 진입로에서는 첫 획이 곧 소실점 획인 경우가 흔해 «되돌리기가 아무 일도 안 하는» 장면이
@@ -2246,8 +2253,28 @@ const diag = {
     invalidate()
   },
   // web2-22 3부 — e2e가 임계를 실제로 넘겨 보는 손잡이(작은 상한 주입) + 마지막 실측
-  autosaveLimitForTest: (n: number | null) => { autosaveLimitOverride = n },
-  autosaveLast: () => lastAutosave,
+  autosaveLimitForTest: (n: number | null) => filePanelRef?.limitForTest(n),
+  autosaveLast: () => filePanelRef?.last() ?? null,
+  // ── web2-43 — **저장소를 그 런타임에서 본다**(#94: 문면이 아니라 행위를 잰다) ──
+  /** 저장소에 실제로 든 것 — 지금 문서의 열쇠·목록·저장물·썸네일 */
+  storeDump: () => filePanelRef?.dump() ?? Promise.resolve(null),
+  /** 예약된 저장을 앞당긴다 — 팔이 「저장됐다」를 기다리는 자리(상한 있는 대기 #95) */
+  storeFlush: () => filePanelRef?.flush() ?? Promise.resolve(),
+  /** 지금 문서의 정체(이름·열쇠·시각) */
+  docNow: () => filePanelRef?.current() ?? null,
+  /** 저장소를 실제로 실패시킨다(D-3의 반증 손잡이) — 이전 실패 게이트가 이것을 쓴다 */
+  storeFailForTest: (m: 'open' | 'put' | 'verify' | null) => setStoreFailForTest(m),
+  /** 저장소를 **앱과 같은 함수로** 만진다 — 팔이 제 경로를 따로 만들면 그것을 재게 된다(#88).
+   *  스펙이 `/src/core/store.ts`를 직접 들여오면 타입도 번들도 그 길을 모른다. */
+  store: {
+    list: () => listDocs(),
+    get: (id: string) => getDoc(id),
+    put: (rec: Parameters<typeof putDoc>[0]) => putDoc(rec),
+    newId: (now: number) => newDocId(now),
+    migrate: (now: number) => migrateFromLocal(now),
+  },
+  /** 최근 목록을 다시 그린다 — 팔이 저장소를 직접 만졌을 때 화면을 맞춘다 */
+  recentSync: () => filePanelRef?.sync(),
   /** 오스냅 판정 그대로(web2-12 8번) — 넘김 꼬리가 스냅 대상이 아님을 팔이 잰다 */
   osnapAt: (x: number, y: number) =>
     osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / viewScale(app) },

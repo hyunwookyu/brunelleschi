@@ -112,18 +112,16 @@ test('② — 임계(70%)를 넘으면 실패 전에 알린다 (작은 상한 �
   await expect(page.locator('#notice')).toContainText('파일로 저장')
 })
 
-test('③ — 실제 실패(quota) 시 종전 알림이 그대로 뜬다 (회귀)', async ({ page }) => {
-  await page.addInitScript(() => {
-    const orig = Storage.prototype.setItem
-    Storage.prototype.setItem = function (k: string, v: string) {
-      if (k === 'b2-autosave2') throw new DOMException('quota', 'QuotaExceededError')
-      return orig.call(this, k, v)
-    }
-  })
-  // 알림은 **한 번만** 뜨고(autosaveWarned) 2.5초 뒤 사라진다 — 부트를 길게 하면 그
-  // 창을 놓친다(첫 두 판의 flake). 첫 획 직후(저장 디바운스 400ms + 알림 창 2.5s)에 본다.
+test('③ — 실제 저장 실패 시 종전 알림이 그대로 뜬다 (회귀)', async ({ page }) => {
+  // ⚠⚠ **web2-43이 저장 자리를 옮겼다**(localStorage → IndexedDB). 종전 팔은
+  // `Storage.prototype.setItem`을 갈아 끼워 quota를 흉내냈는데, 그 자리를 이제 아무도
+  // 안 지나므로 **그대로 두면 조용히 아무것도 안 재게 된다**(#94의 형태 — 관문의 문면이
+  // 아니라 «그 런타임의 행위»를 재라). 지금은 저장소 자신의 실패 손잡이를 쓴다.
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
+  await page.evaluate(() => (window as any).__b2.diag.storeFailForTest('put'))
+  // 알림은 **한 번만** 뜨고 2.5초 뒤 사라진다 — 첫 획 직후에 본다.
   await drawLine(page, 280, 560, 700, 560)
-  await expect(page.locator('#notice')).toContainText('자동 저장이 안 된다', { timeout: 5000 })
+  await expect(page.locator('#notice')).toContainText('저장이 안 된다', { timeout: 5000 })
+  await page.evaluate(() => (window as any).__b2.diag.storeFailForTest(null))
 })

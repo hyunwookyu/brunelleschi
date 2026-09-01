@@ -455,6 +455,41 @@
     .pane label { display: flex; align-items: center; gap: 6px; }
     .pane .head { color: var(--ui-faint); letter-spacing: .04em; }
 
+    /* ── 문서 이름 · 최근 드로잉(web2-43 3·4번) ────────────────────────────────
+       썸네일이 먼저 오고 이름이 뒤다 — 시점을 **그림으로 알아보는** 선례가 이미 있다
+       (종이 띠 `.ptab`의 머리주석 · Procreate 레이어 목록). 여기 썸네일은 종이 띠의
+       것보다 조금 크다: 파일 목록은 **어느 그림인가**를 가리는 자리이기 때문이다. */
+    .doc-name {
+      font: 13px/1.2 system-ui, sans-serif; color: #4a463f; background: none;
+      border: 0; border-bottom: 1px solid var(--ui-faint); outline: none;
+      padding: 3px 0; width: 148px;
+    }
+    .doc-name:focus { border-bottom-color: var(--ui); }
+    #recent { display: flex; flex-direction: column; gap: 2px; max-width: 168px; }
+    #recent .rempty { color: var(--ui-faint); font: 12px system-ui, sans-serif; padding: 3px 0; }
+    #recent .rrow { display: flex; align-items: center; gap: 2px; }
+    #recent .rpick {
+      background: none; border: 0; padding: 2px 0; cursor: pointer; flex: 1 1 auto;
+      display: flex; align-items: center; gap: 6px; min-width: 0;
+      font: 12px/1.2 system-ui, sans-serif; color: #4a463f; text-align: left;
+    }
+    #recent .rthumb {
+      width: 42px; height: 28px; flex: 0 0 auto; object-fit: cover; display: block;
+      background: var(--paper); box-shadow: 0 0 0 1px #e5e0d6;
+    }
+    #recent .rpick:hover .rthumb { box-shadow: 0 0 0 1px #8d8880; }
+    #recent .rtext { display: flex; flex-direction: column; min-width: 0; }
+    #recent .rname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 96px; }
+    #recent .rwhen { color: var(--ui-faint); font-size: 11px; }
+    /* 지금 열려 있는 문서 — 색이 아니라 **형태**가 가른다(종이 띠와 같은 규칙 둘) */
+    #recent .rrow.on .rthumb { box-shadow: 0 0 0 1px var(--ui); }
+    #recent .rrow.on .rname { color: #111; }
+    #recent .rdel {
+      background: none; border: 0; cursor: pointer; padding: 2px 4px; flex: 0 0 auto;
+      font: 12px system-ui, sans-serif; color: #a89f8e;
+    }
+    #recent .rdel:hover { color: #4a463f; }
+
     /* 치수 리본(web2-08 지시 4-3) — 우측, 접힌다. 옅은 바탕(4-a 「배경이 필요하면 아주 옅게」) */
     #dimpanel {
       position: fixed; right: var(--dim-right); top: 96px; z-index: 11; /* 시점바(right:54)의 왼쪽 — 열면 토글을 안 덮는다 */
@@ -661,7 +696,17 @@
              .brnl은 되돌아오는 원본이고 OBJ/glTF는 나가기만 한다. 사람이 「내보내기가
              있으니 불러오기도 필요하다」고 한 것은 그 둘을 같은 것으로 읽었다는 관측이다. -->
         <div>
-          <div class="head" title="이 앱에서 다시 열 수 있는 원본 형식이다">원본 .brnl</div>
+          <!-- web2-43 3·4번 — **문서 이름과 최근 드로잉**. 사람의 말: 「보통 프로그램의
+               파일 탭에는 최근 문서 등이 쭉 뜨는데 그런 게 없다. 저장 시 최종 화면을
+               썸네일로 사용하는 최근 드로잉 탭이 있으면 좋겠다.」
+               ⚠ **새 패널이 아니다**(지시 「하지 말 것」 · R5) — 파일 서랍 안이고 맨 위다:
+               서랍을 여는 이유의 첫째가 「그때 그리던 것으로 돌아간다」이기 때문이다. -->
+          <div class="head" title="지금 문서의 이름 — 바꿔도 그림은 안 바뀐다">문서</div>
+          <input id="doc-name" class="doc-name" type="text" maxlength="60" spellcheck="false"
+                 title="이름을 바꾼다 — 내부 열쇠는 따로 있어서 그림·썸네일이 안 움직인다">
+          <div class="head" style="margin-top:6px" title="누르면 열린다 — 지금 그림은 먼저 저장된다">최근</div>
+          <div id="recent"></div>
+          <div class="head" style="margin-top:6px" title="이 앱에서 다시 열 수 있는 원본 형식이다">원본 .brnl</div>
           <button id="btn-save" data-act="cmd" title=".brnl 저장 — 이 앱에서 다시 열 수 있는 원본">저장</button>
           <button id="btn-open" data-act="cmd" title=".brnl 열기">열기</button>
           <div class="head" style="margin-top:6px" title="다른 앱용 — 이 앱으로 못 되돌아온다">내보내기</div>
