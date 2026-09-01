@@ -1,0 +1,174 @@
+{
+  "what": "web2-49 재료 표현 — ①여섯 무늬 상호 판별 ②축척 통과 ③원근 축소(확인) ④밀도 하한 ⑤⚑ 원점·방향 자동 규칙 스윕. 픽셀 몫은 rep49_e2e_web2_*.json",
+  "when_cmd": "npx vitest run test/rep49_measure.test.ts",
+  "pattern_wall": {
+    "def": "3m×2.5m 벽(mmPerUnit 100 · 시드 7) — 재료별 생성 선분 수·특성 간격 mm. 판별은 (major·minor·stepMm) 서명",
+    "rows": {
+      "brick": {
+        "major": 37,
+        "minor": 551,
+        "majorStepMm": 67,
+        "minorStepMm": 200
+      },
+      "stone": {
+        "major": 7,
+        "minor": 50,
+        "majorStepMm": 325,
+        "minorStepMm": 475
+      },
+      "wood": {
+        "major": 17,
+        "minor": 25,
+        "majorStepMm": 140,
+        "minorStepMm": 140
+      },
+      "tile": {
+        "major": 17,
+        "minor": 0,
+        "majorStepMm": 300,
+        "minorStepMm": 300
+      },
+      "roof": {
+        "major": 7,
+        "minor": 76,
+        "majorStepMm": 345,
+        "minorStepMm": 300
+      },
+      "conc": {
+        "major": 6,
+        "minor": 0,
+        "majorStepMm": 600,
+        "minorStepMm": 600
+      }
+    }
+  },
+  "scale_pass": {
+    "def": "같은 벽 기하에서 mmPerUnit 100→200 — 켜의 세계 간격(비 0.5)과 mm 환산(불변 67)",
+    "world_step_at_100": 0.67,
+    "world_step_at_200": 0.335,
+    "mm_at_100": 67,
+    "mm_at_200": 67,
+    "note": "「mm 환산 == 67」 단독은 생성기 구성의 귀결이다(#5) — 측정의 몫은 두 축척이 **같은 67을 다른 세계 간격으로** 낸다는 것(축척이 실제로 지나간다)"
+  },
+  "foreshorten": {
+    "def": "원근 벽의 켜 선 투영 — 이 벽은 깊이가 크지 않아 값이 작다. 무늬가 세계 좌표라 원근을 «받는» 것 자체는 사영의 구성 귀결(#5) — 게이트를 안 건다. 픽셀 판은 e2e가 한다",
+    "n_courses": 37,
+    "note_5": "확인이지 측정 게이트가 아니다"
+  },
+  "lod_gate": {
+    "def": "repFamilyVisible(stepMm, pxPerMm) — 문 C.REP_MIN_PX의 경계 ±20% · repVisibleFamilies — 부선은 주선 없이 못 선다(계층)",
+    "registered": "C.REP_MIN_PX",
+    "value": 4,
+    "above": {
+      "pxPerMm": 0.07164179104477611,
+      "stepPx": 4.799999999999999,
+      "visible": true
+    },
+    "below": {
+      "pxPerMm": 0.04776119402985075,
+      "stepPx": 3.2,
+      "visible": false
+    },
+    "orphan_band": {
+      "pxPerMm": 0.04776119402985075,
+      "minor_alone_would_be": true,
+      "families": {
+        "major": false,
+        "minor": false
+      }
+    },
+    "note_12": "4px는 눈이 고른 동작점이다 — 경계 양쪽 값을 남기고, 실기기 「뭉친다/일찍 사라진다」가 되돌릴 조건",
+    "falsify": "계층을 끄면(repFamilyVisible만 쓰면) orphan_band에서 minor가 살아난다 — minor_alone_would_be가 그 값"
+  },
+  "flag_origin_direction": {
+    "def": "⚑ 자동 규칙(u = up×n · v = n×u · 위상 = (u,v) 최소 모서리)의 스윕 — 벽 8방위·경사 30/60·슬라브·박공",
+    "rows": {
+      "wall_yaw0": {
+        "degenerate": false,
+        "uHorizontal": true,
+        "vUp": true
+      },
+      "wall_yaw45": {
+        "degenerate": false,
+        "uHorizontal": true,
+        "vUp": true
+      },
+      "wall_yaw90": {
+        "degenerate": false,
+        "uHorizontal": true,
+        "vUp": true
+      },
+      "wall_yaw135": {
+        "degenerate": false,
+        "uHorizontal": true,
+        "vUp": true
+      },
+      "wall_yaw180": {
+        "degenerate": false,
+        "uHorizontal": true,
+        "vUp": true
+      },
+      "wall_yaw225": {
+        "degenerate": false,
+        "uHorizontal": true,
+        "vUp": true
+      },
+      "wall_yaw270": {
+        "degenerate": false,
+        "uHorizontal": true,
+        "vUp": true
+      },
+      "wall_yaw315": {
+        "degenerate": false,
+        "uHorizontal": true,
+        "vUp": true
+      },
+      "slope_30": {
+        "degenerate": false,
+        "uHorizontal": true,
+        "vUp": true
+      },
+      "slope_60": {
+        "degenerate": false,
+        "uHorizontal": true,
+        "vUp": true
+      },
+      "slab": {
+        "degenerate": true,
+        "uHorizontal": true,
+        "vUp": true
+      },
+      "gable": {
+        "degenerate": false,
+        "uHorizontal": true,
+        "vUp": true
+      }
+    },
+    "degenerate_n": 1,
+    "of": 12,
+    "what_this_measures": "규칙이 «방향을 고르지 못하는»(퇴화) 자리와, 벽·경사에서 켜가 수평으로 서는가(uHorizontal — 처마 나란)",
+    "what_this_cannot_measure": "「사람 의도와 다른가」 — 오라클이 없다(#92: 이름표가 아니라 결과를 재려면 의도가 값이어야 한다). 그 판정은 실기기 관측 판정자다",
+    "verdict_stop": "지시 문면대로 자동판까지 세우고 여기서 멈춘다 — 조절 UI(원점 끌기·방향 돌리기)는 사람의 답을 기다린다"
+  },
+  "constants_used": {
+    "REP_BRICK_MODULE_W_MM": 200,
+    "REP_BRICK_COURSE_MM": 67,
+    "REP_STONE_COURSE_MM": [
+      250,
+      400
+    ],
+    "REP_STONE_JOINT_MM": [
+      300,
+      650
+    ],
+    "REP_WOOD_PLANK_MM": 140,
+    "REP_TILE_MM": 300,
+    "REP_ROOF_COURSE_MM": 345,
+    "REP_ROOF_TILE_W_MM": 300,
+    "REP_CONC_PANEL_W_MM": 600,
+    "REP_CONC_PANEL_H_MM": 1200,
+    "REP_MIN_PX": 4,
+    "REP_ALPHA_MAJOR": 0.42,
+    "REP_ALPHA_MINOR": 0.32
+  }
+}

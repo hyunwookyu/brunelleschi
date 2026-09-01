@@ -14,6 +14,9 @@ import { C } from '../core/constants'
 import { projW } from '../core/camera'
 import { hatchSegments, type HatchMode } from '../core/hatch'
 import { hatchSpecOf, hatchHexOf, solidHexOf } from '../core/palette'
+import { repSegments, repBasis, repVisibleFamilies, isRepId, type Seg3 } from '../core/matrep'
+import { project } from '../core/camera'
+import { paintSideAt } from '../core/paint'
 import type { Grade } from '../core/types'
 
 export interface R3D {
@@ -30,6 +33,9 @@ export interface R3D {
    *  경도 기본 굵기는 처음부터 넣어 둔다(옛 문서·연필은 그 자리에서 맞는다). */
   materials: Map<string, LineMaterial>
   hatchGroup: THREE.Group
+  /** 재료 표현(web2-49) — 면 고정 실치수 무늬. 해칭과 같은 겹 층위(면 위·선 아래)이고
+   *  자리는 sortFaces가 해칭과 같은 규칙(order+1)으로 잡는다. */
+  repGroup: THREE.Group
   /** 캔버스 CSS 크기 — NDC 매핑 기준 (문서 프레임과 다를 수 있다) */
   W: number
   H: number
@@ -69,11 +75,13 @@ export function initR3D(canvas: HTMLCanvasElement, W: number, H: number, dpr: nu
   // 자리는 sortFaces가 제 면 바로 위(order+1)로 잡는다.
   const hatchGroup = new THREE.Group()
   scene.add(hatchGroup)
+  const repGroup = new THREE.Group()     // 재료 표현(web2-49) — 해칭과 같은 층위
+  scene.add(repGroup)
   scene.add(group)
   const materials = new Map<string, LineMaterial>()
   // 재질은 **쓰이는 그 자리에서** 만든다(matFor). 경도별로 미리 만들어 두면 굵기 기본값을
   // 여기서도 정하게 되고, 그러면 굵기의 출처가 둘이 된다(PITFALLS #54).
-  return { renderer, scene, camera, group, faceGroup, faceMat, hatchGroup, materials, W, H }
+  return { renderer, scene, camera, group, faceGroup, faceMat, hatchGroup, repGroup, materials, W, H }
 }
 
 const matKey = (g: Grade, w: number) => `${g}:${w.toFixed(3)}`
@@ -352,6 +360,93 @@ function syncHatch(r: R3D, app: App) {
   }
 }
 
+// ── 재료 표현(web2-49) — 면 고정 실치수 무늬 ─────────────────────────────────
+// 무늬는 **문서의 함수**다(면 기하 × 재료 × 축척 × 시드) — 시점이 키에 없다.
+// 시점이 하는 일은 둘뿐이고 매 프레임 gateRep이 한다: 쪽(48-5)과 밀도 하한(LOD).
+let repKey = ''
+const repMats: Record<'major' | 'minor', THREE.LineBasicMaterial> = {
+  major: new THREE.LineBasicMaterial({
+    color: new THREE.Color('#6f6a63'), transparent: true, opacity: C.REP_ALPHA_MAJOR,
+    depthTest: false, depthWrite: false,
+  }),
+  minor: new THREE.LineBasicMaterial({
+    color: new THREE.Color('#6f6a63'), transparent: true, opacity: C.REP_ALPHA_MINOR,
+    depthTest: false, depthWrite: false,
+  }),
+}
+function repLs(segs: Seg3[], fam: 'major' | 'minor', faceId: number,
+  steps: { major: number; minor: number },
+  centroid: { x: number; y: number; z: number }, u: { x: number; y: number; z: number }): THREE.LineSegments {
+  const pos = new Float32Array(segs.length * 6)
+  segs.forEach((s, i) => {
+    pos[i * 6] = s.a.x; pos[i * 6 + 1] = s.a.y; pos[i * 6 + 2] = s.a.z
+    pos[i * 6 + 3] = s.b.x; pos[i * 6 + 4] = s.b.y; pos[i * 6 + 5] = s.b.z
+  })
+  const g = new THREE.BufferGeometry()
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+  const ls = new THREE.LineSegments(g, repMats[fam])
+  ls.userData.faceId = faceId
+  ls.userData.repFam = fam
+  ls.userData.repStepMm = steps[fam]
+  ls.userData.repSteps = steps
+  ls.userData.centroid = centroid
+  ls.userData.u = u
+  return ls
+}
+
+function syncRep(r: R3D, app: App) {
+  const reps = app.doc.faces.filter(f => f.rep !== undefined)
+  const key = `${app.docVersion}|${reps.length}`
+  if (key === repKey) return
+  repKey = key
+  for (const child of [...r.repGroup.children]) {
+    r.repGroup.remove(child)
+    ;(child as THREE.LineSegments).geometry?.dispose()
+  }
+  const mm = app.lift.mmPerUnit
+  if (!mm || mm <= 0) return                            // 축척 미정 — 대기(안 그린다)
+  for (const face of reps) {
+    if (!isRepId(face.rep!.m)) continue
+    const rf = app.faces.find(x => x.id === face.id)
+    if (!rf) continue                                   // 못 풀린 면 — 무늬도 쉰다(면의 규약)
+    const segs = repSegments(rf, face.rep!.m, mm, face.id)
+    let cx = 0, cy = 0, cz = 0
+    for (const p of rf.outer) { cx += p.x; cy += p.y; cz += p.z }
+    const centroid = { x: cx / rf.outer.length, y: cy / rf.outer.length, z: cz / rf.outer.length }
+    const u = repBasis(rf).u
+    const steps = { major: segs.majorStepMm, minor: segs.minorStepMm }
+    if (segs.major.length > 0) r.repGroup.add(repLs(segs.major, 'major', face.id, steps, centroid, u))
+    if (segs.minor.length > 0) r.repGroup.add(repLs(segs.minor, 'minor', face.id, steps, centroid, u))
+  }
+}
+
+/** 시점의 몫 — 매 프레임. ① **쪽**(48-5 무회귀): 카메라가 붙인 쪽일 때만 보인다.
+ *  ② **밀도 하한**: 면 중심에서 잰 무늬 간격의 투영 px가 `C.REP_MIN_PX` 아래면 그 계열을
+ *  숨긴다(작은 축척에서 재료 표현 생략 — 제도 관례). 굵기는 화면 고정, 간격은 면 고정. */
+function gateRep(r: R3D, app: App) {
+  if (r.repGroup.children.length === 0) return
+  const mm = app.lift.mmPerUnit
+  const vs = viewScale(app)
+  for (const child of r.repGroup.children) {
+    const u = child.userData as {
+      faceId: number; repFam: 'major' | 'minor'; repSteps: { major: number; minor: number }
+      centroid: { x: number; y: number; z: number }; u: { x: number; y: number; z: number }
+    }
+    const face = app.doc.faces.find(f => f.id === u.faceId)
+    const rf = app.faces.find(f => f.id === u.faceId)
+    if (!face?.rep || !rf || !mm) { child.visible = false; continue }
+    if (paintSideAt(rf, app.pose) !== face.rep.s) { child.visible = false; continue }
+    // 투영 px/mm — 면 중심에서 가로축으로 0.01 세계단위를 옮겨 재고 줌을 얹는다
+    const p0 = project(app.lift.an, app.pose, u.centroid)
+    const p1 = project(app.lift.an, app.pose, {
+      x: u.centroid.x + u.u.x * 0.01, y: u.centroid.y + u.u.y * 0.01, z: u.centroid.z + u.u.z * 0.01,
+    })
+    if (!p0 || !p1) { child.visible = false; continue }
+    const pxPerUnit = Math.hypot(p1.x - p0.x, p1.y - p0.y) / 0.01 * vs
+    child.visible = repVisibleFamilies(u.repSteps.major, u.repSteps.minor, pxPerUnit / mm)[u.repFam]
+  }
+}
+
 /** **면 깊이 정렬**(web2-45 45-1) — 겹친 화면 자리에서 **앞 면이 위에** 그려진다.
  *  기준선 실측(faces45_web2.json scene_depth): 배열 순서 렌더는 지정 순서가 나쁘면
  *  뒤집힘 33/33이었다. depthTest가 없으므로(선을 가리지 않는 설계) 순서가 전부다 —
@@ -403,6 +498,10 @@ function sortFaces(r: R3D, app: App) {
     const fid = (h.userData as { faceId?: number }).faceId
     h.renderOrder = (fid !== undefined ? orderOf.get(fid) ?? -1000 : -1000) + 1
   }
+  for (const h of r.repGroup.children) {  // 재료 표현(49) — 해칭과 같은 자리(제 면 위)
+    const fid = (h.userData as { faceId?: number }).faceId
+    h.renderOrder = (fid !== undefined ? orderOf.get(fid) ?? -1000 : -1000) + 1
+  }
 }
 
 /** **면이 지금 드러나는가**(web2-48 48-9) — 「도구가 대상을 비춘다」.
@@ -424,6 +523,8 @@ function revealFaces(r: R3D, app: App) {
 export function render3d(r: R3D, app: App) {
   syncCamera(r, app)
   syncHatch(r, app)
+  syncRep(r, app)      // 재료 표현(49) — 문서가 바뀌었을 때만 다시 만든다(면 고정)
+  gateRep(r, app)      // 시점의 몫 — 쪽(48-5)·밀도 하한은 매 프레임
   revealFaces(r, app)
   sortFaces(r, app)
   r.renderer.render(r.scene, r.camera)

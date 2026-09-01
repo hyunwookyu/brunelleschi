@@ -111,6 +111,9 @@ export interface Op {
   fillChanged?: { id: number; before: Face['fill']; after: Face['fill'] }[]
   /** **면 재료**(web2-46) — 사람이 한 것이므로 실행취소 대상이다 */
   matChanged?: { id: number; before: Face['mat']; after: Face['mat'] }[]
+  /** **재료 표현**(web2-49) — 사람이 한 것이므로 실행취소 대상이다. before/after는
+   *  깊은 사본(rep이 객체라 참조로 들면 다음 순환이 op를 오염시킨다 — moved의 규약). */
+  repChanged?: { id: number; before: Face['rep']; after: Face['rep'] }[]
   /** **놓은 사람**(web2-47) — 사람이 한 것이므로 실행취소 대상이다 */
   personsAdded?: Person[]
   /** **광선이 바뀌어 대기 획을 버린 op**(web2-37 4번)가 함께 싣는 시점.
@@ -1636,6 +1639,7 @@ export function faceFrontTarget(app: App): CamPose | null {
 
 import { splitByFace, liftPaint, frontFaceAt, classOf, faceClassOf, FACE_CLASSES, paintSideAt, type FaceClass } from '../core/paint'
 import { cycleMat, isMatId, materialOf, type MatId, type Instr } from '../core/palette'
+import { cycleRep, isRepId, REP_NAMES } from '../core/matrep'
 import type { Person } from '../core/types'
 
 export const paintActive = (app: Pick<App, 'tool'>): boolean => app.tool === 'paint'
@@ -1736,6 +1740,27 @@ export function cycleFaceMat(app: App, faceId: number): { name: string } | null 
   app.redoStack = []
   recompute(app)
   return { name: next === undefined ? '기본' : materialOf(next).name }
+}
+
+/** **재료 표현 순환**(web2-49) — 없음→벽돌→…→콘크리트→없음. 쪽(`s`)은 **붙일 때 카메라가
+ *  있는 쪽**이다(48-5의 규약 재사용 — `paintSideAt` #54): 보고 있는 쪽에 붙는 것이니
+ *  사용자는 의식할 필요가 없다. 재료만 돌 때도 쪽을 지금 시점으로 다시 잰다 —
+ *  「돌린다」는 «지금 보는 면에 다른 재료를 대 본다»이기 때문이다.
+ *  면이 안 풀려 있으면(rf 없음) 쪽을 잴 수 없어 순환하지 않는다(null — 조용히 틀린 쪽 ⛔). */
+export function cycleFaceRep(app: App, faceId: number): { name: string; s: 1 | -1 } | null {
+  const face = app.doc.faces.find(f => f.id === faceId)
+  if (!face) return null
+  const rf = app.faces.find(f => f.id === faceId)
+  if (!rf) return null
+  const before = face.rep ? { ...face.rep } : undefined
+  const nextM = cycleRep(isRepId(face.rep?.m) ? face.rep.m : undefined)
+  const s = paintSideAt(rf, app.pose)
+  const after = nextM === undefined ? undefined : { m: nextM, s }
+  if (after === undefined) delete face.rep; else face.rep = { ...after }
+  app.undoStack.push({ removed: [], added: [], repChanged: [{ id: faceId, before, after }] })
+  app.redoStack = []
+  recompute(app)
+  return { name: nextM === undefined ? '없음' : REP_NAMES[nextM], s }
 }
 
 // ── 숫자와 표시(web2-47) — 사람 놓기 · 면적·부피 · 근거 하이라이트 ────────────
@@ -2166,6 +2191,10 @@ export function undo(app: App) {
     const f = app.doc.faces.find(x => x.id === mc.id)
     if (f) { if (mc.before === undefined) delete f.mat; else f.mat = mc.before }
   }
+  for (const rc of op.repChanged ?? []) {   // 재료 표현(web2-49) — «전»으로(깊은 사본)
+    const f = app.doc.faces.find(x => x.id === rc.id)
+    if (f) { if (rc.before === undefined) delete f.rep; else f.rep = { ...rc.before } }
+  }
   for (const q of op.personsAdded ?? []) {  // 놓은 사람(web2-47) — 걷는다
     const arr = app.doc.persons ?? []
     const i = arr.findIndex(x => x.id === q.id)
@@ -2227,6 +2256,10 @@ export function redo(app: App) {
   for (const mc of op.matChanged ?? []) {   // 면 재료(web2-46) — «후»로
     const f = app.doc.faces.find(x => x.id === mc.id)
     if (f) { if (mc.after === undefined) delete f.mat; else f.mat = mc.after }
+  }
+  for (const rc of op.repChanged ?? []) {   // 재료 표현(web2-49) — «후»로(깊은 사본)
+    const f = app.doc.faces.find(x => x.id === rc.id)
+    if (f) { if (rc.after === undefined) delete f.rep; else f.rep = { ...rc.after } }
   }
   for (const q of op.personsAdded ?? []) (app.doc.persons ??= []).push(q)   // 다시 놓는다
   // 다시 실행 — 값 싣기는 **만든 자리와 같은 함수**를 다시 부른다(#54)

@@ -137,6 +137,9 @@ export function fullDocPlus() {
   d.faces[0]!.mat = 'conc'
   // 단색 채움(web2-48 48-3) — `fill`이 1·2 둘을 다 밟게 두번째 면에 2를 준다.
   if (d.faces[1]) d.faces[1]!.fill = 2
+  // 재료 표현(web2-49) — 같은 기계가 이 줄이 없을 때 실제로 빨개졌다(Face.rep — 이 회차
+  // 실측). m + s(면의 쪽 · 48-5의 규약) 둘이 같이 산다 — 하나가 빠지면 파서가 통째 버린다.
+  d.faces[0]!.rep = { m: 'brick', s: 1 }
   // 놓은 사람(web2-47) — 같은 기계가 Doc.persons·Person.g를 빨강으로 잡았다(실측).
   d.persons = [{ id: app.nextId++, g: { x: 1.25, y: 0, z: -6.5 } }]
   // 평행 사영이 실린 포즈로 그린 획(web2-42) — `view.proj` · 잉크 니브 굵기

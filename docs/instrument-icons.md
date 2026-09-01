@@ -373,3 +373,12 @@
 칠통의 재료 줄 다섯(벽돌·콘크리트·유리·나무·금속)은 **글자 + 톤 견본**이다 — 견본은
 아이콘이 아니라 **색 그 자체**라 선 문법 비대상이다(옐로 롤의 «색이 정체» 예외와 같은
 자리 — 견본이 곧 고르는 값이다).
+
+## 벽돌 켜(손통 「표현」 줄) — web2-49 추가 (자작 · 선 문법)
+
+재료 표현(실치수 무늬 · 면 고정) 순환 줄. 실물은 **입면의 벽돌 쌓기**다 — 켜 셋 +
+어긋난 수직 줄눈(fmat의 «한 켜» 그림과 켜 수로 갈린다). 선 문법 그대로.
+
+```html
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="22" height="18"/><path d="M5 13 H27 M5 19 H27 M12 7 V13 M20 13 V19 M12 19 V25" stroke-width="1.1"/></svg>
+```

@@ -19,8 +19,9 @@ import { type Pt, type V3, add3, sub3, mul3, dot3, cross3, norm3, len3, pt } fro
 export type HatchMode = 'screen' | 'face'
 
 /** 다각형(구멍 포함) 안의 평행선 절단 — 짝수-홀수 규칙.
- *  선: o + t·d (d 단위벡터) · 반환: [t0,t1] 구간들. */
-function clipLine(o: Pt, d: Pt, loops: Pt[][]): [number, number][] {
+ *  선: o + t·d (d 단위벡터) · 반환: [t0,t1] 구간들.
+ *  web2-49가 재료 표현(`matrep.ts`)에서 같은 절단을 쓰므로 내보낸다(#54 — 한 자리). */
+export function clipLine(o: Pt, d: Pt, loops: Pt[][]): [number, number][] {
   const ts: number[] = []
   for (const poly of loops) {
     for (let i = 0; i < poly.length; i++) {

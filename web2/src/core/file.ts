@@ -8,6 +8,7 @@ import { GRADES } from './material'
 import { UNITS, type Unit } from './dim'
 import { validPressCal } from './press'
 import { isMatId, isHex6, toneHex } from './palette'
+import { isRepId } from './matrep'
 import type { Measure } from './measure'
 import { C } from './constants'
 
@@ -88,7 +89,8 @@ const KEY_ORDER: string[] = [
   // 면·치수 줄에도 있는 이름이라 여기서 새로 안 적는다(이 배열은 열쇠 «차례»의 전역
   // 목록이고 이름이 겹치는 것은 정상이다 — 43-1 ①이 바이트로 지킨다).
   'paint', 'f', 'm', 'i', 'c',
-  'faces', 'loops', 'edges', 'kind', 's', 't', 'ox', 'oy', 'cls', 'fill',
+  // rep(web2-49 — 재료 표현 {m, s}: 열쇠 m·s는 위 칠 줄과 면 줄에 이미 있다)
+  'faces', 'loops', 'edges', 'kind', 's', 't', 'ox', 'oy', 'cls', 'fill', 'rep',
   'unit', 'scaleRef', 'grade', 'press', 'w', 'h', 'D', 'tiltX', 'tiltY', 'twist',
   'nextId', 'sheets', 'thumb',
   'layers', 'sheet', 'paper', 'rect', 'on', 'locked', 'p0', 'p1', 'gamma',
@@ -288,6 +290,11 @@ export function parseBrnl(text: string): BrnlData | null {
       // 채움(web2-45 1=해칭 · **web2-48 48-3에서 2=단색**) — 모르는 값이면 그 필드만 버린다
       if (f.fill === 1 || f.fill === 2) face.fill = f.fill
       if (isMatId(f.mat)) face.mat = f.mat   // web2-46 — 모양이 틀리면 그 필드만 버린다
+      // 재료 표현(web2-49) — m·s 둘이 **같이** 서야 산다(쪽 없는 무늬는 48-5 위반이라
+      // 통째로 버린다 — 조용히 «양쪽에 보이는 무늬»를 만들지 않는다).
+      if (isRepId(f.rep?.m) && (f.rep.s === 1 || f.rep.s === -1)) {
+        face.rep = { m: f.rep.m, s: f.rep.s }
+      }
       faces.push(face)
     }
   }

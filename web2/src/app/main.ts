@@ -5,7 +5,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   handwritingGroup, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
-  commitPaint, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, paintActive, docToScreen,
+  commitPaint, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen,
   placePersonAt, gripFaceArea, floorAreaNow, volumeNow, flashFaces, screenToDoc, roomsNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
@@ -1885,6 +1885,9 @@ const GRIP_ROWS = [
   { key: 'fill', name: '채움', tip: '채움 — 잡은 면의 채움을 돌린다(없음·해칭·단색)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M9 24 L23 8 M6 19 L17 8 M15 24 L26 13" stroke-width="1.1"/></svg>' },
   // web2-46 — 면 재료(벽돌 쌓기 그림). 채움 해칭의 무늬·색이 이 값에서 나온다.
   { key: 'fmat', name: '재료', tip: '재료 — 잡은 면의 재료를 돌린다(채움의 무늬·색을 정한다)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="22" height="14"/><path d="M5 16 H27 M13 9 V16 M20 16 V23" stroke-width="1.1"/></svg>' },
+  // web2-49 — 재료 표현(실치수 무늬 · 면 고정 · 보고 있는 쪽에 붙는다). 그림 정본은
+  // docs/instrument-icons.md 「손통」 절 — 벽돌 켜 셋 + 어긋난 수직 줄눈(fmat의 한 켜와 갈린다).
+  { key: 'rep', name: '표현', tip: '표현 — 잡은 면의 재료 표현을 돌린다(벽돌·석재·목재·타일·기와·콘크리트 — 실치수로, 보고 있는 쪽에 붙는다)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="22" height="18"/><path d="M5 13 H27 M5 19 H27 M12 7 V13 M20 13 V19 M12 19 V25" stroke-width="1.1"/></svg>' },
   // web2-47 — 잡은 면의 면적(근거 = 잡힌 그 면이 이미 밝다). 축척 미정이면 이유가 뜬다.
   { key: 'farea', name: '면적', tip: '면적 — 잡은 면의 면적. 축척이 없으면 숫자를 안 낸다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M10 20 h6 M10 20 v-4" stroke-width="1.1"/></svg>' },
 ] as const
@@ -1920,8 +1923,8 @@ function gripRowGate(key: string): string | null {
   // 아무 일이 안 났다. 「손통이 없다」로 읽힌 것의 절반이 이것이다(48-4의 답).
   if (!g || g.ids.length === 0) return '연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)'
   if (key === 'join' && g.ids.length !== 2) return '맺기는 **두 선**을 잡아야 한다'
-  if ((key === 'front' || key === 'cls' || key === 'fill' || key === 'fmat' || key === 'farea') && g.faceId === null) {
-    return `${key === 'front' ? '정면' : key === 'cls' ? '분류' : key === 'fill' ? '채움' : key === 'fmat' ? '재료' : '면적'}은 **면**을 잡아야 한다 — 연필을 든 채로 면 안쪽(경계에서 떨어진 자리)을 꾹 누른다`
+  if ((key === 'front' || key === 'cls' || key === 'fill' || key === 'fmat' || key === 'rep' || key === 'farea') && g.faceId === null) {
+    return `${key === 'front' ? '정면' : key === 'cls' ? '분류' : key === 'fill' ? '채움' : key === 'fmat' ? '재료' : key === 'rep' ? '표현' : '면적'}은 **면**을 잡아야 한다 — 연필을 든 채로 면 안쪽(경계에서 떨어진 자리)을 꾹 누른다`
   }
   return null
 }
@@ -1985,6 +1988,13 @@ function doGripAction(key: string) {
       const face = app.doc.faces.find(f => f.id === app.grip!.faceId)
       status(`재료 — ${r.name}${face?.fill === 1 ? '' : ' (채움을 «해칭»으로 켜면 무늬가 보인다)'} · 다시 누르면 돌린다`)
     }
+  } else if (key === 'rep') {
+    // 재료 표현(web2-49) — 없음→벽돌→…→콘크리트→없음. 실치수 무늬라 **축척이 있어야
+    // 보인다**(값은 저장되고 표시만 기다린다 — 조용히 사라지지 않는다).
+    const r = cycleFaceRep(app, app.grip!.faceId!)
+    if (r === null) { notify('아직 3D로 풀리지 않은 면이다 — 표현을 붙일 쪽을 잴 수 없다'); return }
+    const noScale = app.lift.mmPerUnit === null
+    status(`표현 — ${r.name}(보고 있는 쪽에 붙는다)${noScale ? ' · 치수를 하나 매기면 나타난다(실치수 무늬다)' : ''} · 다시 누르면 돌린다`)
   }
   invalidate()
 }
@@ -3003,6 +3013,21 @@ const diag = {
     paints: app.doc.strokes.filter(s => s.paint !== undefined)
       .map(s => ({ id: s.id, f: s.paint!.f, s: s.paint!.s ?? null, c: s.paint!.c ?? null, w: s.paint!.w ?? null, i: s.paint!.i ?? null })),
   }),
+  /** **재료 표현**(web2-49) — 팔이 렌더의 결정(계열별 보임 — 쪽·밀도 하한)을 읽고,
+   *  순환은 **앱과 같은 함수**(`cycleFaceRep`)를 부른다(측정 경로와 앱 경로를 안 가른다). */
+  rep49: () => ({
+    faces: app.doc.faces.map(f => ({ id: f.id, rep: f.rep ? { ...f.rep } : null })),
+    mmPerUnit: app.lift.mmPerUnit,
+    children: r3d.repGroup.children.map(h => ({
+      f: (h.userData as { faceId?: number }).faceId ?? null,
+      stepMm: (h.userData as { repStepMm?: number }).repStepMm ?? null,
+      visible: h.visible,
+      order: h.renderOrder,
+      segs: ((h as unknown as { geometry: { getAttribute(n: string): { count: number } } }).geometry.getAttribute('position')?.count ?? 0) / 2,
+    })),
+    constants: { REP_MIN_PX: C.REP_MIN_PX, REP_BRICK_COURSE_MM: C.REP_BRICK_COURSE_MM, REP_BRICK_MODULE_W_MM: C.REP_BRICK_MODULE_W_MM },
+  }),
+  cycleRep49: (faceId: number) => cycleFaceRep(app, faceId),
   /** **안 실린 수리를 손으로 걸어 보는 손잡이**(web2-48 48-1 — 수리는 되돌렸다).
    *  `true` = 잉크 겹을 **곱**으로 얹는다(흰 장막이 사라진다) · `false` = **출하 상태**.
    *  왜 안 실었는가: 이 겹은 «종이 위의 잉크»가 아니라 **#gl의 몸체 위에 얹히는 질감**
