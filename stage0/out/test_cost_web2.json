@@ -1,22 +1,22 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "web2-44",
+  "measured_at": "web2-45",
   "unit": {
     "command": "npx vitest run (web2/)",
-    "files": 115,
-    "tests": 935,
-    "wall_s": 29.7,
-    "passed": 935,
+    "files": 117,
+    "tests": 954,
+    "wall_s": 29.9,
+    "passed": 954,
     "failed": 0,
-    "note": "web2-44 — 파일 112 → 115 · 팔 893 → 935. ⚠ 43이 이 원장을 안 갱신했다(43 NOTES 실측 113파일 910건 — 그 사이 몫은 43의 새 팔 16건 + 44의 25건. #34 재발: 19·22·24·31·43에 이어. 44가 행으로 남긴다)."
+    "note": "web2-45 — 파일 115 → 117 · 팔 935 → 954(paint45 12 · faces45_measure 7 등)."
   },
   "e2e": {
     "command": "npx playwright test --workers=2 (dpr1+dpr2)",
-    "cells": 546,
-    "passed": 545,
+    "cells": 554,
+    "passed": 553,
     "failed": 1,
-    "wall_s": 1662,
-    "note": "web2-44 — 518 → 546(grip44 10칸 + 띠 두 점 등). 빨강 1 = waitink37 ③ dpr2(43 등재 선재 · 단독 3/3 · #93). 워커 2 — 43의 관측(워커 수가 판정을 흔든다 · #71 ㉠) 그대로 둔다."
+    "wall_s": 1674,
+    "note": "web2-45 — 546 → 554(paint45 8칸). 빨강 1 = waitink37 ③ dpr2(43·44와 같은 등재 선재 · 단독 3/3)."
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",
@@ -293,6 +293,12 @@
       "unit": 935,
       "e2e": 546,
       "e2e_wall_s": 1662
+    },
+    {
+      "at": "web2-45",
+      "unit": 954,
+      "e2e": 554,
+      "e2e_wall_s": 1674
     }
   ],
   "environment": {
