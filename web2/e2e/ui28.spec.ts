@@ -9,6 +9,7 @@
 //   착수 표에 적었다. 판정자는 전량 e2e다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -16,7 +17,7 @@ const settle = (page: Page) =>
 async function boot(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
 }
@@ -221,7 +222,9 @@ test('28-3 ③ 화면 문구 — 「바꿈」으로 판정한 자리', async ({ 
     [...document.querySelectorAll('#pane-file .head')].map(e => (e.textContent ?? '').trim()))
   console.log(`[28-3] 파일 서랍 머리: ${JSON.stringify(heads)}`)
   // 설명이 화면에서 빠졌다 — 「나가기만 한다」·「다시 연다」는 이제 title이다
-  expect(heads).toEqual(['원본 .brnl', '내보내기', '종이'])
+  // ⚠ web2-43이 앞에 둘을 더했다(문서 이름 · 최근 드로잉) — 파일 서랍을 여는 이유의
+  //   첫째가 「그때 그리던 것으로 돌아간다」이므로 그 자리가 맨 위다.
+  expect(heads).toEqual(['문서', '최근', '원본 .brnl', '내보내기', '종이'])
   for (const h of heads) expect(h).not.toContain('—')
   expect(await text('#btn-brush')).toBe('질감')          // 상위(「종이」)가 이미 말한 낱말을 뺐다
   // 눈 팝업 — 설명 꼬리가 빠졌다

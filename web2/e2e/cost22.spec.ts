@@ -13,6 +13,7 @@
 // ⚠⚠ `--workers=1`로 돌린다(cost18과 같은 규율 — 명령: npx playwright test cost22 --workers=1).
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -151,7 +152,7 @@ test('0부 — 비용 재측정(획 200·400·800 · 절반 옐로 자유): 전�
 
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 저장소 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   await fixture(page)

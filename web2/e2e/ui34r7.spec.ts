@@ -16,6 +16,7 @@
 //   오스냅 체크는 R3에서 안 접히지만(ui28.spec ①) R7에서는 바깥을 누르면 접힌다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -33,7 +34,7 @@ async function drawLine(page: Page, ax: number, ay: number, bx: number, by: numb
 async function boot(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   await drawLine(page, 280, 560, 700, 560)

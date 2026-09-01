@@ -9,6 +9,7 @@
 // ⚠ 필압은 **CDP 실입력**(`force`)으로 싣는다 — 합성 PointerEvent는 pressure가 안 실린다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -16,7 +17,7 @@ const settle = (page: Page) =>
 async function boot(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
 }

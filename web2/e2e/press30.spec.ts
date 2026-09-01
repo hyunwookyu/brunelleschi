@@ -12,6 +12,7 @@
 //   한 쌍만 재면 「무엇을 넣어도 그 값이 나온다」와 구별이 안 된다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -19,7 +20,7 @@ const settle = (page: Page) =>
 async function boot(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
 }

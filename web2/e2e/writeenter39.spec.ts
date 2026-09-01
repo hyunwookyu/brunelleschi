@@ -10,6 +10,7 @@
 //      `app.writeHoldMs`가 따라오고, 그 값이 실제 누름 판정에 먹힌다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -34,7 +35,7 @@ const line = (page: Page, ax: number, ay: number, bx: number, by: number) =>
 async function boot(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   await line(page, 280, 560, 700, 560)       // 지평선 선언

@@ -14,6 +14,7 @@
 // ⚠ `--workers=1`로 돌린다(cost18과 같은 규율 — 워커 둘이면 값이 배 가까이 부푼다).
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 import { settleSlide } from './slidesettle'
 import { writeFileSync, mkdirSync, readFileSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
@@ -106,7 +107,7 @@ test('⑩ 3-b(영역 재조립)의 400획 프레임 비용 — 겹 없음/겹+�
   test.setTimeout(600_000)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 저장소 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   await fixture(page)

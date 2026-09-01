@@ -15,6 +15,7 @@
 // 판독으로는 「사람이 보는 것」을 못 잰다. 3부는 겹을 **바꾸는** 회차라 더욱 그렇다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 import { writeFileSync, mkdirSync, readFileSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -28,7 +29,7 @@ const settle = (page: Page) =>
 async function boot(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 저장소 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
 }

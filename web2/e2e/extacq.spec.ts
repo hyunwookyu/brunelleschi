@@ -5,6 +5,7 @@
 // 여기는 **사람이 만지는 경로**다: 실제 포인터가 끝점 위에 머물러야 획득된다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 
 /** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
  *  `pointer-events: none`인 표시가 됐고, 여는 자리는 **설정 패널의 「진단」**이다. */
@@ -21,7 +22,7 @@ const settle = (page: Page) =>
 async function boot(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 저장소 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
 }

@@ -8,6 +8,7 @@
 //   ㉡ **승인 단계가 정말로 없는가** — 29-2의 제안 줄(#dimsuggest)이 화면에서 사라졌다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -33,7 +34,7 @@ const zero = (cx: number, cy: number, r = 14) =>
 async function boot(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   await line(page, 280, 560, 700, 560)       // 지평선 선언

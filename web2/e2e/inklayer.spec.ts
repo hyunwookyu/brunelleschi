@@ -17,6 +17,7 @@
 //   «달라졌는가»는 그 혼동에 걸리지 않는다 — 덮여 있으면 안 달라지고, 위에 오면 달라진다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -38,7 +39,7 @@ const settle = (page: Page) =>
 async function boot(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 저장소 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
 }

@@ -20,6 +20,7 @@
 // DEFERRED의 실기기 표가 그 자리다. 이 파일이 내는 것은 헤드리스 표다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -155,7 +156,7 @@ test('0부 — 비용 원장(획 50·100·200·400 × rawIn 0·50·100%): 전량
     table[key] = {}
     await page.goto('/')
     await page.waitForFunction(() => (window as any).__b2)
-    await page.evaluate(() => { try { localStorage.clear() } catch { /* 저장소 없음 */ } })
+    await clearStore(page)
     await page.goto('/')
     await page.waitForFunction(() => (window as any).__b2)
     await fixture(page)

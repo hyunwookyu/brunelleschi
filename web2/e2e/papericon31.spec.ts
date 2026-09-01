@@ -31,6 +31,7 @@
 // (34-5가 세운 `__lintLine` 하나 — 여기서 새로 안 짓는다 · #54).
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -568,7 +569,7 @@ test('31-4 ③ 반증 ㉡ — 배선을 끊으면 ②가 빨개진다 (저장 ·
   // 앞 판의 획을 복원해** 획이 여섯이 되고 카메라가 달라진다. 초판이 그래서 dpr1·dpr2의
   // 「떠난 거리」가 5.508082 ↔ 5.335540으로 갈렸다(값이 흔들린 것이 아니라 **다른 문서를
   // 잰 것**이다). 비우고 열면 ②와 같은 문서·같은 카메라가 된다.
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 저장소 없음 */ } })
+  await clearStore(page)
   await page.reload()
   await page.waitForFunction(() => (window as any).__b2)
   expect(await page.evaluate(() => (window as any).__b2.app.doc.strokes.length), '비우고 열었다 — 획 0').toBe(0)

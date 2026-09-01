@@ -10,6 +10,7 @@
 //   그것이 무엇을 바꾸는가는 다른 물음이다).
 
 import { test, expect } from '@playwright/test'
+import { clearStore } from './store43'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -19,7 +20,7 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 test('§0 저장소 현황 — localStorage 실측 상한 · 썸네일 바이트 · 문서 바이트', async ({ page }, info) => {
   await page.goto('/')
   await page.waitForFunction(() => !!(window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 저장소 없음 */ } })
+  await clearStore(page)
 
   // ── ㉠ localStorage 실제 상한 ────────────────────────────────────────────
   // 64K 코드 유닛씩 채우다 QuotaExceededError가 날 때까지. 그 다음 이진 탐색으로

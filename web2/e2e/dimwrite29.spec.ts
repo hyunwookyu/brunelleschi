@@ -8,6 +8,7 @@
 //   실행에서 **종이의 치수는 실제로 보인다**를 분해능으로 짝지운다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 import { settleSlide } from './slidesettle'
 
 const settle = (page: Page) =>
@@ -24,7 +25,7 @@ async function drawLine(page: Page, ax: number, ay: number, bx: number, by: numb
 async function boot(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   await drawLine(page, 280, 560, 700, 560)

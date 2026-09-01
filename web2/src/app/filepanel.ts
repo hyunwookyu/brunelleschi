@@ -178,6 +178,12 @@ export function initFilePanel(deps: FileDeps): FilePanel {
       row.dataset.id = d.id
       const pick = document.createElement('button')
       pick.className = 'rpick'
+      // ⚠ **id와 `data-act`를 준다**(web2-28 1번의 전수 규약 · R3): 파일 서랍 안의
+      //   `button`·`input`은 전부 자기가 «명령»인지 «상태»인지 말해야 한다 — 표시가
+      //   없으면 조용히 «상태»가 되고, 그 자리에서 전수 팔이 빨개진다(실제로 잡았다).
+      //   여는 것은 **명령**이다: 볼일이 끝나므로 서랍이 접힌다.
+      pick.id = `rec-pick-${d.id}`
+      pick.dataset.act = 'cmd'
       pick.title = d.name
       const img = document.createElement('img')
       img.className = 'rthumb'
@@ -197,6 +203,11 @@ export function initFilePanel(deps: FileDeps): FilePanel {
       pick.addEventListener('click', () => { void open(d.id) })
       const del = document.createElement('button')
       del.className = 'rdel'
+      del.id = `rec-del-${d.id}`
+      // 명령이되 **누르는 순간 볼일이 안 끝난다** — 확인이 이 버튼 곁에 뜨므로 바로
+      // 접으면 앵커가 사라져 확인이 미아가 된다(비우기와 같은 자리 · `data-fold="late"`).
+      del.dataset.act = 'cmd'
+      del.dataset.fold = 'late'
       del.textContent = '×'
       del.title = '지운다'
       del.addEventListener('click', () => {
@@ -204,6 +215,9 @@ export function initFilePanel(deps: FileDeps): FilePanel {
         confirmNear(del, `「${d.name}」을 지운다 — 되돌릴 수 없다.`, {
           label: '지운다',
           onPick: () => {
+            // 볼일이 여기서 끝난다 — **그때 접는다**(`data-fold="late"`의 짝 · 비우기와 같다)
+            const pane = document.getElementById('pane-file') as HTMLDetailsElement | null
+            if (pane) pane.open = false
             void deleteDoc(d.id).then(() => {
               // 지금 문서를 지웠으면 **빈 새 문서**로 간다(유령을 안 남긴다)
               if (d.id === cur.id) reset()

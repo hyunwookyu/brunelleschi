@@ -14,6 +14,7 @@
 //   ㉦ 상한 거동 큰 문서 여럿일 때 무엇이 일어나는가(재고 원장에 남긴다)
 
 import { test, expect, type Page } from '@playwright/test'
+import { clearStore, bootDone } from './store43'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -31,25 +32,15 @@ async function drawLine(page: Page, ax: number, ay: number, bx: number, by: numb
   await settle(page)
 }
 
-/** 저장소를 **비우고** 연다 — 팔끼리 문서를 물려주지 않는다(#70의 형태) */
+/** 저장소를 **비우고** 연다 — 팔끼리 문서를 물려주지 않는다(#70의 형태).
+ *  비우는 것과 기다리는 것의 출처는 `e2e/store43.ts` 하나다(#54). */
 async function fresh(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => !!(window as any).__b2)
-  await page.evaluate(async () => {
-    try { localStorage.clear() } catch { /* 없음 */ }
-    await new Promise<void>(res => {
-      const r = indexedDB.deleteDatabase('brunelleschi')
-      r.onsuccess = () => res(); r.onerror = () => res(); r.onblocked = () => res()
-    })
-  })
+  await clearStore(page)
   await page.reload()
   await page.waitForFunction(() => !!(window as any).__b2)
   await bootDone(page)
-}
-
-/** 부팅 복원이 끝났는가 — **상한 있는 대기**다(#95: 상한 · 볼 것 · 대상이 사는가) */
-async function bootDone(page: Page) {
-  await page.waitForFunction(() => !!(window as any).__b2?.diag?.docNow(), undefined, { timeout: 10_000 })
 }
 
 /** 예약된 저장을 앞당기고 저장소를 읽는다 */
@@ -214,13 +205,8 @@ test('㉤ 이전 — 옛 localStorage 자동 저장이 옮겨 온다', async ({ 
   await box(page)
   const src = await dump(page)
   // 저장소를 비우고 **옛 자리**(localStorage)에 그 저장물을 둔다 — 43 이전의 상태다
-  await page.evaluate(async (data: string) => {
-    await new Promise<void>(res => {
-      const r = indexedDB.deleteDatabase('brunelleschi')
-      r.onsuccess = () => res(); r.onerror = () => res(); r.onblocked = () => res()
-    })
-    localStorage.setItem('b2-autosave2', data)
-  }, src.data!)
+  await clearStore(page)
+  await page.evaluate((data: string) => localStorage.setItem('b2-autosave2', data), src.data!)
   await page.reload()
   await page.waitForFunction(() => !!(window as any).__b2)
   await bootDone(page)

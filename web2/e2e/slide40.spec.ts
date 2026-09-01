@@ -29,6 +29,7 @@
 //   · ③의 짝 — 같은 장면·같은 국면의 **정지 프레임**(갈린 축은 「창이 도는가」 하나)
 
 import { test, expect, chromium, type Page } from '@playwright/test'
+import { clearStore } from './store43'
 import { writeFileSync, mkdirSync, readFileSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -294,7 +295,7 @@ test('③ — 동작 중 프레임이 눈에 띄게 안 떨어진다 (획 200개
   test.setTimeout(300_000)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.evaluate(() => { try { localStorage.clear() } catch { /* 저장소 없음 */ } })
+  await clearStore(page)
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   await fixture(page)
