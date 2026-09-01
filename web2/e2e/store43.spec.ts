@@ -10,7 +10,7 @@
 //   그것이 무엇을 바꾸는가는 다른 물음이다).
 
 import { test, expect } from '@playwright/test'
-import { clearStore } from './store43'
+import { clearStore, savedText } from './store43'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -72,18 +72,23 @@ test('§0 저장소 현황 — localStorage 실측 상한 · 썸네일 바이트
   }
   await page.waitForTimeout(600)   // 자동 저장 debounce(400ms)를 넘긴다
 
-  const sizes = await page.evaluate(() => {
+  // ⚠⚠ **자동 저장물을 읽는 자리가 바뀌었다**(web2-43 5번 — localStorage → IndexedDB).
+  //   초판은 `localStorage.getItem('b2-autosave2')`를 읽었고, 이전 뒤에도 그대로 두면
+  //   **조용히 0을 재게 된다**(#94의 형태 — 실제로 그 판이 「문서 0 units」를 냈다).
+  //   지금은 `e2e/store43.ts` 한 자리를 지난다.
+  const auto = await savedText(page)
+  const sizes = await page.evaluate((autoText: string) => {
     const b = (window as any).__b2
-    const auto = localStorage.getItem('b2-autosave2') ?? ''
     const thumb = b.diag.captureThumb ? b.diag.captureThumb() : null
     return {
       strokes: b.app.doc.strokes.length,
-      autosave_units: auto.length,
-      autosave_bytes_utf8: new TextEncoder().encode(auto).length,
+      autosave_units: autoText.length,
+      autosave_bytes_utf8: new TextEncoder().encode(autoText).length,
       thumb_units: thumb ? thumb.length : null,
       thumb_bytes_utf8: thumb ? new TextEncoder().encode(thumb).length : null,
     }
-  })
+  }, auto)
+  expect(sizes.autosave_units, '저장물을 실제로 읽었다 — 0이면 읽는 자리가 죽은 것이다').toBeGreaterThan(0)
 
   // ── ㉢ IndexedDB 쪽 예산(참고) — navigator.storage.estimate() ─────────────
   const est = await page.evaluate(async () => {
@@ -102,6 +107,7 @@ test('§0 저장소 현황 — localStorage 실측 상한 · 썸네일 바이트
       browser: 'playwright chromium (playwright.config의 그것)',
       unit: 'units = UTF-16 코드 유닛(문자열 length) · bytes_utf8 = TextEncoder 바이트',
       note_quota: 'localStorage는 열쇠+값이 함께 예산을 먹는다 — key_units가 그 몫이다',
+      note_doc: 'doc.autosave_units는 **지금 저장소(IndexedDB)에 든 저장물**의 길이다. §0 시점(localStorage)과 자리가 다를 뿐 같은 바이트다.',
     },
     localstorage_limit: quota,
     doc: sizes,

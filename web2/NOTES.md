@@ -18683,7 +18683,10 @@ main 77027f3 · cd web2 && node tools/deploy-check.mjs
 ```
 value_units        5241856      ← UTF-16 코드 유닛(문자열 length) = 5.00 MiB − 1 KiB
 error              QuotaExceededError   ← 실제로 부딪혔다(안 부딪히면 그 수는 상한이 아니다)
-storage.estimate   6442450944   ← 6.00 GiB (IndexedDB 쪽 예산 · 참고)
+storage.estimate   6.0~7.5 GiB  ← IndexedDB 쪽 예산. ⚠ **실행마다 흔들린다**(디스크 여유에
+                                 딸린 값이다 — 실측 6442450944 · 5373924878 · 7516286591).
+                                 그래서 이 수는 «대역»으로만 읽는다: 정확한 값이 아니라
+                                 **자릿수가 셋 다르다**는 것이 논거다.
 ```
 
 ⇒ **AS-C80의 「5MB 가정」은 맞았다**(앱이 `payload.length`를 5·1024·1024와 견주므로 단위도
@@ -18742,7 +18745,8 @@ localStorage 상한                      5241856     store43_web2.json(실측)
                                        ⇒ **다섯 개**면 찬다(would_fit_in_localstorage)
 13개를 실제로 넣었다                   12564890 B  put_error 없음 · 목록에 보이는 것 8
 썸네일 한 장                           1691        store43_web2.json(THUMB_W 160 · JPEG 0.72)
-IndexedDB 예산                         5373924878  files43_web2.json.storage_estimate.quota
+IndexedDB 예산                         5.4 GiB     files43_web2.json.storage_estimate.quota
+                                                   (⚠ 위 ⚠대로 실행마다 흔들린다 — 대역이다)
 ```
 
 ⇒ 「최근 드로잉 목록」은 그 상한 안에서 성립하지 않는다. 지시문의 조건부(「상한이 충분하면

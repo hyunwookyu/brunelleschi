@@ -2,7 +2,7 @@
   "what": "web2-43 §0 — 저장소 현황 실측. localStorage 상한(실제로 부딪혀서) · 문서·썸네일 바이트 · storage.estimate.",
   "run": {
     "note": "정본 명령: LEDGER=1 npx playwright test store43 --workers=1",
-    "project": "dpr1"
+    "project": "dpr2"
   },
   "conditions": {
     "browser": "playwright chromium (playwright.config의 그것)",
@@ -21,12 +21,12 @@
     "strokes": 15,
     "autosave_units": 7144,
     "autosave_bytes_utf8": 7148,
-    "thumb_units": 1691,
-    "thumb_bytes_utf8": 1691
+    "thumb_units": 1435,
+    "thumb_bytes_utf8": 1435
   },
   "storage_estimate": {
-    "quota": 7516286591,
-    "usage": 93823
+    "quota": 6442545509,
+    "usage": 94565
   },
   "assumed_limit_bytes": 5242880,
   "flags_explained": {

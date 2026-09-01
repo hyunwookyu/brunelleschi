@@ -91,7 +91,12 @@ test('㉠ 복구 — 획 → 강제 종료 → 다시 열기 → 그대로(마�
   expect(back.data).toBe(before.data)
 })
 
-/** 썸네일 한 장의 «잉크»와 «UI 자리의 잉크» — 판정자는 픽셀이다(#92) */
+/** 썸네일 한 장의 «잉크» — 판정자는 픽셀이다(#92).
+ *  ⚠⚠ **화면 전체를 세면 안 된다**: 상자를 그리면 카메라가 닫히고 **지평선이 자동으로
+ *  숨는다**(web2-17 5부). 그래서 dpr2에서 「빈 종이 160 → 그린 뒤 31」이 나왔다 —
+ *  잉크가 는 것이 아니라 **지평선이 빠진 것**을 센 것이다(#87: 재는 대상이 틀렸다).
+ *  그래서 **지평선 아래의 상자 자리**만 센다(y 420~560 · x 240~760 — 지평선은 y 400이다).
+ *  `uiInk`는 오른쪽 세로바 자리(~54 CSS px)를 화면 높이 전체에서 센다. */
 async function inkOf(page: Page, url: string) {
   return page.evaluate(async (u: string) => {
     const img = new Image()
@@ -101,17 +106,21 @@ async function inkOf(page: Page, url: string) {
     const g = c.getContext('2d')!
     g.drawImage(img, 0, 0)
     const dat = g.getImageData(0, 0, c.width, c.height).data
+    const W = window.innerWidth, H = window.innerHeight
+    const bx0 = Math.floor(c.width * 240 / W), bx1 = Math.ceil(c.width * 760 / W)
+    const by0 = Math.floor(c.height * 420 / H), by1 = Math.ceil(c.height * 560 / H)
+    const uiX = Math.floor(c.width * (1 - 54 / W))
     let ink = 0
     let uiInk = 0
-    // 세로바는 화면 오른쪽 끝 ~54px — 썸네일에서 그 비율만큼의 오른쪽 띠
-    const uiX = Math.floor(c.width * (1 - 54 / window.innerWidth))
     // 종이색은 #f5f3ee(≈243) — 그보다 **뚜렷하게 어두운** 화소가 잉크다.
     // ⚠ 문턱을 170으로 잡았던 초판은 9개만 셌다(연필은 옅고, 160px로 줄이면 선이 흐려진다).
     for (let y = 0; y < c.height; y++) {
       for (let x = 0; x < c.width; x++) {
         const i = (y * c.width + x) * 4
         const lum = (dat[i]! + dat[i + 1]! + dat[i + 2]!) / 3
-        if (lum < 225) { ink++; if (x >= uiX) uiInk++ }
+        if (lum >= 225) continue
+        if (x >= uiX) uiInk++
+        if (x >= bx0 && x < bx1 && y >= by0 && y < by1) ink++
       }
     }
     return { w: c.width, h: c.height, ink, uiInk }
@@ -121,6 +130,7 @@ async function inkOf(page: Page, url: string) {
 test('㉡ 썸네일 — 목록에 뜨고 · 도면과 일치하고 · UI가 안 찍혀 있다', async ({ page }) => {
   await fresh(page)
   // **대조군**(D-3) — 빈 종이의 썸네일. 아래 「도면이 찍혔다」가 무조건 참이 아님을 이것이 낸다.
+  await settle(page); await settle(page)
   const blank = await inkOf(page, await page.evaluate(() => (window as any).__b2.diag.captureThumb() as string))
   await box(page)
   const d = await dump(page)
@@ -139,7 +149,7 @@ test('㉡ 썸네일 — 목록에 뜨고 · 도면과 일치하고 · UI가 안 
   // 캔버스 셋(gl·brushc·ink)만 합성하고 리본·패널은 그 밖이다.
   const px = await inkOf(page, d.thumb!)
   expect(px.w).toBeGreaterThan(80)
-  expect(px.ink, `도면이 실제로 찍혔다 — 빈 종이 ${blank.ink} → 그린 뒤 ${px.ink}`)
+  expect(px.ink, `상자 자리에 도면이 찍혔다 — 빈 종이 ${blank.ink} → 그린 뒤 ${px.ink}`)
     .toBeGreaterThan(blank.ink + 20)
   // UI 자리는 **대조군과 견준다**(절대 0이 아니라 «안 늘었다»): 종이 결이 켜져 있고
   // JPEG 압축이 내용에 따라 흔들려 그 띠에도 한두 화소가 오르내린다. 리본·패널이 찍혔다면
