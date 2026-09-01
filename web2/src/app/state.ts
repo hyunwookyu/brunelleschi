@@ -106,6 +106,8 @@ export interface Op {
   clsChanged?: { id: number; before: Face['cls']; after: Face['cls'] }[]
   /** **채움 토글**(web2-45 45-4) — 사람이 한 것이므로 실행취소 대상이다 */
   fillChanged?: { id: number; to: boolean }[]
+  /** **면 재료**(web2-46) — 사람이 한 것이므로 실행취소 대상이다 */
+  matChanged?: { id: number; before: Face['mat']; after: Face['mat'] }[]
   /** **광선이 바뀌어 대기 획을 버린 op**(web2-37 4번)가 함께 싣는 시점.
    *  ⚠⚠ 획만 되돌리면 «되살아난다»가 **쓸모없다**: 돌아온 대기 획의 내용은 「그 시점의
    *  화면 위 어디」인데 지금 시점이 그 시점이 아니고, 그 다음 시점 변경에서 **또 버려진다**
@@ -137,6 +139,10 @@ export interface App {
   grade: Grade
   /** 제도펜 니브 굵기 px */
   nib: number
+  /** **칠 선택**(web2-46) — 붓의 재료·톤·도구. `i: 'brush'`가 45의 흑연 붓 그대로다
+   *  (기본 — 무회귀). `t: 'auto'`는 «분류의 제안을 따른다»이고, 사람이 톤을 손으로
+   *  고르면 그 값이 그대로 남는다(제안은 제안에 그친다 — 지시 문면·46 측정 항목). */
+  paintSel: { m: MatId; t: number | 'auto'; i: Instr }
   eraserRadius: number
   /** **지금 이 획이 펜의 지우개 끝으로 그어지는 중인가**(web2-15 2-b).
    *  ⚠ 도구(`tool`)는 **안 바꾼다.** 안드로이드 크롬은 지우개 끝을 호버에 안 알리므로
@@ -364,6 +370,7 @@ export function createApp(W: number, H: number): App {
     tool: 'pencil',
     grade: 'HB',
     nib: C.NIB_PX,
+    paintSel: { m: 'conc', t: 'auto', i: 'brush' },
     eraserRadius: C.ERASER_PX,
     tipErase: false,
     activeErase: null,
@@ -1605,6 +1612,7 @@ export function faceFrontTarget(app: App): CamPose | null {
 // 한 붓 → 면별 조각 → 획 여럿(paint 태그) → 한 op(붓 하나가 실행취소 한 칸이다).
 
 import { splitByFace, liftPaint, frontFaceAt, classOf, faceClassOf, FACE_CLASSES, type FaceClass } from '../core/paint'
+import { materialOf, clampTone, suggestTone, cycleMat, isMatId, type MatId, type Instr } from '../core/palette'
 
 export const paintActive = (app: Pick<App, 'tool'>): boolean => app.tool === 'paint'
 
@@ -1620,6 +1628,15 @@ export function commitPaint(app: App, pts: Pt[]): { placed: number; offFace: num
       raw: r.pts,
       paint: { f: r.f },
       mat: { grade: activeGrade(app) },
+    }
+    // 재료 칠(web2-46) — 도구가 마커·색연필이면 재료·톤이 실린다. 톤 «자동»은 **이 조각이
+    // 얹힌 면의 분류**가 제안한 값으로 굳는다(칠하는 순간 사람이 실행한 것이므로 저장은
+    // 구체값이다 — 제안은 UI 시점의 것). 사람이 고른 톤이면 그 값 그대로다.
+    if (app.paintSel.i !== 'brush') {
+      const m = materialOf(app.paintSel.m)
+      const cls = faceClassNow(app, r.f) ?? 'wall'
+      const t = app.paintSel.t === 'auto' ? clampTone(m, suggestTone(cls)) : clampTone(m, app.paintSel.t)
+      s.paint = { f: r.f, m: app.paintSel.m, t, i: app.paintSel.i === 'marker' ? 1 : 2 }
     }
     if (!isDrawPose(app.pose)) s.view = clonePose(app.pose)
     app.doc.strokes.push(s)
@@ -1669,6 +1686,21 @@ export function toggleFaceFill(app: App, faceId: number): boolean | null {
   app.redoStack = []
   recompute(app)
   return to
+}
+
+/** **면 재료를 돌린다**(web2-46) — 없음→벽돌→…→금속→없음(cls 순환의 문법 그대로).
+ *  채움 해칭의 무늬·색이 이 값에서 나온다. 반환 = 새 재료 이름(없음이면 null 문자열 아님 —
+ *  «기본」). */
+export function cycleFaceMat(app: App, faceId: number): { name: string } | null {
+  const face = app.doc.faces.find(f => f.id === faceId)
+  if (!face) return null
+  const before = face.mat
+  const next = cycleMat(isMatId(before) ? before : undefined)
+  if (next === undefined) delete face.mat; else face.mat = next
+  app.undoStack.push({ removed: [], added: [], matChanged: [{ id: faceId, before, after: next }] })
+  app.redoStack = []
+  recompute(app)
+  return { name: next === undefined ? '기본' : materialOf(next).name }
 }
 
 // ── 재기(web2-32 6번) — 두 점을 짚으면 길이가 나온다 ────────────────────────
@@ -2047,6 +2079,10 @@ export function undo(app: App) {
     const f = app.doc.faces.find(x => x.id === fc.id)
     if (f) { if (fc.to) delete f.fill; else f.fill = 1 }
   }
+  for (const mc of op.matChanged ?? []) {   // 면 재료(web2-46) — «전»으로
+    const f = app.doc.faces.find(x => x.id === mc.id)
+    if (f) { if (mc.before === undefined) delete f.mat; else f.mat = mc.before }
+  }
   // 광선이 바뀌어 버린 op는 **그 시점까지** 되돌린다(web2-37 4번 — 위 `Op.pose` 주석).
   // ⚠ `setPose`를 안 부른다: 그것을 부르면 이 복원이 다시 «광선이 바뀌었다»로 읽혀
   //    방금 돌려놓은 획을 그 자리에서 도로 버린다(자기 자신을 되돌리는 고리).
@@ -2099,6 +2135,10 @@ export function redo(app: App) {
   for (const fc of op.fillChanged ?? []) {
     const f = app.doc.faces.find(x => x.id === fc.id)
     if (f) { if (fc.to) f.fill = 1; else delete f.fill }
+  }
+  for (const mc of op.matChanged ?? []) {   // 면 재료(web2-46) — «후»로
+    const f = app.doc.faces.find(x => x.id === mc.id)
+    if (f) { if (mc.after === undefined) delete f.mat; else f.mat = mc.after }
   }
   // 다시 실행 — 값 싣기는 **만든 자리와 같은 함수**를 다시 부른다(#54)
   if (op.dim) setDimension(app, op.dim.id, op.dim.mm)

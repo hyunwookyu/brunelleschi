@@ -5,7 +5,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   handwritingGroup, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
-  commitPaint, cycleFaceClass, faceClassNow, toggleFaceFill, paintActive, docToScreen,
+  commitPaint, cycleFaceClass, faceClassNow, toggleFaceFill, cycleFaceMat, paintActive, docToScreen,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
@@ -13,7 +13,7 @@ import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, type Draft } from './render2d'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -22,6 +22,7 @@ import { initNotice, notify, status, ask, clearNotice, confirmNear } from './not
 import { recognizeStrokes } from '../core/handwriting'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
+import { MATERIALS, TONE_NAMES, type Instr } from '../core/palette'
 import type { Grade, Layer, Sheet, Stroke, CamPose } from '../core/types'
 import { parseDim, formatMm, lenMm, formatScale, formatUnits, dimSkew, skewOff, UNITS, type Unit } from '../core/dim'
 import { measureMm, measureUnits } from '../core/measure'
@@ -746,7 +747,7 @@ window.addEventListener('resize', () => {
   if (etrayOpen && etrayAnchor) placeFlyout(etrayEl, etrayAnchor)   // 크기통도 같다(34-3)
   if (rolltrayOpen) placeFlyout(rolltrayEl, rollBtn)                // 롤통도 같다(34-6)
   if (griptrayOpen) placeFlyout(griptrayEl, gripBtn)                // 손통도 같다(web2-44)
-
+  if (painttrayOpen) placeFlyout(painttrayEl, toolBtn['paint'])     // 칠통도 같다(web2-46)
 })
 if (!TRAY) {   // 되돌리기(A-4) — 옛 세로 버튼·슬라이더로
   trayEl.hidden = true
@@ -825,6 +826,8 @@ for (const k of Object.keys(toolBtn) as (keyof typeof toolBtn)[]) {
     // 면 버튼을 **다시** 누르면 팝오버(web2-21 4부 — 「전부 찾기」). 손 띠에 버튼을 안
     // 늘린다(지시 4-e ⚠). 다른 도구는 종전 그대로다.
     if (k === 'face' && app.tool === 'face') { toggleFacePop(); return }
+    // 붓을 **다시** 누르면 칠통(web2-46) — 면 팝오버의 문법 그대로(#77 ㉠: 옛 뜻이 먼저).
+    if (k === 'paint' && app.tool === 'paint') { setPainttrayOpen(!painttrayOpen); return }
     // 재기는 **토글**이다 — 다시 누르면 연필로 돌아온다(재는 일은 잠깐 하는 일이다)
     if (k === 'measure' && app.tool === 'measure') { setTool('pencil'); return }
     // 지우개 둘 — **도구를 먼저 바꾸고 크기통을 연다**(web2-34 3번). 연필·펜 단추가
@@ -1870,6 +1873,8 @@ const GRIP_ROWS = [
   // docs/instrument-icons.md 「붓(칠 도구)」 절의 줄 둘.
   { key: 'cls', name: '분류', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 24 L26 24"/><path d="M16 24 V8 M16 8 l-4 5 M16 8 l4 5" stroke-width="1.2"/></svg>' },
   { key: 'fill', name: '채움', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M9 24 L23 8 M6 19 L17 8 M15 24 L26 13" stroke-width="1.1"/></svg>' },
+  // web2-46 — 면 재료(벽돌 쌓기 그림). 채움 해칭의 무늬·색이 이 값에서 나온다.
+  { key: 'fmat', name: '재료', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="22" height="14"/><path d="M5 16 H27 M13 9 V16 M20 16 V23" stroke-width="1.1"/></svg>' },
 ] as const
 const gripRow = new Map<string, HTMLButtonElement>()
 for (const r of GRIP_ROWS) {
@@ -1898,8 +1903,8 @@ function gripRowGate(key: string): string | null {
   const g = app.grip
   if (!g || g.ids.length === 0) return '선을 꾹 눌러 잡은 뒤에 쓴다'
   if (key === 'join' && g.ids.length !== 2) return '맺기는 **두 선**을 잡아야 한다'
-  if ((key === 'front' || key === 'cls' || key === 'fill') && g.faceId === null) {
-    return `${key === 'front' ? '정면' : key === 'cls' ? '분류' : '채움'}은 **면**을 잡아야 한다(면 안을 꾹 누른다)`
+  if ((key === 'front' || key === 'cls' || key === 'fill' || key === 'fmat') && g.faceId === null) {
+    return `${key === 'front' ? '정면' : key === 'cls' ? '분류' : key === 'fill' ? '채움' : '재료'}은 **면**을 잡아야 한다(면 안을 꾹 누른다)`
   }
   return null
 }
@@ -1945,9 +1950,101 @@ function doGripAction(key: string) {
   } else if (key === 'fill') {
     const on = toggleFaceFill(app, app.grip!.faceId!)
     if (on !== null) status(on ? '채움 — 해칭이 얹혔다(면의 성질이다 — 경계를 따라간다)' : '채움을 걷었다')
+  } else if (key === 'fmat') {
+    // 면 재료(web2-46) — 없음→벽돌→…→금속→없음. 채움이 꺼져 있으면 무늬가 안 보이므로
+    // 그 사실을 함께 말한다(값은 저장된다 — 조용히 사라지지 않는다).
+    const r = cycleFaceMat(app, app.grip!.faceId!)
+    if (r) {
+      const face = app.doc.faces.find(f => f.id === app.grip!.faceId)
+      status(`재료 — ${r.name}${face?.fill === 1 ? '' : ' (채움을 켜면 무늬가 보인다)'} · 다시 누르면 돌린다`)
+    }
   }
   invalidate()
 }
+// ── 칠통(web2-46) — **재료 목록이지 색 목록이 아니다**(지시). 그림 정본은
+// docs/instrument-icons.md 「마커·색연필(칠통)」. 도구 셋 + 톤 자동 + 재료 다섯 줄.
+const painttrayEl = document.getElementById('painttray')!
+const PAINT_INSTRS: { i: Instr; name: string; svg: string }[] = [
+  { i: 'brush', name: '붓', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3 V14"/><path d="M12.5 14 h7 v4 h-7 z"/><path d="M12.5 18 C12.5 23 11.5 25.5 10.5 27.5 C13.5 26.6 18.5 26.6 21.5 27.5 C20.5 25.5 19.5 23 19.5 18 Z"/></svg>' },
+  { i: 'marker', name: '마커', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="4" width="8" height="15" rx="1"/><path d="M13.5 19 L13 24 L17 28 L18.5 19"/></svg>' },
+  { i: 'cp', name: '색연필', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 h6 v16 l-3 8 l-3 -8 z"/><path d="M14.2 21.5 l1.1 3 M16.9 21.5 l-1.1 3" stroke-width="1.0"/></svg>' },
+]
+const paintInstrRow = new Map<Instr, HTMLButtonElement>()
+const paintAutoBtn = document.createElement('button')
+const paintSwatch = new Map<string, HTMLButtonElement>()   // 키 `${matId}:${tone}`
+{
+  for (const r of PAINT_INSTRS) {
+    const b = document.createElement('button')
+    b.id = `btn-paint-${r.i}`
+    b.className = 'rrow'
+    b.dataset.act = 'state'   // 도구 상태 — 누른다고 통이 접히지 않는다(견본을 이어 고른다)
+    b.innerHTML = `${r.svg}<span>${r.name}</span>`
+    b.addEventListener('click', () => {
+      app.paintSel.i = r.i
+      if (app.tool !== 'paint') setTool('paint')
+      syncPainttray()
+      status(r.i === 'brush' ? '붓 — 흑연 톤(재료 없음)' : `${r.name} — 재료 줄에서 톤을 고른다(자동 = 분류의 제안)`)
+    })
+    painttrayEl.append(b)
+    paintInstrRow.set(r.i, b)
+  }
+  // 톤 «자동» — 분류의 **제안**을 따른다. 제안이지 기본값이 아니다: 견본을 손으로
+  // 고르면 그 값이 그대로 남는다(46 측정 항목 — 제안에 그치는가).
+  paintAutoBtn.id = 'btn-paint-auto'
+  paintAutoBtn.className = 'rrow'
+  paintAutoBtn.dataset.act = 'state'
+  paintAutoBtn.innerHTML = '<span>톤 자동 — 분류의 제안(슬라브 밝음 · 경사 중간 · 벽 그림자)</span>'
+  paintAutoBtn.addEventListener('click', () => { app.paintSel.t = 'auto'; syncPainttray(); status('톤 자동 — 칠하는 면의 분류가 제안한다') })
+  painttrayEl.append(paintAutoBtn)
+  for (const m of MATERIALS) {
+    const row = document.createElement('div')
+    row.id = `paintrow-${m.id}`
+    row.className = 'rrow'
+    const name = document.createElement('span')
+    name.className = 'prow-name'
+    name.textContent = m.name
+    row.append(name)
+    m.tones.forEach((hex, ti) => {
+      const b = document.createElement('button')
+      b.id = `swatch-${m.id}-${ti}`
+      b.className = 'swatch'
+      b.dataset.act = 'state'
+      b.style.background = hex
+      b.title = `${m.name} · ${TONE_NAMES[ti] ?? ''}`
+      b.addEventListener('click', () => {
+        app.paintSel.m = m.id
+        app.paintSel.t = ti                                  // 사람의 선택 — 그대로 남는다
+        if (app.paintSel.i === 'brush') app.paintSel.i = 'marker'   // 재료를 골랐다 = 재료 도구(주력 마커)
+        if (app.tool !== 'paint') setTool('paint')
+        syncPainttray()
+        status(`${m.name} · ${TONE_NAMES[ti]} — ${app.paintSel.i === 'marker' ? '마커' : '색연필'}`)
+      })
+      row.append(b)
+    })
+    painttrayEl.append(row)
+  }
+}
+function syncPainttray() {
+  for (const [i, b] of paintInstrRow) b.classList.toggle('on', app.paintSel.i === i)
+  paintAutoBtn.classList.toggle('on', app.paintSel.t === 'auto')
+  for (const m of MATERIALS) {
+    m.tones.forEach((_, ti) => {
+      const b = document.getElementById(`swatch-${m.id}-${ti}`)
+      b?.classList.toggle('on', app.paintSel.m === m.id && app.paintSel.t === ti)
+    })
+  }
+}
+let painttrayOpen = false
+function setPainttrayOpen(v: boolean) {
+  painttrayOpen = v
+  painttrayEl.classList.toggle('open', v)
+  if (v) { syncPainttray(); closeOtherBoxes('#painttray'); placeFlyout(painttrayEl, toolBtn['paint']) }
+}
+registerBox({
+  id: '#painttray', isOpen: () => painttrayOpen, close: () => setPainttrayOpen(false),
+  zone: () => [painttrayEl, toolBtn['paint']],
+})
+
 let lastSheetForYellow = app.activeSheet
 const paperbar = initPaperbar(app, document.getElementById('paperbar')!, {
   capture: captureSheet,
@@ -2597,6 +2694,21 @@ const diag = {
       resolved: app.faces.some(x => x.id === f.id),
     })),
   }),
+  /** **재료**(web2-46) — 칠 선택·면 재료·순서 반증 손잡이. */
+  mats46: () => ({
+    markerSpacing: C.MARKER_SPACING,
+    /** e2e 원장의 constants_used 몫(2차 [9]) — 판정에 드는 상수를 원장이 스스로 든다 */
+    constants: { MARKER_SPACING: C.MARKER_SPACING, MARKER_W_PX: C.MARKER_W_PX, CP_W_PX: C.CP_W_PX, HATCH_ALPHA: C.HATCH_ALPHA, HATCH_SPACING_PX: C.HATCH_SPACING_PX },
+    paintSel: { ...app.paintSel },
+    faceMats: app.doc.faces.map(f => ({ id: f.id, mat: f.mat ?? null, fill: f.fill === 1 })),
+    paints: app.doc.strokes.filter(s => s.paint !== undefined)
+      .map(s => ({ id: s.id, f: s.paint!.f, m: s.paint!.m ?? null, t: s.paint!.t ?? null, i: s.paint!.i ?? null })),
+  }),
+  /** D-3 반증 손잡이(45 DEFERRED 「픽셀 순서 판별은 46 몫」) — 화가 알고리즘을 끈다.
+   *  render3d의 그 손잡이를 그대로 노출한다(#54 — 여기서 다른 정렬을 만들지 않는다). */
+  setFaceSort: (v: boolean) => { setFaceSortForTest(v); invalidate() },
+  /** spacing 대조 팔(1차 [2][3]) — 같은 획·같은 경로에서 0.03과 출하값을 잰다 */
+  setMarkerSpacing: (v: number) => { brushLayer.setMarkerSpacingForTest(v); invalidate() },
   summary: () => ({
     horizonY: app.lift.an.horizonY,
     screenHDeclared: app.lift.an.screenHDeclared,

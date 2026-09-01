@@ -346,3 +346,30 @@
 
 - **분류** — 법선 화살과 면: `<svg viewBox="0 0 32 32" …><path d="M6 24 L26 24"/><path d="M16 24 V8 M16 8 l-4 5 M16 8 l4 5" stroke-width="1.2"/></svg>`
 - **채움** — 해칭 든 사각: `<svg viewBox="0 0 32 32" …><rect x="6" y="8" width="20" height="16"/><path d="M9 24 L23 8 M6 19 L17 8 M15 24 L26 13" stroke-width="1.1"/></svg>`
+
+## 마커·색연필(칠통) — web2-46 추가 (자작 · 선 문법)
+
+재료 칠 도구 둘. 실물은 제도판 위의 **챔퍼 촉 마커**(코픽류)와 **색연필**이다.
+선 문법 그대로: `fill:none · stroke:currentColor · 1.6/32 · round`.
+칠통(#painttray)의 도구 줄에 붓(45 정본)과 나란히 선다 — 붓 그림은 안 바뀐다.
+
+- **마커** — 뚜껑 없는 몸통 + 챔퍼(빗깎임) 촉:
+
+```html
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="4" width="8" height="15" rx="1"/><path d="M13.5 19 L13 24 L17 28 L18.5 19"/></svg>
+```
+
+- **색연필** — 연필 실루엣(뾰족 끝) + 심 위 짧은 빗금 셋(색이 실린 심 — 무채 문법 안에서
+  «색이 있음»을 결로 말한다. 연필통 줄의 원뿔 깎임과 갈리는 채널이 이 빗금이다):
+
+```html
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 h6 v16 l-3 8 l-3 -8 z"/><path d="M14.2 21.5 l1.1 3 M16.9 21.5 l-1.1 3" stroke-width="1.0"/></svg>
+```
+
+손통 줄 하나(web2-46 · `.rrow` 문법):
+
+- **재료** — 벽돌 쌓기(면에 재료를 준다): `<svg viewBox="0 0 32 32" …><rect x="5" y="9" width="22" height="14"/><path d="M5 16 H27 M13 9 V16 M20 16 V23" stroke-width="1.1"/></svg>`
+
+칠통의 재료 줄 다섯(벽돌·콘크리트·유리·나무·금속)은 **글자 + 톤 견본**이다 — 견본은
+아이콘이 아니라 **색 그 자체**라 선 문법 비대상이다(옐로 롤의 «색이 정체» 예외와 같은
+자리 — 견본이 곧 고르는 값이다).

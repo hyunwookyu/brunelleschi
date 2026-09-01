@@ -40,11 +40,16 @@ import { isFlat2d, type Stroke } from '../core/types'
 import { pt, type Pt } from '../core/vec'
 import type { Draft } from './render2d'
 // 매핑·색·필압 계수는 순수 모듈이다 — 단위가 WebGL 없이 잰다(test/brushmap.test.ts)
-import { BRUSH_OF, strokeColor, weightOf, pressureProfile, strokeColorAt, weightAt, rawPressProfile, strokeColorMix, strokeColorAtMix } from './brushmap'
+import { BRUSH_OF, strokeColor, weightOf, pressureProfile, strokeColorAt, weightAt, rawPressProfile, strokeColorMix, strokeColorAtMix, INSTR_BRUSH, instrWeight } from './brushmap'
+import { paintHexOf } from '../core/palette'
 import { remapPress } from '../core/press'
 
 export interface BrushLayer {
   canvas: HTMLCanvasElement
+  /** **1차 리뷰어 [2][3] 대응** — 마커 spacing 대조 팔(0.03 ↔ C.MARKER_SPACING)을
+   *  **출하 경로 그대로**(같은 획·같은 상자·같은 redraw) 돌리기 위한 반증 손잡이.
+   *  e2e가 재고 나면 반드시 C.MARKER_SPACING으로 되돌린다. */
+  setMarkerSpacingForTest(v: number): void
   /** 캐시 키가 갈렸으면 전량 다시 그린다. 반환 = 이번에 실제로 그렸는가.
    *  draft(web2-12 2번)가 있으면 **draft 전용 모드**로 돈다 — 아래 syncDraft 절. */
   sync(app: App, draft?: Draft | null): boolean
@@ -96,6 +101,20 @@ function withStraightAlpha<T>(fn: () => T): T {
 export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   let canvas = withStraightAlpha(() =>
     brush.createCanvas(W, H, { parent: '#app', pixelDensity: dpr, id: 'brushc' }))
+
+  // ── 마커(web2-46) — 내장 marker의 **spacing 하나만** 0.03 → C.MARKER_SPACING ──
+  // 내장 그대로는 「겹치면 진해진다」가 죽어 있었다(실측 — 46-0 뒤 스윕): spacing 0.03은
+  // 한 획의 내부 퇴적만으로 상자 안료가 포화해(1·2·3겹 = 3376·3377·3377) 겹침이 픽셀에
+  // 안 실린다. spacing 스윕(0.03·0.12·0.15·0.18·0.2·0.22·0.25 — NOTES 46-0 표)에서 0.2가
+  // 1→2겹 +82% · 2→3겹 +9% · 피복(알파)은 전 구간 만재 — 실물 마커의 겹 계단과 같은
+  // 형태다. 나머지 파라미터는 내장 값 그대로다(근거 없는 수를 안 짓는다 — BRUSH_OF 규약).
+  const addMarker46 = (spacing: number) => brush.add('marker46', {
+    weight: 2, scatter: 0.2, sharpness: null, grain: null, opacity: 1,
+    spacing, pressure: { curve: [0.35, 0.25], min_max: [1.2, 0.85] },
+    type: 'marker',
+  })
+  addMarker46(C.MARKER_SPACING)
+
   let cw = W, ch = H
 
   // ── 스냅샷 겹(web2-12 2번) — 그리는 동안 확정 획을 이 2D 캔버스가 든다 ──────
@@ -274,6 +293,18 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     brush.spline(sp, 0)   // curvature 0 — 점 사이는 직선 세그먼트(점렬 자체가 곡선을 든다)
   }
 
+  /** **재료 칠 점렬**(web2-46) — 마커·색연필. 시드 규약은 drawStrokeRaw와 같다(계약 3).
+   *  색은 톤 hex 그대로(brushmap 머리주석 — 겹침 누적은 라이브러리 퇴적의 몫), 굵기는
+   *  도구 상수(#54 — instrWeight 하나). 필압은 안 싣는다: 마커는 실물이 균일 촉이고
+   *  색연필 필압은 45 무회귀 확인 뒤의 일이다(DEFERRED에 올린다). */
+  function drawPaintRaw(s: Stroke, pts: Pt[], hex: string, instr: 1 | 2) {
+    brush.seed(s.id)
+    brush.noiseSeed(s.id)
+    brush.set(INSTR_BRUSH[instr], hex, instrWeight(instr))
+    const sp: [number, number, number][] = pts.map(p => [p.x, p.y, 0.5])
+    brush.spline(sp, 0)
+  }
+
   /** 대기 획의 **흑연 파선**(web2-16 3-a) — 벡터 점선을 버리고 확정 획과 같은 브러시로
    *  긋되 파선으로 남긴다: 제도에서 파선은 «아직/숨은»의 계열이다(A-3 — 숨은선).
    *  패턴은 종전 벡터 점선의 규격 그대로(C.WAIT_DASH_* — 상태 채널의 연속성. #65:
@@ -365,7 +396,10 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
           }
           if (offScreen({ x: x0, y: y0 }, { x: x1, y: y1 })) { clipped++; continue }
           drawn++
-          drawStrokeRaw(app, s, spts)
+          // 재료 칠(web2-46) — m·t·i가 성하면 마커/색연필로, 아니면 45의 흑연 그대로.
+          const hex = paintHexOf(s)
+          if (hex && s.paint!.i !== undefined) drawPaintRaw(s, spts, hex, s.paint!.i)
+          else drawStrokeRaw(app, s, spts)
           continue
         }
         // 글씨 획(web2-32 1번)도 이 갈래다 — **같은 규격**이므로 술어가 하나다(isFlat2d)
@@ -677,6 +711,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   let syncs = 0, redraws = 0, blank = false
   return {
     canvas,
+    setMarkerSpacingForTest(v: number) { addMarker46(v); last = null },
     sync(app, draft) {
       syncs++
       paperPhase(app)   // 종이 위상 — 문서(팬)를 따라간다(10번)

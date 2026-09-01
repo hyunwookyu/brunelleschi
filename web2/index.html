@@ -368,11 +368,17 @@
        (사람 관측). 펼침은 전부 **왼쪽으로 겹쳐 뜬다**(overlay) — 자리는 main.ts가
        누른 버튼의 줄에 맞춘다. 선례(A-3): 프로크리에이트 브러시·크기 팝오버, 크리타
        팝업 팔레트, 스케치업 플라이아웃 — 전부 겹쳐 뜨지 밀어내지 않는다. */
-    #tray, #pentray, #etray, #rolltray, #griptray {
+    #tray, #pentray, #etray, #rolltray, #griptray, #painttray {
       display: none; position: fixed; z-index: 12;
       flex-direction: column; gap: var(--btn-gap); align-items: flex-end;
     }
-    #tray.open, #pentray.open, #etray.open, #rolltray.open, #griptray.open { display: flex; }
+    #tray.open, #pentray.open, #etray.open, #rolltray.open, #griptray.open, #painttray.open { display: flex; }
+    /* 칠통(web2-46) — 재료 줄의 톤 견본. 견본은 색 그 자체라 선 문법 비대상
+       (instrument-icons.md 「마커·색연필」 절이 정본). 고른 견본은 테로 말한다. */
+    .swatch { width: 16px; height: 16px; border-radius: 3px; border: 1.5px solid rgba(0,0,0,.14);
+              padding: 0; cursor: pointer; touch-action: none; }
+    .swatch.on { border: 1.5px solid #3a362f; outline: 1.5px solid rgba(58,54,47,.35); outline-offset: 1px; }
+    .prow-name { min-width: 52px; text-align: left; }
     /* 롤통 줄(web2-34 6번) — 연필통·촉통 줄과 같은 크기·같은 어법. 앞의 롤 그림 +
        이름. 옐로의 색 예외는 **통 안**에만 산다(`instrument-icons.md` 정본). */
     .rrow { display: flex; flex-direction: row; align-items: center; gap: 7px;
@@ -381,6 +387,8 @@
             padding: 5px 9px; touch-action: none; border: 0; cursor: pointer; }
     .rrow svg { height: calc(15px * var(--ui-scale)); width: auto; }
     .rrow.disabled { opacity: .38; }
+    /* 칠통(web2-46) — 고른 도구·자동 줄의 표시(지우개 크기 줄 .erow.on의 문법 그대로) */
+    .rrow.on { background: rgba(60, 56, 49, .10); }
     .trow svg { height: calc(15px * var(--ui-scale)); width: auto; }
     /* 펜 촉 줄(web2-30 2번) — **그 굵기의 실제 선 견본**이 1:1로 그려진다(원칙 e:
        선폭이 화면 고정이므로 견본과 그은 선이 같은 px다). 아이콘 문법은 연필통 줄과
@@ -1168,6 +1176,11 @@
 
     <!-- 손통 줄 넷(web2-44) — 행은 main.ts가 짓는다(#54: 그림 정본은 instrument-icons.md). -->
     <div id="griptray"></div>
+
+    <!-- 칠통(web2-46) — **재료 목록이지 색 목록이 아니다**(지시). 도구 줄(붓·마커·색연필) +
+         재료 다섯 줄(이름 + 톤 견본 둘셋) + 톤 「자동」(분류의 제안을 따른다 — 제안이지
+         기본값이 아니다: 사람이 견본을 고르면 그 값이 남는다). 행은 main.ts가 짓는다. -->
+    <div id="painttray"></div>
 
     <div id="pentray"></div>
 

@@ -13,6 +13,7 @@ import { MAT, gradeOf, widthOf } from '../core/material'
 import { C } from '../core/constants'
 import { projW } from '../core/camera'
 import { hatchSegments, type HatchMode } from '../core/hatch'
+import { hatchSpecOf, hatchHexOf } from '../core/palette'
 import type { Grade } from '../core/types'
 
 export interface R3D {
@@ -248,10 +249,20 @@ let hatchMode: HatchMode = 'screen'
 export const getHatchMode = (): HatchMode => hatchMode
 export function setHatchMode(m: HatchMode) { hatchMode = m; hatchKey = '' }
 let hatchKey = ''
-const hatchMat = new THREE.LineBasicMaterial({
-  color: 0x8d8880, transparent: true, opacity: C.HATCH_ALPHA,
-  depthTest: false, depthWrite: false,
-})
+// 해칭 선 재질 — 색마다 하나(web2-46: 재료가 색을 정한다 — `palette.hatchHexOf`).
+// 재료 없는 면은 45의 회갈색 그대로다(HATCH_DEFAULT_HEX — 무회귀). 캐시라 dispose 불요.
+const hatchMats = new Map<string, THREE.LineBasicMaterial>()
+function hatchMatOf(hex: string): THREE.LineBasicMaterial {
+  let m = hatchMats.get(hex)
+  if (!m) {
+    m = new THREE.LineBasicMaterial({
+      color: new THREE.Color(hex), transparent: true, opacity: C.HATCH_ALPHA,
+      depthTest: false, depthWrite: false,
+    })
+    hatchMats.set(hex, m)
+  }
+  return m
+}
 
 /** 해칭 다시 짓기 — 문서·모드가 바뀌면, 그리고 **화면 판은 시점·줌이 바뀌면**(정의가
  *  화면의 것이라서다 — 그것이 곧 ⚑의 「무늬가 면 위에서 미끄러진다」다). */
@@ -271,10 +282,15 @@ function syncHatch(r: R3D, app: App) {
   for (const face of filled) {
     const rf = app.faces.find(x => x.id === face.id)
     if (!rf) continue                                  // 못 풀린 면 — 채움도 쉰다(면의 규약)
+    // 재료(web2-46) — 무늬·색의 출처는 palette 하나다(#54). 없으면 45의 기본 그대로.
+    const spec = hatchSpecOf(face)
     const spacing = hatchMode === 'screen'
-      ? C.HATCH_SPACING_PX / viewScale(app)            // 화면 px 정의 — 줌을 되돌려 문서 px로
-      : C.HATCH_SPACING_PX
-    const segs = hatchSegments(app.lift.an, app.pose, rf, hatchMode, spacing, C.HATCH_ANGLE_DEG)
+      ? spec.spacingPx / viewScale(app)                // 화면 px 정의 — 줌을 되돌려 문서 px로
+      : spec.spacingPx
+    const segs = hatchSegments(app.lift.an, app.pose, rf, hatchMode, spacing, spec.angleDeg)
+    // 교차 한 벌 더(콘크리트) — 같은 생성기를 각도+90°로 한 번 더 부른다(기제 불변 — 45의
+    // 생성기·짝수-홀수 절단이 그대로 돌고 호출이 하나 는 것뿐이다).
+    if (spec.cross) segs.push(...hatchSegments(app.lift.an, app.pose, rf, hatchMode, spacing, spec.angleDeg + 90))
     if (segs.length === 0) continue
     const pos = new Float32Array(segs.length * 6)
     segs.forEach((s, i) => {
@@ -283,7 +299,7 @@ function syncHatch(r: R3D, app: App) {
     })
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-    const ls = new THREE.LineSegments(g, hatchMat)
+    const ls = new THREE.LineSegments(g, hatchMatOf(hatchHexOf(face)))
     ls.userData.faceId = face.id
     r.hatchGroup.add(ls)
   }

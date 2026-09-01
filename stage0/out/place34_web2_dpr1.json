@@ -13,29 +13,35 @@
  "after": {
   "vh": 800,
   "top": 12,
-  "h": 683,
-  "bottom": 695,
-  "slack": 105
+  "h": 766,
+  "bottom": 778,
+  "slack": 22
  },
  "unit_button_px": 45,
  "two_buttons_px": 92,
+ "placed_by_31": [
+  "btn-zoom-fit",
+  "btn-lens"
+ ],
+ "taken_by_31_px": 74,
+ "slack_without_31": 96,
  "slack_before_after": [
   25,
-  105
+  22
  ],
  "probe_insert": {
-  "h": 775,
-  "bottom": 787,
-  "slack": 13,
-  "probe": 45
+  "h": 766,
+  "bottom": 778,
+  "slack": 22,
+  "probe": null
  },
  "gate": {
-  "slack_ge_two_buttons": true,
+  "slack_ge_two_buttons": false,
   "insert_fits": true,
-  "reachability": "여유 px — 재편 전 **25** ↔ 후 **105**. 통과선은 «버튼 두 개분» 92px이고 둘 사이에 있다. 시험 삽입 뒤 여유도 전 −67(25 − 92) ↔ 후 13로 부호가 갈린다.",
+  "reachability": "여유 px — 재편 전 **25** ↔ 후 **22**. 통과선은 «버튼 두 개분» 92px이고 둘 사이에 있다. 시험 삽입 뒤 여유도 전 −67(25 − 92) ↔ 후 22로 부호가 갈린다.",
   "reachability_value": [
    25,
-   105
+   22
   ],
   "reachability_source": "slack_before_after"
  }

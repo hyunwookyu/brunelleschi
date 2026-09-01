@@ -1,22 +1,22 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "web2-45",
+  "measured_at": "web2-46",
   "unit": {
     "command": "npx vitest run (web2/)",
-    "files": 117,
-    "tests": 954,
-    "wall_s": 29.9,
-    "passed": 954,
+    "files": 119,
+    "tests": 968,
+    "wall_s": 28.3,
+    "passed": 968,
     "failed": 0,
-    "note": "web2-45 — 파일 115 → 117 · 팔 935 → 954(paint45 12 · faces45_measure 7 등)."
+    "note": "web2-46 — 파일 117 → 119 · 팔 954 → 968(mats46 11 · mats46_measure 3)."
   },
   "e2e": {
     "command": "npx playwright test --workers=2 (dpr1+dpr2)",
-    "cells": 554,
-    "passed": 553,
-    "failed": 1,
-    "wall_s": 1674,
-    "note": "web2-45 — 546 → 554(paint45 8칸). 빨강 1 = waitink37 ③ dpr2(43·44와 같은 등재 선재 · 단독 3/3)."
+    "cells": 566,
+    "passed": 566,
+    "failed": 0,
+    "wall_s": 1764,
+    "note": "web2-46 — 554 → 566(mats46 12칸). 빨강 0 — 43·44·45가 등재한 waitink37 ③ dpr2 선재도 이번 실행은 초록(간헐 — 등재는 유지)."
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",
@@ -299,6 +299,12 @@
       "unit": 954,
       "e2e": 554,
       "e2e_wall_s": 1674
+    },
+    {
+      "at": "web2-46",
+      "unit": 968,
+      "e2e": 566,
+      "e2e_wall_s": 1764
     }
   ],
   "environment": {

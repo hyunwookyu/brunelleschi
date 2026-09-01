@@ -11,19 +11,19 @@
   "h": 800
  },
  "sidebar_pencil": {
-  "w": 45,
-  "h": 683,
-  "bottom": 695
+  "w": 91,
+  "h": 766,
+  "bottom": 778
  },
  "sidebar_pen": {
-  "w": 45,
-  "h": 683,
-  "bottom": 695
+  "w": 91,
+  "h": 766,
+  "bottom": 778
  },
  "sidebar_eraser": {
-  "w": 45,
-  "h": 683,
-  "bottom": 695
+  "w": 91,
+  "h": 766,
+  "bottom": 778
  },
  "tray": {
   "w": 96,
@@ -37,13 +37,16 @@
  "overlap": {
   "pencil": {
    "overlaps": 0,
-   "n": 16,
+   "n": 19,
    "ids": [
     "sidebar-toggle",
     "dim-toggle",
+    "btn-zoom-fit",
+    "btn-lens",
     "btn-undo",
     "btn-redo",
     "btn-snap",
+    "btn-grip",
     "btn-pencil",
     "tray-2H",
     "tray-H",
@@ -59,13 +62,16 @@
   },
   "pen_with_pentray": {
    "overlaps": 0,
-   "n": 15,
+   "n": 18,
    "ids": [
     "sidebar-toggle",
     "dim-toggle",
+    "btn-zoom-fit",
+    "btn-lens",
     "btn-undo",
     "btn-redo",
     "btn-snap",
+    "btn-grip",
     "btn-pencil",
     "btn-pen",
     "nib-0_18",
@@ -80,13 +86,16 @@
   },
   "eraser_with_etray": {
    "overlaps": 0,
-   "n": 14,
+   "n": 17,
    "ids": [
     "sidebar-toggle",
     "dim-toggle",
+    "btn-zoom-fit",
+    "btn-lens",
     "btn-undo",
     "btn-redo",
     "btn-snap",
+    "btn-grip",
     "btn-pencil",
     "btn-pen",
     "btn-eraser-pencil",
@@ -99,8 +108,8 @@
    ]
   }
  },
- "right_edge_x": 1195,
+ "right_edge_x": 1158,
  "hit_pad_css": "3px",
- "clip_boundary_css_h": 695,
+ "clip_boundary_css_h": 778,
  "note": "판정(겹침 0·화면 안·오른쪽 축·크기 대역)은 팔의 단언이 정본이고 이 원장은 그 실측값의 기록이다."
 }

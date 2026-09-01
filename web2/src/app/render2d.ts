@@ -10,6 +10,8 @@ import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../cor
 import { cubeGeom, cubeArrows, viewName } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32, widthOf, widthOfMat } from '../core/material'
+import { toneHex } from '../core/palette'
+import { instrWeight } from './brushmap'
 import { overshootEnds } from '../core/overshoot'
 import { waitFadeFactor, atOwnPose, bodyHex } from '../core/waitfade'
 import type { OsnapHit } from '../core/osnap'
@@ -481,12 +483,18 @@ export function draw2d(
     // (`draftBrushed` — 겹 순서 역전을 막는다, state.ts 그 술어의 머리주석이 정본).
     // 그 밖(classic·INK)은 종전 벡터 미리보기 그대로다.
     if (forced || !draftBrushed(app)) {
-      ctx.strokeStyle = forced ? COL.preview : m.color
+      // 재료 칠 미리보기(web2-46) — 마커·색연필이면 톤 색·도구 굵기로 긋는다(원칙 d:
+      // 확정될 모습에 가깝게. 질감 미리보기는 45의 DEFERRED 그대로 미룬다 — 색·폭만).
+      const pm = app.tool === 'paint' && app.paintSel.i !== 'brush'
+        ? { hex: toneHex(app.paintSel.m, app.paintSel.t === 'auto' ? 1 : app.paintSel.t),
+            w: instrWeight(app.paintSel.i === 'marker' ? 1 : 2) }
+        : null
+      ctx.strokeStyle = forced ? COL.preview : pm ? pm.hex : m.color
       // 몸체 알파도 확정과 같게 — 확정 몸체(Line2)는 MAT.alpha로 그려지는데 미리보기가
       // 불투명이면 긋는 동안이 더 진하다(「검은 벡터선」 관측의 절반이 이것이다).
       // 떼는 순간 무변화 게이트(draftgate.spec)가 이 정합을 잰다.
-      ctx.globalAlpha = forced ? 1 : m.alpha
-      ctx.lineWidth = (forced ? C.LINE_W_RESULT : drawW) * is
+      ctx.globalAlpha = forced ? 1 : pm ? 0.45 : m.alpha   // 마커 미리보기 — 옅게(확정은 퇴적)
+      ctx.lineWidth = (forced ? C.LINE_W_RESULT : pm ? pm.w : drawW) * is
       ctx.beginPath()
       // 옐로 프리핸드(web2-24 4-b) — 미리보기도 **손이 지나간 점렬**을 따른다(확정이
       // raw 정본이므로 원칙 d: 보이는 그대로 확정된다). 머무름(held)이 서면 반듯
