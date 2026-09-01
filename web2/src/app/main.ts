@@ -2572,6 +2572,7 @@ requestAnimationFrame(() => {
 
 // e2e 진단 통로 — 앱과 같은 함수·같은 상태를 본다(측정 경로와 앱 경로를 가르지 않는다)
 import { project, screenAxes, vpMarks, frameAxes, isParallel, projW, horizonScreenY } from '../core/camera'
+import { setMarkerFlatForTest } from '../core/facetex'
 import { forwardOf, yawDir } from '../core/level'
 import { loopAt, buildGraph, cyclesOf, planesOf, faceScreen } from '../core/face'
 import { geomSize3 } from '../core/osnap'
@@ -3040,6 +3041,8 @@ const diag = {
   serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
   corruptPaintTex: () => { const n = corruptPaintTexForTest(); invalidate(); return n },
   rebakePaintTex: () => { rebakePaintTexForTest(); invalidate() },
+  /** 마커 평면 덮어쓰기 반증(D-3 · mats46 ②) — 켜면 겹 계단이 죽는 대역으로 재굽기 */
+  setMarkerFlatForTest: (v: boolean) => { setMarkerFlatForTest(v); rebakePaintTexForTest(); invalidate() },
   setPaintBlendForTest: (v: boolean) => { setPaintBlendForTest(v); invalidate() },
   /** **안 실린 수리를 손으로 걸어 보는 손잡이**(web2-48 48-1 — 수리는 되돌렸다).
    *  `true` = 잉크 겹을 **곱**으로 얹는다(흰 장막이 사라진다) · `false` = **출하 상태**.

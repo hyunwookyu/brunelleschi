@@ -118,6 +118,14 @@ const inTex = (s: Stroke, faceId: number, side: 1 | -1): boolean =>
  *  붓(흑연)  MAT 경도 색·알파 그대로(#54 — 종전 drawPaintGraphite의 색과 같은 출처)
  *  마커      hex · canvas 'multiply' — **겹치면 진해진다**(46의 계약 — 기제만 바뀌었다)
  *  색연필    hex · source-over 부분 알파(완전히 덮이지 않는다) */
+/** **반증 손잡이**(D-3 · mats46 ② — 겹침 계단의 도달 가능성): 마커를 «평면 덮어쓰기»
+ *  (source-over · 알파 1)로 굽는다 — 겹쳐도 같은 색이라 계단이 죽는다. 출하(multiply ·
+ *  PAINT_MARKER_ALPHA)가 «겹치면 진해진다»를 만드는 그 조합임을 같은 실행에서 증명한다.
+ *  ⚠ 알파만 1.0으로 두는 판은 반증이 못 된다 — multiply는 알파 1에서도 곱으로 계속
+ *  어두워진다(실측: 상대 계단 0.44 — 절반 문을 안 넘었다). 제품 경로는 안 부른다. */
+let markerFlatOverride = false
+export function setMarkerFlatForTest(v: boolean): void { markerFlatOverride = v }
+
 function drawStrokeTex(
   g: CanvasRenderingContext2D, s: Stroke, box: UvBox, dims: { h: number; pxPerUnit: number },
 ) {
@@ -128,8 +136,8 @@ function drawStrokeTex(
   g.save()
   const grade = s.mat?.grade ?? 'HB'
   if (p.i === 1 && p.c) {          // 마커
-    g.globalCompositeOperation = 'multiply'
-    g.globalAlpha = C.PAINT_MARKER_ALPHA
+    g.globalCompositeOperation = markerFlatOverride ? 'source-over' : 'multiply'
+    g.globalAlpha = markerFlatOverride ? 1 : C.PAINT_MARKER_ALPHA
     g.strokeStyle = p.c
   } else if (p.i === 2 && p.c) {   // 색연필
     g.globalCompositeOperation = 'source-over'

@@ -2,7 +2,7 @@
   "what": "web2-48 — 화면 몫: 칠 합성(곱) · 면의 쪽 · 크기 트레이 · 면 표시와 가림 · 궤도 중 칠 · 툴팁 · 배열 · 큐브 톤",
   "note_92": "#92 — 판정자는 픽셀(종이보다 밝은 불투명 픽셀 수 · 자국 폭 · 면 알파)이다. 「곱을 켰다」는 이름표라 안 센다",
   "blend": {
-    "def": "칠 상자의 «종이보다 밝은 픽셀» — 칠 층 단독(#brushc 버퍼) · 출하 합성 · 곱을 걸은 합성 · 되돌린 합성",
+    "def": "칠 상자의 «종이보다 밝은 픽셀»(출하 합성 스크린샷) + #brushc 단독 층 + #gl의 따뜻한 칠 픽셀",
     "box": {
       "x": 505,
       "y": 405,
@@ -11,28 +11,21 @@
     },
     "brushc_layer_alone": {
       "px": 4500,
-      "touched": 1360,
-      "opaque": 1360,
-      "opaqueLighter": 948,
-      "lumaMean": 248
+      "touched": 0,
+      "opaque": 0,
+      "opaqueLighter": 0,
+      "lumaMean": null
     },
     "shipped": {
       "px": 4500,
-      "lumaMean": 244,
-      "lighterThanPaper": 918
-    },
-    "with_multiply": {
-      "px": 4500,
-      "lumaMean": 241,
+      "lumaMean": 233,
       "lighterThanPaper": 0
     },
-    "restored": {
-      "px": 4500,
-      "lumaMean": 244,
-      "lighterThanPaper": 918
+    "warm_on_gl": {
+      "warm": 2890,
+      "any": 13109
     },
-    "note_reverted": "⚠⚠ **48-1은 진단만 끝냈고 수리는 되돌렸다.** 곱은 장막을 지우지만 이 겹이 «종이 위의 잉크»가 아니라 **#gl의 몸체 위에 얹히는 질감**이라 질감 × 몸체로 흑연이 두 번 어두워진다 — press26 ②(dpr2 · p=0.20): 꺼짐 185.3 → 128.9 · 켬 196.0 → 127.1로 보정의 순서까지 뒤집혔다. 올바른 수리는 칠에게 제 겹을 주는 것이다(DEFERRED)",
-    "note_73": "#73 ㉐의 범위 정정은 그대로 산다(AS-C157) — 이 겹에서 곱은 **발화한다**(with_multiply가 그 증거). 되돌린 이유는 «곱이 안 선다»가 아니라 «이 겹이 곱의 대상이 아니다»이다"
+    "note_50": "48-1의 장막(p5.brush가 흰 종이 전제로 불투명하게 쓰는 것 — AS-C158)은 수리된 것이 아니라 **병소가 구조에서 빠진 것**이다. 곱의 반증 스위치는 paint50_web2_*.json의 falsify_over가 든다"
   },
   "side": {
     "def": "칠한 쪽의 상자 칠 픽셀 ↔ 평면 건너편 포즈의 **화면 전체** 칠 픽셀. 둘째가 0이어야 한다",
@@ -42,17 +35,17 @@
         "f": 10,
         "s": 1,
         "c": "#d9a08a",
-        "w": 10,
+        "w": 0.2656887439899176,
         "i": 1
       }
     ],
     "near_box": {
-      "warm": 500,
-      "any": 5308
+      "warm": 2890,
+      "any": 13109
     },
     "far_whole_screen": {
       "warm": 0,
-      "any": 2017
+      "any": 0
     },
     "flipped": {
       "side": 1,
@@ -61,9 +54,9 @@
     "note_92": "판정자는 픽셀이다 — `paintVisible`의 반환값(이름표)이 아니라 렌더가 그것을 존중하는가를 재는다. 순수 함수 쪽은 단위 팔(test/mats46.test.ts ④)이 따로 재고, 저장 왕복은 test/roundtrip43(게이트 ①·②)과 test/mats46(46-4 ①)이 재다"
   },
   "sizes": {
-    "rows_w2_5": 7,
-    "rows_w20": 36,
-    "ratio": 5.143
+    "rows_w2_5": 6,
+    "rows_w20": 33,
+    "ratio": 5.5
   },
   "reveal": {
     "withPencil": {
@@ -92,7 +85,7 @@
       "touched": 1200,
       "opaque": 1200,
       "opaqueLighter": 0,
-      "lumaMean": 243
+      "lumaMean": 219
     },
     "box": {
       "x": 530,
@@ -133,31 +126,32 @@
   },
   "orbit": {
     "before": {
-      "px": 4500,
-      "touched": 1360,
-      "opaque": 1360,
-      "opaqueLighter": 789,
-      "lumaMean": 245
+      "warm": 1166,
+      "any": 11370
     },
     "during": [
-      1277,
-      1222,
-      1168,
-      1111,
-      1074
+      1104,
+      1037,
+      963,
+      886,
+      816
     ],
+    "after": {
+      "warm": 816,
+      "any": 7899
+    },
     "tileStats": {
       "active": true,
       "tiles": 7,
       "frames": 5,
-      "bakeMs": 17.6,
+      "bakeMs": 30.9,
       "bakePasses": 1,
       "bakeClamped": 0,
       "frameMsMedian": 0.1,
       "frameMsMax": 0.6,
-      "paintFrames": 5,
-      "paintMsMedian": 0.4,
-      "paintMsMax": 0.5
+      "paintFrames": 0,
+      "paintMsMedian": 0,
+      "paintMsMax": 0
     }
   },
   "tooltips": {

@@ -40,9 +40,7 @@ import { isFlat2d, type Stroke } from '../core/types'
 import { pt, type Pt } from '../core/vec'
 import type { Draft } from './render2d'
 // 매핑·색·필압 계수는 순수 모듈이다 — 단위가 WebGL 없이 잰다(test/brushmap.test.ts)
-import { BRUSH_OF, strokeColor, weightOf, pressureProfile, strokeColorAt, weightAt, rawPressProfile, strokeColorMix, strokeColorAtMix, INSTR_BRUSH, paintWeightOf } from './brushmap'
-import { paintHexOf } from '../core/palette'
-import { paintVisible } from '../core/paint'
+import { BRUSH_OF, strokeColor, weightOf, pressureProfile, strokeColorAt, weightAt, rawPressProfile, strokeColorMix, strokeColorAtMix } from './brushmap'
 import { remapPress } from '../core/press'
 
 export interface BrushLayer {
@@ -294,31 +292,9 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     brush.spline(sp, 0)   // curvature 0 — 점 사이는 직선 세그먼트(점렬 자체가 곡선을 든다)
   }
 
-  /** **재료 칠 점렬**(web2-46) — 마커·색연필. 시드 규약은 drawStrokeRaw와 같다(계약 3).
-   *  색은 톤 hex 그대로(brushmap 머리주석 — 겹침 누적은 라이브러리 퇴적의 몫), 굵기는
-   *  도구 상수(#54 — instrWeight 하나). 필압은 안 싣는다: 마커는 실물이 균일 촉이고
-   *  색연필 필압은 45 무회귀 확인 뒤의 일이다(DEFERRED에 올린다). */
-  function drawPaintRaw(s: Stroke, pts: Pt[], hex: string, instr: 1 | 2) {
-    brush.seed(s.id)
-    brush.noiseSeed(s.id)
-    // 굵기(web2-48 48-2) — 획에 실린 크기 트레이 값. 출처는 `paintWeightOf` 하나(#54).
-    brush.set(INSTR_BRUSH[instr], hex, paintWeightOf(s))
-    const sp: [number, number, number][] = pts.map(p => [p.x, p.y, 0.5])
-    brush.spline(sp, 0)
-  }
-
-  /** **붓(흑연) 칠의 점렬**(45의 경로) — 46까지는 `drawStrokeRaw`(획 굵기)였는데 48-2가
-   *  붓에도 크기 트레이를 줬으므로 굵기만 그 값으로 갈아 끼운다. 나머지(시드·질감·
-   *  필압 규약)는 `drawStrokeRaw`와 한 톨도 안 다르다 — 굵기가 안 실린 옛 획은
-   *  `paintWeightOf`가 `widthOf(s)`를 내므로 **종전과 같은 픽셀**이다(무회귀). */
-  function drawPaintGraphite(s: Stroke, pts: Pt[]) {
-    const g = gradeOf(s)
-    brush.seed(s.id)
-    brush.noiseSeed(s.id)
-    brush.set(BRUSH_OF[g], strokeColor(g), paintWeightOf(s))
-    const sp: [number, number, number][] = pts.map(p => [p.x, p.y, 0.5])
-    brush.spline(sp, 0)
-  }
+  // (web2-50) 칠 점렬 함수 둘(drawPaintRaw · drawPaintGraphite)은 **지웠다** — 칠이 면
+  // 텍스처(core/facetex)로 옮겨 갔다(게이트 통과 후 삭제 — A-4의 그 순서. 되살릴 조건이
+  // 오면 git 이력 45~49가 정본이다).
 
   /** 대기 획의 **흑연 파선**(web2-16 3-a) — 벡터 점선을 버리고 확정 획과 같은 브러시로
    *  긋되 파선으로 남긴다: 제도에서 파선은 «아직/숨은»의 계열이다(A-3 — 숨은선).
@@ -693,63 +669,10 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     if (tileFrameMs.length < 400) tileFrameMs.push(performance.now() - t0)
   }
 
-  // ── **칠은 타일에 안 들어간다 — 살려서 그린다**(web2-48 48-6) ──────────
-  //
-  // 증상(사람): 「돌리는 동안 칠이 사라지고 멈추면 돌아온다 — **데이터가 아니라
-  // 표시 문제**」. D-1로 경로에 표식을 심을 것도 없이 `gestureList`가 이유를 문면으로
-  // 들고 있었다: 칠 획은 ① 2D도 아니고 ② 대기도 아니고 ③ `lift.lifted`에도 없다
-  // (칠은 리프팅에 안 낀다 — `isPaint`가 거른다). 그래서 그 자리에서 `continue`했고
-  // 제스처 내내 한 획도 안 그려졌다. **37-4(광선이 바뀌면 대기 획을 버린다)와는
-  // 무관하다** — 칠은 애초에 대기 획이 아니라 그 경로를 밟지 않는다(확인만 하고 넘어간다).
-  //
-  // ⚠⚠ **타일에 «넣을» 수가 없다**(지시문은 「캡시에 포함시켜라」였으나 그것이 기하적으로
-  //   안 된다 — D-4: 사람이 준 근거도 확인 대상이다). 타일은 한 획을 **누운 직선**(길이 L ×
-  //   굵기 w)으로 굽고 두 끝점으로 **아핀 변환**해 붙인다. 그것이 성립하는 근거는 「확정
-  //   기하가 직선이므로 사영도 직선」이다(3-c ㉓). 칠은 **점렬**이고 한 평면 위에 누워
-  //   있으므로 포즈가 바뀔 때의 변환이 **호모그래피**다 — 아핀으로 못 적는다.
-  //   두 끝점으로 타일을 만들면 굴곡이 펌진 **곱은 막대**가 된다(조용히 틀린 그림 ⛔).
-  //
-  // 그래서: 제스처 동안 **칠만 살려서 그린다**. 선은 타일(#brushsnap)이 들고,
-  // #brushc는 숨는 대신 **칠 획만** 들고 떠 있는다. 비용은 O(칠 획)이고 칠은 몇
-  // 획이라 프레임 예산 밖이 아니다 — 그 값을 `tileStats.paintMs`가 직접 재서 원장에 낸다
-  // (문면으로 「쌀 것」이라 적지 않는다 — #12). **칠이 없는 문서는 종전 그대로**
-  // #brushc가 숨고 이 경로가 한 번도 안 돌아간다(무회귀).
+  // (web2-50) 48-6의 «칠만 살려 그리기»(drawPaintsOnly)는 **지웠다** — 칠이 #gl의 면
+  // 텍스처에 살아 궤도가 구조적으로 무해하다(paint50 ③·paint48 ⑥이 그 판이다).
+  // paintMs 표본은 비므로 tileStats의 그 칸은 0이 정상이다(paint48 ⑥이 «0이 정상»을 잰다).
   let paintMs: number[] = []
-  /** 제스처 프레임의 칠 한 장 — `redraw`의 칠 갈래와 **같은 함수들**을 부른다(#54).
-   *  그린 획 수를 돌려준다 — 0이면 부른 쪽이 #brushc를 숨긴다. */
-  function drawPaintsOnly(app: App): number {
-    const t0 = performance.now()
-    let n = 0
-    brush.clear()
-    brush.push()
-    brush.translate(-cw / 2, -ch / 2)
-    for (const s of app.doc.strokes) {
-      if (s.paint === undefined) continue
-      const g3 = app.paintGeo.get(s.id)
-      if (!g3) continue
-      if (!paintVisible(app.faces, s, app.pose)) continue        // 48-5 — 같은 문
-      const spts: Pt[] = []
-      for (const P of g3) {
-        const q = project(app.lift.an, app.pose, P)
-        if (q) spts.push(docToScreen(app, q))
-      }
-      if (spts.length < 2) continue
-      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
-      for (const q of spts) {
-        if (q.x < x0) x0 = q.x; if (q.x > x1) x1 = q.x
-        if (q.y < y0) y0 = q.y; if (q.y > y1) y1 = q.y
-      }
-      if (offScreen({ x: x0, y: y0 }, { x: x1, y: y1 })) continue
-      const hex = paintHexOf(s)
-      if (hex && s.paint.i !== undefined) drawPaintRaw(s, spts, hex, s.paint.i)
-      else drawPaintGraphite(s, spts)
-      n++
-    }
-    brush.pop()
-    brush.render()
-    if (paintMs.length < 400) paintMs.push(performance.now() - t0)
-    return n
-  }
 
   /** 제스처 경로를 켜고 끔다 — `#brushc`는 아틀라스를 들고 숨는다
    *  (48-6이 단서 하나를 더했다: 칠이 있으면 그 겹이 **칠만 들고** 떠 있는다). */

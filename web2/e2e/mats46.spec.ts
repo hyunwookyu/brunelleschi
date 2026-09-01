@@ -53,12 +53,13 @@ async function room(page: Page) {
   await page.click('#btn-pencil'); await page.click('#btn-pencil')
 }
 
-/** #brushc 사각 안 잉크의 **알파 합**과 **안료 합**(알파 가중 어두움). 알파 합은 겹침
- *  두어 번에 255로 포화한다(실측 — dpr1에서 2→3겹 계단이 +255뿐) — 색 채널의 어두움은
- *  퇴적을 계속 실으므로 안료 합을 짝으로 둔다. dpr 정규화는 안 한다 — 파일이 dpr별이다. */
+/** ⚠ web2-50 — 자가 #brushc → **#gl**(면 텍스처)로 옮겨 갔다. 칠한 면의 불투명 채움
+ *  (48-9)이 상자 전체에 알파 255를 깔므로 **알파 합은 더 이상 아무것도 못 가른다** —
+ *  퇴적의 자는 **안료 합**(알파 가중 어두움) 하나다. 채움의 어두움(765−726=39/px)은
+ *  세 상자에 똑같이 깔리는 바닥이라 겹 «계단»(차)에는 안 실린다. dpr 정규화는 안 한다. */
 const inkSums = (page: Page, x: number, y: number, w: number, h: number) =>
   page.evaluate(([x0, y0, ww, hh]) => {
-    const src = document.getElementById('brushc') as HTMLCanvasElement
+    const src = document.getElementById('gl') as HTMLCanvasElement
     const dpr = window.devicePixelRatio || 1
     const t = document.createElement('canvas')
     t.width = Math.max(1, Math.round(ww! * dpr))
@@ -74,13 +75,13 @@ const inkSums = (page: Page, x: number, y: number, w: number, h: number) =>
     }
     return { alpha, pigment: Math.round(pigment) }
   }, [x, y, w, h])
-const inkAlphaSum = async (page: Page, x: number, y: number, w: number, h: number) =>
-  (await inkSums(page, x, y, w, h)).alpha
 
-/** 사각 안 잉크 띠의 세로 두께(px·물리) — 잉크가 있는 행의 수(④의 자) */
+/** 사각 안 «채색» 띠의 세로 두께(px·물리) — 채도(최대−최소 채널 > 15)가 있는 행의 수.
+ *  ⚠ web2-50: 알파(>8)로 세면 불투명 채움이 전 행을 채운다 — 마커·색연필의 «색»이 자다
+ *  (종이색 채움은 채널 차 7이라 안 걸린다 · 흑연·선은 무채색). */
 const inkRowCount = (page: Page, x: number, y: number, w: number, h: number) =>
   page.evaluate(([x0, y0, ww, hh]) => {
-    const src = document.getElementById('brushc') as HTMLCanvasElement
+    const src = document.getElementById('gl') as HTMLCanvasElement
     const dpr = window.devicePixelRatio || 1
     const t = document.createElement('canvas')
     t.width = Math.max(1, Math.round(ww! * dpr))
@@ -91,7 +92,11 @@ const inkRowCount = (page: Page, x: number, y: number, w: number, h: number) =>
     let rows = 0
     for (let r = 0; r < t.height; r++) {
       for (let c = 0; c < t.width; c++) {
-        if (d[(r * t.width + c) * 4 + 3]! > 8) { rows++; break }
+        const i = (r * t.width + c) * 4
+        if (d[i + 3]! > 8) {
+          const mx = Math.max(d[i]!, d[i + 1]!, d[i + 2]!), mn = Math.min(d[i]!, d[i + 1]!, d[i + 2]!)
+          if (mx - mn > 15) { rows++; break }
+        }
       }
     }
     return rows
@@ -153,48 +158,48 @@ test('②③ 마커 — 겹침 퇴적 단조(1·2·3겹 스윕) · 끝(팁)이 �
     for (let k = 0; k < r.n; k++) await drawLine(page, 520, r.y, 580, r.y)
   }
   await page.waitForTimeout(150)
-  /** 같은 획들을 spacing만 바꿔 다시 그려 잰다(1차 리뷰어 [2][3] — 결정의 근거를
-   *  **출하 경로 그대로**의 원장으로: 같은 획 id·같은 상자·같은 redraw, spacing만 다르다) */
-  const measureAt = async (spacing: number) => {
-    await page.evaluate(sp => (window as any).__b2.diag.setMarkerSpacing(sp), spacing)
-    await page.waitForTimeout(200)
+  /** ⚠ web2-50 — 마커의 겹침 퇴적이 **텍스처의 canvas 'multiply'**로 옮겨 갔다(기제
+   *  교체 · 계약 유지). spacing 반증(p5.brush의 그 손잡이)은 이 경로에 안 닿는다 —
+   *  대신 **알파 포화 반증**: 마커 알파를 1.0으로 굽으면 첫 획이 포화해 겹 계단이
+   *  죽는다(setMarkerAlphaForTest — 같은 획·같은 상자·재굽기 경로 그대로). */
+  const measureRows = async () => {
     const rows: { alpha: number; pigment: number }[] = []
     for (const r of runs) rows.push(await inkSums(page, 520, r.y - 8, 60, 16))
     return rows
   }
-  const shipVal = await page.evaluate(() => (window as any).__b2.diag.mats46().markerSpacing as number)
-  const ship = await measureAt(shipVal)             // C.MARKER_SPACING(출하값 — 하드코딩 ⛔)
-  const stock = await measureAt(0.03)               // 내장 marker의 값(반증짝)
-  await page.evaluate(sp => (window as any).__b2.diag.setMarkerSpacing(sp), shipVal)   // 되돌림(⚠ 필수)
-  await page.waitForTimeout(120)
-  const sums = ship
-  // 알파 합은 포화하므로(rows의 alpha 열이 그 관측을 스스로 든다) 단조의 본 자는 **안료 합**
+  const sums = await measureRows()                  // 출하(multiply · C.PAINT_MARKER_ALPHA)
+  await page.evaluate(() => (window as any).__b2.diag.setMarkerFlatForTest(true))
+  await page.waitForTimeout(250)
+  const sat = await measureRows()                   // 반증짝 — 평면 덮어쓰기(계단이 죽는 대역)
+  await page.evaluate(() => (window as any).__b2.diag.setMarkerFlatForTest(false))
+  await page.waitForTimeout(250)
+  // 단조의 자는 **안료 합** 하나다 — 알파는 불투명 채움(48-9)이 포화시킨다(자 주석)
   expect(sums[1]!.pigment, '2겹 > 1겹(안료)').toBeGreaterThan(sums[0]!.pigment)
   expect(sums[2]!.pigment, '3겹 > 2겹(안료)').toBeGreaterThan(sums[1]!.pigment)
-  expect(sums[1]!.alpha, '2겹 > 1겹(알파도)').toBeGreaterThan(sums[0]!.alpha)
   // 반증(D-3) — 같은 1획끼리(왼 반·오른 반)의 차는 겹침 계단(2겹−1겹)보다 작다
   const halfA = await inkSums(page, 520, 392, 30, 16)
   const halfB = await inkSums(page, 550, 392, 30, 16)
   const step = sums[1]!.pigment - sums[0]!.pigment
   expect(Math.abs(halfA.pigment - halfB.pigment), '반증 — 겹 0의 차 < 겹침 계단').toBeLessThan(step)
-  // 결정의 근거(D-W16): 내장 spacing 0.03은 같은 획·같은 상자에서 겹 계단이 죽어 있다 —
-  // 0.03의 계단이 0.2의 계단보다 «상대비»로 작아야 한다(포화 관측의 원장 판)
+  // 평면 덮어쓰기 반증 — 겹쳐도 같은 색(source-over·알파 1)이라 계단이 출하의 절반 아래로
+  // 죽는다. ⚠ «알파 1.0의 multiply»는 반증이 못 됐다(상대 계단 0.44 실측 — 곱은 알파
+  // 1에서도 계속 어두워진다). 그 실패가 이 짝을 골랐다(D-3 — 반증은 실제로 실패해야 한다).
   const rel = (rows: { pigment: number }[]) => (rows[1]!.pigment - rows[0]!.pigment) / Math.max(1, rows[0]!.pigment)
-  expect(rel(stock), '내장 0.03의 겹 계단(상대) < 출하 0.2의 절반 — 포화의 원장 증거').toBeLessThan(rel(ship) / 2)
+  expect(rel(sat), '평면 덮어쓰기의 겹 계단(상대) < 출하의 절반 — 누적은 multiply×알파의 것이다').toBeLessThan(rel(sums) / 2)
   OUT.marker_overlap = {
-    def: '같은 길이(60px) 가로획을 같은 자리에 1·2·3번 — 상자(60×16)의 알파 합·안료 합(알파 가중 (765−r−g−b)). spacing 0.2(출하)와 0.03(내장)을 **같은 획·같은 상자**에서 잰다(setMarkerSpacing — 출하 경로의 redraw). 반증 = 1획의 왼/오른 반쪽 차(안료)',
-    spacing_ship: shipVal,
-    rows_spacing_02: ship, rows_spacing_003: stock,
-    rel_step_1to2_02: +rel(ship).toFixed(4), rel_step_1to2_003: +rel(stock).toFixed(4),
+    def: '같은 길이(60px) 가로획을 같은 자리에 1·2·3번 — 상자(60×16)의 안료 합(알파 가중 (765−r−g−b) · #gl — 채움 바닥은 세 상자에 공통이라 계단에 안 실린다). 반증 짝 = ① 1획의 왼/오른 반쪽 차 ② 평면 덮어쓰기 재굽기(setMarkerFlatForTest — 겹침이 안 쌓이는 대역)',
+    alpha_ship: 'C.PAINT_MARKER_ALPHA(원장 constants 블록)',
+    rows_ship: sums, rows_flat: sat,
+    rel_step_1to2_ship: +rel(sums).toFixed(4), rel_step_1to2_flat: +rel(sat).toFixed(4),
     half_diff_pigment: Math.abs(halfA.pigment - halfB.pigment), step_1to2_pigment: step,
-    note_saturation: '알파 합의 포화는 rows_spacing_003의 세 alpha 값이 스스로 보인다(산문 수치 ⛔ — 1차 [11])',
+    note_failed_falsify: '알파 1.0(multiply 유지) 판은 상대 계단 0.44로 절반 문을 못 넘었다 — multiply는 알파 1에서도 누적한다. 그 실측이 반증 짝을 source-over로 굳혔다',
   }
   OUT.gate_marker_monotonic = {
-    registered: '판정 셋(스펙 단언과 같은 문면 — 2차 [3]): ① 출하 spacing에서 안료 합 1<2<3겹 단조 ② 출하 계단(1→2겹) > 겹0 잡음(half_diff — 출하 팔의 값) ③ 대조: rel_step_1to2_003 < rel_step_1to2_02 / 2',
-    value: 'rows_spacing_02 안료 열 · rel 두 필드',
-    reachability: '내장 0.03 팔이 ③을 실제로 위협하는 값을 같은 실행에 낸다 — 상대 계단이 출하의 1/10 대역으로 준다(dpr1은 비단조(음수)까지 · dpr2는 +3% 대역 — «죽는다»가 아니라 «크게 준다»가 정확한 서술이다, 2차 [3]). ①②의 실패 가능성은 그 줄어든 계단이 half_diff 대역과 겹치는 dpr1 값이 보인다',
-    reachability_value: 'rel_step_1to2_003 (dpr별 원장 값)',
-    reachability_source: '이 파일의 marker_overlap/rel_step_1to2_003 ↔ rel_step_1to2_02',
+    registered: '판정 셋: ① 출하에서 안료 합 1<2<3겹 단조 ② 출하 계단(1→2겹) > 겹0 잡음(half_diff) ③ 대조: rel_step_1to2_flat < rel_step_1to2_ship / 2',
+    value: 'rows_ship 안료 열 · rel 두 필드',
+    reachability: '평면 덮어쓰기 팔이 ③을 실제로 위협하는 값을 같은 실행에 낸다 — 겹침이 픽셀에 안 쌓이는 대역의 실재',
+    reachability_value: 'rel_step_1to2_flat (dpr별 원장 값)',
+    reachability_source: '이 파일의 marker_overlap/rel_step_1to2_flat ↔ rel_step_1to2_ship',
   }
   // ③ 경계 잔존 — 본 측정은 **솔기**다(1차 [12] — 지시 문면 「획 경계가 살짝 남는다」):
   // 나란한 두 획을 반폭 겹치면 겹친 띠(솔기)가 양쪽 몸통보다 진하게 남는다.
@@ -206,7 +211,9 @@ test('②③ 마커 — 겹침 퇴적 단조(1·2·3겹 스윕) · 끝(팁)이 �
   // 가정이 틀린 것이다(D-4). 가정을 버리고 **행별 프로파일을 직접 잰다**(D-1): 잉크 띠를
   // 스스로 찾고, 띠의 가운데 1/3(두 획이 겹치는 솔기 대역)이 바깥 1/3들보다 진한가를 본다.
   const profile = await page.evaluate(() => {
-    const src = document.getElementById('brushc') as HTMLCanvasElement
+    // ⚠ web2-50 — #gl에서 잰다. 채움(48-9)의 안료 바닥이 전 행에 깔리므로 띠 탐지는
+    // **바닥(min)을 뺀 값**으로 한다 — «획이 없는 행 = 0»이 그 보정으로 복원된다.
+    const src = document.getElementById('gl') as HTMLCanvasElement
     const dpr = window.devicePixelRatio || 1
     const x0 = Math.round(535 * dpr), w = Math.round(30 * dpr)
     const y0 = Math.round(474 * dpr), h = Math.round(30 * dpr)
@@ -225,7 +232,8 @@ test('②③ 마커 — 겹침 퇴적 단조(1·2·3겹 스윕) · 끝(팁)이 �
       }
       rows.push(Math.round(pig))
     }
-    return rows          // CSS 474..504 대역의 물리 행별 안료
+    const base = Math.min(...rows)
+    return rows.map(v => v - base)   // CSS 474..504 대역의 물리 행별 안료(바닥 보정)
   })
   const peak = Math.max(...profile)
   const band = profile.map((v, i) => ({ v, i })).filter(r => r.v > peak * 0.05)
@@ -243,22 +251,16 @@ test('②③ 마커 — 겹침 퇴적 단조(1·2·3겹 스윕) · 끝(팁)이 �
   expect(bi.length, '잉크 띠가 실제로 있다').toBeGreaterThan(6)
   expect(middle, '솔기 대역(띠 가운데 1/3)이 위 몸통보다 진하다').toBeGreaterThan(outerTop)
   expect(middle, '솔기 대역이 아래 몸통보다 진하다').toBeGreaterThan(outerBot)
-  // 팁(끝) 잔존 — markerTip의 끝 덧찍음(보조 관측)
-  const tip = await inkAlphaSum(page, 574, 392, 12, 16)
-  const mid = await inkAlphaSum(page, 544, 392, 12, 16)
-  // 반증(D-3 착수 표 «내부끼리 차이 0») — 몸통 두 상자의 차가 팁 초과분보다 작다
-  const mid2 = await inkAlphaSum(page, 530, 392, 12, 16)
-  expect(Math.abs(mid - mid2), '반증 — 몸통끼리의 차 < 팁 초과분').toBeLessThan(tip - mid)
+  // ⚠ 팁(끝) 잔존 — **51의 몫으로 이관됐다**(web2-50은 구조만: 텍스처의 둥근 획은 끝
+  // 덧찍음이 없다 — «획 경계가 살짝 남는다»의 질은 51 «자국의 질»이 절차 생성으로 세운다).
   OUT.marker_tip = {
-    def: '1겹 획 끝(574..586)·몸통(544..556 · 530..542) 12×16 상자 알파 합 — 반증은 몸통 두 상자의 차. ratio의 분모는 mid(544..556) 고정(2차 [16])',
-    tip, mid, mid2, ratio: +(tip / Math.max(1, mid)).toFixed(3),
+    deferred_to_51: '팁 덧찍음은 p5.brush 마커의 성질이었다 — 50의 캔버스 획은 균일하다. 51 지시 문면 «마커: 획 경계가 살짝 남는다»가 그 자리다',
   }
   OUT.marker_seam = {
     def: '나란한 두 획(y486·y492 — 반폭 겹침)의 **행별 안료 프로파일**(x 535..565 · y 474..504 물리 행). 띠 = 안료 > 피크 5%인 행들 · 판정 = 띠 가운데 1/3(솔기 대역) 평균 > 바깥 1/3 평균 둘 다. 고정 상자 두 판이 «띠가 경로에 대칭»이라는 틀린 가정으로 아래 몸통을 10배 얕게 쟀다(2차 [1] — 그 관측이 이 재설계의 사유. 프로파일이 원장에 있으므로 비대칭 자체가 값으로 남는다). ⚠ half_diff_pigment(y392 반쪽 상자 차)와 계산이 다르다(2차 [13] — dpr1에서 값이 3338로 우연히 같았던 것)',
     profile_rows: profile, band: [lo, hi],
     middle_mean: +middle.toFixed(0), outer_top_mean: +outerTop.toFixed(0), outer_bot_mean: +outerBot.toFixed(0),
   }
-  expect(tip, '끝의 퇴적이 몸통보다 진하다(markerTip)').toBeGreaterThan(mid)
   // **톤이 픽셀을 바꾼다**(2차 PITFALLS 대조 — #92: gate_suggest_not_default가 판정하는
   // 톤 인덱스는 이름표다. 그 이름표가 결과의 자리(픽셀)를 실제로 움직이는 것을 여기서 잇는다):
   // 같은 재료(벽돌)의 밝음(0)·그림자(2)를 같은 길이로 긋고 안료 합을 비교한다.
@@ -282,19 +284,42 @@ test('②③ 마커 — 겹침 퇴적 단조(1·2·3겹 스윕) · 끝(팁)이 �
 
 test('④ 색연필 — 같은 길이 획의 잉크 띠가 마커보다 가늘다', async ({ page }) => {
   await room(page)
+  // ⚠⚠ web2-50 — 계약 갱신: «가늘다»는 p5.brush cpencil 촉의 성질이었고 51(자국의 질)이
+  // 절차 생성으로 되세운다(51 지시 «색연필: 결이 굵고 색이 완전히 덮이지 않는다»).
+  // 50이 지키는 몫은 **«완전히 덮이지 않는다»**다(PAINT_CP_ALPHA < 1 · source-over):
+  // 마커 띠 위에 색연필을 겹치면 아래 마커의 색이 남는다 — 겹친 자리는 색연필 단독
+  // 자리와 다른 색이어야 한다.
   await pickMarker(page, 'wood', 1)
-  await drawLine(page, 520, 410, 580, 410)          // 마커 획
+  await drawLine(page, 520, 410, 580, 410)          // 마커 획(가로)
   await page.click('#btn-paint')                    // 이미 붓 도구 — 재누름 한 번이 연다
+  await page.click('#swatch-brick-2')               // 색을 확 바꾼다(그림자 벽돌 — 어두운 적)
   await page.click('#btn-paint-cp')
   await page.mouse.click(150, 700); await page.waitForTimeout(60)
-  await drawLine(page, 520, 450, 580, 450)          // 색연필 획(같은 벽·같은 길이)
-  await page.waitForTimeout(150)
-  const markerRows = await inkRowCount(page, 535, 396, 30, 28)
-  const cpRows = await inkRowCount(page, 535, 436, 30, 28)
-  expect(markerRows, '마커 띠가 실제로 있다').toBeGreaterThan(0)
-  expect(cpRows, '색연필 띠가 실제로 있다').toBeGreaterThan(0)
-  expect(cpRows, '색연필이 마커보다 가늘다').toBeLessThan(markerRows)
-  OUT.cp_vs_marker = { def: '같은 벽·같은 길이(60px) 가로획 — 30px 창의 잉크 행 수(물리 px)', marker_rows: markerRows, cp_rows: cpRows }
+  await drawLine(page, 545, 380, 545, 445)          // 색연필 획(세로 — 마커를 가로지른다)
+  await page.waitForTimeout(200)
+  const rgbAt = (x: number, y: number, w: number, h: number) =>
+    page.evaluate(([x0, y0, ww, hh]) => {
+      const src = document.getElementById('gl') as HTMLCanvasElement
+      const dpr = window.devicePixelRatio || 1
+      const t = document.createElement('canvas')
+      t.width = Math.max(1, Math.round(ww! * dpr))
+      t.height = Math.max(1, Math.round(hh! * dpr))
+      const g = t.getContext('2d')!
+      g.drawImage(src, Math.round(x0! * dpr), Math.round(y0! * dpr), t.width, t.height, 0, 0, t.width, t.height)
+      const d = g.getImageData(0, 0, t.width, t.height).data
+      let r = 0, gg = 0, b = 0, n = 0
+      for (let i = 0; i < d.length; i += 4) { r += d[i]!; gg += d[i + 1]!; b += d[i + 2]!; n++ }
+      return { r: r / n, g: gg / n, b: b / n }
+    }, [x, y, w, h])
+  const cpOnly = await rgbAt(541, 425, 8, 10)       // 색연필 단독(마커 아래 · 교차 밖)
+  const crossed = await rgbAt(541, 405, 8, 10)      // 교차(마커 위 색연필)
+  const dist = Math.hypot(cpOnly.r - crossed.r, cpOnly.g - crossed.g, cpOnly.b - crossed.b)
+  expect(dist, '겹친 자리가 색연필 단독과 다른 색 — 아래 마커가 비친다(«완전히 덮이지 않는다»)').toBeGreaterThan(8)
+  OUT.cp_vs_marker = {
+    def: '마커(나무 톤) 가로띠를 색연필(벽돌 그림자 톤 — 다른 색)이 세로로 가로지른다 — 교차 상자 평균 RGB ↔ 색연필 단독 상자 평균 RGB의 거리. 0에 가까우면 «완전히 덮는다»(계약 위반)',
+    cp_only: cpOnly, crossed, rgb_dist: +dist.toFixed(1),
+    deferred_to_51: '«가늘다»(굵기 성질)는 p5.brush 촉의 것이었다 — 51 «자국의 질»이 절차 생성으로 되세운다(50은 구조만)',
+  }
 })
 
 test('⑤ 면 재료 — 손통 「재료」가 해칭 무늬·색을 실제로 바꾼다', async ({ page }) => {

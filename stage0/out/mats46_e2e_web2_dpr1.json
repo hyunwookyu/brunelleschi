@@ -2,11 +2,11 @@
   "what": "web2-46 — 화면 몫: 칠통 · 마커 겹침 누적/경계 · 색연필 굵기 · 면 재료 해칭 · 깊이 순서 픽셀 판별 · 200획 성능",
   "note_92": "#92 — 판정자는 픽셀 퇴적(알파 합·채널 차)이다. 「마커를 골랐다」는 이름표라 안 센다",
   "tray": {
-    "rows": 9,
+    "rows": 10,
     "sel_after_swatch": {
-      "m": "wood",
-      "t": 2,
-      "i": "marker"
+      "hex": "#8a6238",
+      "i": "marker",
+      "w": 10
     },
     "sel_after_cp": "cp"
   },
@@ -18,84 +18,80 @@
     "HATCH_SPACING_PX": 11
   },
   "marker_overlap": {
-    "def": "같은 길이(60px) 가로획을 같은 자리에 1·2·3번 — 상자(60×16)의 알파 합·안료 합(알파 가중 (765−r−g−b)). spacing 0.2(출하)와 0.03(내장)을 **같은 획·같은 상자**에서 잰다(setMarkerSpacing — 출하 경로의 redraw). 반증 = 1획의 왼/오른 반쪽 차(안료)",
-    "spacing_ship": 0.2,
-    "rows_spacing_02": [
+    "def": "같은 길이(60px) 가로획을 같은 자리에 1·2·3번 — 상자(60×16)의 안료 합(알파 가중 (765−r−g−b) · #gl — 채움 바닥은 세 상자에 공통이라 계단에 안 실린다). 반증 짝 = ① 1획의 왼/오른 반쪽 차 ② 평면 덮어쓰기 재굽기(setMarkerFlatForTest — 겹침이 안 쌓이는 대역)",
+    "alpha_ship": "C.PAINT_MARKER_ALPHA(원장 constants 블록)",
+    "rows_ship": [
       {
-        "alpha": 210120,
-        "pigment": 35804
+        "alpha": 244800,
+        "pigment": 193454
       },
       {
-        "alpha": 223380,
-        "pigment": 47405
+        "alpha": 244800,
+        "pigment": 307813
       },
       {
-        "alpha": 225165,
-        "pigment": 83565
+        "alpha": 244800,
+        "pigment": 390932
       }
     ],
-    "rows_spacing_003": [
+    "rows_flat": [
       {
-        "alpha": 218535,
-        "pigment": 91553
+        "alpha": 244800,
+        "pigment": 319169
       },
       {
-        "alpha": 227970,
-        "pigment": 91305
+        "alpha": 244800,
+        "pigment": 331159
       },
       {
-        "alpha": 228225,
-        "pigment": 116080
+        "alpha": 244800,
+        "pigment": 336886
       }
     ],
-    "rel_step_1to2_02": 0.324,
-    "rel_step_1to2_003": -0.0027,
-    "half_diff_pigment": 3338,
-    "step_1to2_pigment": 11601,
-    "note_saturation": "알파 합의 포화는 rows_spacing_003의 세 alpha 값이 스스로 보인다(산문 수치 ⛔ — 1차 [11])"
+    "rel_step_1to2_ship": 0.5911,
+    "rel_step_1to2_flat": 0.0376,
+    "half_diff_pigment": 6332,
+    "step_1to2_pigment": 114359,
+    "note_failed_falsify": "알파 1.0(multiply 유지) 판은 상대 계단 0.44로 절반 문을 못 넘었다 — multiply는 알파 1에서도 누적한다. 그 실측이 반증 짝을 source-over로 굳혔다"
   },
   "gate_marker_monotonic": {
-    "registered": "판정 셋(스펙 단언과 같은 문면 — 2차 [3]): ① 출하 spacing에서 안료 합 1<2<3겹 단조 ② 출하 계단(1→2겹) > 겹0 잡음(half_diff — 출하 팔의 값) ③ 대조: rel_step_1to2_003 < rel_step_1to2_02 / 2",
-    "value": "rows_spacing_02 안료 열 · rel 두 필드",
-    "reachability": "내장 0.03 팔이 ③을 실제로 위협하는 값을 같은 실행에 낸다 — 상대 계단이 출하의 1/10 대역으로 준다(dpr1은 비단조(음수)까지 · dpr2는 +3% 대역 — «죽는다»가 아니라 «크게 준다»가 정확한 서술이다, 2차 [3]). ①②의 실패 가능성은 그 줄어든 계단이 half_diff 대역과 겹치는 dpr1 값이 보인다",
-    "reachability_value": "rel_step_1to2_003 (dpr별 원장 값)",
-    "reachability_source": "이 파일의 marker_overlap/rel_step_1to2_003 ↔ rel_step_1to2_02"
+    "registered": "판정 셋: ① 출하에서 안료 합 1<2<3겹 단조 ② 출하 계단(1→2겹) > 겹0 잡음(half_diff) ③ 대조: rel_step_1to2_flat < rel_step_1to2_ship / 2",
+    "value": "rows_ship 안료 열 · rel 두 필드",
+    "reachability": "평면 덮어쓰기 팔이 ③을 실제로 위협하는 값을 같은 실행에 낸다 — 겹침이 픽셀에 안 쌓이는 대역의 실재",
+    "reachability_value": "rel_step_1to2_flat (dpr별 원장 값)",
+    "reachability_source": "이 파일의 marker_overlap/rel_step_1to2_flat ↔ rel_step_1to2_ship"
   },
   "marker_tip": {
-    "def": "1겹 획 끝(574..586)·몸통(544..556 · 530..542) 12×16 상자 알파 합 — 반증은 몸통 두 상자의 차. ratio의 분모는 mid(544..556) 고정(2차 [16])",
-    "tip": 48960,
-    "mid": 36210,
-    "mid2": 40035,
-    "ratio": 1.352
+    "deferred_to_51": "팁 덧찍음은 p5.brush 마커의 성질이었다 — 50의 캔버스 획은 균일하다. 51 지시 문면 «마커: 획 경계가 살짝 남는다»가 그 자리다"
   },
   "marker_seam": {
     "def": "나란한 두 획(y486·y492 — 반폭 겹침)의 **행별 안료 프로파일**(x 535..565 · y 474..504 물리 행). 띠 = 안료 > 피크 5%인 행들 · 판정 = 띠 가운데 1/3(솔기 대역) 평균 > 바깥 1/3 평균 둘 다. 고정 상자 두 판이 «띠가 경로에 대칭»이라는 틀린 가정으로 아래 몸통을 10배 얕게 쟀다(2차 [1] — 그 관측이 이 재설계의 사유. 프로파일이 원장에 있으므로 비대칭 자체가 값으로 남는다). ⚠ half_diff_pigment(y392 반쪽 상자 차)와 계산이 다르다(2차 [13] — dpr1에서 값이 3338로 우연히 같았던 것)",
     "profile_rows": [
-      9,
-      40,
-      83,
-      247,
-      441,
-      648,
-      891,
-      1120,
-      1480,
-      2437,
-      3889,
-      3538,
-      3702,
-      3653,
-      3488,
-      3245,
-      2965,
-      1134,
-      793,
-      546,
-      393,
-      266,
-      149,
-      89,
-      36,
+      2520,
+      2520,
+      2546,
+      2687,
+      3727,
+      5223,
+      5718,
+      5893,
+      5969,
+      6086,
+      6853,
+      6703,
+      6107,
+      5081,
+      4045,
+      3009,
+      1973,
+      741,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
       0,
       0,
       0,
@@ -103,22 +99,32 @@
       0
     ],
     "band": [
-      3,
-      21
+      0,
+      17
     ],
-    "middle_mean": 3422,
-    "outer_top_mean": 805,
-    "outer_bot_mean": 1016
+    "middle_mean": 6204,
+    "outer_top_mean": 3204,
+    "outer_bot_mean": 3493
   },
   "tone_pixel": {
     "def": "같은 재료(벽돌) 밝음(0)·그림자(2)의 같은 길이(25px) 획 — 20×14 상자 안료 합. gate_suggest_not_default의 톤 인덱스(이름표)가 픽셀(자리)을 바꾸는 것의 연결 고리(#92 ②)",
-    "tone0": 7224,
-    "tone2": 11122
+    "tone0": 47717,
+    "tone2": 75006
   },
   "cp_vs_marker": {
-    "def": "같은 벽·같은 길이(60px) 가로획 — 30px 창의 잉크 행 수(물리 px)",
-    "marker_rows": 17,
-    "cp_rows": 6
+    "def": "마커(나무 톤) 가로띠를 색연필(벽돌 그림자 톤 — 다른 색)이 세로로 가로지른다 — 교차 상자 평균 RGB ↔ 색연필 단독 상자 평균 RGB의 거리. 0에 가까우면 «완전히 덮는다»(계약 위반)",
+    "cp_only": {
+      "r": 169.125,
+      "g": 128,
+      "b": 113.125
+    },
+    "crossed": {
+      "r": 159,
+      "g": 111,
+      "b": 89.0125
+    },
+    "rgb_dist": 31.2,
+    "deferred_to_51": "«가늘다»(굵기 성질)는 p5.brush 촉의 것이었다 — 51 «자국의 질»이 절차 생성으로 되세운다(50은 구조만)"
   },
   "face_mat": {
     "segs_default": 13,
@@ -129,22 +135,22 @@
     "box_px": 2420,
     "threshold_sweep": {
       "th2": {
-        "contested": 159,
-        "to_front": 159,
-        "mean_on": 26.5,
-        "mean_off": 20.38
-      },
-      "th4": {
         "contested": 71,
         "to_front": 71,
-        "mean_on": 28.72,
-        "mean_off": 19.49
+        "mean_on": 18.49,
+        "mean_off": 13.68
+      },
+      "th4": {
+        "contested": 22,
+        "to_front": 22,
+        "mean_on": 21.14,
+        "mean_off": 14.5
       },
       "th8": {
-        "contested": 39,
-        "to_front": 39,
-        "mean_on": 34.95,
-        "mean_off": 24.67
+        "contested": 0,
+        "to_front": 0,
+        "mean_on": 0,
+        "mean_off": 0
       },
       "th16": {
         "contested": 0,
@@ -155,12 +161,12 @@
     },
     "delta_stats": {
       "def": "|Δ|>2 모집단(스윕 최저 문턱과 같다 — 2차 [2]: 문턱 4 조건화를 걷었다)",
-      "n": 159,
-      "mean": 6.13,
-      "sd": 3,
-      "p10": 3,
-      "p90": 10,
-      "max": 13
+      "n": 71,
+      "mean": 4.82,
+      "sd": 1.32,
+      "p10": 4,
+      "p90": 6,
+      "max": 8
     },
     "note_dpr": "다툰 자리 수는 dpr을 따라 4배가 되지 않는다(교차 «개수»는 화면 기하의 것이고 픽셀 면적만 dpr을 탄다 — AA 폭이 기기 px ~1이라 자리 수가 교차 수 대역에 묶인다). 분모는 box_px(2차 [6])",
     "note_5": "«다툰 자리의 이동이 전부 + 쪽»은 색 선택(벽돌 r>b · 금속 r<b)의 구성적 귀결에 가깝다 — 측정의 몫은 ① 다툰 자리가 실제로 있다(= 순서가 픽셀에 닿는다) ② 그 수·Δ 분포다. Δ가 상수(색차×알파)에 가까우면 sd가 작게 나온다 — 그 값 자체를 낸다(1차 [7])",
@@ -174,19 +180,26 @@
     "reachability_value": "threshold_sweep.th4.contested",
     "reachability_source": "이 파일의 threshold_sweep — 동색(순서가 픽셀에 안 실리는) 상태의 기록은 paint45_e2e depth_after.note_pixel"
   },
+  "depth_pixel_48": {
+    "def": "**web2-48 48-9 뒤의 재겨짐** — 칠한 면이 깊이를 쓰므로 화가 알고리즘 온/오프가 화면을 안 바꿔 반증이 죽었다(다텀 픽셀 0). 대신 겹침 띄에서 «앞 면 색»이 이기는가를 절대값으로 재다",
+    "r_gt_b": 2172,
+    "b_gt_r": 0,
+    "note_48": "순서가 틀리면 이 둘이 뒤집힌다 — 그것이 이제의 판정자다. 깊이 버퍼가 들어온 것은 45-1을 대체한 것이 아니라 **검사가 둘이 된 것**이다: 안 칠한 면은 여전히 깊이를 안 쓰고 화가 알고리즘만이 그 순서를 정한다",
+    "note_92": "46의 verdictAll(다텀 픽셀 >15)은 48-9 뒤에 구조적으로 0이다 — 그 문면을 남기면 «재는 양이 결과를 안 바꾸는» 팔이 된다"
+  },
   "perf200": {
     "def": "전량 재그리기 ms(5회 min/median/max) — plain: 재료 없는 197획 / with_mats: 같은 장면 + 마커 칠 3(콘크리트) ≥200획. 같은 페이지 연속 실측이라 환경이 같다. 헤드리스 소프트웨어 GL의 수(실기기 판정은 사람 — **관측이지 판정이 아니다**: 통과선을 안 건다)",
     "plain": {
       "strokes": 197,
-      "min": 60.2,
-      "median": 62.3,
-      "max": 76.8
+      "min": 51.7,
+      "median": 74.5,
+      "max": 97.6
     },
     "with_mats": {
       "strokes": 200,
-      "min": 52.7,
-      "median": 64.3,
-      "max": 82.9
+      "min": 50.8,
+      "median": 65.3,
+      "max": 83.5
     }
   },
   "dpr_project": "dpr1"

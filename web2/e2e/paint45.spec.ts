@@ -51,7 +51,31 @@ async function room(page: Page) {
 
 const p45 = (page: Page) => page.evaluate(() => (window as any).__b2.diag.paint45())
 
-/** #brushc의 사각 안 «잉크 픽셀 수»(알파>0) — waitink37의 판독 규약 그대로 */
+/** #gl의 사각 안 «어두운 잉크»(알파>16 · 밝기<200) — ⚠ web2-50: 칠이 #brushc에서
+ *  면 텍스처(#gl)로 옮겨 갔다. 칠한 면은 불투명 종이색 채움(48-9)이 함께 서므로
+ *  «알파>0»은 상자 전체가 걸린다 — 어두운 것(흑연 칠·획)만 세야 칠의 잉크다. */
+const glDark = (page: Page, x: number, y: number, w: number, h: number) =>
+  page.evaluate(([x0, y0, ww, hh]) => {
+    const src = document.getElementById('gl') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const t = document.createElement('canvas')
+    t.width = Math.max(1, Math.round(ww! * dpr))
+    t.height = Math.max(1, Math.round(hh! * dpr))
+    const g = t.getContext('2d')!
+    g.drawImage(src, Math.round(x0! * dpr), Math.round(y0! * dpr), t.width, t.height, 0, 0, t.width, t.height)
+    const d = g.getImageData(0, 0, t.width, t.height).data
+    let n = 0
+    for (let i = 0; i < d.length; i += 4) {
+      const a = d[i + 3]! / 255
+      if (a < 0.06) continue
+      const lum = (0.299 * d[i]! + 0.587 * d[i + 1]! + 0.114 * d[i + 2]!) * a + 255 * (1 - a)
+      if (lum < 200) n++
+    }
+    return n
+  }, [x, y, w, h])
+
+/** #brushc의 사각 안 «잉크 픽셀 수»(알파>0) — waitink37의 판독 규약 그대로.
+ *  ⚠ 이제 «선(흑연 질감)»의 자다 — 칠은 여기 없다(web2-50 · 위 glDark가 그 자리). */
 const inkCount = (page: Page, x: number, y: number, w: number, h: number) =>
   page.evaluate(([x0, y0, ww, hh]) => {
     const src = document.getElementById('brushc') as HTMLCanvasElement
@@ -69,15 +93,17 @@ const inkCount = (page: Page, x: number, y: number, w: number, h: number) =>
 
 test('①② 붓 — 면 위 픽셀이 생기고, 시점을 돌려도 따라온다', async ({ page }) => {
   await room(page)
-  const before = await inkCount(page, 505, 390, 90, 100)
+  // ⚠ web2-50 — 칠의 자가 #brushc → #gl(면 텍스처)로 바뀌었다(구조 교체 — 거동은 같다)
+  const before = await glDark(page, 505, 390, 90, 100)
   await page.click('#btn-paint')
   expect(await page.evaluate(() => (window as any).__b2.app.tool)).toBe('paint')
   // 벽 안에 칠 세 획
   for (const dy of [0, 14, 28]) await drawLine(page, 515, 410 + dy, 585, 430 + dy)
+  await page.waitForTimeout(200)
   const g = await p45(page)
   expect((g.paints as unknown[]).length, '칠 획이 섰다').toBeGreaterThanOrEqual(3)
   expect((g.geoIds as number[]).length).toBe((g.paints as unknown[]).length)
-  const after = await inkCount(page, 505, 390, 90, 100)
+  const after = await glDark(page, 505, 390, 90, 100)
   expect(after, '칠이 실제 픽셀이다').toBeGreaterThan(before + 200)
   OUT.brush = { ink_before: before, ink_after: after, paints: (g.paints as unknown[]).length }
   // ② 궤도를 조금 돌린다 — 칠이 3D를 따라 다시 사영된다(사라지지 않는다)
@@ -88,7 +114,7 @@ test('①② 붓 — 면 위 픽셀이 생기고, 시점을 돌려도 따라온�
   await page.waitForTimeout(200)
   const g2 = await p45(page)
   expect((g2.geoIds as number[]).length, '궤도 뒤에도 3D가 선다').toBe((g.geoIds as number[]).length)
-  const moved = await inkCount(page, 460, 360, 200, 170)          // 넉넉한 상자
+  const moved = await glDark(page, 460, 360, 200, 170)          // 넉넉한 상자
   expect(moved, '돌린 시점에도 칠이 보인다').toBeGreaterThan(150)
   OUT.orbit = { ink_after_orbit: moved }
 })
@@ -113,14 +139,18 @@ test('③ 채움 — 손통 「채움」이 해칭을 만들고 · 표시 토글
   const segsScreen = (a.hatch as { segs: number }[]).reduce((s, h) => s + h.segs, 0)
   expect(segsScreen, '해칭 선분이 실제로 만들어졌다').toBeGreaterThan(4)
   // 판을 바꾼다 — 표시 팝업의 토글(⚑의 두 판)
+  // ⚠ web2-50: **면 고정 판은 이제 면 텍스처에 산다**(지시 「면 고정 판만 텍스처로」) —
+  // LineSegments 수가 아니라 텍스처 등록 + 픽셀이 판정자다. 화면 고정 판은 종전 그대로.
   await page.click('#btn-display')
   await page.click('#chk-hatchface')
-  await page.waitForTimeout(150)
+  await page.waitForTimeout(200)
   const b = await p45(page)
   expect(b.hatchMode).toBe('face')
-  const segsFace = (b.hatch as { segs: number }[]).reduce((s, h) => s + h.segs, 0)
-  expect(segsFace).toBeGreaterThan(4)
-  OUT.fill = { segs_screen: segsScreen, segs_face: segsFace, toggled: true }
+  const texes = await page.evaluate(() => (window as any).__b2.diag.paintTex())
+  expect(texes.length, '면 고정 해칭의 텍스처가 섰다').toBeGreaterThanOrEqual(1)
+  const faceInk = await glDark(page, 505, 390, 90, 100)
+  expect(faceInk, '면 고정 해칭이 실제 픽셀이다').toBeGreaterThan(4)
+  OUT.fill = { segs_screen: segsScreen, face_mode_textures: texes.length, face_mode_ink: faceInk, toggled: true }
   await page.click('#chk-hatchface')   // 되돌린다(기기 설정 — 다음 팔에 안 새게)
   await page.click('#btn-display')
   // ── 채운 면 «위에» 선이 정상으로 선다(지시 45-4 · 45 리뷰어 [8]㉠) ────────────

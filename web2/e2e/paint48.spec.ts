@@ -129,7 +129,9 @@ const BOX = { x: 505, y: 405, w: 90, h: 50 }
  *  #92의 형태(재는 대상이 틀렸다). 상자를 안 잡는 이유는 포즈를 건너편으로 옷기면
  *  그 면이 화면 어디로 가는지 모르기 때문이다 — «어디에도 없다»가 재려는 것이다. */
 const warmPixels = (page: Page) => page.evaluate(() => {
-  const src = document.getElementById('brushc') as HTMLCanvasElement
+  // ⚠ web2-50 — 칠의 자가 #brushc → **#gl**(면 텍스처)로 옮겨 갔다. 따뜻함 문턱은 종전
+  // 그대로(벽돌 톤 r−b 큰 값 · 종이색 채움 #f5f3ee는 r−b 7이라 안 걸린다 · 흑연 0).
+  const src = document.getElementById('gl') as HTMLCanvasElement
   const t = document.createElement('canvas')
   t.width = src.width; t.height = src.height
   const g = t.getContext('2d')!
@@ -144,7 +146,12 @@ const warmPixels = (page: Page) => page.evaluate(() => {
   return { warm, any }
 })
 
-test('① 48-1 칠이 안 뜬다 — 곱 합성 · D-3 반증(끄면 흰 장막이 되살아난다)', async ({ page }) => {
+test('① 48-1 흰 장막 — **web2-50 구조로 소멸했다**(칠이 제 자리(면 텍스처·곱)로 갔다)', async ({ page }) => {
+  // ⚠⚠ 계약이 뒤집혔다: 48까지 이 팔은 «장막이 남아 있다(진단만 끝났다)»를 재고 있었다.
+  // 50이 DEFERRED «칠은 제 겹을 가져야 한다»를 **면 텍스처 + 곱 합성**으로 닫았으므로
+  // 이제 재는 것은 ㄱ 출하 합성에 장막이 **없다** ㄴ #brushc에는 칠이 **아예 없다**
+  // (기제가 나갔다 — 48-1의 병소 자체가 소멸) ㄷ 곱의 반증(over면 밝아진다)은
+  // paint50.spec ①②가 같은 실행 스위치(setPaintBlendForTest)로 든다.
   await room(page)
   await pickPaint(page, { swatch: 'swatch-brick-0', instr: 'marker' })
   await drawLine(page, 520, 420, 580, 440)
@@ -152,26 +159,14 @@ test('① 48-1 칠이 안 뜬다 — 곱 합성 · D-3 반증(끄면 흰 장막�
 
   const brushc = await layerStats(page, 'brushc', BOX.x, BOX.y, BOX.w, BOX.h)
   const on = await shotStats(page, BOX.x, BOX.y, BOX.w, BOX.h)
-  // ⚠⚠ **48-1은 진단까지만 끝냈고 수리는 되돌렸다** — 그래서 이 팔이 재는 것도 바뀜다.
-  // 셋을 **같은 실행에서** 낸다: ㄱ 증상이 살아 있다(출하 상태) ㄴ 수리가 실재한다
-  // (곱을 걸면 장막이 0) ㄷ 되돌리면 출하 상태로 간다. 왜 안 실었는가는 note_reverted에
-  // 있고 그 **비용은 `press26.spec` ②이 따로 재다**(흑연이 두 번 어두워진다).
-  await page.evaluate(() => (window as any).__b2.diag.setInkBlend(true))
-  await page.waitForTimeout(150)
-  const mul = await shotStats(page, BOX.x, BOX.y, BOX.w, BOX.h)
-  await page.evaluate(() => (window as any).__b2.diag.setInkBlend(false))
-  await page.waitForTimeout(150)
-  const back = await shotStats(page, BOX.x, BOX.y, BOX.w, BOX.h)
-
-  expect(brushc.opaqueLighter, 'ㄱ 칠 층(#brushc) 자체가 불투명 흰 장막을 깔아 놓는다(AS-C158)').toBeGreaterThan(0)
-  expect(on.lighterThanPaper, 'ㄱ 출하 상태에는 그 장막이 합성에도 남아 있다 — 48은 진단까지다').toBeGreaterThan(0)
-  expect(mul.lighterThanPaper, 'ㄴ 곱을 걸면 장막이 실제로 사라진다(수리는 실재한다)').toBe(0)
-  expect(back.lighterThanPaper, 'ㄷ 되돌리면 출하 상태다').toBe(on.lighterThanPaper)
+  expect(brushc.opaqueLighter, 'ㄴ #brushc에 칠의 장막이 없다 — 칠이 그 겹에서 나갔다').toBe(0)
+  expect(on.lighterThanPaper, 'ㄱ 출하 합성에 종이보다 밝은 픽셀이 없다 — 장막 소멸').toBe(0)
+  const warm = await warmPixels(page)
+  expect(warm.warm, '칠 자체는 화면에 있다(#gl — 벽돌 톤)').toBeGreaterThan(0)
   OUT.blend = {
-    def: '칠 상자의 «종이보다 밝은 픽셀» — 칠 층 단독(#brushc 버퍼) · 출하 합성 · 곱을 걸은 합성 · 되돌린 합성',
-    box: BOX, brushc_layer_alone: brushc, shipped: on, with_multiply: mul, restored: back,
-    note_reverted: '⚠⚠ **48-1은 진단만 끝냈고 수리는 되돌렸다.** 곱은 장막을 지우지만 이 겹이 «종이 위의 잉크»가 아니라 **#gl의 몸체 위에 얹히는 질감**이라 질감 × 몸체로 흑연이 두 번 어두워진다 — press26 ②(dpr2 · p=0.20): 꺼짐 185.3 → 128.9 · 켬 196.0 → 127.1로 보정의 순서까지 뒤집혔다. 올바른 수리는 칠에게 제 겹을 주는 것이다(DEFERRED)',
-    note_73: '#73 ㉐의 범위 정정은 그대로 산다(AS-C157) — 이 겹에서 곱은 **발화한다**(with_multiply가 그 증거). 되돌린 이유는 «곱이 안 선다»가 아니라 «이 겹이 곱의 대상이 아니다»이다',
+    def: '칠 상자의 «종이보다 밝은 픽셀»(출하 합성 스크린샷) + #brushc 단독 층 + #gl의 따뜻한 칠 픽셀',
+    box: BOX, brushc_layer_alone: brushc, shipped: on, warm_on_gl: warm,
+    note_50: '48-1의 장막(p5.brush가 흰 종이 전제로 불투명하게 쓰는 것 — AS-C158)은 수리된 것이 아니라 **병소가 구조에서 빠진 것**이다. 곱의 반증 스위치는 paint50_web2_*.json의 falsify_over가 든다',
   }
 })
 
@@ -226,7 +221,10 @@ test('③ 48-2 크기 트레이 — 고른 칸의 굵기가 화면의 자국 폭
   // 선이 아니라 «면 없는 칠»이 되어 아무 선도 안 남았다. 픽스처를 둘로 나누지 않고
   // **같은 면의 떨어진 두 자리**에 그으면 그 문을 안 밟고, 덤으로 **같은 프레임·같은 면**
   // 에서 견주게 된다(비교의 조건이 오히려 좋아진다 — #71 「재는 조건」).
-  await pickPaint(page, { swatch: 'swatch-metal-2', sizeId: 'btn-paint-w-2_5', instr: 'marker' })
+  // ⚠ web2-50 — 자가 #gl의 **따뜻한 띠**다(벽돌 톤 — 채움·무늬(무채색)와 갈린다). 굵기의
+  // 저장 단위는 세계로 바뀌었지만(원근을 받는다) 그은 그 자리의 화면 폭은 여전히 트레이
+  // px 대역이다 — 이 팔이 재는 «칸이 폭으로 갈린다»는 그대로 선다.
+  await pickPaint(page, { swatch: 'swatch-brick-0', sizeId: 'btn-paint-w-2_5', instr: 'marker' })
   await drawLine(page, 520, 418, 580, 418)
   await page.waitForTimeout(150)
   const thin = await inkRows(page, 510, 409, 80, 18)
@@ -239,10 +237,12 @@ test('③ 48-2 크기 트레이 — 고른 칸의 굵기가 화면의 자국 폭
   OUT.sizes = { rows_w2_5: thin, rows_w20: thick, ratio: +(thick / Math.max(1, thin)).toFixed(3) }
 })
 
-/** 사각 안 잉크 띠의 세로 두께(물리 px) — mats46의 그 자(두 자리에 다른 자 ⛔) */
+/** 사각 안 «따뜻한» 잉크 띠의 세로 두께(물리 px) — ⚠ web2-50: #gl에서 잰다.
+ *  알파가 아니라 따뜻함(r−b)으로 세는 이유: 칠한 면의 불투명 채움(48-9)이 상자 전체에
+ *  알파를 깔아 «알파>8»은 아무것도 못 가른다. */
 const inkRows = (page: Page, x: number, y: number, w: number, h: number) =>
   page.evaluate(([x0, y0, ww, hh]) => {
-    const src = document.getElementById('brushc') as HTMLCanvasElement
+    const src = document.getElementById('gl') as HTMLCanvasElement
     const dpr = window.devicePixelRatio || 1
     const t = document.createElement('canvas')
     t.width = Math.max(1, Math.round((ww as number) * dpr))
@@ -253,7 +253,8 @@ const inkRows = (page: Page, x: number, y: number, w: number, h: number) =>
     let rows = 0
     for (let r = 0; r < t.height; r++) {
       for (let c = 0; c < t.width; c++) {
-        if (d[(r * t.width + c) * 4 + 3]! > 8) { rows++; break }
+        const i = (r * t.width + c) * 4
+        if (d[i + 3]! > 8 && d[i]! - d[i + 2]! > 10) { rows++; break }
       }
     }
     return rows
@@ -348,36 +349,38 @@ test('⑤ 48-9 딸린 값 — 칠한 면이 뒤를 가리므로 깊이 순서를
   }
 })
 
-test('⑥ 48-6 돌리는 동안 칠이 남는다', async ({ page }) => {
+test('⑥ 돌리는 동안 칠이 남는다 — 48-6의 «살리기»가 web2-50 구조로 무용해졌다', async ({ page }) => {
+  // ⚠⚠ 계약 갱신: 48-6은 제스처 중 #brushc가 «칠만 들고 떠 있는» 우회였다. 50이 칠을
+  // #gl(면 텍스처)로 옮겨 궤도가 구조적으로 무해해졌다 — 48-6의 그 절(drawPaintsOnly)은
+  // 제품에서 나갔고, 이 팔은 «궤도 프레임마다 칠이 화면에 있다»(사람의 그 증상)를
+  // #gl의 따뜻한 픽셀로 잰다. 타일 경로(선의 흑연)는 여전히 돈다 — 그 확인은 남긴다.
   await room(page)
   await pickPaint(page, { swatch: 'swatch-brick-1', instr: 'marker' })
   await drawLine(page, 520, 420, 580, 440)
   await page.click('#btn-pencil'); await page.click('#btn-pencil')
   await page.waitForTimeout(200)
   await page.evaluate(() => (window as any).__b2.diag.tileStatsReset())
-  const before = await layerStats(page, 'brushc', BOX.x, BOX.y, BOX.w, BOX.h)
-  // 궤도 제스처 — **가운데 단추 끌기**가 이 앱의 궤도다(cost18·gesture와 같은 손짓).
-  // 놓지 않은 채로 재는 것이 핵심이다 — 「멈추면 돌아온다」가 증상이었다.
+  const before = await warmPixels(page)
+  expect(before.warm, '칠이 섰다').toBeGreaterThan(0)
   await page.mouse.move(600, 400)
   await page.mouse.down({ button: 'middle' })
   const during: number[] = []
   for (let i = 1; i <= 5; i++) {
     await page.mouse.move(600 + i * 10, 400 + i * 3)
     await page.waitForTimeout(90)
-    during.push((await layerStats(page, 'brushc', BOX.x - 80, BOX.y - 80, BOX.w + 200, BOX.h + 200)).touched)
+    during.push((await warmPixels(page)).warm)
   }
   const held = await page.evaluate(() => (window as any).__b2.diag.tileStats())
   await page.mouse.up({ button: 'middle' })
   await page.waitForTimeout(200)
-  expect(before.touched, '놓은 뒤 화면에는 칠이 있다').toBeGreaterThan(0)
-  expect(held.active, '궤도 중 타일 경로가 실제로 돌았다(안 돌았으면 이 팔은 종전 경로를 잰다)').toBe(true)
+  const after = await warmPixels(page)
+  expect(held.active, '궤도 중 타일 경로(선)가 실제로 돌았다').toBe(true)
   for (let i = 0; i < during.length; i++) {
     expect(during[i], `궤도 프레임 ${i}에 칠이 있다`).toBeGreaterThan(0)
   }
-  // D-3 반증의 자리 — 이 회차가 더한 절이 실제로 돌았는가. 0이면 위 프레임 값은
-  // 다른 이유로 초록인 것이다(#94의 판별: 문면이 아니라 «그 경로가 돌았는가»).
-  expect(held.paintFrames, '제스처 중 칠 경로가 실제로 돌았다(48-6이 더한 그 절)').toBeGreaterThan(0)
-  OUT.orbit = { before, during, tileStats: held }
+  expect(after.warm, '놓은 뒤에도 있다').toBeGreaterThan(0)
+  expect(held.paintFrames, '48-6의 칠 살리기 절은 더 안 돈다(기제가 구조에서 빠졌다 — 0이 정상)').toBe(0)
+  OUT.orbit = { before, during, after, tileStats: held }
 })
 
 test('⑦ 48-10 툴팁 — 44~47이 더한 손잡이 전수에 설명이 있다', async ({ page }) => {

@@ -107,7 +107,12 @@ export function splitByFace(
   return { runs: kept, offFace }
 }
 
-/** 칠 획의 **3D 점렬**(파생) — 그은 시점(s.view)의 광선을 그 면의 평면에 떨어뜨린다.
+/** ⚠ **web2-50로 대체됐다** — 정본이 uv가 되어 파생은 `facetex.paintGeoOf`(uv → 3D)다.
+ *  이 함수는 raw+view(45~48 정본)의 광선 역투영이라 **새 획에는 안 닿는다**(raw가 없다).
+ *  게이트 통과 후에도 남긴 이유: 45~48 형식의 «읽기» 표식이 필요해질 때의 정본이 이 식이다.
+ *  제품 경로 호출부는 0이다(recompute가 paintGeoOf를 쓴다).
+ *
+ *  칠 획의 **3D 점렬**(파생) — 그은 시점(s.view)의 광선을 그 면의 평면에 떨어뜨린다.
  *  면이 목록에 없으면(못 풀림) null — 안 보인다(면의 규약). 광선이 평면과 평행하거나
  *  뒤로 가면 그 점은 건너뛴다(끊긴 점렬은 두 점 미만이면 null). */
 export function liftPaint(
