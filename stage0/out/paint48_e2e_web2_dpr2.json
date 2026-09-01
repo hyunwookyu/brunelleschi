@@ -1,0 +1,377 @@
+{
+  "what": "web2-48 — 화면 몫: 칠 합성(곱) · 면의 쪽 · 크기 트레이 · 면 표시와 가림 · 궤도 중 칠 · 툴팁 · 배열 · 큐브 톤",
+  "note_92": "#92 — 판정자는 픽셀(종이보다 밝은 불투명 픽셀 수 · 자국 폭 · 면 알파)이다. 「곱을 켰다」는 이름표라 안 센다",
+  "blend": {
+    "box": {
+      "x": 505,
+      "y": 405,
+      "w": 90,
+      "h": 50
+    },
+    "brushc_layer_alone": {
+      "px": 18000,
+      "touched": 5351,
+      "opaque": 5351,
+      "opaqueLighter": 3415,
+      "lumaMean": 247
+    },
+    "composite_on": {
+      "px": 18000,
+      "lumaMean": 241,
+      "lighterThanPaper": 0
+    },
+    "composite_off": {
+      "px": 18000,
+      "lumaMean": 244,
+      "lighterThanPaper": 3372
+    },
+    "composite_back": {
+      "px": 18000,
+      "lumaMean": 241,
+      "lighterThanPaper": 0
+    }
+  },
+  "side": {
+    "paints": [
+      {
+        "id": 11,
+        "f": 10,
+        "s": 1,
+        "c": "#d9a08a",
+        "w": 10,
+        "i": 1
+      }
+    ],
+    "roundtripAvailable": false
+  },
+  "sizes": {
+    "rows_w2_5": 12,
+    "rows_w20": 72,
+    "ratio": 6
+  },
+  "reveal": {
+    "withPencil": {
+      "px": 4800,
+      "touched": 0,
+      "opaque": 0,
+      "opaqueLighter": 0,
+      "lumaMean": null
+    },
+    "withPaint": {
+      "px": 4800,
+      "touched": 4800,
+      "opaque": 0,
+      "opaqueLighter": 0,
+      "lumaMean": 136
+    },
+    "backPencil": {
+      "px": 4800,
+      "touched": 0,
+      "opaque": 0,
+      "opaqueLighter": 0,
+      "lumaMean": null
+    },
+    "painted": {
+      "px": 4800,
+      "touched": 4800,
+      "opaque": 4800,
+      "opaqueLighter": 0,
+      "lumaMean": 243
+    },
+    "box": {
+      "x": 530,
+      "y": 415,
+      "w": 40,
+      "h": 30
+    }
+  },
+  "depth": {
+    "sorted": [
+      {
+        "f": 9,
+        "order": -1000
+      },
+      {
+        "f": 10,
+        "order": -998
+      }
+    ],
+    "unsorted": [
+      {
+        "f": 9,
+        "order": -1000
+      },
+      {
+        "f": 10,
+        "order": -998
+      }
+    ]
+  },
+  "orbit": {
+    "before": {
+      "px": 18000,
+      "touched": 5351,
+      "opaque": 5351,
+      "opaqueLighter": 2834,
+      "lumaMean": 244
+    },
+    "during": [
+      4993,
+      4840,
+      4613,
+      4418,
+      4182
+    ],
+    "tileStats": {
+      "active": true,
+      "tiles": 7,
+      "frames": 5,
+      "bakeMs": 52.2,
+      "bakePasses": 1,
+      "bakeClamped": 0,
+      "frameMsMedian": 0.1,
+      "frameMsMax": 2.1,
+      "paintFrames": 5,
+      "paintMsMedian": 0.5,
+      "paintMsMax": 0.5
+    }
+  },
+  "tooltips": {
+    "total": 30,
+    "rows": [
+      {
+        "id": "btn-grip",
+        "present": true,
+        "tip": "손 — 잡은 것을 다룬다 (복제 · 잠금 · 맺기 · 정면)",
+        "targetable": true
+      },
+      {
+        "id": "btn-grip-dup",
+        "present": true,
+        "tip": "복제 — 잡은 선을 같은 자리에 하나 더 놓는다",
+        "targetable": true
+      },
+      {
+        "id": "btn-grip-lock",
+        "present": true,
+        "tip": "잠금 — 잡은 선을 보호한다(안 잡히고 안 지워진다)",
+        "targetable": true
+      },
+      {
+        "id": "btn-grip-join",
+        "present": true,
+        "tip": "맺기 — 잡은 두 선을 만나게 연장한다",
+        "targetable": true
+      },
+      {
+        "id": "btn-grip-front",
+        "present": true,
+        "tip": "정면 — 잡은 면을 정면으로 보는 평행 투영으로 간다",
+        "targetable": true
+      },
+      {
+        "id": "btn-paint",
+        "present": true,
+        "tip": "붓 — 면 위에 칠한다(톤은 지금 시점 그대로, 정확한 형태는 면 정면 뷰에서)",
+        "targetable": true
+      },
+      {
+        "id": "btn-grip-cls",
+        "present": true,
+        "tip": "분류 — 잡은 면의 분류를 돌린다(자동·슬라브·벽·경사)",
+        "targetable": true
+      },
+      {
+        "id": "btn-grip-fill",
+        "present": true,
+        "tip": "채움 — 잡은 면의 채움을 돌린다(없음·해칭·단색)",
+        "targetable": true
+      },
+      {
+        "id": "btn-paint-brush",
+        "present": true,
+        "tip": "붓 — 흑연 톤으로 칠한다(색을 안 쓴다)",
+        "targetable": true
+      },
+      {
+        "id": "btn-paint-marker",
+        "present": true,
+        "tip": "마커 — 넓게 덮는다. 겹치면 진해진다",
+        "targetable": true
+      },
+      {
+        "id": "btn-paint-cp",
+        "present": true,
+        "tip": "색연필 — 가늘게 결을 남긴다",
+        "targetable": true
+      },
+      {
+        "id": "btn-grip-fmat",
+        "present": true,
+        "tip": "재료 — 잡은 면의 재료를 돌린다(채움의 무늬·색을 정한다)",
+        "targetable": true
+      },
+      {
+        "id": "swatch-brick-0",
+        "present": true,
+        "tip": "벽돌 · 밝음",
+        "targetable": true
+      },
+      {
+        "id": "swatch-conc-1",
+        "present": true,
+        "tip": "콘크리트 · 중간",
+        "targetable": true
+      },
+      {
+        "id": "swatch-glass-1",
+        "present": true,
+        "tip": "유리 · 중간",
+        "targetable": true
+      },
+      {
+        "id": "swatch-wood-2",
+        "present": true,
+        "tip": "나무 · 그림자",
+        "targetable": true
+      },
+      {
+        "id": "swatch-metal-2",
+        "present": true,
+        "tip": "금속 · 그림자",
+        "targetable": true
+      },
+      {
+        "id": "btn-floor-area",
+        "present": true,
+        "tip": "바닥면적·부피 — 근거가 된 면이 밝아진다. 축척이 없으면 숫자를 안 낸다",
+        "targetable": true
+      },
+      {
+        "id": "btn-person",
+        "present": true,
+        "tip": "사람 놓기 — 다음으로 지면을 탭한 자리에 선다(한 번 놓으면 풀린다)",
+        "targetable": true
+      },
+      {
+        "id": "btn-stencil",
+        "present": true,
+        "tip": "사람 스텐실 — 가로선이 눈높이다. 눈을 거기 맞춰 그리면 놓았을 때 눈이 지평선에 얹힌다",
+        "targetable": true
+      },
+      {
+        "id": "stencil-save",
+        "present": true,
+        "tip": "그린 스텐실을 이 기기에 저장한다",
+        "targetable": true
+      },
+      {
+        "id": "stencil-clear",
+        "present": true,
+        "tip": "판을 비운다 — 저장된 스텐실은 저장을 다시 누를 때 바뀜다",
+        "targetable": true
+      },
+      {
+        "id": "stencil-close",
+        "present": true,
+        "tip": "닫는다 — 저장하지 않은 변경은 버린다",
+        "targetable": true
+      },
+      {
+        "id": "btn-grip-farea",
+        "present": true,
+        "tip": "면적 — 잡은 면의 면적. 축척이 없으면 숫자를 안 낸다",
+        "targetable": true
+      },
+      {
+        "id": "paint-wheel-cv",
+        "present": true,
+        "tip": "색상 휠 — 바깥 고리가 색상, 안쪽 판이 채도·명도",
+        "targetable": true
+      },
+      {
+        "id": "btn-paint-w-2_5",
+        "present": true,
+        "tip": "자국 굵기 2.5px",
+        "targetable": true
+      },
+      {
+        "id": "btn-paint-w-5",
+        "present": true,
+        "tip": "자국 굵기 5px",
+        "targetable": true
+      },
+      {
+        "id": "btn-paint-w-10",
+        "present": true,
+        "tip": "자국 굵기 10px",
+        "targetable": true
+      },
+      {
+        "id": "btn-paint-w-20",
+        "present": true,
+        "tip": "자국 굵기 20px",
+        "targetable": true
+      },
+      {
+        "id": "btn-paint-w-40",
+        "present": true,
+        "tip": "자국 굵기 40px",
+        "targetable": true
+      }
+    ],
+    "missing": []
+  },
+  "tooltip_labels": [
+    {
+      "id": "chk-hatchface",
+      "tip": "해칭이 면에 붙는다 — 끄면 종이(화면)에 붙는다",
+      "targetable": true
+    },
+    {
+      "id": "chk-rooms",
+      "tip": "벽으로 닫힌 영역(실)의 버블·연결 — 축척이 있으면 면적도",
+      "targetable": true
+    }
+  ],
+  "layout": {
+    "snap": {
+      "x": 1153,
+      "y": 206,
+      "w": 45,
+      "h": 45
+    },
+    "grip": {
+      "x": 1153,
+      "y": 252,
+      "w": 45,
+      "h": 45
+    },
+    "pencil": {
+      "x": 1153,
+      "y": 309,
+      "w": 45,
+      "h": 99
+    },
+    "pen": {
+      "x": 1153,
+      "y": 409,
+      "w": 45,
+      "h": 99
+    }
+  },
+  "cube": {
+    "box": {
+      "x": 1032,
+      "y": 38,
+      "w": 80,
+      "h": 80
+    },
+    "px": 25600,
+    "lumaMean": 223,
+    "lighterThanPaper": 0,
+    "paper_luma": 243.06
+  },
+  "dpr": 2,
+  "note_ledger": "LEDGER=1 없이는 한 바이트도 안 쓴다(#90·#94 — tools/ledgerfs가 호출 시점에 판정한다)"
+}

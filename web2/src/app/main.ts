@@ -1895,6 +1895,7 @@ for (const r of GRIP_ROWS) {
   b.className = 'rrow'
   b.dataset.act = 'cmd'
   b.innerHTML = `${r.svg}<span>${r.name}</span>`
+  b.title = r.tip     // 48-10 — 통을 열기 «전»에도 설명이 있다(syncGripRows는 열어야 돈다)
   b.addEventListener('click', () => { setGriptrayOpen(false); doGripAction(r.key) })
   griptrayEl.append(b)
   gripRow.set(r.key, b)
@@ -2008,7 +2009,7 @@ const paintSizeRow = new Map<number, HTMLButtonElement>()
 
 // ── 색상 휠(48-7) — 기하·색 변환은 `core/colorwheel.ts`가 든다(이 파일은 DOM만) ──
 // 크기는 통의 폭(208px — index.html `--dim-w` 계산의 그 내용 폭)에 맞춘다.
-const WHEEL: WheelGeom = { cx: 92, cy: 92, rOut: 88, rIn: 66 }
+const WHEEL: WheelGeom = { cx: 68, cy: 68, rOut: 64, rIn: 48 }
 const wheelCv = document.createElement('canvas')
 const wheelHex = document.createElement('span')
 

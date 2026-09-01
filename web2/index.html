@@ -391,7 +391,15 @@
     #tray, #pentray, #etray, #rolltray, #griptray, #painttray {
       display: none; position: fixed; z-index: 12;
       flex-direction: column; gap: var(--btn-gap); align-items: flex-end;
+      /* ⚠⚠ **web2-48 48-7이 이 두 줄을 더했다.** 칠통에 색상 휠이 들어오면서
+         통의 내용이 화면 높이를 넘었고, 그것이 조용한 결함을 냈다 — 줄은 flex 항목이라
+         **기본값 `flex-shrink: 1`로 눌렸고**(휠 줄이 180px에서 **25px**로) 그 안의 캠버스는
+         대체 요소라 안 줄어 **위의 단추들 위로 넘쳐 눈에 안 보이게 덮었다**.
+         e2e가 「휠 캠버스가 마커 단추의 클릭을 가로채다」로 잡았다(사람 눈에는 «안 눌리는
+         단추»로만 보였을 것이다). 줄은 안 줄이고(물건은 줄지 않는다) 넘치면 통이 굴러간다. */
+      max-height: calc(100vh - 12px); overflow-y: auto; overscroll-behavior: contain;
     }
+    #tray > *, #pentray > *, #etray > *, #rolltray > *, #griptray > *, #painttray > * { flex-shrink: 0; }
     #tray.open, #pentray.open, #etray.open, #rolltray.open, #griptray.open, #painttray.open { display: flex; }
     /* 칠통(web2-46) — 재료 줄의 톤 견본. 견본은 색 그 자체라 선 문법 비대상
        (instrument-icons.md 「마커·색연필」 절이 정본). 고른 견본은 테로 말한다. */
@@ -404,7 +412,15 @@
        누름 문법은 안 받는다. 46의 재료 줄이 쓰던 그 자리를 그대로 쓴다. */
     .prow { cursor: default; }
     #paint-wheel { flex-direction: column; gap: 4px; padding: 7px 9px; }
-    #paint-wheel-cv { display: block; touch-action: none; cursor: crosshair; }
+    /* ⚠⚠ `position: static`을 **명시해야 한다**(web2-48 48-7 — e2e가 잡은 결함):
+       이 파일 위쪽에 `canvas { position: absolute; inset: 0; display: block; }`이 있다 —
+       화면 겹(#gl·#ink·#brushc…)을 위한 규칙인데 **요소 선택자라 새 캠버스에도
+       그대로 걸렸다**. 그래서 휠 캠버스가 흐름에서 빠져 **칠통 전체를 덮었고**
+       (실측: 통은 y 382..794인데 캠버스 사각이 1006,382,132,132 — 통의 좌상단),
+       그 덤에 덤혀 단추들이 **보이긴 하는데 안 눌렸다**. 사람 눈에는 «고장난
+       단추»로만 보였을 증상이다 — e2e가 「휠 캠버스가 마커 단추의 클릭을 가로채다」로
+       잡았다(#73 ㉐의 친척: «문면상 이 규칙은 화면 겹의 것»이 아니라 실측이 정한다). */
+    #paint-wheel-cv { position: static; inset: auto; display: block; touch-action: none; cursor: crosshair; }
     #paint-hex { min-width: 0; font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #4a463f; }
     /* 크기 트레이 — **줄마다 그 굵기의 실제 자국**이다(1:1). 자국은 SVG 선 하나이고
        `stroke-width`가 곧 그 굵기 px라, 「1:1」이 문면이 아니라 기하로 참이다.
