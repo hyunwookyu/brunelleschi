@@ -7,7 +7,7 @@
     "no_brighter": {
       "brighter": 0,
       "maxUp": 0,
-      "darkSum": 709340
+      "darkSum": 649262
     },
     "edge_ramp": [
       {
@@ -174,16 +174,16 @@
       {
         "a": 1,
         "r": 235,
-        "g": 237,
-        "b": 236,
-        "lum": 236.3
+        "g": 236,
+        "b": 235,
+        "lum": 235.6
       },
       {
         "a": 1,
-        "r": 170,
-        "g": 198,
-        "b": 221,
-        "lum": 192.3
+        "r": 165,
+        "g": 196,
+        "b": 220,
+        "lum": 189.5
       },
       {
         "a": 1,
@@ -271,17 +271,17 @@
       },
       {
         "a": 1,
-        "r": 113,
-        "g": 149,
+        "r": 112,
+        "g": 148,
         "b": 176,
-        "lum": 141.3
+        "lum": 140.4
       },
       {
         "a": 1,
-        "r": 144,
-        "g": 158,
-        "b": 168,
-        "lum": 155
+        "r": 141,
+        "g": 156,
+        "b": 167,
+        "lum": 152.8
       },
       {
         "a": 1,
@@ -336,18 +336,18 @@
     "ramp_max_lum": 243,
     "paper_lum": 243,
     "under_pattern": {
-      "bandPx": 9857,
-      "contrastPx": 1656
+      "bandPx": 8945,
+      "contrastPx": 2046
     },
     "under_pattern_over": {
-      "bandPx": 10051,
-      "contrastPx": 0
+      "bandPx": 9157,
+      "contrastPx": 676
     },
     "line_under_band_dark": 96,
     "falsify_over": {
-      "brighter": 114315,
+      "brighter": 115301,
       "maxUp": 87.5,
-      "darkSum": 562069
+      "darkSum": 516464
     },
     "dom_canvas": {
       "before": 10,
@@ -369,22 +369,22 @@
     "reachability_source": "이 파일의 falsify_over ↔ no_brighter · under_pattern_over ↔ under_pattern"
   },
   "orbit": {
-    "before": 5238,
+    "before": 4227,
     "during": [
-      4740,
-      4244,
-      3746,
-      3263,
-      2802
+      3827,
+      3418,
+      3021,
+      2632,
+      2263
     ],
-    "after": 2802,
+    "after": 2263,
     "note_d3": "D-3 반증 스위치 없음 — «궤도 중 소실»을 되살릴 옛 경로(48-6의 타일 제외)가 삭제됐다. 이 팔이 재는 것은 궤도 «행위» 중의 픽셀이고(문면 아님 — #94), 부정 대조는 paint48 ⑥의 tileStats.paintFrames == 0(옛 절이 안 도는 것)이다"
   },
   "foreshorten_clip": {
     "def": "경계를 일부러 지나는 마커 획 — 열별 파란 띠 두께(물리 px · ±2열 평균). near=545css · far=855css · 밖=488/915css. 기대 비 = 벽 투영 높이 비(픽스처에서 유도 — #88)",
-    "near_px": 17.6,
-    "far_px": 13.8,
-    "ratio": 1.275,
+    "near_px": 19,
+    "far_px": 14,
+    "ratio": 1.357,
     "expected_ratio": 1.24,
     "tol_registered": "C.PAINT50_FORESHORTEN_TOL",
     "tol_value": 0.12,
@@ -403,10 +403,10 @@
     "reachability_source": "이 파일의 ratio ↔ expected_ratio"
   },
   "side": {
-    "before": 5238,
+    "before": 4227,
     "behind": 0,
     "scene_ink_behind": 171771,
-    "restored": 5238,
+    "restored": 4227,
     "tex_behind": [
       {
         "key": "9:1",
@@ -435,9 +435,9 @@
     "note_d3": "D-3 — 반증 스위치 없음: 쪽 게이트를 끄는 손잡이를 안 만들었다(paintVisible 계열의 단위 반증은 test/mats46 ④가 든다). 건너편 0의 귀속(쪽 때문 — 밀도·미배치 아님)은 장면 잉크 > 0과 tex의 visible=false가 가른다"
   },
   "derived": {
-    "hash_base": 2062313225,
-    "hash_corrupted": 815718503,
-    "hash_rebaked": 2062313225,
+    "hash_base": 2684920409,
+    "hash_corrupted": 1705421388,
+    "hash_rebaked": 2684920409,
     "textures": 1,
     "file_bytes": 4003,
     "note_identity": "rebaked == base(정확 일치)는 **설계 보장**이다(§5.1 유형 3 — 결정론 굽기의 항등 · 임계 아님). 이 팔의 측정은 가운데 단계다: corrupted ≠ base(오염이 화면에 실제로 보였다 — 이것이 없으면 회복 항등은 아무것도 안 잰다 · D-3)"
@@ -529,20 +529,20 @@
     "cap": 1024,
     "min": 64,
     "before_ms": {
-      "median": 16.5,
-      "p90": 17.90000009536743
+      "median": 16.799999713897705,
+      "p90": 18.200000286102295
     },
     "before2_ms": {
-      "median": 16.800000190734863,
-      "p90": 17.600000381469727
+      "median": 16.90000009536743,
+      "p90": 17.5
     },
-    "noise_floor_ms": 0.3,
+    "noise_floor_ms": 0.1,
     "after_ms": {
       "median": 16.799999713897705,
-      "p90": 18
+      "p90": 17.200000286102295
     },
-    "delta_median_ms": 0,
-    "delta_p90_ms": 0.4,
+    "delta_median_ms": -0.1,
+    "delta_p90_ms": -0.3,
     "note_cap": "상한 1024의 근거 — 장당 최악 1024²×4=4.19MB(2048이면 16.7MB — 4배)이고 이 장면의 실제 합은 bytes_total이다(긴 변만 단계라 장당 그보다 작다). «상한을 올리면 커진다»는 **clamped가 참인 장에만** 걸리는 산술이다(2차 [8]) — 이 장면은 clamped 합이 그 판정이다(0이면 상한 증설에 불변 · dpr2의 단일 1024도 포화가 아니라 올림 양자화일 수 있다 — screen_px_prequant가 가른다). 상한을 실제로 누르는 것은 큰 면·줌 인 장면이고 실기기 관측 판정자다(DEFERRED)",
     "note_89": "목표 «스무 면»에 못 미치면 faces 값이 그 사실이다 — 상한을 조용히 줄이지 않는다(rep49 note_89 그대로 · 같은 픽스처가 세운 면이 17이다)",
     "note_levels": "기본 줌의 levels가 전부 같은 값인 것은 이 장면의 셀들이 비슷한 화면 크기라서다 — «작으면 낮게»의 실측은 levels_zoomed_out(줌 아웃에서 단계 하강)이 든다",

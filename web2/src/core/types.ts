@@ -119,7 +119,7 @@ export interface Stroke {
    *  단위**로 바뀌었다(칠은 면 위 안료라 원근을 받는다 — 원칙 e와의 «다름»의 결정).
    *  **uv 없는 칠 획(45~48 형식)은 파서가 획째 버리고 센다** — 사용자 확정 「잃어도
    *  상관없다」(50 지시 · 마이그레이션 ⛔ · 여는 순간 한 줄 알림). */
-  paint?: { f: number; s?: 1 | -1; uv?: number[]; press?: number[]; c?: string; i?: 1 | 2; w?: number }
+  paint?: { f: number; s?: 1 | -1; uv?: number[]; press?: number[]; c?: string; i?: 1 | 2 | 3; w?: number }
 }
 
 // ── 종이(web2-19 2부) — **명명된 뷰가 「종이」다**(도면집의 한 장) ─────────────

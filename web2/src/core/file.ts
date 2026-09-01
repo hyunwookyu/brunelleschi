@@ -252,8 +252,8 @@ export function parseBrnl(text: string, info?: ParseInfo): BrnlData | null {
         p.press.every((v: unknown) => isNum(v) && (v as number) >= 0 && (v as number) <= C.PRESS_Q)) {
         st.paint.press = p.press.map(Number)
       }
-      // 색 — 도구(i)와 **같이** 성해야 받는다(48-7의 규약 그대로).
-      if (isHex6(p.c) && (p.i === 1 || p.i === 2)) {
+      // 색 — 도구(i)와 **같이** 성해야 받는다(48-7의 규약 그대로 · 51: 연필 i=3이 늘었다).
+      if (isHex6(p.c) && (p.i === 1 || p.i === 2 || p.i === 3)) {
         st.paint.c = p.c; st.paint.i = p.i
       }
       // 굵기 — **세계 단위**(50 — px에서 바뀌었다. 옛 px 값은 위에서 획째 버려져 여기

@@ -1644,8 +1644,10 @@ import { uvFromScreen, paintGeoOf } from '../core/facetex'
 import { cycleMat, isMatId, materialOf, type MatId, type Instr } from '../core/palette'
 import { cycleRep, isRepId, REP_NAMES, repBasis } from '../core/matrep'
 
-/** 이 면 중심에서의 «화면 px / 세계 단위»(지금 포즈·줌) — 칠 굵기의 px→세계 환산이
- *  이 자다(gateRep의 pxPerMm와 같은 식 · 축척(mm)만 안 낀다 — #54: 자를 새로 안 만든다). */
+/** 이 면 중심에서의 «화면 px / 세계 단위»(지금 포즈·줌) — gateRep의 pxPerMm와 같은 식.
+ *  ⚠ **u축(면의 수평) 방향 하나다** — 원근으로 축이 비등방이면 굵기 환산에는 못 쓴다
+ *  (아래 perp 판이 그 자리다 · brush51 ⑤가 실측으로 잡았다: u축 환산의 가로획 폭이
+ *  화면에서 절반 대역). Injector의 대체 경로·진단에만 남는다. */
 function pxPerUnitOnScreen(app: App, rf: ResolvedFace): number | null {
   let cx = 0, cy = 0, cz = 0
   for (const p of rf.outer) { cx += p.x; cy += p.y; cz += p.z }
@@ -1656,6 +1658,24 @@ function pxPerUnitOnScreen(app: App, rf: ResolvedFace): number | null {
   if (!p0 || !p1) return null
   const v = Math.hypot(p1.x - p0.x, p1.y - p0.y) / 0.01 * viewScale(app)
   return v > 1e-9 ? v : null
+}
+
+/** **획에 수직인 방향의 «세계 단위 / 화면 px»**(그 획 중점에서) — 자국 «폭»의 환산 자다
+ *  (폭은 획 진행에 수직이다 — u축 환산은 원근 비등방에서 틀린다, #54: 커밋·Injector가
+ *  같은 자를 쓴다). 화면 중점에서 수직으로 1px 옮긴 점을 같은 평면에 떨어뜨려 uv 거리로
+ *  잰다 — 광선·평면 식은 uvFromScreen과 같은 것이다. 못 재면 null(부른 쪽이 대체). */
+function worldPerPxPerp(app: App, rf: ResolvedFace, aScr: Pt, bScr: Pt): number | null {
+  const mid = { x: (aScr.x + bScr.x) / 2, y: (aScr.y + bScr.y) / 2 }
+  const dx = bScr.x - aScr.x, dy = bScr.y - aScr.y
+  const L = Math.hypot(dx, dy)
+  if (L < 1e-9) return null
+  const step = 1 / Math.max(1e-9, viewScale(app))         // 화면 1px = 문서 1/s
+  const off = { x: mid.x - (dy / L) * step, y: mid.y + (dx / L) * step }
+  const pair = uvFromScreen(app.lift.an, app.pose, rf, [mid, off, mid])   // 최소 2점 요구를 채운다
+  if (!pair || pair.length < 4) return null
+  const du = pair[2]! - pair[0]!, dv = pair[3]! - pair[1]!
+  const d = Math.hypot(du, dv)
+  return d > 1e-12 ? d : null
 }
 import type { Person } from '../core/types'
 
@@ -1687,16 +1707,19 @@ export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: nu
     if (press && press.length === pts.length && uv.length / 2 === r.idx.length) {
       s.paint!.press = r.idx.map(i => press[i]!)
     }
-    // 재료 칠(46 → 48-7) — 도구가 마커·색연필이면 지금 색이 실린다(hex 하나 — #54).
+    // 재료 칠(46 → 48-7 → 51) — 도구가 색을 쓰면 지금 색이 실린다(hex 하나 — #54).
+    // 51: 연필(i=3)이 넷째 도구다.
     if (app.paintSel.i !== 'brush') {
       s.paint!.c = app.paintSel.hex
-      s.paint!.i = app.paintSel.i === 'marker' ? 1 : 2
+      s.paint!.i = app.paintSel.i === 'marker' ? 1 : app.paintSel.i === 'cp' ? 2 : 3
     }
-    // 굵기(48-2 → 50) — 트레이 값은 화면 px이고 저장은 **세계 단위**다: 칠은 면 위
-    // 안료라 원근을 받는다(원칙 e의 «다름» — 선폭은 화면 고정, 칠폭은 면 고정).
-    // 환산은 그은 순간 그 면의 «화면 px / 세계 단위»다(pxPerUnitOnScreen — gateRep의 자).
+    // 굵기(48-2 → 50 → 51) — 트레이 값은 화면 px이고 저장은 **세계 단위**다. 환산은
+    // **그 획 중점의 수직 방향**(폭의 방향)이다 — u축 환산은 원근 비등방에서 폭을
+    // 절반 대역으로 틀리게 냈다(brush51 ⑤ 실측 · worldPerPxPerp 머리주석).
+    const wpp = worldPerPxPerp(app, rf, r.pts[0]!, r.pts[r.pts.length - 1]!)
     const ppu = pxPerUnitOnScreen(app, rf)
-    s.paint!.w = ppu ? app.paintSel.w / ppu : C.PAINT_W_FALLBACK_UNITS
+    s.paint!.w = wpp ? app.paintSel.w * wpp
+      : ppu ? app.paintSel.w / ppu : C.PAINT_W_FALLBACK_UNITS
     if (!isDrawPose(app.pose)) s.view = clonePose(app.pose)
     app.doc.strokes.push(s)
     added.push(s)
@@ -1709,6 +1732,48 @@ export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: nu
     for (const l of app.listeners) l()
   }
   return { placed: added.length, offFace }
+}
+
+/** **Injector**(web2-51) — 칠 도구의 탭이 짚은 칠 획의 속성 전부(도구·색·굵기)를 지금
+ *  도구(paintSel)에 싣는다. 판정은 파생 3D(paintGeo)의 지금 시점 사영에 대한 점-폴리라인
+ *  거리(화면 px — 오스냅 반경의 그 자). 못 짚으면 null(아무것도 안 바꾼다 — 탭은 원래
+ *  잡음이었다). ⚠ 불투명도는 도구 상수라 획에 따로 없다 — «전부»의 현행 외연은 i·c·w다
+ *  (그 사실을 원장이 적는다). w는 세계 → 그 면의 지금 화면 px로 환산해 싣는다(트레이의 자). */
+export function injectPaintAt(app: App, p: Pt): { i: Instr; hex: string; w: number } | null {
+  const vs = viewScale(app)
+  let best: { s: Stroke; d: number } | null = null
+  for (const s of app.doc.strokes) {
+    if (s.paint === undefined) continue
+    const g3 = app.paintGeo.get(s.id)
+    if (!g3) continue
+    for (let i = 0; i + 1 < g3.length; i++) {
+      const a = project(app.lift.an, app.pose, g3[i]!)
+      const b = project(app.lift.an, app.pose, g3[i + 1]!)
+      if (!a || !b) continue
+      const dx = b.x - a.x, dy = b.y - a.y
+      const L2 = dx * dx + dy * dy
+      const t = L2 > 1e-12 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / L2)) : 0
+      const d = Math.hypot(p.x - (a.x + dx * t), p.y - (a.y + dy * t)) * vs
+      if (!best || d < best.d) best = { s, d }
+    }
+  }
+  if (!best || best.d > C.OSNAP_RADIUS_PX * 1.5) return null
+  const ps = best.s.paint!
+  const i: Instr = ps.i === 1 ? 'marker' : ps.i === 2 ? 'cp' : ps.i === 3 ? 'pencil' : 'brush'
+  const rf = app.faces.find(f => f.id === ps.f)
+  // 굵기 되찾기 — 커밋과 **같은 자**(worldPerPxPerp · 그 획 중점의 수직 방향 — #54)
+  let wPx = app.paintSel.w
+  if (rf && ps.w) {
+    const g3 = app.paintGeo.get(best.s.id)
+    const m = g3 ? Math.floor(g3.length / 2) : 0
+    const a = g3 && g3.length >= 2 ? project(app.lift.an, app.pose, g3[Math.max(0, m - 1)]!) : null
+    const b = g3 && g3.length >= 2 ? project(app.lift.an, app.pose, g3[Math.min(g3.length - 1, m + 1)]!) : null
+    const wpp = a && b ? worldPerPxPerp(app, rf, a, b) : null
+    const ppu = pxPerUnitOnScreen(app, rf)
+    wPx = wpp ? ps.w / wpp : ppu ? ps.w * ppu : app.paintSel.w
+  }
+  app.paintSel = { hex: ps.c ?? app.paintSel.hex, i, w: wPx }
+  return { i, hex: app.paintSel.hex, w: wPx }
 }
 
 /** **분류를 돌린다**(45-2 — 자동은 틀리므로 사람이 고친다): 자동 → slab → wall → slope → 자동.

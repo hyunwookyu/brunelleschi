@@ -17,7 +17,8 @@ import type { Face, Stroke } from './types'
 import { C } from './constants'
 
 export type MatId = 'brick' | 'conc' | 'glass' | 'wood' | 'metal'
-export type Instr = 'brush' | 'marker' | 'cp'
+/** web2-51: 연필(pencil)이 넷째 도구로 늘었다 — 종이 결에 걸린 불연속(색은 hex — cp처럼). */
+export type Instr = 'brush' | 'marker' | 'cp' | 'pencil'
 
 export interface HatchSpec {
   angleDeg: number

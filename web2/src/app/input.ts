@@ -82,6 +82,8 @@ export interface InputCallbacks {
   /** **칠 한 붓이 끝났다**(web2-45) — 문서 좌표 점렬. 면 배정·확정은 main이 부른다(#54). */
   /** 칠 한 붓 — press는 점별 필압(펜만 · raw와 같은 길이 · web2-50 정본 목록의 «압력») */
   onPaint: (pts: Pt[], press?: number[]) => void
+  /** Injector(web2-51) — 칠 도구의 탭: 짚은 칠 획의 속성(도구·색·굵기)을 지금 도구로 */
+  onPaintInject: (p: Pt) => void
 }
 
 export function initInput(
@@ -490,9 +492,14 @@ export function initInput(
     // 버린다」의 명시판: 반듯해진 획의 raw 곡선이 남으면 표현·23 밑그림이 그 곡선을
     // 되살린다). 반듯 미리보기의 end가 그대로 확정된다(원칙 d — 2-b 순서).
     if (holdTimer !== undefined) { clearTimeout(holdTimer); holdTimer = undefined }
-    // 칠(web2-45) — 탭은 잡음이고, 점렬이 그대로 한 붓이다(면 배정은 main → state).
+    // 칠 — 탭은 **Injector**다(web2-51: 그린 획을 짚으면 그 획의 속성이 지금 도구에
+    // 실린다 — Feather의 그 도구). 45~50에서 탭은 잡음이었으므로 몸짓에 뜻을 하나만
+    // 얹는 것이다(#77 ㉠ 무위반 — 옛 뜻이 없던 자리). 끌면 종전대로 한 붓이다.
     if (paintActive(app)) {
-      if (Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * viewScale(app) <= C.TAP_MAX_PX) return
+      if (Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * viewScale(app) <= C.TAP_MAX_PX) {
+        cb.onPaintInject(d.start)
+        return
+      }
       cb.onPaint(d.raw, d.press && d.press.length === d.raw.length ? d.press : undefined)
       return
     }

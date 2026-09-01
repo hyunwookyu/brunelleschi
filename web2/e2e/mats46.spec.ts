@@ -122,9 +122,8 @@ test('① 칠통 — 재누름이 열고 · 견본이 화면과 같은 상태에
   await page.click('#btn-paint')
   expect(await page.locator('#painttray.open').count(), '재누름이 연다').toBe(1)
   const rows = await page.locator('#painttray .rrow').count()
-  // ⚠ **web2-48이 이 수를 바꿨다**: 「톤 자동」이 사라지고(48-8) 크기 트레이(48-2)와
-  // 색상 휠(48-7)이 들어왔다 — 도구 셋 + 크기 + 휠 + 재료 다섯 = **열**.
-  expect(rows, '도구 셋 + 크기 트레이 + 색상 휠 + 재료 다섯(48-8이 «자동»을 뺀 자리)').toBe(10)
+  // ⚠ web2-48이 10으로(자동 빠짐 · 크기·휠 들어옴), **web2-51이 11로**(연필 — 넷째 도구).
+  expect(rows, '도구 넷 + 크기 트레이 + 색상 휠 + 재료 다섯(51 — 연필이 늘었다)').toBe(11)
   await page.click('#swatch-wood-2')
   const sel = await page.evaluate(() => (window as any).__b2.diag.mats46().paintSel)
   // ⚠⚠ **web2-48 48-7이 상태의 모양을 바꿨다**: (재료, 톤) 쌀이 아니라 **색 hex 하나**다

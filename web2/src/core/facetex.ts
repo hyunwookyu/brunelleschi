@@ -27,7 +27,7 @@ import { hatch2d } from './hatch'
 import { facePlane } from './paint'
 import { rayThrough, type Analysis } from './camera'
 import { hatchSpecOf, hatchHexOf } from './palette'
-import { MAT } from './material'
+import { MAT, rng32 } from './material'
 import { C } from './constants'
 import { type Pt, type V3, pt, add3, mul3, dot3 } from './vec'
 
@@ -126,6 +126,74 @@ const inTex = (s: Stroke, faceId: number, side: 1 | -1): boolean =>
 let markerFlatOverride = false
 export function setMarkerFlatForTest(v: boolean): void { markerFlatOverride = v }
 
+// ── 자국의 질(web2-51) — 압력 프로필·결 해시(팔과 제품이 같은 함수 — #54) ─────────
+
+/** 반증 스위치 둘(D-3 · e2e 전용 — #30): 압력 평탄화(프로필이 상수 — 압력 게이트가
+ *  죽어야 한다) · 결 끔(grain ≡ 1 — 결 게이트가 죽어야 한다). 제품 경로는 안 부른다. */
+let pressFlatOverride = false
+export function setPressFlatForTest(v: boolean): void { pressFlatOverride = v }
+let grainOffOverride = false
+export function setGrainOffForTest(v: boolean): void { grainOffOverride = v }
+
+/** 압력(0..1) → 농도 배수 — 지시 «농도의 기울기가 굵기보다 가파르다»(26-6)의 왼쪽. */
+export const paintDensity = (press: number): number =>
+  pressFlatOverride ? 0.7
+    : Math.min(1, C.PAINT51_DENSITY_FLOOR + C.PAINT51_DENSITY_SLOPE * press)
+/** 압력(0..1) → 굵기 배수 — 오른쪽(완만). */
+export const paintWidthFactor = (press: number): number =>
+  pressFlatOverride ? 0.925
+    : C.PAINT51_WIDTH_FLOOR + C.PAINT51_WIDTH_SLOPE * press
+
+/** **결 해시** — UV 격자 칸의 결정론 값(0..1). 시드는 격자 정수 좌표만이라(실행·획 무관)
+ *  같은 면 자리는 언제나 같은 이빨이다 — «종이 결에 걸린다»의 코드판. Math.random ⛔. */
+export function grain01(qu: number, qv: number): number {
+  if (grainOffOverride) return 1
+  let h = (qu * 374761393 + qv * 668265263) | 0
+  h = Math.imul(h ^ (h >>> 13), 1274126177)
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296
+}
+
+/** 획의 점렬을 등간격 도장(stamp) 자리로 편다 — {x, y, t(0..1), press(0..1)} */
+function stampsOf(
+  uv: number[], press: number[] | undefined,
+  toPx: (u: number, v: number) => Pt, spacingPx: number,
+): { x: number; y: number; t: number; press: number }[] {
+  const pts: Pt[] = []
+  for (let i = 0; i + 1 < uv.length; i += 2) pts.push(toPx(uv[i]!, uv[i + 1]!))
+  const segLen: number[] = []
+  let L = 0
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const d = Math.hypot(pts[i + 1]!.x - pts[i]!.x, pts[i + 1]!.y - pts[i]!.y)
+    segLen.push(d); L += d
+  }
+  if (L < 1e-9) return []
+  const prAt = (t: number): number => {
+    if (!press || press.length === 0) return 0.5
+    const i = Math.min(press.length - 1, Math.round(t * (press.length - 1)))
+    return Math.min(1, Math.max(0, press[i]! / C.PRESS_Q))
+  }
+  const out: { x: number; y: number; t: number; press: number }[] = []
+  const n = Math.max(2, Math.ceil(L / spacingPx))
+  for (let k = 0; k <= n; k++) {
+    const target = (k / n) * L
+    let acc = 0, i = 0
+    while (i < segLen.length && acc + segLen[i]! < target) { acc += segLen[i]!; i++ }
+    const segT = segLen[i]! > 1e-9 ? (target - acc) / segLen[i]! : 0
+    const a = pts[Math.min(i, pts.length - 1)]!, b = pts[Math.min(i + 1, pts.length - 1)]!
+    out.push({ x: a.x + (b.x - a.x) * segT, y: a.y + (b.y - a.y) * segT, t: k / n, press: prAt(k / n) })
+  }
+  return out
+}
+
+/** 도장 하나(원) — 알파·반지름은 부른 쪽이 정한다. */
+function stamp(g: CanvasRenderingContext2D, x: number, y: number, r: number, alpha: number) {
+  if (alpha <= 0 || r <= 0) return
+  g.globalAlpha = Math.min(1, alpha)
+  g.beginPath()
+  g.arc(x, y, r, 0, Math.PI * 2)
+  g.fill()
+}
+
 function drawStrokeTex(
   g: CanvasRenderingContext2D, s: Stroke, box: UvBox, dims: { h: number; pxPerUnit: number },
 ) {
@@ -133,34 +201,141 @@ function drawStrokeTex(
   const uv = p.uv!
   const toPx = (u: number, v: number): Pt =>
     pt((u - box.u0) * dims.pxPerUnit, dims.h - (v - box.v0) * dims.pxPerUnit)
-  g.save()
+  const wWorld = p.w ?? C.PAINT_W_FALLBACK_UNITS
+  const wPx = Math.max(0.5, wWorld * dims.pxPerUnit)
   const grade = s.mat?.grade ?? 'HB'
-  if (p.i === 1 && p.c) {          // 마커
+  g.save()
+  g.lineCap = 'round'
+  g.lineJoin = 'round'
+
+  if (p.i === 1 && p.c) {
+    // ── 마커 — 평평한 띠(multiply · 겹치면 진해진다) + **팁**(양 끝 덧찍음 — 51) ────
     g.globalCompositeOperation = markerFlatOverride ? 'source-over' : 'multiply'
     g.globalAlpha = markerFlatOverride ? 1 : C.PAINT_MARKER_ALPHA
     g.strokeStyle = p.c
-  } else if (p.i === 2 && p.c) {   // 색연필
-    g.globalCompositeOperation = 'source-over'
-    g.globalAlpha = C.PAINT_CP_ALPHA
-    g.strokeStyle = p.c
-  } else {                          // 붓(흑연) — 경도의 색·알파
-    g.globalCompositeOperation = 'source-over'
-    g.globalAlpha = MAT[grade].alpha
-    g.strokeStyle = MAT[grade].color
+    g.lineWidth = wPx
+    g.beginPath()
+    const p0 = toPx(uv[0]!, uv[1]!)
+    g.moveTo(p0.x, p0.y)
+    for (let i = 2; i + 1 < uv.length; i += 2) {
+      const q = toPx(uv[i]!, uv[i + 1]!)
+      g.lineTo(q.x, q.y)
+    }
+    g.stroke()
+    if (!markerFlatOverride) {
+      // 팁 — «획 경계가 살짝 남는다»(50이 51 몫으로 미룬 성질의 부활). 곱이라 겹수와
+      // 무관하게 «끝이 몸통보다 진하다»가 유지된다(mats46 팁 팔이 되쟀다).
+      g.fillStyle = p.c
+      const tipR = (wPx / 2) * C.PAINT51_MARKER_TIP_LEN_K
+      const e0 = toPx(uv[0]!, uv[1]!)
+      const e1 = toPx(uv[uv.length - 2]!, uv[uv.length - 1]!)
+      g.globalAlpha = C.PAINT51_MARKER_TIP_ALPHA
+      for (const e of [e0, e1]) { g.beginPath(); g.arc(e.x, e.y, tipR, 0, Math.PI * 2); g.fill() }
+    }
+    g.restore()
+    return
   }
-  g.lineCap = 'round'
-  g.lineJoin = 'round'
-  g.lineWidth = Math.max(0.5, (p.w ?? C.PAINT_W_FALLBACK_UNITS) * dims.pxPerUnit)
-  g.beginPath()
-  const p0 = toPx(uv[0]!, uv[1]!)
-  g.moveTo(p0.x, p0.y)
-  for (let i = 2; i + 1 < uv.length; i += 2) {
-    const q = toPx(uv[i]!, uv[i + 1]!)
-    g.lineTo(q.x, q.y)
+
+  if (p.i === 2 && p.c) {
+    // ── 색연필 — 결이 굵고(거친 UV 격자) 색이 완전히 덮이지 않는다(빈 알갱이) ───────
+    // ⚠ 도장 단위 건너뜀(초판)은 이웃 도장의 번짐이 칸을 도로 덮어 구멍이 안 남았다
+    // (dpr2 실측: 내부 맨살 0 — 그 실측이 이 재설계의 사유). **긁개 캔버스**에 이 획만
+    // 그리고 결 칸을 destination-out으로 뚫은 뒤 본판에 합성한다 — 남의 획은 안 지운다.
+    const scratch = document.createElement('canvas')
+    scratch.width = (g.canvas as HTMLCanvasElement).width
+    scratch.height = (g.canvas as HTMLCanvasElement).height
+    const sg = scratch.getContext('2d')!
+    sg.fillStyle = p.c
+    sg.globalCompositeOperation = 'source-over'
+    const st = stampsOf(uv, p.press, toPx, Math.max(1, wPx * 0.3))
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
+    for (const q of st) {
+      const gr2 = grain01(Math.floor(q.x * 7.13), Math.floor(q.y * 7.13))   // 잔결(도장별 미세 변화)
+      stamp(sg, q.x, q.y, (wPx / 2) * paintWidthFactor(q.press),
+        C.PAINT_CP_ALPHA * (0.7 + 0.3 * gr2) * paintDensity(q.press))
+      if (q.x < x0) x0 = q.x
+      if (q.y < y0) y0 = q.y
+      if (q.x > x1) x1 = q.x
+      if (q.y > y1) y1 = q.y
+    }
+    // 결 칸 뚫기 — UV 격자(굵기 배수 셀 · 세계 고정)에서 grain이 문 아래인 칸을 걷어낸다
+    const cellPx = Math.max(1.5, wWorld * C.PAINT51_CP_GRAIN_K * dims.pxPerUnit)
+    const m = wPx
+    sg.globalCompositeOperation = 'destination-out'
+    sg.fillStyle = '#000'
+    for (let qy = Math.floor((y0 - m) / cellPx); qy <= Math.floor((y1 + m) / cellPx); qy++) {
+      for (let qx = Math.floor((x0 - m) / cellPx); qx <= Math.floor((x1 + m) / cellPx); qx++) {
+        const gr = grain01(qx, qy)
+        if (gr >= C.PAINT51_CP_SKIP_TH) continue
+        sg.globalAlpha = 1 - C.PAINT51_CP_SKIP_ALPHA / C.PAINT_CP_ALPHA   // 구멍의 잔량(살짝 남는다)
+        sg.beginPath()
+        sg.arc((qx + 0.5) * cellPx, (qy + 0.5) * cellPx, cellPx * 0.38, 0, Math.PI * 2)
+        sg.fill()
+      }
+    }
+    g.globalCompositeOperation = 'source-over'
+    g.globalAlpha = 1
+    g.drawImage(scratch, 0, 0)
+    g.restore()
+    return
   }
-  g.stroke()
+
+  if (p.i === 3 && p.c) {
+    // ── 연필(51 신설) — 종이 결에 걸린 불연속 · 압력이 농도(가파름)·굵기(완만)를 움직인다 ──
+    g.globalCompositeOperation = 'source-over'
+    g.fillStyle = p.c
+    const cellPx = Math.max(1, wWorld * C.PAINT51_PENCIL_GRAIN_K * dims.pxPerUnit)
+    const st = stampsOf(uv, p.press, toPx, Math.max(0.8, wPx * 0.25))
+    for (const q of st) {
+      const gr = grain01(Math.floor(q.x / cellPx), Math.floor(q.y / cellPx))
+      const tooth = C.PAINT51_PENCIL_GRAIN_FLOOR + (1 - C.PAINT51_PENCIL_GRAIN_FLOOR) * gr
+      stamp(g, q.x, q.y, (wPx / 2) * paintWidthFactor(q.press),
+        0.85 * tooth * paintDensity(q.press))
+    }
+    g.restore()
+    return
+  }
+
+  // ── 붓(흑연 — i 없음) — 획 안 농도 흐름 · 끝 갈라짐(빗살 발산) ──────────────────
+  g.globalCompositeOperation = 'source-over'
+  g.strokeStyle = MAT[grade].color
+  const rng = rng32(s.id)                       // 결정론 — 획마다 같은 빗살·같은 흐름(§5)
+  const nodes: number[] = []
+  for (let k = 0; k < C.PAINT51_BRUSH_FLOW_NODES; k++) nodes.push(0.5 + 0.5 * rng())
+  const flow = (t: number): number => {
+    const x = t * (nodes.length - 1)
+    const i = Math.min(nodes.length - 2, Math.floor(x))
+    const f = x - i
+    return nodes[i]! * (1 - f) + nodes[i + 1]! * f
+  }
+  const bristles = C.PAINT51_BRUSH_BRISTLES
+  const st = stampsOf(uv, p.press, toPx, Math.max(1, wPx * 0.3))
+  // 빗살의 가로 배치·개별 세기(획당 고정 — rng 순서가 결정론의 전부다)
+  const offs: { o: number; a: number; w: number }[] = []
+  for (let b = 0; b < bristles; b++) {
+    offs.push({ o: (b / (bristles - 1) - 0.5) * 0.8 + (rng() - 0.5) * 0.2, a: 0.5 + 0.5 * rng(), w: 0.3 + 0.35 * rng() })
+  }
+  g.fillStyle = MAT[grade].color
+  for (let i = 0; i + 1 < st.length; i++) {
+    const q = st[i]!, q2 = st[i + 1]!
+    // 진행 방향의 수직(빗살이 벌어지는 축)
+    const dx = q2.x - q.x, dy = q2.y - q.y
+    const dl = Math.hypot(dx, dy) || 1
+    const nx = -dy / dl, ny = dx / dl
+    const split = q.t > C.PAINT51_BRUSH_SPLIT_T
+      ? ((q.t - C.PAINT51_BRUSH_SPLIT_T) / (1 - C.PAINT51_BRUSH_SPLIT_T)) * C.PAINT51_BRUSH_SPLIT_K
+      : 0
+    for (const b of offs) {
+      const off = (b.o * (1 + split * 2)) * wPx
+      stamp(g, q.x + nx * off, q.y + ny * off,
+        (wPx / 2) * b.w * paintWidthFactor(q.press) * (split > 0 ? 0.7 : 1),
+        MAT[grade].alpha * b.a * flow(q.t) * paintDensity(q.press) * 0.6)
+    }
+  }
   g.restore()
 }
+
+
 
 /** **굽는다** — 흰 바탕 + (이 면·이 쪽의) 획 전부, 획 id 차례(그린 차례 = 쌓인 차례).
  *  면 고정 해칭(hatchMode 'face' · web2-45의 둘째 판)은 획보다 **아래**에 깐다

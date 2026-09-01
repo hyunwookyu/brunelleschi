@@ -5,7 +5,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   handwritingGroup, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
-  commitPaint, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen,
+  commitPaint, injectPaintAt, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen,
   placePersonAt, gripFaceArea, floorAreaNow, volumeNow, flashFaces, screenToDoc, roomsNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
@@ -483,6 +483,16 @@ inputApi = initInput(ink, app, {
     invalidate()
   },
   // ── 칠 한 붓(web2-45) — 면 배정·분할·확정은 state.commitPaint 하나다(#54) ──────
+  // ── Injector(web2-51) — 탭이 짚은 칠 획의 속성을 되찾는다(판정은 state 하나 #54) ────
+  onPaintInject(p) {
+    const r = injectPaintAt(app, p)
+    if (r) {
+      syncPainttray()
+      const name = r.i === 'marker' ? '마커' : r.i === 'cp' ? '색연필' : r.i === 'pencil' ? '연필' : '붓'
+      status(`${name} · ${r.hex} · ${r.w.toFixed(1)}px — 짚은 획의 속성을 실었다`)
+      invalidate()
+    }
+  },
   onPaint(pts, press) {
     const r = commitPaint(app, pts, press)
     // 알림은 오류가 있을 때만(4-b) — 얹혔으면 화면이 말한다. 통째로 허공이면 이유를.
@@ -2016,7 +2026,9 @@ const painttrayEl = document.getElementById('painttray')!
 const PAINT_INSTRS: { i: Instr; name: string; tip: string; svg: string }[] = [
   { i: 'brush', name: '붓', tip: '붓 — 흑연 톤으로 칠한다(색을 안 쓴다)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3 V14"/><path d="M12.5 14 h7 v4 h-7 z"/><path d="M12.5 18 C12.5 23 11.5 25.5 10.5 27.5 C13.5 26.6 18.5 26.6 21.5 27.5 C20.5 25.5 19.5 23 19.5 18 Z"/></svg>' },
   { i: 'marker', name: '마커', tip: '마커 — 넓게 덮는다. 겹치면 진해진다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="4" width="8" height="15" rx="1"/><path d="M13.5 19 L13 24 L17 28 L18.5 19"/></svg>' },
-  { i: 'cp', name: '색연필', tip: '색연필 — 가늘게 결을 남긴다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 h6 v16 l-3 8 l-3 -8 z"/><path d="M14.2 21.5 l1.1 3 M16.9 21.5 l-1.1 3" stroke-width="1.0"/></svg>' },
+  { i: 'cp', name: '색연필', tip: '색연필 — 결이 굵고 색이 완전히 덮이지 않는다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 h6 v16 l-3 8 l-3 -8 z"/><path d="M14.2 21.5 l1.1 3 M16.9 21.5 l-1.1 3" stroke-width="1.0"/></svg>' },
+  // 연필(web2-51) — 종이 결에 걸린 불연속 · 압력이 농도(가파름)·굵기(완만)를 움직인다
+  { i: 'pencil', name: '연필', tip: '연필 — 종이 결에 걸린다. 세게 누르면 진해진다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 24 L24 12 l-4 -4 L8 20 l-1 5 z"/><path d="M18 10 l4 4"/></svg>' },
 ]
 const paintInstrRow = new Map<Instr, HTMLButtonElement>()
 const paintSizeRow = new Map<number, HTMLButtonElement>()
@@ -2572,7 +2584,7 @@ requestAnimationFrame(() => {
 
 // e2e 진단 통로 — 앱과 같은 함수·같은 상태를 본다(측정 경로와 앱 경로를 가르지 않는다)
 import { project, screenAxes, vpMarks, frameAxes, isParallel, projW, horizonScreenY } from '../core/camera'
-import { setMarkerFlatForTest } from '../core/facetex'
+import { setMarkerFlatForTest, setPressFlatForTest, setGrainOffForTest } from '../core/facetex'
 import { forwardOf, yawDir } from '../core/level'
 import { loopAt, buildGraph, cyclesOf, planesOf, faceScreen } from '../core/face'
 import { geomSize3 } from '../core/osnap'
@@ -3038,13 +3050,18 @@ const diag = {
     PAINT_MARKER_ALPHA: C.PAINT_MARKER_ALPHA, PAINT_CP_ALPHA: C.PAINT_CP_ALPHA,
     PAINT_W_FALLBACK_UNITS: C.PAINT_W_FALLBACK_UNITS,
     PAINT50_LUM_TOL: C.PAINT50_LUM_TOL, PAINT50_FORESHORTEN_TOL: C.PAINT50_FORESHORTEN_TOL,
-    PAINT50_PATTERN_MIN_PX: C.PAINT50_PATTERN_MIN_PX, PAINT50_LINE_INK_MIN_PX: C.PAINT50_LINE_INK_MIN_PX }),
+    PAINT50_PATTERN_MIN_PX: C.PAINT50_PATTERN_MIN_PX, PAINT50_LINE_INK_MIN_PX: C.PAINT50_LINE_INK_MIN_PX,
+    PAINT51_DPR_W_TOL: C.PAINT51_DPR_W_TOL, PAINT51_SWATCH_W_TOL: C.PAINT51_SWATCH_W_TOL,
+    PAINT51_DENSITY_SLOPE: C.PAINT51_DENSITY_SLOPE, PAINT51_WIDTH_SLOPE: C.PAINT51_WIDTH_SLOPE }),
   /** 저장물 원문(파일 저장과 같은 함수 — #54) — paint50 팔이 «텍스처가 파일에 없다»를 잰다 */
   serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
   corruptPaintTex: () => { const n = corruptPaintTexForTest(); invalidate(); return n },
   rebakePaintTex: () => { rebakePaintTexForTest(); invalidate() },
   /** 마커 평면 덮어쓰기 반증(D-3 · mats46 ②) — 켜면 겹 계단이 죽는 대역으로 재굽기 */
   setMarkerFlatForTest: (v: boolean) => { setMarkerFlatForTest(v); rebakePaintTexForTest(); invalidate() },
+  /** 51 반증 둘(D-3) — 압력 평탄화 · 결 끔. 켜고 재굽기 — 해당 게이트가 죽어야 한다 */
+  setPressFlatForTest: (v: boolean) => { setPressFlatForTest(v); rebakePaintTexForTest(); invalidate() },
+  setGrainOffForTest: (v: boolean) => { setGrainOffForTest(v); rebakePaintTexForTest(); invalidate() },
   setPaintBlendForTest: (v: boolean) => { setPaintBlendForTest(v); invalidate() },
   /** **안 실린 수리를 손으로 걸어 보는 손잡이**(web2-48 48-1 — 수리는 되돌렸다).
    *  `true` = 잉크 겹을 **곱**으로 얹는다(흰 장막이 사라진다) · `false` = **출하 상태**.

@@ -782,6 +782,38 @@ export const C = {
   PAINT50_PATTERN_MIN_PX: 30,
   /** 곱 게이트 ④(선이 산다)의 문 — 위 모서리 상자의 선 잉크(#brushc) 최소 픽셀(2차 [3]). */
   PAINT50_LINE_INK_MIN_PX: 20,
+
+  // ── 자국의 질(web2-51) — 브러시 넷의 성질 상수. 전부 «절차 생성»의 손잡이다 ──────
+  /** 압력 → **농도** 직선 프로필의 기울기·바닥: density = min(1, 바닥 + 기울기 × press).
+   *  지시 문면(26-6 재인용) «농도의 기울기가 굵기보다 가파르다»가 두 SLOPE의 부등식이고,
+   *  단위 팔이 그 부등식을 함수 그 자체로 잰다(#54 — 팔과 제품이 같은 함수). */
+  PAINT51_DENSITY_FLOOR: 0.25,
+  PAINT51_DENSITY_SLOPE: 0.9,
+  /** 압력 → **굵기** 배수 프로필: widthFactor = 바닥 + 기울기 × press (농도보다 완만). */
+  PAINT51_WIDTH_FLOOR: 0.7,
+  PAINT51_WIDTH_SLOPE: 0.45,
+  /** 연필 결의 격자 크기 — **획 굵기의 배수**(세계 단위 절대 눈금이 없다 — 축척 미정에도
+   *  칠하므로. 굵기 상대라 어느 축척에서도 같은 «자국 대비 결»이 난다). */
+  PAINT51_PENCIL_GRAIN_K: 0.45,
+  /** 연필 결의 알파 대역 — grain 해시(0..1)가 [바닥, 1]로 펴진다(불연속의 깊이). */
+  PAINT51_PENCIL_GRAIN_FLOOR: 0.25,
+  /** 색연필 — 결이 «굵고»(격자 배수 — 연필보다 크다) 색이 완전히 덮이지 않는다
+   *  (grain이 문 아래인 칸은 피복 알파가 낮다 — 빈 알갱이). */
+  PAINT51_CP_GRAIN_K: 1.1,
+  PAINT51_CP_SKIP_TH: 0.42,
+  PAINT51_CP_SKIP_ALPHA: 0.18,
+  /** 마커 팁 — 획 양 끝의 덧찍음(곱 알파 · «획 경계가 살짝 남는다»). 길이는 굵기의 배수. */
+  PAINT51_MARKER_TIP_ALPHA: 0.35,
+  PAINT51_MARKER_TIP_LEN_K: 0.9,
+  /** 붓 — 빗살 수·끝 갈라짐 시작(길이 비율)·발산 폭(굵기 배수)·흐름 저주파 마디 수. */
+  PAINT51_BRUSH_BRISTLES: 4,
+  PAINT51_BRUSH_SPLIT_T: 0.85,
+  PAINT51_BRUSH_SPLIT_K: 0.8,
+  PAINT51_BRUSH_FLOW_NODES: 5,
+  /** 51 게이트 — dpr 1↔3 굵기 비의 허용(#26-2 계열 · 1.0 ± 이 값). */
+  PAINT51_DPR_W_TOL: 0.15,
+  /** 51 게이트 — 트레이 견본 굵기 ↔ 그은 자국 굵기의 허용(상대 편차). */
+  PAINT51_SWATCH_W_TOL: 0.25,
 } as const
 
 /** **시점 스냅 임계의 상한(rad)** — 실제 임계는 `level.ts`의
