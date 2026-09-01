@@ -104,8 +104,11 @@ export interface Op {
   lockChanged?: { id: number; to: boolean }[]
   /** **분류 정정**(web2-45 45-2) — 사람이 한 것이므로 실행취소 대상이다 */
   clsChanged?: { id: number; before: Face['cls']; after: Face['cls'] }[]
-  /** **채움 토글**(web2-45 45-4) — 사람이 한 것이므로 실행취소 대상이다 */
-  fillChanged?: { id: number; to: boolean }[]
+  /** **채움**(web2-45 45-4 · web2-48 48-3에서 **순환**이 됐다: 없음→해칭→단색→없음) —
+   *  사람이 한 것이므로 실행취소 대상이다. `before`/`after`는 `Face['fill']` 그대로다
+   *  (46의 `matChanged`와 같은 형태 — 값이 둘 이상이면 «전/후»를 담아야 한다:
+   *  `to: boolean` 한 칸으로는 해칭↔단색을 못 되돌린다). */
+  fillChanged?: { id: number; before: Face['fill']; after: Face['fill'] }[]
   /** **면 재료**(web2-46) — 사람이 한 것이므로 실행취소 대상이다 */
   matChanged?: { id: number; before: Face['mat']; after: Face['mat'] }[]
   /** **놓은 사람**(web2-47) — 사람이 한 것이므로 실행취소 대상이다 */
@@ -150,10 +153,14 @@ export interface App {
   /** **사람 놓기 대기**(web2-47 47-2) — 참이면 다음 지면 탭이 그 자리다(자동으로 안
    *  세운다 — 지시. 한 번 놓으면 풀린다). */
   placePerson: boolean
-  /** **칠 선택**(web2-46) — 붓의 재료·톤·도구. `i: 'brush'`가 45의 흑연 붓 그대로다
-   *  (기본 — 무회귀). `t: 'auto'`는 «분류의 제안을 따른다»이고, 사람이 톤을 손으로
-   *  고르면 그 값이 그대로 남는다(제안은 제안에 그친다 — 지시 문면·46 측정 항목). */
-  paintSel: { m: MatId; t: number | 'auto'; i: Instr }
+  /** **칠 선택**(web2-46 → web2-48이 고쳤다) — 지금 색·도구·굵기.
+   *  · `hex` **색상 휠이 정본**이다(48-7). 재료 프리셋은 이 값을 정하는 여러 길 중
+   *    하나로 남는다 — 46의 (재료, 톤) 쌍은 저장에서도 상태에서도 빠졌다(#54: 색의
+   *    출처가 둘이면 「고른 색」과 「나가는 색」이 갈린다).
+   *  · `i: 'brush'`가 45의 흑연 붓 그대로다(기본 — 무회귀).
+   *  · `w` 자국 굵기 px(48-2 — 크기 트레이. 슬라이더 ⛔ R1).
+   *  ⛔ `t: 'auto'`(46의 「톤 자동」)는 48-8이 없앴다. */
+  paintSel: { hex: string; i: Instr; w: number }
   eraserRadius: number
   /** **지금 이 획이 펜의 지우개 끝으로 그어지는 중인가**(web2-15 2-b).
    *  ⚠ 도구(`tool`)는 **안 바꾼다.** 안드로이드 크롬은 지우개 끝을 호버에 안 알리므로
@@ -381,7 +388,9 @@ export function createApp(W: number, H: number): App {
     tool: 'pencil',
     grade: 'HB',
     nib: C.NIB_PX,
-    paintSel: { m: 'conc', t: 'auto', i: 'brush' },
+    // 기본 색은 46의 콘크리트 중간톤 그대로다 — 값이 바뀌면 46의 픽셀 팔이 이유 없이
+    // 흔들린다(무회귀). 기본 굵기는 마커 촉 폭(C.MARKER_W_PX = 크기 트레이의 가운데 칸).
+    paintSel: { hex: '#a8a29a', i: 'brush', w: C.MARKER_W_PX },
     hlFaces: null,
     showRooms: false,
     placePerson: false,
@@ -1625,8 +1634,8 @@ export function faceFrontTarget(app: App): CamPose | null {
 // 판정·역투영은 core/paint.ts가 든다(#54). 여기는 상태 배선뿐이다:
 // 한 붓 → 면별 조각 → 획 여럿(paint 태그) → 한 op(붓 하나가 실행취소 한 칸이다).
 
-import { splitByFace, liftPaint, frontFaceAt, classOf, faceClassOf, FACE_CLASSES, type FaceClass } from '../core/paint'
-import { materialOf, clampTone, suggestTone, cycleMat, isMatId, type MatId, type Instr } from '../core/palette'
+import { splitByFace, liftPaint, frontFaceAt, classOf, faceClassOf, FACE_CLASSES, paintSideAt, type FaceClass } from '../core/paint'
+import { cycleMat, isMatId, materialOf, type MatId, type Instr } from '../core/palette'
 import type { Person } from '../core/types'
 
 export const paintActive = (app: Pick<App, 'tool'>): boolean => app.tool === 'paint'
@@ -1644,15 +1653,20 @@ export function commitPaint(app: App, pts: Pt[]): { placed: number; offFace: num
       paint: { f: r.f },
       mat: { grade: activeGrade(app) },
     }
-    // 재료 칠(web2-46) — 도구가 마커·색연필이면 재료·톤이 실린다. 톤 «자동»은 **이 조각이
-    // 얹힌 면의 분류**가 제안한 값으로 굳는다(칠하는 순간 사람이 실행한 것이므로 저장은
-    // 구체값이다 — 제안은 UI 시점의 것). 사람이 고른 톤이면 그 값 그대로다.
+    // 재료 칠(web2-46 → web2-48 48-7) — 도구가 마커·색연필이면 **지금 색**이 실린다.
+    // 46은 (재료, 톤) 쌍을 실었는데 48-7이 그 좁힘을 정정했다 — 실리는 것은 hex 하나다.
+    // ⛔ 「톤 자동」(46의 분류 제안)은 48-8이 없앴다 — 여기 갈래가 하나 줄었다.
     if (app.paintSel.i !== 'brush') {
-      const m = materialOf(app.paintSel.m)
-      const cls = faceClassNow(app, r.f) ?? 'wall'
-      const t = app.paintSel.t === 'auto' ? clampTone(m, suggestTone(cls)) : clampTone(m, app.paintSel.t)
-      s.paint = { f: r.f, m: app.paintSel.m, t, i: app.paintSel.i === 'marker' ? 1 : 2 }
+      s.paint = { f: r.f, c: app.paintSel.hex, i: app.paintSel.i === 'marker' ? 1 : 2 }
     }
+    // 굵기(48-2) — 크기 트레이가 정한 자국 폭. **붓(흑연)에도 실린다**: 세 도구 전부
+    // 두께가 없다는 것이 지시의 증상이었다(슬라이더 ⛔ · 트레이의 값 그대로).
+    s.paint!.w = app.paintSel.w
+    // ⚠⚠ **면의 어느 쪽인가**(48-5) — 칠할 때 카메라가 있던 쪽이 정한다. 사용자는
+    // 의식하지 않는다(보고 있는 쪽을 칠하는 것이다). 면이 못 풀렸으면 부호를 안 단다 —
+    // 그때는 옛 규약(양쪽에서 보임)으로 남고, 조용히 틀린 쪽에 붙이지 않는다.
+    const rf = app.faces.find(x => x.id === r.f)
+    if (rf) s.paint!.s = paintSideAt(rf, app.pose)
     if (!isDrawPose(app.pose)) s.view = clonePose(app.pose)
     app.doc.strokes.push(s)
     added.push(s)
@@ -1691,16 +1705,22 @@ export function faceClassNow(app: App, faceId: number): FaceClass | null {
   return classOf(face, rf, C.FACE_CLASS_DEG)
 }
 
-/** **채움 토글**(45-4) — 면의 성질이다(픽셀로 굽지 않는다). */
-export function toggleFaceFill(app: App, faceId: number): boolean | null {
+/** **채움을 돌린다**(45-4 · web2-48 48-3) — 면의 성질이다(픽셀로 굽지 않는다).
+ *  없음 → **해칭**(1) → **단색**(2) → 없음. 단색은 「해칭 채움과 같은 규격」이라는 지시
+ *  그대로 **또 하나의 무늬**로 들어왔다(면의 함수 · 경계를 따라간다 · 개구부가 바뀌면
+ *  따라 잘린다) — 새 손잡이도 새 저장 축도 안 생기고 이 순환 한 칸이 늘었을 뿐이다.
+ *  반환 = 새 값(없으면 undefined). */
+export const FILL_NAMES: Record<1 | 2, string> = { 1: '해칭', 2: '단색' }
+export function cycleFaceFill(app: App, faceId: number): Face['fill'] {
   const face = app.doc.faces.find(f => f.id === faceId)
-  if (!face) return null
-  const to = face.fill !== 1
-  if (to) face.fill = 1; else delete face.fill
-  app.undoStack.push({ removed: [], added: [], fillChanged: [{ id: faceId, to }] })
+  if (!face) return undefined
+  const before = face.fill
+  const after: Face['fill'] = before === 1 ? 2 : before === 2 ? undefined : 1
+  if (after === undefined) delete face.fill; else face.fill = after
+  app.undoStack.push({ removed: [], added: [], fillChanged: [{ id: faceId, before, after }] })
   app.redoStack = []
   recompute(app)
-  return to
+  return after
 }
 
 /** **면 재료를 돌린다**(web2-46) — 없음→벽돌→…→금속→없음(cls 순환의 문법 그대로).
@@ -2138,9 +2158,9 @@ export function undo(app: App) {
     const f = app.doc.faces.find(x => x.id === cc.id)
     if (f) { if (cc.before === undefined) delete f.cls; else f.cls = cc.before }
   }
-  for (const fc of op.fillChanged ?? []) {
+  for (const fc of op.fillChanged ?? []) {                // 채움(48-3에서 순환) — «전»으로
     const f = app.doc.faces.find(x => x.id === fc.id)
-    if (f) { if (fc.to) delete f.fill; else f.fill = 1 }
+    if (f) { if (fc.before === undefined) delete f.fill; else f.fill = fc.before }
   }
   for (const mc of op.matChanged ?? []) {   // 면 재료(web2-46) — «전»으로
     const f = app.doc.faces.find(x => x.id === mc.id)
@@ -2200,9 +2220,9 @@ export function redo(app: App) {
     const f = app.doc.faces.find(x => x.id === cc.id)
     if (f) { if (cc.after === undefined) delete f.cls; else f.cls = cc.after }
   }
-  for (const fc of op.fillChanged ?? []) {
+  for (const fc of op.fillChanged ?? []) {                // 채움(48-3에서 순환) — «후»로
     const f = app.doc.faces.find(x => x.id === fc.id)
-    if (f) { if (fc.to) f.fill = 1; else delete f.fill }
+    if (f) { if (fc.after === undefined) delete f.fill; else f.fill = fc.after }
   }
   for (const mc of op.matChanged ?? []) {   // 면 재료(web2-46) — «후»로
     const f = app.doc.faces.find(x => x.id === mc.id)

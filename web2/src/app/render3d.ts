@@ -13,7 +13,7 @@ import { MAT, gradeOf, widthOf } from '../core/material'
 import { C } from '../core/constants'
 import { projW } from '../core/camera'
 import { hatchSegments, type HatchMode } from '../core/hatch'
-import { hatchSpecOf, hatchHexOf } from '../core/palette'
+import { hatchSpecOf, hatchHexOf, solidHexOf } from '../core/palette'
 import type { Grade } from '../core/types'
 
 export interface R3D {
@@ -51,8 +51,17 @@ export function initR3D(canvas: HTMLCanvasElement, W: number, H: number, dpr: nu
   // 무채색 — **상시 표시**라 색을 안 준다(4-c의 갈래: 상시는 무채색, 순간은 색).
   // 종이(#f5f3ee)보다 어둡되 2H(가장 옅은 심, alpha .50)보다 옅게 둔다 —
   // 면이 그 위의 선보다 눈에 띄면 안 된다.
+  // ⚠⚠ **web2-48 48-9 — 면은 평소에 안 보인다.** 「제도에서 면은 칠하기 전까지 존재하지
+  // 않는다 — 선이 둘러싼 빈 종이일 뿐이다」(지시). 이 회색은 「여기 면이 있다」는 **UI
+  // 표시**지 그림이 아니고, 늘 떠 있을 이유가 없었다. 이제 셋으로 갈린다:
+  //   · 안 칠한 면 + 칠 도구를 안 들었다  →  **안 그린다**(종이 그대로)
+  //   · 안 칠한 면 + 칠 도구를 들었다      →  이 옅은 회색(도구가 대상을 비춘다)
+  //   · 칠한 면                            →  `solidMatOf` — **불투명**하고 뒤를 가린다
+  // 옅기를 0.22 → `C.FACE_HINT_ALPHA`로 내린 이유: 이제 상시가 아니라 **도구를 든 동안만**
+  // 뜨므로 「여기가 대상이다」만 말하면 된다(R8 — 늘 보이는 것은 잠깐 얹히는 것보다 약하다.
+  // 여기서는 반대로 잠깐 얹히는 것이라 더 약해도 읽힌다).
   const faceMat = new THREE.MeshBasicMaterial({
-    color: 0x8d8880, transparent: true, opacity: 0.22,
+    color: 0x8d8880, transparent: true, opacity: C.FACE_HINT_ALPHA,
     side: THREE.DoubleSide, depthTest: false, depthWrite: false,
   })
   scene.add(faceGroup)
@@ -68,6 +77,29 @@ export function initR3D(canvas: HTMLCanvasElement, W: number, H: number, dpr: nu
 }
 
 const matKey = (g: Grade, w: number) => `${g}:${w.toFixed(3)}`
+
+// ── **칠한 면의 불투명 재질**(web2-48 48-9) — 뒤를 가린다 ─────────────────────
+// 「칠한 면은 불투명하다 — 뒤를 가린다. 칠했다는 것은 「여기 실체가 있다」는 선언이다.
+//  안 칠한 면은 안 가린다(작도를 계속해야 하므로)」(지시).
+// 가리는 기제는 **깊이 버퍼**다(renderOrder가 아니다): 이 재질만 `depthWrite`를 켜고,
+// 면은 renderOrder 음수 대역이라 선(0)보다 먼저 그려지므로 **그 뒤의 선이 깊이 검사에
+// 걸린다**. 앞의 선은 그대로 그려진다. 안 칠한 면(`faceMat`)은 종전대로 깊이를 안 써서
+// 아무것도 안 가린다 — 45-1이 세운 「면이 선을 안 가린다」가 그쪽에서는 불변이다.
+// ⚠ 딸린 값(지시): 이제 **깊이 정렬이 틀리면 즉시 드러난다**(45-1의 `orderByDepth`를
+//   이 회차가 다시 확인한다 — `e2e/paint48.spec.ts` ⑤).
+// 색마다 하나 — 캐시라 dispose 불요(hatchMats의 선례 그대로).
+const solidMats = new Map<string, THREE.MeshBasicMaterial>()
+function solidMatOf(hex: string): THREE.MeshBasicMaterial {
+  let m = solidMats.get(hex)
+  if (!m) {
+    m = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(hex), side: THREE.DoubleSide,
+      transparent: false, depthTest: true, depthWrite: true,
+    })
+    solidMats.set(hex, m)
+  }
+  return m
+}
 
 /** 경도·굵기 짝의 재질 — 없으면 만든다. 화면 크기는 만든 그 자리에서 맞춘다. */
 function matFor(r: R3D, g: Grade, w: number): LineMaterial {
@@ -113,6 +145,14 @@ export function syncStrokes(r: R3D, app: App) {
     r.faceGroup.remove(child)
     ;(child as THREE.Mesh).geometry?.dispose()
   }
+  // **칠한 면**(48-9) — 「칠했다」의 뜻은 ① 채움을 줬거나(해칭·단색) ② 그 면에 칠 획이
+  // 하나라도 얹혔다는 것이다. 둘 다 사람이 「여기 실체가 있다」고 선언한 자리다.
+  // ⚠ 48-5의 «쪽»은 여기서 **안 본다**: 벽의 안쪽만 칠했어도 벽은 벽이다(실체의 선언은
+  // 면의 것이고 칠의 것이 아니다). 그래서 이 집합은 포즈의 함수가 아니고 여기(docVersion)
+  // 서 굳혀도 궤도에서 안 낡는다 — 「무엇을 어디서 굳히는가」의 규율(sortFaces 주석)대로다.
+  const painted = new Set<number>()
+  for (const s of app.doc.strokes) if (s.paint !== undefined) painted.add(s.paint.f)
+  for (const f of app.doc.faces) if (f.fill === 1 || f.fill === 2) painted.add(f.id)
   for (const f of app.faces) {
     if (f.tris.length < 3) continue
     const pos = new Float32Array(f.tris.length * 3)
@@ -123,7 +163,14 @@ export function syncStrokes(r: R3D, app: App) {
     })
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-    const mesh = new THREE.Mesh(g, r.faceMat)
+    const face = app.doc.faces.find(x => x.id === f.id)
+    const isPainted = painted.has(f.id)
+    // 단색 채움(48-3)이면 그 색, 아니면 종이색이다 — 「칠했다」는 곧 «여기 표면이 있다»라
+    // 종이 한 장이 서 있는 것과 같다(칠 자체는 #brushc가 그 위에 그린다).
+    const mesh = new THREE.Mesh(g, isPainted
+      ? solidMatOf(face?.fill === 2 ? solidHexOf(face) : C.PAPER_HEX)
+      : r.faceMat)
+    mesh.userData.painted = isPainted
     // 깊이 정렬(web2-45 45-1)의 재료 — 자리는 sortFaces가 매 프레임 잡는다(포즈의 함수라
     // 여기(docVersion)서 굳히면 궤도에서 낡는다). 중심은 삼각분할 정점 평균으로 충분하다 —
     // 겹치는 면들은 서로 다른 평면이라 중심 깊이가 순서를 가른다(같은 평면 겹침은 없다:
@@ -358,9 +405,26 @@ function sortFaces(r: R3D, app: App) {
   }
 }
 
+/** **면이 지금 드러나는가**(web2-48 48-9) — 「도구가 대상을 비춘다」.
+ *  ⚠ **갈래를 여기 적어 둔다**: 지시는 「칠하는 도구를 들었을 때만」인데 **면 도구**도
+ *  넣었다. 면 도구의 일이 「탭해서 면을 만들고 없애는 것」이라, 면이 안 보이면 **없애는
+ *  쪽이 눈먼 조작**이 된다(있는 면을 못 보고 누른다). 「비추는 도구」의 뜻이 «그 면을
+ *  대상으로 삼는 도구»이므로 둘 다 같은 무리다 — 단순한 쪽으로 갔고 갈래였음을 남긴다. */
+export const facesRevealed = (app: Pick<App, 'tool'>): boolean =>
+  app.tool === 'paint' || app.tool === 'face'
+
+/** 칠 안 한 면의 표시를 도구에 맞춘다(48-9). 칠한 면은 늘 보인다 — 그림이기 때문이다. */
+function revealFaces(r: R3D, app: App) {
+  const on = facesRevealed(app)
+  for (const k of r.faceGroup.children) {
+    k.visible = (k.userData as { painted?: boolean }).painted === true || on
+  }
+}
+
 export function render3d(r: R3D, app: App) {
   syncCamera(r, app)
   syncHatch(r, app)
+  revealFaces(r, app)
   sortFaces(r, app)
   r.renderer.render(r.scene, r.camera)
 }

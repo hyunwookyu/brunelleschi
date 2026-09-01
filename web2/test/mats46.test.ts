@@ -9,10 +9,12 @@
 
 import { describe, it, expect } from 'vitest'
 import { session } from './session'
-import { commitPaint, cycleFaceMat, undo, redo, toggleFaceAt } from '../src/app/state'
+import { commitPaint, cycleFaceMat, cycleFaceFill, undo, redo, toggleFaceAt } from '../src/app/state'
+import { paintSideAt, paintVisible, facePlane } from '../src/core/paint'
+import { add3, mul3, dot3 } from '../src/core/vec'
 import {
-  MATERIALS, MAT_IDS, isMatId, materialOf, clampTone, toneHex, suggestTone,
-  hatchSpecOf, hatchHexOf, paintHexOf, cycleMat, HATCH_DEFAULT_HEX, type MatId,
+  MATERIALS, MAT_IDS, isMatId, materialOf, clampTone, toneHex, isHex6, solidHexOf,
+  hatchSpecOf, hatchHexOf, paintHexOf, cycleMat, HATCH_DEFAULT_HEX, SOLID_DEFAULT_HEX, type MatId,
 } from '../src/core/palette'
 import { serializeBrnl, parseBrnl } from '../src/core/file'
 import { lumaOf } from '../src/app/brushmap'
@@ -74,11 +76,7 @@ describe('46-1 팔레트 — 재료 목록의 성질', () => {
     }
   })
 
-  it('③ 제안·순환·강등의 순수 규칙', () => {
-    // 제안 — 빛의 코사인 차례(구성적 근거 — palette.ts 머리주석)
-    expect(suggestTone('slab')).toBe(0)
-    expect(suggestTone('slope')).toBe(1)
-    expect(suggestTone('wall')).toBe(2)
+  it('③ 순환·강등의 순수 규칙 (⛔ 「톤 자동」은 web2-48 48-8이 없앨다)', () => {
     // 두 톤 재료(유리)에 «그림자»를 물으면 마지막 톤으로 잘린다
     expect(clampTone(materialOf('glass'), 2)).toBe(1)
     expect(toneHex('glass', 2)).toBe(materialOf('glass').tones[1])
@@ -100,53 +98,73 @@ describe('46-1 팔레트 — 재료 목록의 성질', () => {
     expect(hatchSpecOf({ mat: 'gold' })).toEqual(hatchSpecOf({}))
   })
 })
-
-describe('46-2 칠 — 도구·톤 해석 (제안은 제안에 그친다)', () => {
-  it('① 붓(기본)은 45 그대로 — m/t/i가 안 실린다(무회귀)', () => {
+// ⚠⚠ **web2-48이 이 절의 뜻을 바꿨다.** 46은 (재료, 톤) 쌍을 칠에 실었고 「톤 자동」이
+// 분류의 제안을 따랐는데, 48-7이 그 좁힘을 정정했고(색상 휠 — 임의의 색) 48-8이 제안을
+// 없앴다. 그래서 재는 것도 바뀐다: **「제안이 제안에 그치는가」가 아니라 「고른 색이
+// 그대로 나가는가」**다. 46의 팔을 지우지 않고 **그 자리에서 다시 겨눈다**(#65 — 정보를
+// 지우지 않는다: 이 절의 픽스처·구조가 그대로 서 있고 판정만 새 규약을 본다).
+describe('46-2 → 48 칠 — 도구·색·굵기·면의 쪽', () => {
+  it('① 붓(기본)은 45 그대로 — 색·도구가 안 실린다(무회귀)', () => {
     const { s } = roomSession()
     expect(s.app.paintSel.i).toBe('brush')          // 기본값 자체가 45다
     commitPaint(s.app, wallPts())
     const p = s.app.doc.strokes.find(x => x.paint !== undefined)!
-    expect(p.paint!.m).toBeUndefined()
+    expect(p.paint!.c).toBeUndefined()
     expect(p.paint!.i).toBeUndefined()
     expect(paintHexOf(p)).toBeNull()
   })
 
-  it('② 마커 + 톤 자동 — 칠하는 면의 분류가 제안한 톤으로 굳는다(슬라브 0 · 벽 2)', () => {
+  it('② 마커 — 고른 색이 그대로 실린다(48-7: 재료 프리셋 밖의 임의 색도)', () => {
     const { s, floorId, wallId } = roomSession()
-    s.app.paintSel = { m: 'brick', t: 'auto', i: 'marker' }
+    // 재료 표에 **없는** 색을 고른다 — 46이던 (재료, 톤) 쌍으로는 담을 수 없던 값이다.
+    s.app.paintSel = { hex: '#1e7fd0', i: 'marker', w: 10 }
     commitPaint(s.app, floorPts())
     commitPaint(s.app, wallPts())
     const ps = s.app.doc.strokes.filter(x => x.paint !== undefined)
     const onFloor = ps.find(x => x.paint!.f === floorId)!
     const onWall = ps.find(x => x.paint!.f === wallId)!
-    expect(onFloor.paint!.t).toBe(0)                 // 슬라브 → 밝음
-    expect(onWall.paint!.t).toBe(2)                  // 벽 → 그림자
-    expect(onFloor.paint!.m).toBe('brick')
+    // 분류(슬라브 ↔ 벽)가 달라도 색이 **안 갈린다** — 자동 제안이 없어졌다(48-8)
+    expect(onFloor.paint!.c).toBe('#1e7fd0')
+    expect(onWall.paint!.c).toBe('#1e7fd0')
     expect(onFloor.paint!.i).toBe(1)
-    expect(paintHexOf(onFloor)).toBe(materialOf('brick').tones[0])
+    expect(paintHexOf(onFloor)).toBe('#1e7fd0')
   })
 
-  it('③ 사람이 고른 톤은 그대로 남는다 — 분류가 달라도 제안이 안 덮는다(지시 측정 항목)', () => {
-    const { s, floorId, wallId } = roomSession()
-    s.app.paintSel = { m: 'wood', t: 1, i: 'cp' }    // 사람의 선택(중간)
-    commitPaint(s.app, floorPts())                   // 슬라브(제안은 0)
-    commitPaint(s.app, wallPts())                    // 벽(제안은 2)
-    const ps = s.app.doc.strokes.filter(x => x.paint !== undefined)
-    expect(ps.find(x => x.paint!.f === floorId)!.paint!.t).toBe(1)   // 제안 0이 안 덮었다
-    expect(ps.find(x => x.paint!.f === wallId)!.paint!.t).toBe(1)      // 제안 2가 안 덮었다
-    expect(ps.every(x => x.paint!.i === 2)).toBe(true)
-    // 선택 상태도 안 움직였다 — 칠이 선택을 되쓰지 않는다
-    expect(s.app.paintSel.t).toBe(1)
+  it('③ 굵기(48-2) — 크기 트레이의 값이 획에 실리고, 붓에도 실린다', () => {
+    const { s } = roomSession()
+    s.app.paintSel = { hex: '#8a6238', i: 'cp', w: C.PAINT_W_PX[0]! }
+    commitPaint(s.app, wallPts())
+    const p1 = s.app.doc.strokes.find(x => x.paint !== undefined)!
+    expect(p1.paint!.w).toBe(C.PAINT_W_PX[0])
+    expect(p1.paint!.i).toBe(2)
+    // 붓(흑연)도 같은 트레이를 쓴다 — 세 도구 전부 두께가 없다는 것이 48-2의 증상이었다
+    s.app.paintSel = { hex: '#8a6238', i: 'brush', w: C.PAINT_W_PX[4]! }
+    commitPaint(s.app, floorPts())
+    const p2 = s.app.doc.strokes.filter(x => x.paint !== undefined).at(-1)!
+    expect(p2.paint!.w).toBe(C.PAINT_W_PX[4])
+    expect(p2.paint!.c).toBeUndefined()             // 붓은 색이 안 나간다(흑연)
   })
 
-  it('④ 두 톤 재료(유리) + 자동 벽 — 제안 2가 마지막 톤(1)으로 잘린다', () => {
+  it('④ 면의 쪽(48-5) — 칠할 때 카메라가 있던 쪽의 부호가 실린다', () => {
     const { s, wallId } = roomSession()
-    s.app.paintSel = { m: 'glass', t: 'auto', i: 'marker' }
+    s.app.paintSel = { hex: '#c07a5b', i: 'marker', w: 10 }
     commitPaint(s.app, wallPts())
     const p = s.app.doc.strokes.find(x => x.paint !== undefined)!
     expect(p.paint!.f).toBe(wallId)
-    expect(p.paint!.t).toBe(1)
+    expect(p.paint!.s === 1 || p.paint!.s === -1).toBe(true)
+    // 같은 부호를 순수 함수가 다시 낸다(#54 — 상태와 규칙이 같은 자를 쓴다)
+    const rf = s.app.faces.find(f => f.id === wallId)!
+    expect(paintSideAt(rf, s.app.pose)).toBe(p.paint!.s)
+    // 그 쪽에서는 보이고, 평면 건너편에서는 안 보인다
+    expect(paintVisible(s.app.faces, p, s.app.pose)).toBe(true)
+    const pl = facePlane(rf)
+    // 눈을 평면 반대쪽으로 옮긴 가짜 포즈 — 거리는 부호가 뒤집힐 만큼만
+    const dist = dot3(pl.n, s.app.pose.p) - pl.d
+    const other = { ...s.app.pose, p: add3(s.app.pose.p, mul3(pl.n, -2 * dist)) }
+    expect(paintVisible(s.app.faces, p, other)).toBe(false)
+    // ⚠ 반증(D-3): 부호가 없는 «옛 획»은 어느 쪽에서도 보인다(45·46 그대로)
+    const legacy = { paint: { f: wallId } }
+    expect(paintVisible(s.app.faces, legacy, other)).toBe(true)
   })
 })
 
@@ -170,50 +188,109 @@ describe('46-3 면 재료 — 순환·실행취소', () => {
   })
 })
 
-describe('46-4 저장 왕복 — paint.m/t/i · Face.mat', () => {
+describe('48-3 단색 채움 — 순환·색·실행취소', () => {
+  it('① 없음 → 해칭(1) → 단색(2) → 없음 · 실행취소가 그 사슬을 되짚는다', () => {
+    const { s, wallId } = roomSession()
+    const face = () => s.app.doc.faces.find(f => f.id === wallId)!
+    expect(face().fill).toBeUndefined()
+    expect(cycleFaceFill(s.app, wallId)).toBe(1)
+    expect(cycleFaceFill(s.app, wallId)).toBe(2)
+    expect(cycleFaceFill(s.app, wallId)).toBeUndefined()
+    // 되짚기 — `to: boolean` 한 칸으로는 못 하던 일이다(해칭↔단색을 가른다)
+    undo(s.app); expect(face().fill).toBe(2)
+    undo(s.app); expect(face().fill).toBe(1)
+    undo(s.app); expect(face().fill).toBeUndefined()
+    redo(s.app); expect(face().fill).toBe(1)
+    redo(s.app); expect(face().fill).toBe(2)
+  })
+
+  it('② 단색의 색 — 재료가 있으면 그 중간 톤, 없으면 무채색 기본', () => {
+    expect(solidHexOf({})).toBe(SOLID_DEFAULT_HEX)
+    expect(solidHexOf({ mat: 'brick' })).toBe(materialOf('brick').tones[1])
+    // 두 톤 재료(유리)는 중간이 곧 마지막이다 — 대역 밖을 안 짚는다
+    expect(solidHexOf({ mat: 'glass' })).toBe(materialOf('glass').tones[1])
+    // 모르는 재료는 기본으로 물러난다(해칭의 그 규약 그대로)
+    expect(solidHexOf({ mat: 'gold' })).toBe(SOLID_DEFAULT_HEX)
+    // ⚠ 반증(D-3): 단색은 해칭 «선» 색과 다른 톤을 쓴다(면은 몸통 · 선은 그림자)
+    expect(solidHexOf({ mat: 'brick' })).not.toBe(hatchHexOf({ mat: 'brick' }))
+  })
+})
+
+describe('46-4 → 48 저장 왕복 — paint.s/c/i/w · Face.fill · Face.mat', () => {
   it('① 성한 값은 왕복하고, 모양이 틀리면 그 몫만 강등된다(문서 거부 ⛔)', () => {
     const { s, wallId } = roomSession()
-    s.app.paintSel = { m: 'metal', t: 0, i: 'marker' }
+    s.app.paintSel = { hex: '#666d75', i: 'marker', w: 20 }
     commitPaint(s.app, wallPts())
     cycleFaceMat(s.app, wallId)                       // 벽 = 벽돌
+    cycleFaceFill(s.app, wallId); cycleFaceFill(s.app, wallId)   // 벽 = 단색(2)
     const txt = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, drawView: s.app.drawView })
     const back = parseBrnl(txt)!
     expect(back).not.toBeNull()
     const p = back.doc.strokes.find(x => x.paint !== undefined)!
-    expect(p.paint).toEqual(expect.objectContaining({ m: 'metal', t: 0, i: 1 }))
+    expect(p.paint).toEqual(expect.objectContaining({ c: '#666d75', i: 1, w: 20 }))
+    expect(p.paint!.s === 1 || p.paint!.s === -1).toBe(true)
     expect(back.doc.faces.find(f => f.id === wallId)!.mat).toBe('brick')
+    expect(back.doc.faces.find(f => f.id === wallId)!.fill).toBe(2)
     // 두 번째 저장이 바이트로 같다(43-1의 규약이 새 필드에도 선다)
     const txt2 = serializeBrnl({ doc: back.doc, nextId: back.nextId, drawView: back.drawView })
     expect(txt2).toBe(txt)
-    // 강등 — m이 모르는 재료
+    // 강등 — 색이 hex가 아니다(도구까지 함께 버린다: 어떤 촉인지 모르는 색은 안 받는다)
     const j = JSON.parse(txt)
     const jp = j.strokes.find((x: any) => x.paint !== undefined)
-    jp.paint.m = 'gold'
+    jp.paint.c = 'rebeccapurple'
     const b2 = parseBrnl(JSON.stringify(j))!
     const p2 = b2.doc.strokes.find(x => x.paint !== undefined)!
     expect(p2.paint!.f).toBe(wallId)                  // 칠 자체는 산다(흑연 강등)
-    expect(p2.paint!.m).toBeUndefined()
-    expect(p2.paint!.t).toBeUndefined()
+    expect(p2.paint!.c).toBeUndefined()
     expect(p2.paint!.i).toBeUndefined()
-    // 강등 — 톤 대역 밖 / 도구 밖 / 면 재료
-    jp.paint.m = 'metal'; jp.paint.t = 5
-    expect(parseBrnl(JSON.stringify(j))!.doc.strokes.find(x => x.paint !== undefined)!.paint!.m).toBeUndefined()
-    jp.paint.t = 0; jp.paint.i = 3
-    expect(parseBrnl(JSON.stringify(j))!.doc.strokes.find(x => x.paint !== undefined)!.paint!.m).toBeUndefined()
-    jp.paint.i = 1
+    // 면의 쪽 — 대역 밖이면 그 필드만 버린다(양쪽에서 보임 = 45·46 거동)
+    jp.paint.c = '#666d75'; jp.paint.s = 0
+    expect(parseBrnl(JSON.stringify(j))!.doc.strokes.find(x => x.paint !== undefined)!.paint!.s).toBeUndefined()
+    // 굵기 — 0·음수·대역 밖은 그 필드만 버린다(three/p5가 조용히 안 그리는 값)
+    jp.paint.s = 1
+    for (const bad of [0, -3, 1e9]) {
+      jp.paint.w = bad
+      expect(parseBrnl(JSON.stringify(j))!.doc.strokes.find(x => x.paint !== undefined)!.paint!.w).toBeUndefined()
+    }
+    jp.paint.w = 20
+    // 면 채움 — 모르는 값이면 그 필드만
+    j.faces.find((f: any) => f.id === wallId).fill = 9
     j.faces.find((f: any) => f.id === wallId).mat = 7
     const b3 = parseBrnl(JSON.stringify(j))!
     expect(b3.doc.faces.find(f => f.id === wallId)!.mat).toBeUndefined()   // 그 필드만
-    expect(b3.doc.strokes.find(x => x.paint !== undefined)!.paint!.m).toBe('metal')
+    expect(b3.doc.faces.find(f => f.id === wallId)!.fill).toBeUndefined()
+    expect(b3.doc.strokes.find(x => x.paint !== undefined)!.paint!.c).toBe('#666d75')
   })
 
   it('② 옛 파일(45 이전 모양)이 그대로 열린다 — paint.f만', () => {
     const { s } = roomSession()
-    commitPaint(s.app, wallPts())                     // 붓 — m 없음
+    s.app.paintSel = { hex: '#a8a29a', i: 'brush', w: 10 }
+    commitPaint(s.app, wallPts())                     // 붓 — 색 없음
     const txt = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, drawView: s.app.drawView })
-    expect(txt).not.toContain('"m"')                  // 안 쓰는 열쇠는 파일에 없다(왕복 동일성)
+    expect(txt).not.toContain('"c"')                  // 안 쓰는 열쇠는 파일에 없다(왕복 동일성)
     const back = parseBrnl(txt)!
-    expect(back.doc.strokes.find(x => x.paint !== undefined)!.paint).toEqual(
-      { f: back.doc.strokes.find(x => x.paint !== undefined)!.paint!.f })
+    expect(back.doc.strokes.find(x => x.paint !== undefined)!.paint!.f)
+      .toBe(s.app.doc.strokes.find(x => x.paint !== undefined)!.paint!.f)
+  })
+
+  it('③ **web2-46 파일의 (재료, 톤)이 색으로 옮겨 열린다**(48-7 — 무손실)', () => {
+    const { s, wallId } = roomSession()
+    commitPaint(s.app, wallPts())
+    const txt = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, drawView: s.app.drawView })
+    const j = JSON.parse(txt)
+    const jp = j.strokes.find((x: any) => x.paint !== undefined)
+    // 46이 쓰던 그 모양 그대로 밀어 넣는다(그때의 파일에는 c도 s도 w도 없다)
+    jp.paint = { f: wallId, m: 'brick', t: 1, i: 1 }
+    const back = parseBrnl(JSON.stringify(j))!
+    const p = back.doc.strokes.find(x => x.paint !== undefined)!
+    expect(p.paint!.c).toBe(toneHex('brick', 1))      // 그 쌍이 가리키던 값 그대로
+    expect(isHex6(p.paint!.c)).toBe(true)
+    expect(p.paint!.i).toBe(1)
+    expect(p.paint!.s).toBeUndefined()                // 옛 파일 = 양쪽에서 보인다
+    expect(paintHexOf(p)).toBe(materialOf('brick').tones[1])
+    // ⚠ 반증(D-3): 재료가 모르는 값이면 옮기지 않는다(흑연 강등 — 조용히 틀린 색 ⛔)
+    jp.paint = { f: wallId, m: 'gold', t: 1, i: 1 }
+    expect(parseBrnl(JSON.stringify(j))!.doc.strokes.find(x => x.paint !== undefined)!.paint!.c)
+      .toBeUndefined()
   })
 })

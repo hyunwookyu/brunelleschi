@@ -5,7 +5,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   handwritingGroup, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
-  commitPaint, cycleFaceClass, faceClassNow, toggleFaceFill, cycleFaceMat, paintActive, docToScreen,
+  commitPaint, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, paintActive, docToScreen,
   placePersonAt, gripFaceArea, floorAreaNow, volumeNow, flashFaces, screenToDoc, roomsNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
@@ -25,6 +25,8 @@ import { recognizeStrokes } from '../core/handwriting'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
 import { MATERIALS, TONE_NAMES, type Instr } from '../core/palette'
+// 색상 휠(web2-48 48-7) — 기하·색 변환은 순수 모듈이 든다(이 파일은 DOM만).
+import { hsvOf, hexOfHsv, svRect, svPoint, huePoint, hueAt, svAt, partAt, markerInk, type Hsv, type WheelGeom, type WheelPart } from '../core/colorwheel'
 import type { Grade, Layer, Sheet, Stroke, CamPose } from '../core/types'
 import { parseDim, formatMm, lenMm, formatScale, formatUnits, dimSkew, skewOff, UNITS, type Unit } from '../core/dim'
 import { measureMm, measureUnits } from '../core/measure'
@@ -1952,8 +1954,10 @@ function doGripAction(key: string) {
       status(`분류 — ${name}${r.auto ? ' (자동)' : ''} · 다시 누르면 돌린다`)
     }
   } else if (key === 'fill') {
-    const on = toggleFaceFill(app, app.grip!.faceId!)
-    if (on !== null) status(on ? '채움 — 해칭이 얹혔다(면의 성질이다 — 경계를 따라간다)' : '채움을 걷었다')
+    // 채움 순환(45-4 → web2-48 48-3): 없음 → 해칭 → **단색** → 없음.
+    const v = cycleFaceFill(app, app.grip!.faceId!)
+    status(v === undefined ? '채움을 걷었다'
+      : `채움 — ${FILL_NAMES[v]}이 얹혔다(면의 성질이다 — 경계를 따라간다) · 다시 누르면 돈다`)
   } else if (key === 'farea') {
     // 47-3 — 근거는 잡힌 면 그 자체(잡기 표시가 밝힘이다). 축척 미정이면 숫자를 안 낸다(#61).
     const r = gripFaceArea(app)
@@ -1965,50 +1969,180 @@ function doGripAction(key: string) {
     const r = cycleFaceMat(app, app.grip!.faceId!)
     if (r) {
       const face = app.doc.faces.find(f => f.id === app.grip!.faceId)
-      status(`재료 — ${r.name}${face?.fill === 1 ? '' : ' (채움을 켜면 무늬가 보인다)'} · 다시 누르면 돌린다`)
+      status(`재료 — ${r.name}${face?.fill === 1 ? '' : ' (채움을 «해칭»으로 켜면 무늬가 보인다)'} · 다시 누르면 돌린다`)
     }
   }
   invalidate()
 }
-// ── 칠통(web2-46) — **재료 목록이지 색 목록이 아니다**(지시). 그림 정본은
-// docs/instrument-icons.md 「마커·색연필(칠통)」. 도구 셋 + 톤 자동 + 재료 다섯 줄.
+// ── 칠통(web2-46 → **web2-48이 다시 지었다**) ────────────────────────────────
+//
+// ⚠⚠ **정정**(48-7 「원장·DECISIONS에 정정을 남겨라 — 무엇을 누가 왜 좁혔는지까지」):
+// 46 **지시문**이 「팔레트를 색 목록으로 만들지 마라, 재료 목록이어야 한다」고 못 박았고
+// 46 세션이 그대로 지어 이 통이 **재료 다섯 × 톤 = 견본 14개**뿐이었다. 그 좁힘은
+// **사용자와 상의 없이 지시문이 한 것**이고 판단도 틀렸다 — 전문 드로잉 툴이면 임의의
+// 색을 뽑을 수 있어야 한다. 48-7이 뒤집는다:
+//
+//     기본    **색상 휠**(프로크리에이트·모폴리오 방식) — 고리(색상) + 안쪽 판(채도·명도)
+//     곁에    재료 프리셋 열넷 — 빠른 길이지 유일한 길이 아니다
+//     그리고  **크기 트레이**(48-2) — 붓·마커·색연필의 자국 굵기. 슬라이더 ⛔(R1)
+//
+// ⛔ 「톤 자동」(46의 분류 제안)은 **48-8이 없앴다** — 사용자가 원하지 않았다.
+// 그림 정본은 docs/instrument-icons.md 「마커·색연필(칠통)」.
 const painttrayEl = document.getElementById('painttray')!
-const PAINT_INSTRS: { i: Instr; name: string; svg: string }[] = [
-  { i: 'brush', name: '붓', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3 V14"/><path d="M12.5 14 h7 v4 h-7 z"/><path d="M12.5 18 C12.5 23 11.5 25.5 10.5 27.5 C13.5 26.6 18.5 26.6 21.5 27.5 C20.5 25.5 19.5 23 19.5 18 Z"/></svg>' },
-  { i: 'marker', name: '마커', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="4" width="8" height="15" rx="1"/><path d="M13.5 19 L13 24 L17 28 L18.5 19"/></svg>' },
-  { i: 'cp', name: '색연필', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 h6 v16 l-3 8 l-3 -8 z"/><path d="M14.2 21.5 l1.1 3 M16.9 21.5 l-1.1 3" stroke-width="1.0"/></svg>' },
+const PAINT_INSTRS: { i: Instr; name: string; tip: string; svg: string }[] = [
+  { i: 'brush', name: '붓', tip: '붓 — 흑연 톤으로 칠한다(색을 안 쓴다)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3 V14"/><path d="M12.5 14 h7 v4 h-7 z"/><path d="M12.5 18 C12.5 23 11.5 25.5 10.5 27.5 C13.5 26.6 18.5 26.6 21.5 27.5 C20.5 25.5 19.5 23 19.5 18 Z"/></svg>' },
+  { i: 'marker', name: '마커', tip: '마커 — 넓게 덮는다. 겹치면 진해진다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="4" width="8" height="15" rx="1"/><path d="M13.5 19 L13 24 L17 28 L18.5 19"/></svg>' },
+  { i: 'cp', name: '색연필', tip: '색연필 — 가늘게 결을 남긴다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 h6 v16 l-3 8 l-3 -8 z"/><path d="M14.2 21.5 l1.1 3 M16.9 21.5 l-1.1 3" stroke-width="1.0"/></svg>' },
 ]
 const paintInstrRow = new Map<Instr, HTMLButtonElement>()
-const paintAutoBtn = document.createElement('button')
-const paintSwatch = new Map<string, HTMLButtonElement>()   // 키 `${matId}:${tone}`
+const paintSizeRow = new Map<number, HTMLButtonElement>()
+
+// ── 색상 휠(48-7) — 기하·색 변환은 `core/colorwheel.ts`가 든다(이 파일은 DOM만) ──
+// 크기는 통의 폭(208px — index.html `--dim-w` 계산의 그 내용 폭)에 맞춘다.
+const WHEEL: WheelGeom = { cx: 92, cy: 92, rOut: 88, rIn: 66 }
+const wheelCv = document.createElement('canvas')
+const wheelHex = document.createElement('span')
+
+/** 휠을 굽는다 — 고리(색상)와 안쪽 판(채도·명도). 판은 **지금 색상**의 함수라 색상이
+ *  바뀔 때마다 다시 굽는다(고리는 안 바뀌지만 한 번에 그리는 편이 단순하다 — A-3).
+ *  ⚠ `Math.random` ⛔ — 여기 난수가 아예 없다(격자 주사). */
+function drawWheel(hsv: Hsv) {
+  const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1))
+  const S = WHEEL.rOut * 2 + 4
+  if (wheelCv.width !== Math.round(S * dpr)) {
+    wheelCv.width = Math.round(S * dpr); wheelCv.height = Math.round(S * dpr)
+    wheelCv.style.width = `${S}px`; wheelCv.style.height = `${S}px`
+  }
+  const g = wheelCv.getContext('2d')!
+  g.setTransform(dpr, 0, 0, dpr, 0, 0)
+  g.clearRect(0, 0, S, S)
+  // 고리 — 1° 부채꼴 360개(경계가 안 보이게 1.2° 겹친다)
+  for (let a = 0; a < 360; a++) {
+    g.beginPath()
+    g.fillStyle = hexOfHsv({ h: a, s: 1, v: 1 })
+    const t0 = (a - 90) * Math.PI / 180, t1 = (a + 1.2 - 90) * Math.PI / 180
+    g.arc(WHEEL.cx, WHEEL.cy, WHEEL.rOut, t0, t1)
+    g.arc(WHEEL.cx, WHEEL.cy, WHEEL.rIn, t1, t0, true)
+    g.closePath(); g.fill()
+  }
+  // 안쪽 판 — 가로 채도 · 세로 명도(위가 밝다). 2px 격자면 눈에 안 갈린다.
+  const rc = svRect(WHEEL)
+  const step = 2
+  for (let y = 0; y < rc.h; y += step) {
+    for (let x = 0; x < rc.w; x += step) {
+      g.fillStyle = hexOfHsv({ h: hsv.h, s: x / rc.w, v: 1 - y / rc.h })
+      g.fillRect(rc.x + x, rc.y + y, step, step)
+    }
+  }
+  // 표식 둘 — 지금 색상(고리)과 지금 채도·명도(판). 테 색은 배경 대비로 갈린다.
+  const hex = hexOfHsv(hsv)
+  const ring = huePoint(WHEEL, hsv.h)
+  const sv = svPoint(WHEEL, hsv)
+  for (const [p, r] of [[ring, 7], [sv, 8]] as [{ x: number; y: number }, number][]) {
+    g.beginPath(); g.arc(p.x, p.y, r, 0, Math.PI * 2)
+    g.lineWidth = 2; g.strokeStyle = markerInk(hex); g.stroke()
+    g.beginPath(); g.arc(p.x, p.y, r + 1.6, 0, Math.PI * 2)
+    g.lineWidth = 1; g.strokeStyle = markerInk(hex) === '#000000' ? '#ffffff' : '#000000'; g.stroke()
+  }
+}
+
+/** 지금 색을 HSV로 — 상태의 정본은 `app.paintSel.hex` 하나다(#54). 휠은 그것을 그린다. */
+const wheelHsv = (): Hsv => hsvOf(app.paintSel.hex) ?? { h: 0, s: 0, v: 0.5 }
+
+function setPaintHex(hex: string, why: string) {
+  app.paintSel.hex = hex
+  // 색을 골랐다 = 색이 나가는 도구다(붓은 흑연이라 색이 안 나간다) — 46의 견본 규약 그대로.
+  if (app.paintSel.i === 'brush') app.paintSel.i = 'marker'
+  if (app.tool !== 'paint') setTool('paint')
+  syncPainttray()
+  status(`${hex} — ${app.paintSel.i === 'marker' ? '마커' : '색연필'}${why}`)
+}
+
 {
   for (const r of PAINT_INSTRS) {
     const b = document.createElement('button')
     b.id = `btn-paint-${r.i}`
     b.className = 'rrow'
-    b.dataset.act = 'state'   // 도구 상태 — 누른다고 통이 접히지 않는다(견본을 이어 고른다)
+    b.dataset.act = 'state'   // 도구 상태 — 누른다고 통이 접히지 않는다(색을 이어 고른다)
+    b.title = r.tip           // 48-10 — 새 손잡이에도 설명이 붙는다(28-2의 규칙)
     b.innerHTML = `${r.svg}<span>${r.name}</span>`
     b.addEventListener('click', () => {
       app.paintSel.i = r.i
       if (app.tool !== 'paint') setTool('paint')
       syncPainttray()
-      status(r.i === 'brush' ? '붓 — 흑연 톤(재료 없음)' : `${r.name} — 재료 줄에서 톤을 고른다(자동 = 분류의 제안)`)
+      status(r.tip)
     })
     painttrayEl.append(b)
     paintInstrRow.set(r.i, b)
   }
-  // 톤 «자동» — 분류의 **제안**을 따른다. 제안이지 기본값이 아니다: 견본을 손으로
-  // 고르면 그 값이 그대로 남는다(46 측정 항목 — 제안에 그치는가).
-  paintAutoBtn.id = 'btn-paint-auto'
-  paintAutoBtn.className = 'rrow'
-  paintAutoBtn.dataset.act = 'state'
-  paintAutoBtn.innerHTML = '<span>톤 자동 — 분류의 제안(슬라브 밝음 · 경사 중간 · 벽 그림자)</span>'
-  paintAutoBtn.addEventListener('click', () => { app.paintSel.t = 'auto'; syncPainttray(); status('톤 자동 — 칠하는 면의 분류가 제안한다') })
-  painttrayEl.append(paintAutoBtn)
+
+  // ── 크기 트레이(48-2) — **각 줄에 그 굵기의 실제 자국을 1:1로** 그린다 ────────
+  // 펜 촉(30-2)·지우개 크기(34-3)와 같은 문법이다: 고르는 것이지 미는 것이 아니다(R1).
+  // 자국은 SVG 선 하나이고 `stroke-width`가 곧 그 굵기 px다 — 「1:1」이 문면이 아니라
+  // 기하로 참이다(`e2e/paint48.spec.ts` ③이 화면에서 그 폭을 잰다).
+  const sizeWrap = document.createElement('div')
+  sizeWrap.id = 'paint-sizes'
+  sizeWrap.className = 'rrow prow'
+  for (const w of C.PAINT_W_PX) {
+    const b = document.createElement('button')
+    b.id = `btn-paint-w-${String(w).replace('.', '_')}`
+    b.className = 'sizebtn'
+    b.dataset.act = 'state'
+    b.title = `자국 굵기 ${w}px`
+    b.innerHTML = `<svg width="44" height="${Math.max(12, Math.ceil(w) + 6)}" viewBox="0 0 44 ${Math.max(12, Math.ceil(w) + 6)}">`
+      + `<line x1="4" y1="${Math.max(12, Math.ceil(w) + 6) / 2}" x2="40" y2="${Math.max(12, Math.ceil(w) + 6) / 2}"`
+      + ` stroke="currentColor" stroke-width="${w}" stroke-linecap="round"/></svg>`
+    b.addEventListener('click', () => {
+      app.paintSel.w = w
+      if (app.tool !== 'paint') setTool('paint')
+      syncPainttray()
+      status(`자국 굵기 ${w}px`)
+    })
+    sizeWrap.append(b)
+    paintSizeRow.set(w, b)
+  }
+  painttrayEl.append(sizeWrap)
+
+  // ── 색상 휠 — **기본이다**(48-7) ──────────────────────────────────────────
+  const wheelWrap = document.createElement('div')
+  wheelWrap.id = 'paint-wheel'
+  wheelWrap.className = 'rrow prow'
+  wheelCv.id = 'paint-wheel-cv'
+  wheelCv.setAttribute('role', 'button')     // 툴팁 대상 선택자에 든다(28-2 · 48-10)
+  wheelCv.title = '색상 휠 — 바깥 고리가 색상, 안쪽 판이 채도·명도'
+  wheelWrap.append(wheelCv)
+  wheelHex.id = 'paint-hex'
+  wheelHex.className = 'prow-name'
+  wheelWrap.append(wheelHex)
+  painttrayEl.append(wheelWrap)
+  const wheelPick = (e: PointerEvent) => {
+    const r = wheelCv.getBoundingClientRect()
+    const x = e.clientX - r.left, y = e.clientY - r.top
+    const part = partAt(WHEEL, x, y)
+    if (!part) return
+    const cur = wheelHsv()
+    const next: Hsv = part === 'ring'
+      ? { ...cur, h: hueAt(WHEEL, x, y), s: cur.s || 1, v: cur.v || 1 }
+      : { h: cur.h, ...svAt(WHEEL, x, y) }
+    setPaintHex(hexOfHsv(next), ' — 색상 휠')
+    e.preventDefault()
+  }
+  wheelCv.addEventListener('pointerdown', e => {
+    wheelCv.setPointerCapture(e.pointerId)
+    wheelDrag = partAt(WHEEL, e.offsetX, e.offsetY)
+    wheelPick(e)
+  })
+  wheelCv.addEventListener('pointermove', e => { if (wheelDrag) wheelPick(e) })
+  wheelCv.addEventListener('pointerup', () => { wheelDrag = null })
+  wheelCv.addEventListener('pointercancel', () => { wheelDrag = null })
+
+  // ── 재료 프리셋 — **곁이다**(빠른 길이지 유일한 길이 아니다) ──────────────────
+  // 46의 견본 열넷을 그대로 둔다: 좁힘이 틀렸다는 것이지 이 열넷이 쓸모없다는 게 아니다.
+  // 누르면 **휠의 색이 된다** — 색의 출처는 `paintSel.hex` 하나다(#54).
   for (const m of MATERIALS) {
     const row = document.createElement('div')
     row.id = `paintrow-${m.id}`
-    row.className = 'rrow'
+    row.className = 'rrow prow'
     const name = document.createElement('span')
     name.className = 'prow-name'
     name.textContent = m.name
@@ -2020,26 +2154,22 @@ const paintSwatch = new Map<string, HTMLButtonElement>()   // 키 `${matId}:${to
       b.dataset.act = 'state'
       b.style.background = hex
       b.title = `${m.name} · ${TONE_NAMES[ti] ?? ''}`
-      b.addEventListener('click', () => {
-        app.paintSel.m = m.id
-        app.paintSel.t = ti                                  // 사람의 선택 — 그대로 남는다
-        if (app.paintSel.i === 'brush') app.paintSel.i = 'marker'   // 재료를 골랐다 = 재료 도구(주력 마커)
-        if (app.tool !== 'paint') setTool('paint')
-        syncPainttray()
-        status(`${m.name} · ${TONE_NAMES[ti]} — ${app.paintSel.i === 'marker' ? '마커' : '색연필'}`)
-      })
+      b.addEventListener('click', () => setPaintHex(hex, ` — ${m.name} · ${TONE_NAMES[ti]}`))
       row.append(b)
     })
     painttrayEl.append(row)
   }
 }
+let wheelDrag: WheelPart = null
 function syncPainttray() {
   for (const [i, b] of paintInstrRow) b.classList.toggle('on', app.paintSel.i === i)
-  paintAutoBtn.classList.toggle('on', app.paintSel.t === 'auto')
+  for (const [w, b] of paintSizeRow) b.classList.toggle('on', app.paintSel.w === w)
+  drawWheel(wheelHsv())
+  wheelHex.textContent = app.paintSel.hex
   for (const m of MATERIALS) {
-    m.tones.forEach((_, ti) => {
+    m.tones.forEach((hex, ti) => {
       const b = document.getElementById(`swatch-${m.id}-${ti}`)
-      b?.classList.toggle('on', app.paintSel.m === m.id && app.paintSel.t === ti)
+      b?.classList.toggle('on', app.paintSel.hex === hex)
     })
   }
 }
@@ -2843,10 +2973,19 @@ const diag = {
     /** e2e 원장의 constants_used 몫(2차 [9]) — 판정에 드는 상수를 원장이 스스로 든다 */
     constants: { MARKER_SPACING: C.MARKER_SPACING, MARKER_W_PX: C.MARKER_W_PX, CP_W_PX: C.CP_W_PX, HATCH_ALPHA: C.HATCH_ALPHA, HATCH_SPACING_PX: C.HATCH_SPACING_PX },
     paintSel: { ...app.paintSel },
-    faceMats: app.doc.faces.map(f => ({ id: f.id, mat: f.mat ?? null, fill: f.fill === 1 })),
+    faceMats: app.doc.faces.map(f => ({ id: f.id, mat: f.mat ?? null, fill: f.fill ?? null })),
     paints: app.doc.strokes.filter(s => s.paint !== undefined)
-      .map(s => ({ id: s.id, f: s.paint!.f, m: s.paint!.m ?? null, t: s.paint!.t ?? null, i: s.paint!.i ?? null })),
+      .map(s => ({ id: s.id, f: s.paint!.f, s: s.paint!.s ?? null, c: s.paint!.c ?? null, w: s.paint!.w ?? null, i: s.paint!.i ?? null })),
   }),
+  /** D-3 반증 손잡이(web2-48 48-1) — 잉크 겹의 **곱 합성**을 끈다(= 수리 전 상태).
+   *  끄면 p5.brush의 «흰 종이 전제»가 그대로 화면에 나와 칠이 하얗게 뜬다 —
+   *  `e2e/paint48.spec.ts` ①이 그 값을 실제로 되살려 잡는다(반증 조건이 있는 검사다). */
+  setInkBlend: (v: boolean) => {
+    for (const id of ['brushc', 'brushsnap']) {
+      const el = document.getElementById(id)
+      if (el) (el as HTMLElement).style.mixBlendMode = v ? '' : 'normal'
+    }
+  },
   /** D-3 반증 손잡이(45 DEFERRED 「픽셀 순서 판별은 46 몫」) — 화가 알고리즘을 끈다.
    *  render3d의 그 손잡이를 그대로 노출한다(#54 — 여기서 다른 정렬을 만들지 않는다). */
   setFaceSort: (v: boolean) => { setFaceSortForTest(v); invalidate() },

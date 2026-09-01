@@ -59,17 +59,29 @@ export const toneHex = (id: MatId, t: number): string => {
   return m.tones[clampTone(m, t)]!
 }
 
-/** **분류 → 톤 제안**(지시: 45의 분류가 기본 톤을 제안하는 근거 — **제안이지 기본값이
- *  아니다**). 근거는 위에서 오는 빛의 코사인 차례다(구성적 근거 — 측정이 아니다. #5):
- *  수평(슬라브)이 가장 받고, 경사가 다음, 수직(벽)이 가장 적다 → 밝음·중간·그림자.
- *  적용 시점은 **사람이 칠하는 순간, 톤 선택이 «자동»일 때뿐**이다 — 면에 자동으로
- *  칠해지는 일이 없고, 사람이 톤을 손으로 고르면 그 선택이 그대로 남는다(46 측정 항목). */
-export const suggestTone = (cls: 'slab' | 'wall' | 'slope'): number =>
-  cls === 'slab' ? 0 : cls === 'slope' ? 1 : 2
+// ⛔⛔ **`suggestTone`(「톤 자동」)은 web2-48 48-8이 없앴다.** 46의 「분류가 기본 톤을
+// 제안한다」는 **지시문이 넣은 것이고 사용자가 원하지 않았다**(48-8 문면: 「제안을
+// 없애라. 맞을 것을 요구하는 기능이 하나 준다」). 자동 명암·톤 제안은 이 앱의 «하지 말
+// 것»에 들어갔다. 되살리려면 그 판단부터 다시 물어야 하므로 함수를 남기지 않는다 —
+// 남겨 두면 다음 회차가 «있으니 쓴다»로 되살린다(#65의 형태).
 
 /** 이 면의 해칭 규격 — 재료가 있으면 재료의 무늬, 없으면 45의 기본(무회귀). */
 export const hatchSpecOf = (face: Pick<Face, 'mat'>): HatchSpec =>
   isMatId(face.mat) ? materialOf(face.mat).hatch : { angleDeg: C.HATCH_ANGLE_DEG, spacingPx: C.HATCH_SPACING_PX }
+
+/** **단색 채움의 색**(web2-48 48-3) — 재료가 있으면 그 **중간 톤**(해칭이 마지막 톤 =
+ *  그림자를 쓰는 것과 짝이다: 선은 어두워야 읽히고 면은 몸통 색이어야 한다), 없으면
+ *  종이보다 한 단계 어두운 무채색이다. 무채색을 쓰는 이유는 45의 기본 해칭이 무채색인
+ *  것과 같다 — **채움에는 기본 재료가 없다**(면은 사람이 지정하는 것이므로).
+ *  ⚠ 갈래로 남긴 것: 「면마다 임의의 색」은 여기 없다 — 48-7이 연 임의 색은 **칠**의
+ *  것이고 면의 색은 `Face.mat` 하나가 정한다. 면에 색을 직접 주는 것은 49(재료 표현)의
+ *  물음이라 여기서 새 저장 축을 안 만든다(범위를 안 넓힌다). */
+export const SOLID_DEFAULT_HEX = '#ded9d1'
+export const solidHexOf = (face: Pick<Face, 'mat'>): string => {
+  if (!isMatId(face.mat)) return SOLID_DEFAULT_HEX
+  const m = materialOf(face.mat)
+  return m.tones[Math.min(1, m.tones.length - 1)]!
+}
 
 /** 이 면의 해칭 «선 색» — 재료가 있으면 그림자 톤(마지막 — 선은 종이보다 어두워야 읽힌다),
  *  없으면 45의 회갈색 그대로(무회귀 — render3d의 종전 값이 이리로 옮겨 온 것뿐이다 #54). */
@@ -80,13 +92,20 @@ export const hatchHexOf = (face: Pick<Face, 'mat'>): string => {
   return m.tones[m.tones.length - 1]!
 }
 
-/** 칠 획의 색 — 재료 칠(마커·색연필)이면 그 톤, 아니면 null(45의 흑연 경로가 그린다). */
+/** 칠 획의 색 — 재료 칠(마커·색연필)이면 그 hex, 아니면 null(45의 흑연 경로가 그린다).
+ *  ⚠ web2-48 48-7: **출처가 `paint.c` 하나다**(#54). 46은 재료 프리셋의 (m,t) 쌍을
+ *  실었는데 그러면 「임의의 색」을 담을 자리가 없다 — 옛 파일의 (m,t)는 파서가 열 때
+ *  hex로 옮겨 받고(`core/file.ts`), 여기서는 hex만 읽는다. */
 export const paintHexOf = (s: Pick<Stroke, 'paint'>): string | null => {
   const p = s.paint
-  if (!p || p.m === undefined || p.t === undefined || p.i === undefined) return null
-  if (!isMatId(p.m)) return null
-  return toneHex(p.m, p.t)
+  if (!p || p.i === undefined) return null
+  return isHex6(p.c) ? p.c! : null
 }
+
+/** `#rrggbb` 여섯 자리 — 저장·파서·팔이 같은 술어를 쓴다(#54). 세 자리 축약은 안 받는다:
+ *  쓰는 쪽이 늘 여섯 자리를 내므로 받아들일 형태를 늘리면 왕복 동일성만 흔들린다. */
+export const isHex6 = (v: unknown): v is string =>
+  typeof v === 'string' && /^#[0-9a-f]{6}$/.test(v)
 
 /** 재료 순환(griptray 「재료」 행) — 없음→벽돌→…→금속→없음. cls 순환과 같은 문법. */
 export const cycleMat = (cur: MatId | undefined): MatId | undefined => {

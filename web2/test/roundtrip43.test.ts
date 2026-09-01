@@ -125,12 +125,18 @@ export function fullDocPlus() {
   d.faces[0]!.fill = 1
   // 재료 칠·면 재료(web2-46) — 같은 기계가 Stroke.m·Stroke.i를 빨강으로 잡았다(실측 —
   // 이 두 줄이 그 대응이다). 마커 칠 획 하나 + 면 재료 하나가 픽스처 대역에 든다.
+  // ⚠ **web2-48**: 칠의 열쇠가 셋 바뀌었다 — `s`(면의 쪽 · 48-5) · `c`(색 hex · 48-7) ·
+  // `w`(자국 굵기 · 48-2). 46의 (m,t)는 **상태에도 저장에도 안 남는다**(파서가 열 때
+  // 색으로 옮겨 받는다 — #54). 그래서 이 픽스처도 새 열쇠로 적는다 — 게이트 ②가
+  // 이 줄이 낙으면 빨개진다(그것이 43-1이 세운 기계다).
   const mw = hand(41, pt(640, 470), pt(710, 495), 5)
   d.strokes.push({
     id: app.nextId++, a: mw[0]!, b: mw[mw.length - 1]!, raw: mw,
-    paint: { f: d.faces[0]!.id, m: 'brick', t: 1, i: 1 }, mat: { grade: 'HB' },
+    paint: { f: d.faces[0]!.id, s: -1, c: '#c07a5b', i: 1, w: 10 }, mat: { grade: 'HB' },
   })
   d.faces[0]!.mat = 'conc'
+  // 단색 채움(web2-48 48-3) — `fill`이 1·2 둘을 다 밟게 두번째 면에 2를 준다.
+  if (d.faces[1]) d.faces[1]!.fill = 2
   // 놓은 사람(web2-47) — 같은 기계가 Doc.persons·Person.g를 빨강으로 잡았다(실측).
   d.persons = [{ id: app.nextId++, g: { x: 1.25, y: 0, z: -6.5 } }]
   // 평행 사영이 실린 포즈로 그린 획(web2-42) — `view.proj` · 잉크 니브 굵기

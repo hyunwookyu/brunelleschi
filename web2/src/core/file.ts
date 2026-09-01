@@ -7,7 +7,7 @@ import { horizonDocY } from './camera'
 import { GRADES } from './material'
 import { UNITS, type Unit } from './dim'
 import { validPressCal } from './press'
-import { isMatId } from './palette'
+import { isMatId, isHex6, toneHex } from './palette'
 import type { Measure } from './measure'
 import { C } from './constants'
 
@@ -83,7 +83,11 @@ const KEY_ORDER: string[] = [
   'format', 'version', 'frame', 'W', 'H',
   'strokes', 'id', 'a', 'b', 'x', 'y', 'z', 'raw', 'rawIn',
   'name', 'pose', 'p', 'q', 'proj', 'view', 'mat', 'dim', 'layer', 'own3', 'axis', 'text', 'lock',
-  'paint', 'f', 'm', 'i',
+  // 칠(web2-45 → 46 → **48**): f 면 id · s 면의 쪽(48-5) · c 색 hex(48-7) · i 도구 ·
+  // w 자국 굵기(48-2). ⚠ `m`은 **면 재료**(Face.mat)가 아직 쓰고, `s`·`t`·`w`는 아래
+  // 면·치수 줄에도 있는 이름이라 여기서 새로 안 적는다(이 배열은 열쇠 «차례»의 전역
+  // 목록이고 이름이 겹치는 것은 정상이다 — 43-1 ①이 바이트로 지킨다).
+  'paint', 'f', 'm', 'i', 'c',
   'faces', 'loops', 'edges', 'kind', 's', 't', 'ox', 'oy', 'cls', 'fill',
   'unit', 'scaleRef', 'grade', 'press', 'w', 'h', 'D', 'tiltX', 'tiltY', 'twist',
   'nextId', 'sheets', 'thumb',
@@ -219,13 +223,25 @@ export function parseBrnl(text: string): BrnlData | null {
     // 잉크»가 되어 안 보인다 — 면이 못 풀린 것과 같은 상태라 조용히 틀리지 않는다).
     if (s.paint && isNum(s.paint.f)) {
       st.paint = { f: s.paint.f }
-      // 재료 칠(web2-46) — m·t·i 셋이 **같이** 성해야 받는다. 하나라도 틀리면 셋을 함께
-      // 버린다(흑연 강등 — cls·layer의 «그 필드만 버린다» 규약. 조용히 틀린 색 ⛔).
       const p = s.paint
-      if (isMatId(p.m) && isNum(p.t) && p.t >= 0 && p.t <= 2 && Number.isInteger(p.t)
+      // ⚠⚠ **면의 쪽**(web2-48 48-5) — ±1만 받는다. 모양이 틀리면 **그 필드만 버린다**:
+      // 잃으면 45·46과 같은 «양쪽에서 보임»이라 칠이 조용히 사라지지 않는다(그 반대로
+      // 골랐다면 파일이 조금 상했을 때 칠이 통째로 안 보이게 된다 — 못 고른다).
+      if (p.s === 1 || p.s === -1) st.paint.s = p.s
+      // 색(web2-48 48-7) — 도구(i)와 **같이** 성해야 받는다: 색만 있고 도구가 없으면
+      // 어떤 촉으로 그릴지 모른다(46의 «셋이 같이» 규약을 둘로 줄인 것뿐이다).
+      if (isHex6(p.c) && (p.i === 1 || p.i === 2)) {
+        st.paint.c = p.c; st.paint.i = p.i
+      } else if (isMatId(p.m) && isNum(p.t) && p.t >= 0 && p.t <= 2 && Number.isInteger(p.t)
         && (p.i === 1 || p.i === 2)) {
-        st.paint.m = p.m; st.paint.t = p.t; st.paint.i = p.i
+        // **옛 파일의 (재료, 톤)을 색으로 옮겨 받는다**(web2-46 → 48-7). 상태에도 저장에도
+        // (m,t)를 남기지 않는 이유는 #54다 — 색의 출처가 둘이면 「고른 색」과 「나가는
+        // 색」이 갈린다. 옮김은 **무손실**이다: 그 쌍이 가리키던 값이 곧 이 hex다.
+        st.paint.c = toneHex(p.m, p.t); st.paint.i = p.i
       }
+      // 굵기(web2-48 48-2) — 양수 유한값만. 대역 밖이면 그 필드만 버린다(도구 기본값으로
+      // 물러난다 — `brushmap.paintWeightOf`. 0·음수는 라이브러리가 조용히 안 그린다).
+      if (isNum(p.w) && p.w > 0 && p.w <= 200) st.paint.w = p.w
     }
     if (s.own3 && isV3(s.own3.a) && isV3(s.own3.b) &&
         (s.own3.axis === null || typeof s.own3.axis === 'string')) {
@@ -269,7 +285,8 @@ export function parseBrnl(text: string): BrnlData | null {
       // 분류 정정·채움(web2-45) — 모양이 틀리면 **그 필드만 버린다**(own3의 규약:
       // 잃어도 «자동 분류»·«채움 없음»일 뿐이라 조용히 틀린 기하가 안 난다).
       if (f.cls === 'slab' || f.cls === 'wall' || f.cls === 'slope') face.cls = f.cls
-      if (f.fill === 1) face.fill = 1
+      // 채움(web2-45 1=해칭 · **web2-48 48-3에서 2=단색**) — 모르는 값이면 그 필드만 버린다
+      if (f.fill === 1 || f.fill === 2) face.fill = f.fill
       if (isMatId(f.mat)) face.mat = f.mat   // web2-46 — 모양이 틀리면 그 필드만 버린다
       faces.push(face)
     }

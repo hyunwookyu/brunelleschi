@@ -74,6 +74,26 @@
     #paperfilm { z-index: 0; pointer-events: none; }
     /* brush 렌더러(web2-11 2부) — gl 위·ink 아래. 입력은 ink가 받으므로 이 겹은 눌리지 않는다. */
     #brushc { z-index: 1; pointer-events: none; }
+    /* ── 잉크 겹의 합성은 **곱**이다(web2-48 48-1) ────────────────────────────
+       D-1 실측(고치기 전에 칠 층만 단독으로 읽었다 — `e2e/paint48.spec.ts` ①이 정본):
+       p5.brush는 «흰 종이 위에 그린다»를 전제로 짜여 있다. 블렌드 셰이더가
+         bgColor = mix(vec3(1.0), source.rgb, source.a);
+         outColor = vec4(spectral_mix(bgColor, pigment, mixIntensity), 1.);
+       이므로 ① **빈 자리의 배경을 흰색으로 가정**하고 ② **알파를 1로 못 박는다**.
+       마커 한 획의 상자(90×50 CSS px · dpr1)에서 칠한 픽셀 **1360개가 전부 알파 255**
+       였고 그중 **1204개(88.5%)가 종이보다 밝았다** — 표본 (253,248,245,255)·
+       (255,255,254,255). 그 불투명 흰 장막이 아래 #gl의 면(알파 56 · 광도 137)을 덮는다.
+       그것이 사람이 본 「칠이 하얗게 뜬다」이고, 원인은 칠의 색이 아니라 **합성**이다.
+       곱으로 얹으면 흰색(255)이 항등이라 장막이 사라지고 안료만 남는다 — 감산 매체
+       (잉크·흑연·마커)의 올바른 연산이 애초에 곱이다.
+       ⚠⚠ **#73 ㉠은 이 겹에 안 걸린다**(D-4 — 사람이 준 근거도 결론이 아니라 확인
+       대상이다). 그 항목이 «죽는다»고 쟀던 것은 **#film**이고, 같은 실행에서 #brushc에
+       걸어 재니 **산다**: 합성 광도 225 → **215** · 종이보다 밝은 픽셀 1088 → **0** ·
+       선언을 벗기면 1088로 **되돌아온다**. #73의 사망은 그 겹이 선 자리의 성질이지
+       이 합성 트리 전체의 성질이 아니었다 — assumptions.md AS-C157.
+       ⚠ #brushsnap(그리는 동안의 확정 획 사본)도 같은 잉크라 같은 연산이어야 한다 —
+       한쪽만 걸면 뗌 순간에 농도가 튄다. */
+    #brushc, #brushsnap { mix-blend-mode: multiply; }
     /* 막(web2-20 3부) — 곱은 **캔버스 안에서** 한다(filmlayer.ts drawFilms 머리주석 —
        CSS mix-blend-mode는 이 앱의 합성 트리(WebGL 형제 겹)에서 발화하지 않았다: 실측).
        #film은 막 영역의 «물든 아래 화면» 사본이라 보통 합성으로 얹는다.
@@ -1004,9 +1024,12 @@
         <!-- 자(삼각자) = **스냅 묶음의 입구**(3-b — 이 회차의 핵심): 오스냅 종류·반경이
              여기서 열린다. 「기능적 도구」 층위가 처음으로 화면에 존재하게 됐다.
              SVG는 docs/instrument-icons.md 「삼각자」 정본 그대로다(path 수정 금지). -->
-        <!-- 짝 줄(web2-44 재편) — 자와 손통이 한 줄에 눕는다: 둘 다 「기능 도구」이고
-             이 높이(상단 140px 아래)는 뷰 큐브 대역 밖이라 왼쪽으로 자라도 안전하다. -->
-        <div class="bar-row">
+        <!-- ⛔ **짝 줄을 되돌렸다**(web2-48 48-11 · 사람 관측 「삼각자가 옆으로 튀어나왔다」).
+             web2-44가 자와 손통을 `.bar-row`로 눕혔는데(근거: 「둘 다 기능 도구이고 이
+             높이는 뷰 큐브 대역 밖이라 왼쪽으로 자라도 안전하다」), **안전한 것과 읽히는
+             것은 다른 물음이었다** — 제도 도구 띠는 세로 한 줄이고 거기서 혼자 옆으로
+             나온 것은 「같은 무리가 아니다」로 읽힌다. 배열은 무리를 말하는 채널이다.
+             배치를 34-0 대조표의 항목으로 올린다(R9 — 「한 띠의 배열축은 하나다」). -->
         <button id="btn-snap" class="t ico-sq" title="자 — 오스냅 종류·반경" aria-label="자(스냅)">
           <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 26 L26 26 L6 6 Z"/>
@@ -1023,7 +1046,6 @@
         <button id="btn-grip" class="t ico-sq" title="손 — 잡은 것을 다룬다 (복제 · 잠금 · 맺기 · 정면)" aria-label="손(잡기)">
           <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 C10.8 12 10.8 19 12.4 27 L14.6 25 C13.6 18.6 13.8 12 15.2 6 Z"/><path d="M19 4 C21.2 12 21.2 19 19.6 27 L17.4 25 C18.4 18.6 18.2 12 16.8 6 Z"/><path d="M13 4 A 3.2 3.2 0 0 1 19 4"/></svg>
         </button>
-        </div>
 
         <div class="bar-gap"></div>
 

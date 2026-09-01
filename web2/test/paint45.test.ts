@@ -8,7 +8,7 @@
 import { describe, it, expect } from 'vitest'
 import { session, type Session } from './session'
 import {
-  commitPaint, cycleFaceClass, faceClassNow, toggleFaceFill, undo, redo,
+  commitPaint, cycleFaceClass, faceClassNow, cycleFaceFill, undo, redo,
   toggleFaceAt, beginErase, eraseAt, endErase,
 } from '../src/app/state'
 import { faceClassOf, splitByFace, frontFaceAt } from '../src/core/paint'
@@ -106,7 +106,7 @@ describe('45-3 칠하기 — 면 배정·분할·왕복', () => {
 
   it('④ 채운 면 위에 선을 그으면 — 선은 정상으로 서고 채움은 안 바뀐다(지시 45-4)', () => {
     const { s, wallId } = roomSession()
-    expect(toggleFaceFill(s.app, wallId)).toBe(true)
+    expect(cycleFaceFill(s.app, wallId)).toBe(1)   // web2-48 48-3: 토글 → 순환(첫 칸이 해칭)
     const st = s.draw(520, 490, 520, 400)!            // 벽 위를 지나는 보통 세로선
     expect(s.app.lift.lifted.has(st.id), '선이 정상으로 3D에 선다').toBe(true)
     expect(s.app.doc.faces.find(f => f.id === wallId)!.fill).toBe(1)
@@ -211,7 +211,7 @@ describe('45-4 채움 — 해칭 두 판 · 개구부 추종', () => {
 
   it('④ 채움 토글 — 면의 성질(저장 필드)·실행취소', () => {
     const { s, wallId } = roomSession()
-    expect(toggleFaceFill(s.app, wallId)).toBe(true)
+    expect(cycleFaceFill(s.app, wallId)).toBe(1)   // web2-48 48-3: 토글 → 순환(첫 칸이 해칭)
     expect(s.app.doc.faces.find(f => f.id === wallId)!.fill).toBe(1)
     undo(s.app)
     expect(s.app.doc.faces.find(f => f.id === wallId)!.fill).toBeUndefined()

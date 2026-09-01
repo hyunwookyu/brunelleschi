@@ -98,40 +98,38 @@ describe('무늬 판별 — 같은 면, 다섯 재료', () => {
     }
   })
 })
-
-describe('톤 제안 — 제안에 그친다 (시퀀스를 값으로)', () => {
-  it('자동: 분류가 정한다 · 수동: 분류가 달라도 안 덮는다', () => {
+// ⚠⚠ **web2-48이 이 절을 갈아 끼웠다.** 46이 여기서 잰 것은 「톤 «자동»이 분류를 따르고
+// 수동은 안 덮인다」였는데, **48-8이 「톤 자동」을 없앴다**(46의 그 기능은 지시문이 넣은
+// 것이고 사용자가 원하지 않았다 — 48-7·48-8의 정정). 재던 양이 사라졌으므로 팔을 남겨
+// 두면 **아무것도 안 재는 초록**이 된다(#92의 형태). 대신 48이 실제로 요구하는 것을
+// 같은 픽스처·같은 자로 잰다: **고른 색이 면의 분류와 무관하게 그대로 나가는가** —
+// 그것이 「제안이 없다」의 값 판이다.
+describe('색 충실도 — 고른 색이 그대로 나간다 (48-7·48-8의 값 판)', () => {
+  it('분류가 갈리는 두 면에 같은 색이 실린다 · 재료 표 밖의 색도', () => {
     const floorPts = (): Pt[] => Array.from({ length: 11 }, (_, t) => ({ x: 420 + t * 5, y: 472 + t }))
     const wallPts = (): Pt[] => Array.from({ length: 11 }, (_, t) => ({ x: 515 + t * 7, y: 465 - t * 4 }))
-    const seq: { sel: string; face: string; got: number }[] = []
-    {
+    const seq: { sel: string; face: string; got: string | null }[] = []
+    // ㉠ 재료 프리셋의 색(46이 담을 수 있던 값) · ㉡ 표 밖의 색(46이 못 담던 값)
+    for (const [sel, hex] of [['preset', '#c07a5b'], ['arbitrary', '#1e7fd0']] as [string, string][]) {
       const { s, floor, wall } = roomSession()
-      s.app.paintSel = { m: 'brick', t: 'auto', i: 'marker' }
+      s.app.paintSel = { hex, i: 'marker', w: 10 }
       commitPaint(s.app, floorPts())
       commitPaint(s.app, wallPts())
       const ps = s.app.doc.strokes.filter(x => x.paint !== undefined)
-      seq.push({ sel: 'auto', face: 'slab', got: ps.find(x => x.paint!.f === floor.id)!.paint!.t! })
-      seq.push({ sel: 'auto', face: 'wall', got: ps.find(x => x.paint!.f === wall.id)!.paint!.t! })
+      seq.push({ sel, face: 'slab', got: ps.find(x => x.paint!.f === floor.id)!.paint!.c ?? null })
+      seq.push({ sel, face: 'wall', got: ps.find(x => x.paint!.f === wall.id)!.paint!.c ?? null })
     }
-    {
-      const { s, floor, wall } = roomSession()
-      s.app.paintSel = { m: 'brick', t: 1, i: 'marker' }   // 사람의 선택
-      commitPaint(s.app, floorPts())
-      commitPaint(s.app, wallPts())
-      const ps = s.app.doc.strokes.filter(x => x.paint !== undefined)
-      seq.push({ sel: 'manual1', face: 'slab', got: ps.find(x => x.paint!.f === floor.id)!.paint!.t! })
-      seq.push({ sel: 'manual1', face: 'wall', got: ps.find(x => x.paint!.f === wall.id)!.paint!.t! })
-    }
-    expect(seq.map(r => r.got)).toEqual([0, 2, 1, 1])
-    OUT.suggest_seq = {
-      def: '같은 두 면(슬라브·벽)에 자동/수동(톤 1)으로 칠한 결과 톤 — 자동은 분류를 따르고(0·2) 수동은 분류가 달라도 1·1',
+    expect(seq.map(r => r.got)).toEqual(['#c07a5b', '#c07a5b', '#1e7fd0', '#1e7fd0'])
+    OUT.color_seq = {
+      def: '같은 두 면(슬라브·벽)에 같은 색으로 칠한 결과 paint.c — 분류가 색을 안 바꾼다',
       rows: seq,
+      note_48: '46의 `suggest_seq`(톤 자동 ↔ 수동)를 대신한다. 그 기능은 48-8이 없앴다 — 재던 양이 없어졌으므로 팔도 겨눔을 옮겼다(남겨 두면 아무것도 안 재는 초록이 된다 · #92)',
     }
-    OUT.gate_suggest_not_default = {
-      registered: 'commitPaint의 톤 해석(state.ts) — 자동일 때만 suggestTone', value: 'manual1 행 둘 다 1',
-      reachability: '자동 행(0·2)이 같은 실행에서 «제안이 실제로 작동함»을 낸다 — 제안이 죽어 있으면(늘 기본 톤) 자동 행이 0·2로 갈리지 않는다',
-      reachability_value: [0, 2],
-      reachability_source: 'mats46_web2.json/suggest_seq/rows[0..1]',
+    OUT.gate_color_verbatim = {
+      registered: 'commitPaint의 색 해석(state.ts) — paintSel.hex를 그대로 싣는다', value: '네 행 전부 고른 색과 같다',
+      reachability: '「재료 표 밖의 색」 행이 그 자리를 실제로 지난다 — 46의 (재료, 톤) 쌍으로는 담을 수 없는 값이라, 옛 경로가 살아 있으면 그 두 행이 표 안의 색으로 굳는다',
+      reachability_value: ['#1e7fd0', '#1e7fd0'],
+      reachability_source: 'mats46_web2.json/color_seq/rows[2..3]',
     }
     OUT.gate_pattern_distinct = {
       registered: 'MATERIALS의 무늬 다섯 — (dirs·segs·angle) 짝', value: '5종 전부 상이(pattern_wall.rows)',

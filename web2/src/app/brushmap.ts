@@ -41,6 +41,17 @@ export function alphaColor(hex: string, a: number): string {
 export const INSTR_BRUSH: Record<1 | 2, string> = { 1: 'marker46', 2: 'cpencil' }
 export const instrWeight = (i: 1 | 2): number => (i === 1 ? C.MARKER_W_PX : C.CP_W_PX)
 
+/** **칠 한 획의 굵기**(web2-48 48-2) — 크기 트레이가 정한 값이 획에 실려 있으면 그것,
+ *  없으면(45·46 옛 획) 종전 그대로: 재료 칠은 도구 기본값 · 붓(흑연)은 경도 기본값.
+ *  ⚠ 굵기의 출처를 늘리지 않는다(#54) — 이 함수 하나가 「칠은 얼마나 굵은가」의 답이고
+ *  2D 오버레이의 미리보기도 같은 자를 쓴다. */
+export const paintWeightOf = (s: Stroke): number => {
+  const w = s.paint?.w
+  if (typeof w === 'number' && isFinite(w) && w > 0) return w
+  const i = s.paint?.i
+  return i === 1 || i === 2 ? instrWeight(i) : widthOf(s)
+}
+
 /** 화면색의 광도(0..255) — 경도 단조 팔이 잰다(작을수록 진하다) */
 export function lumaOf(hex: string): number {
   const n = parseInt(hex.slice(1), 16)

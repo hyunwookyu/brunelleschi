@@ -25,6 +25,42 @@ export const facePlane = (f: ResolvedFace): { n: V3; d: number } => {
   return { n, d: dot3(n, f.outer[0]!) }
 }
 
+// ── 면의 «쪽»(web2-48 48-5) — 칠은 한쪽에만 붙는다 ───────────────────────────
+// 사람 지적: 「면을 중심선 취급하는 이상 벽의 두께는 구현되지 않으니, 그리기는 벽의 한
+// 면에만 적용되어야 하는 것 아닌가.」 맞다 — 45가 틀렸다.
+//
+// 판정자는 **평면의 부호 거리**다: `n·P − d`. `n`은 그 면의 저장된 법선(경계 루프의
+// 감김에서 나온다 — 좌표가 아니라 «정체»라 차수 승격·잡아 옮기기에도 안 뒤집힌다).
+// 그래서 이 부호는 **평면의 쪽**을 가리키지 «어느 화면»을 가리키는 게 아니다 —
+// 나중에 벽에 두께가 오면 `+1`은 법선 쪽 표면, `−1`은 반대쪽 표면으로 그대로 간다.
+// **그 이어짐이 이 표현을 고른 유일한 이유다**(지시: 「이어짐을 깨뜨리지 않는 형태로」).
+
+export type FaceSide = 1 | -1
+
+/** 이 점이 그 평면의 어느 쪽인가. **0(평면 위)은 +1로 접는다** — 눈이 평면에 정확히
+ *  얹히는 것은 측정 가능한 상태가 아니고(부동소수), 그때는 칠이 보이는 쪽이 안전하다
+ *  (「애매하면 놓지 않는다」 — 안 보이는 쪽으로 접으면 칠이 조용히 사라진다). */
+export const sideOfPlane = (pl: { n: V3; d: number }, P: V3): FaceSide =>
+  dot3(pl.n, P) - pl.d >= 0 ? 1 : -1
+
+/** **칠할 때 카메라가 있던 쪽** — 이 값이 그대로 `Stroke.paint.s`가 된다.
+ *  ⚠ 평행 사영에서도 `pose.p`가 정답이다: 평행은 «눈을 뒤로 빼면서 조이는» 족이라
+ *  눈이 여전히 그 쪽에 있다(camera.ts projDen 주석 — 광선의 원점이 pose.p다). */
+export const paintSideAt = (f: ResolvedFace, pose: CamPose): FaceSide =>
+  sideOfPlane(facePlane(f), pose.p)
+
+/** **이 칠이 지금 보이는가**(48-5의 게이트). 부호가 없으면(45·46 옛 파일) 언제나 보인다 —
+ *  옛 거동 그대로다(조용한 변형 ⛔). 면이 못 풀리면 애초에 안 그린다(면의 규약). */
+export function paintVisible(
+  faces: ResolvedFace[], s: Pick<Stroke, 'paint'>, pose: CamPose,
+): boolean {
+  const side = s.paint?.s
+  if (side !== 1 && side !== -1) return true
+  const f = faces.find(x => x.id === s.paint!.f)
+  if (!f) return false
+  return paintSideAt(f, pose) === side
+}
+
 /** 화면 점이 짚는 **맨 앞 면** — 폴리곤(구멍 제외) 안이고 광선이 그 평면과 만나는 것 중
  *  가장 가까운 것. 칠의 면 배정과 45-1 깊이 판정이 같은 식이다(#54). */
 export function frontFaceAt(

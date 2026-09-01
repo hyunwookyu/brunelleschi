@@ -40,8 +40,9 @@ import { isFlat2d, type Stroke } from '../core/types'
 import { pt, type Pt } from '../core/vec'
 import type { Draft } from './render2d'
 // 매핑·색·필압 계수는 순수 모듈이다 — 단위가 WebGL 없이 잰다(test/brushmap.test.ts)
-import { BRUSH_OF, strokeColor, weightOf, pressureProfile, strokeColorAt, weightAt, rawPressProfile, strokeColorMix, strokeColorAtMix, INSTR_BRUSH, instrWeight } from './brushmap'
+import { BRUSH_OF, strokeColor, weightOf, pressureProfile, strokeColorAt, weightAt, rawPressProfile, strokeColorMix, strokeColorAtMix, INSTR_BRUSH, paintWeightOf } from './brushmap'
 import { paintHexOf } from '../core/palette'
+import { paintVisible } from '../core/paint'
 import { remapPress } from '../core/press'
 
 export interface BrushLayer {
@@ -300,7 +301,21 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   function drawPaintRaw(s: Stroke, pts: Pt[], hex: string, instr: 1 | 2) {
     brush.seed(s.id)
     brush.noiseSeed(s.id)
-    brush.set(INSTR_BRUSH[instr], hex, instrWeight(instr))
+    // 굵기(web2-48 48-2) — 획에 실린 크기 트레이 값. 출처는 `paintWeightOf` 하나(#54).
+    brush.set(INSTR_BRUSH[instr], hex, paintWeightOf(s))
+    const sp: [number, number, number][] = pts.map(p => [p.x, p.y, 0.5])
+    brush.spline(sp, 0)
+  }
+
+  /** **붓(흑연) 칠의 점렬**(45의 경로) — 46까지는 `drawStrokeRaw`(획 굵기)였는데 48-2가
+   *  붓에도 크기 트레이를 줬으므로 굵기만 그 값으로 갈아 끼운다. 나머지(시드·질감·
+   *  필압 규약)는 `drawStrokeRaw`와 한 톨도 안 다르다 — 굵기가 안 실린 옛 획은
+   *  `paintWeightOf`가 `widthOf(s)`를 내므로 **종전과 같은 픽셀**이다(무회귀). */
+  function drawPaintGraphite(s: Stroke, pts: Pt[]) {
+    const g = gradeOf(s)
+    brush.seed(s.id)
+    brush.noiseSeed(s.id)
+    brush.set(BRUSH_OF[g], strokeColor(g), paintWeightOf(s))
     const sp: [number, number, number][] = pts.map(p => [p.x, p.y, 0.5])
     brush.spline(sp, 0)
   }
@@ -383,6 +398,9 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
         if (s.paint !== undefined) {
           const g3 = app.paintGeo.get(id)
           if (!g3) continue
+          // ⚠⚠ **면의 한쪽에만 붙는다**(web2-48 48-5) — 카메라가 칠한 쪽에 있을 때만
+          // 그린다. 부호가 없는 옛 획(45·46)은 이 문을 그냥 지난다(옛 거동 그대로).
+          if (!paintVisible(app.faces, s, app.pose)) continue
           const spts: { x: number; y: number }[] = []
           for (const P of g3) {
             const q = project(app.lift.an, app.pose, P)
@@ -399,7 +417,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
           // 재료 칠(web2-46) — m·t·i가 성하면 마커/색연필로, 아니면 45의 흑연 그대로.
           const hex = paintHexOf(s)
           if (hex && s.paint!.i !== undefined) drawPaintRaw(s, spts, hex, s.paint!.i)
-          else drawStrokeRaw(app, s, spts)
+          else drawPaintGraphite(s, spts)
           continue
         }
         // 글씨 획(web2-32 1번)도 이 갈래다 — **같은 규격**이므로 술어가 하나다(isFlat2d)

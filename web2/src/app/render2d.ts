@@ -20,8 +20,6 @@ import { vpMarks, project, projectSeg, groundAxes, horizonScreenY, eyeAbove } fr
 import { cubeGeom, cubeArrows, viewName } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32, widthOf, widthOfMat } from '../core/material'
-import { toneHex } from '../core/palette'
-import { instrWeight } from './brushmap'
 import { overshootEnds } from '../core/overshoot'
 import { waitFadeFactor, atOwnPose, bodyHex } from '../core/waitfade'
 import type { OsnapHit } from '../core/osnap'
@@ -146,8 +144,14 @@ const COL = {
   // 경도표에 없다. 굵기 1.5px는 유지한다(7px급 기호가 1.1px·알파 0.5로는 사라질 위험 —
   // AS-C23의 되돌릴 조건이 굵기를 가시성 손잡이로 지정한 그대로다).
   // ⚠ 획 «위»에서의 대비는 색이 아니라 형태(□◆△… — 획과 다른 기하)가 가른다(AS-C23).
-  cubeFace: 'rgba(252,251,248,0.80)',
-  cubeEdge: '#b0a99c',
+  // 뷰 큐브(web2-48 48-12) — **아이콘과 같은 무게**다. 종전 값은 종이보다 밝은
+  // 흰색(252,251,248)에 알파 0.80이라 화면에서 혼자 하얗게 튀었다(사람 관측).
+  // 회색 계열 + 투명도로 내린다: 면은 `--ui`(#8d8880 = 141,136,128)의 옅은 물이고
+  // 모서리는 `--ui` 그대로다 — 세로바의 아이콘이 쓰는 바로 그 색이다(#54: 새 색 ⛔).
+  // 알파 0.16의 근거는 **아이콘과 같은 무게**라는 지시 하나다(눈이 고른 값 — #12
+  // 동작점이고 스윕이 없다). 되돌릴 조건: 밝은 배경에서 큐브의 면이 안 읽힌다.
+  cubeFace: 'rgba(141,136,128,0.16)',
+  cubeEdge: '#8d8880',
 }
 
 // ── 잉크 번짐(web2-12 9번) — **획에 내재한 것만**: 머무름(체류) · 내림·뗌 · 가장자리 ──
@@ -495,9 +499,10 @@ export function draw2d(
     if (forced || !draftBrushed(app)) {
       // 재료 칠 미리보기(web2-46) — 마커·색연필이면 톤 색·도구 굵기로 긋는다(원칙 d:
       // 확정될 모습에 가깝게. 질감 미리보기는 45의 DEFERRED 그대로 미룬다 — 색·폭만).
+      // web2-48: 색은 휠이 정한 hex 하나고(48-7) 폭은 크기 트레이가 정한 값이다(48-2) —
+      // 둘 다 `app.paintSel` 그대로다(#54: 확정될 획과 같은 자리를 읽는다).
       const pm = app.tool === 'paint' && app.paintSel.i !== 'brush'
-        ? { hex: toneHex(app.paintSel.m, app.paintSel.t === 'auto' ? 1 : app.paintSel.t),
-            w: instrWeight(app.paintSel.i === 'marker' ? 1 : 2) }
+        ? { hex: app.paintSel.hex, w: app.paintSel.w }
         : null
       ctx.strokeStyle = forced ? COL.preview : pm ? pm.hex : m.color
       // 몸체 알파도 확정과 같게 — 확정 몸체(Line2)는 MAT.alpha로 그려지는데 미리보기가
