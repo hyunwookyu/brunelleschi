@@ -1,0 +1,39 @@
+{
+  "what": "web2-45 — 화면 몫: 붓 픽셀 · 시점 추종 · 채움 두 판 · 깊이 정렬 후 · 정면 칠",
+  "note_92": "#92 — 칠·채움의 판정자는 픽셀·선분 수(결과의 자리)다. ink_after_orbit 같은 픽셀 계수는 분포가 아니라 «잉크가 있다»의 수다(#40 대상 아님)",
+  "note_47": "#47 — 깊이 기준선(전 33/33)은 faces45_web2.json scene_depth가 정본이다",
+  "brush": {
+    "ink_before": 560,
+    "ink_after": 1147,
+    "paints": 3
+  },
+  "orbit": {
+    "ink_after_orbit": 1826
+  },
+  "fill": {
+    "segs_screen": 13,
+    "segs_face": 11,
+    "toggled": true
+  },
+  "line_over_fill": {
+    "ink_before": 560,
+    "ink_after": 753,
+    "lifted": true
+  },
+  "depth_after": {
+    "front_order": -998,
+    "back_order": -1000,
+    "note": "이 팔은 «렌더 인스턴스의 배선»(faceOrder가 실제 mesh renderOrder다)만 잰다 — 분모 있는 «후» 값(0/33 · 같은 장면·같은 하네스)은 faces45_web2.json scene_depth.after가 정본이다(45 리뷰어 [3] 대응)",
+    "note_pixel": "#92 ② — renderOrder(이름표)가 픽셀(자리)을 바꾸는 것은 **색이 갈릴 때**다: 지금은 면·해칭이 전부 같은 색(#8d8880 반투명)이라 순서가 픽셀에 안 실린다(같은 색 반투명 over 합성은 교환법칙이 성립한다 — 대수적 사실). 픽셀 판별 팔은 46(색·재료)이 첫 이색 겹을 만드는 순간 세운다 — DEFERRED 행"
+  },
+  "front_paint": {
+    "face": 10,
+    "runs": 1,
+    "adjacent_face_thin_px": 0,
+    "adjacent_face_box": {
+      "w": 138.5862,
+      "h": 0
+    }
+  },
+  "dpr_project": "dpr1"
+}

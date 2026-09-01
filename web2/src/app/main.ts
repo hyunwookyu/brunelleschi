@@ -5,7 +5,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   handwritingGroup, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
-  commitPaint, cycleFaceClass, faceClassNow, toggleFaceFill, paintActive,
+  commitPaint, cycleFaceClass, faceClassNow, toggleFaceFill, paintActive, docToScreen,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
@@ -2562,6 +2562,20 @@ const diag = {
       // 띠 재편의 판정자 — 세로바 상자와 화면 높이(여유는 팔이 이 둘로 계산한다)
       bar: { top: sb.top, bottom: sb.bottom, left: sb.left, right: sb.right, winH: window.innerHeight, winW: window.innerWidth },
     }
+  },
+  /** 면의 화면 bbox(web2-45 [8]㉡ — 인접 면 «폭 0» 실측) — 사영은 앱의 project 하나다(#54). */
+  faceScreenBox45: (id: number) => {
+    const f = app.faces.find(x => x.id === id)
+    if (!f) return null
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
+    for (const P of f.outer) {
+      const q = project(app.lift.an, app.pose, P)
+      if (!q) return null
+      const sp = docToScreen(app, q)
+      if (sp.x < x0) x0 = sp.x; if (sp.x > x1) x1 = sp.x
+      if (sp.y < y0) y0 = sp.y; if (sp.y > y1) y1 = sp.y
+    }
+    return { w: +(x1 - x0).toFixed(4), h: +(y1 - y0).toFixed(4) }
   },
   /** **면·칠·해칭**(web2-45) — 팔이 화면과 같은 상태를 읽는다(#88). */
   paint45: () => ({

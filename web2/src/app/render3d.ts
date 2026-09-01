@@ -294,29 +294,48 @@ function syncHatch(r: R3D, app: App) {
  *  뒤집힘 33/33이었다. depthTest가 없으므로(선을 가리지 않는 설계) 순서가 전부다 —
  *  중심의 시선 방향 깊이로 renderOrder를 매 프레임 배정한다(먼 것 먼저 · 화가 알고리즘).
  *  전부 **음수 대역**이라 선(0)은 여전히 면 위다(6-h 「선 우선순위」 불변). */
-function sortFaces(r: R3D, app: App) {
-  const kids = r.faceGroup.children
-  if (kids.length < 2) return
-  const p = app.pose.p, q = app.pose.q
-  // 시선 방향(앞) — quatRotate(q, (0,0,−1))을 손으로 편다(진단이 아니라 렌더 몫 —
-  // vec.ts를 여기 들여오면 three와 좌표계가 두 벌이 된다. 식은 camera.ts와 같다).
+/** **깊이 순위의 규칙 그 자체** — 순수 함수로 뽑아 둔 이유는 팔이 **같은 함수**를 재게
+ *  하기 위해서다(#54 · 45 리뷰어 [3] — «후»를 다른 하네스에서 재면 대역이 안 맞는다).
+ *  반환: id → 그리는 차례(0 = 가장 먼저 = 가장 멀다). 나중 = 위. */
+export function orderByDepth(
+  rows: { id: number; centroid: { x: number; y: number; z: number } }[],
+  pose: { p: { x: number; y: number; z: number }; q: { x: number; y: number; z: number; w: number } },
+): Map<number, number> {
+  const p = pose.p, q = pose.q
+  // 시선 방향(앞) — quatRotate(q, (0,0,−1))을 손으로 편다(식은 camera.ts와 같다)
   const fx = -2 * (q.x * q.z + q.w * q.y)
   const fy = -2 * (q.y * q.z - q.w * q.x)
   const fz = -(1 - 2 * (q.x * q.x + q.y * q.y))
-  const rows = kids.map(k => {
-    const c = (k.userData as { centroid?: { x: number; y: number; z: number } }).centroid
-    const d = c ? (c.x - p.x) * fx + (c.y - p.y) * fy + (c.z - p.z) * fz : 0
-    return { k, d }
+  const ranked = rows.map(r => ({
+    id: r.id,
+    d: (r.centroid.x - p.x) * fx + (r.centroid.y - p.y) * fy + (r.centroid.z - p.z) * fz,
+  }))
+  ranked.sort((a, b) => b.d - a.d)               // 먼 것 먼저
+  return new Map(ranked.map((r, i) => [r.id, i]))
+}
+
+// D-3 반증 손잡이(45 리뷰어 [4]) — 끄면 배열 순서 그대로다(수리 전 상태 재현 · #30).
+let faceSortOn = true
+export function setFaceSortForTest(v: boolean) { faceSortOn = v }
+
+function sortFaces(r: R3D, app: App) {
+  const kids = r.faceGroup.children
+  if (kids.length < 2) return
+  const rows = kids.map((k, i) => {
+    const u = k.userData as { centroid?: { x: number; y: number; z: number }; faceId?: number }
+    return { k, id: u.faceId ?? -i - 1, centroid: u.centroid ?? { x: 0, y: 0, z: 0 } }
   })
-  rows.sort((a, b) => b.d - a.d)                 // 먼 것 먼저
+  const rank = faceSortOn
+    ? orderByDepth(rows, app.pose)
+    : new Map(rows.map((r, i) => [r.id, i]))     // 끔 = 배열 순서(수리 전)
   // 면은 짝수 자리, 그 면의 해칭은 바로 위 홀수 자리 — 해칭이 «자기 면» 위·«앞 면» 아래에
   // 선다(뒤 면의 해칭이 앞 면 채움을 뚫고 나오면 깊이 정렬이 무의미해진다).
   const orderOf = new Map<number, number>()
-  rows.forEach((row, i) => {
+  for (const row of rows) {
+    const i = rank.get(row.id) ?? 0
     row.k.renderOrder = -1000 + 2 * i
-    const fid = (row.k.userData as { faceId?: number }).faceId
-    if (fid !== undefined) orderOf.set(fid, -1000 + 2 * i)
-  })
+    orderOf.set(row.id, -1000 + 2 * i)
+  }
   for (const h of r.hatchGroup.children) {
     const fid = (h.userData as { faceId?: number }).faceId
     h.renderOrder = (fid !== undefined ? orderOf.get(fid) ?? -1000 : -1000) + 1

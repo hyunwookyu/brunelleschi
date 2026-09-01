@@ -121,9 +121,26 @@ test('③ 채움 — 손통 「채움」이 해칭을 만들고 · 표시 토글
   const segsFace = (b.hatch as { segs: number }[]).reduce((s, h) => s + h.segs, 0)
   expect(segsFace).toBeGreaterThan(4)
   OUT.fill = { segs_screen: segsScreen, segs_face: segsFace, toggled: true }
-  // 개구부·선-위 규약은 단위 팔이 잰다(paint45.test ②·④) — 여기는 배선까지다
   await page.click('#chk-hatchface')   // 되돌린다(기기 설정 — 다음 팔에 안 새게)
   await page.click('#btn-display')
+  // ── 채운 면 «위에» 선이 정상으로 선다(지시 45-4 · 45 리뷰어 [8]㉠) ────────────
+  // 선의 잉크는 #brushc(해칭이 사는 #gl보다 DOM에서 위)에 실린다 — 겹 순서는 캔버스
+  // 더미의 구성이고, 여기서 재는 것은 «채움이 선 픽셀·승격을 안 건드린다»다.
+  // ⚠ 잡기 세션(글씨 상태)을 먼저 놓는다 — 안 놓으면 다음 획이 글씨로 읽힌다(39·44 규약.
+  //   초판이 그대로 밟았다: lifted false — 그 획은 text가 돼 있었다).
+  await page.click('#btn-pencil'); await page.click('#btn-pencil')
+  const inkBefore = await inkCount(page, 505, 390, 90, 100)
+  await drawLine(page, 520, 490, 520, 400)               // 채운 벽 위를 지나는 세로선
+  const lineState = await page.evaluate(() => {
+    const app = (window as any).__b2.app
+    const last = app.doc.strokes[app.doc.strokes.length - 1]
+    return { lifted: app.lift.lifted.has(last.id), fillStill: app.doc.faces.some((f: any) => f.fill === 1) }
+  })
+  const inkAfter = await inkCount(page, 505, 390, 90, 100)
+  expect(lineState.lifted, '선이 정상으로 3D에 선다').toBe(true)
+  expect(lineState.fillStill, '채움은 안 바뀐다').toBe(true)
+  expect(inkAfter, '선의 잉크가 실제로 얹혔다').toBeGreaterThan(inkBefore + 30)
+  OUT.line_over_fill = { ink_before: inkBefore, ink_after: inkAfter, lifted: lineState.lifted }
 })
 
 test('④ 깊이 정렬 «후» — 참 앞 면의 renderOrder가 언제나 더 높다(기준선 33/33의 수리)', async ({ page }) => {
@@ -157,8 +174,8 @@ test('④ 깊이 정렬 «후» — 참 앞 면의 renderOrder가 언제나 더 
   expect(order[front]!, '앞 면이 위에 그려진다(나중 = 높은 order)').toBeGreaterThan(order[back]!)
   OUT.depth_after = {
     front_order: order[front], back_order: order[back],
-    inversions_after: order[front]! > order[back]! ? 0 : 1,
-    baseline: 'faces45_web2.json scene_depth — 지정 순서가 나쁘면 33/33 뒤집힘이던 자리',
+    note: '이 팔은 «렌더 인스턴스의 배선»(faceOrder가 실제 mesh renderOrder다)만 잰다 — 분모 있는 «후» 값(0/33 · 같은 장면·같은 하네스)은 faces45_web2.json scene_depth.after가 정본이다(45 리뷰어 [3] 대응)',
+    note_pixel: '#92 ② — renderOrder(이름표)가 픽셀(자리)을 바꾸는 것은 **색이 갈릴 때**다: 지금은 면·해칭이 전부 같은 색(#8d8880 반투명)이라 순서가 픽셀에 안 실린다(같은 색 반투명 over 합성은 교환법칙이 성립한다 — 대수적 사실). 픽셀 판별 팔은 46(색·재료)이 첫 이색 겹을 만드는 순간 세운다 — DEFERRED 행',
   }
 })
 
@@ -181,11 +198,27 @@ test('⑤ 면 정면 뷰에서 칠 — 그 면에만 얹힌다', async ({ page }
   const fs = new Set((g.paints as { f: number }[]).map(x => x.f))
   expect(fs.size, '한 면에만 얹혔다').toBe(1)
   expect(fs.has(wallId), '그 면이다').toBe(true)
-  OUT.front_paint = { face: wallId, runs: (g.paints as unknown[]).length }
+  // 인접 면(바닥)이 실제로 모서리로 선다 — 화면 나비(법선 방향 두께) 실측
+  // (44 DEFERRED가 «45의 칠하기가 실측으로 다시 잰다»로 넘긴 그 값 · 45 리뷰어 [8]㉡).
+  const adj = await page.evaluate((wid) => {
+    const b2 = (window as any).__b2
+    const floor = b2.app.faces.find((f: any) => f.id !== wid)
+    return floor ? b2.diag.faceScreenBox45(floor.id) : null
+  }, wallId)
+  expect(adj, '인접 면이 있다').not.toBeNull()
+  // 정면 평행 뷰에서 바닥은 «선»으로 선다 — 짧은 변이 1px 아래
+  const thin = Math.min(adj!.w, adj!.h)
+  expect(thin, '인접 면의 화면 두께(px)').toBeLessThan(1)
+  OUT.front_paint = {
+    face: wallId, runs: (g.paints as unknown[]).length,
+    adjacent_face_thin_px: thin, adjacent_face_box: adj,
+  }
 })
 
-test.afterAll(() => {
+test.afterAll(async ({ }, testInfo) => {
+  // dpr별 파일(45 리뷰어 [12] — 픽셀 수는 dpr의 함수다 · place34의 그 규약)
   const outDir = resolve(HERE, '../../stage0/out')
   mkdirSync(outDir, { recursive: true })
-  writeFileSync(resolve(outDir, 'paint45_e2e_web2.json'), JSON.stringify(OUT, null, 2))
+  OUT.dpr_project = testInfo.project.name
+  writeFileSync(resolve(outDir, `paint45_e2e_web2_${testInfo.project.name}.json`), JSON.stringify(OUT, null, 2))
 })
