@@ -7,6 +7,7 @@ import { horizonDocY } from './camera'
 import { GRADES } from './material'
 import { UNITS, type Unit } from './dim'
 import { validPressCal } from './press'
+import { isMatId } from './palette'
 import type { Measure } from './measure'
 import { C } from './constants'
 
@@ -82,7 +83,7 @@ const KEY_ORDER: string[] = [
   'format', 'version', 'frame', 'W', 'H',
   'strokes', 'id', 'a', 'b', 'x', 'y', 'z', 'raw', 'rawIn',
   'name', 'pose', 'p', 'q', 'proj', 'view', 'mat', 'dim', 'layer', 'own3', 'axis', 'text', 'lock',
-  'paint', 'f',
+  'paint', 'f', 'm', 'i',
   'faces', 'loops', 'edges', 'kind', 's', 't', 'ox', 'oy', 'cls', 'fill',
   'unit', 'scaleRef', 'grade', 'press', 'w', 'h', 'D', 'tiltX', 'tiltY', 'twist',
   'nextId', 'sheets', 'thumb',
@@ -213,7 +214,16 @@ export function parseBrnl(text: string): BrnlData | null {
     if (s.lock === 1) st.lock = 1
     // 칠 획(web2-45) — 면 id 하나. 모양이 틀리면 그 필드만 버린다(그 획은 «면 없는
     // 잉크»가 되어 안 보인다 — 면이 못 풀린 것과 같은 상태라 조용히 틀리지 않는다).
-    if (s.paint && isNum(s.paint.f)) st.paint = { f: s.paint.f }
+    if (s.paint && isNum(s.paint.f)) {
+      st.paint = { f: s.paint.f }
+      // 재료 칠(web2-46) — m·t·i 셋이 **같이** 성해야 받는다. 하나라도 틀리면 셋을 함께
+      // 버린다(흑연 강등 — cls·layer의 «그 필드만 버린다» 규약. 조용히 틀린 색 ⛔).
+      const p = s.paint
+      if (isMatId(p.m) && isNum(p.t) && p.t >= 0 && p.t <= 2 && Number.isInteger(p.t)
+        && (p.i === 1 || p.i === 2)) {
+        st.paint.m = p.m; st.paint.t = p.t; st.paint.i = p.i
+      }
+    }
     if (s.own3 && isV3(s.own3.a) && isV3(s.own3.b) &&
         (s.own3.axis === null || typeof s.own3.axis === 'string')) {
       st.own3 = { a: { ...s.own3.a }, b: { ...s.own3.b }, axis: s.own3.axis ?? null }
@@ -257,6 +267,7 @@ export function parseBrnl(text: string): BrnlData | null {
       // 잃어도 «자동 분류»·«채움 없음»일 뿐이라 조용히 틀린 기하가 안 난다).
       if (f.cls === 'slab' || f.cls === 'wall' || f.cls === 'slope') face.cls = f.cls
       if (f.fill === 1) face.fill = 1
+      if (isMatId(f.mat)) face.mat = f.mat   // web2-46 — 모양이 틀리면 그 필드만 버린다
       faces.push(face)
     }
   }

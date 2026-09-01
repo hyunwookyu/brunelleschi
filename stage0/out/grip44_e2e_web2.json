@@ -3,6 +3,7 @@
   "hold": {
     "writeHoldMs": 450,
     "wait_margin_ms": 300,
+    "margin_direction": "above-threshold(누름 팔이 450+300ms 대기) · 끌기 팔은 이동이 시계를 끈다 · dpr1+dpr2만",
     "far_press": {
       "strokes_before": 4,
       "strokes_after": 4,
@@ -28,15 +29,15 @@
   "bar": {
     "at_800": {
       "top": 12,
-      "bottom": 732,
+      "bottom": 778,
       "width": 91,
       "winH": 800,
-      "spare_px": 68
+      "spare_px": 22
     },
     "at_700": {
-      "bottom": 732,
+      "bottom": 778,
       "winH": 700,
-      "spare_px": -32
+      "spare_px": -78
     },
     "undo_row_left_offset_px": 37,
     "note_46": "#46·#12 — 여유는 창 높이가 정한 값이다. 두 점(800·700)을 남긴다",

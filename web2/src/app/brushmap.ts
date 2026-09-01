@@ -31,6 +31,16 @@ export function alphaColor(hex: string, a: number): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`
 }
 
+// ── 재료 칠 도구(web2-46) — 마커·색연필 ─────────────────────────────────────
+// 내장 브러시 그대로다(46-0 재고 조사: marker·cpencil이 표준 11종에 있다 — brush.add 0).
+// 색은 **톤 hex 그대로** 넘긴다(alphaColor의 종이 혼합 ⛔): 마커의 겹침 누적은 라이브러리의
+// 옅은 퇴적(marker형 opacity 1)이 지는 몫이라, 여기서 색을 미리 섞으면 누적이 죽는다.
+// 실제로 누적되는가·경계가 남는가는 e2e가 픽셀 광도로 잰다(D-1 — 문면으로 안 적는다).
+// ⚠ 마커는 내장이 아니라 **marker46**이다(brushlayer가 brush.add로 등록 — 내장 marker의
+// spacing 하나만 실측으로 고쳤다: 내장 0.03은 겹침 누적이 포화로 죽는다. 그 절 주석이 정본).
+export const INSTR_BRUSH: Record<1 | 2, string> = { 1: 'marker46', 2: 'cpencil' }
+export const instrWeight = (i: 1 | 2): number => (i === 1 ? C.MARKER_W_PX : C.CP_W_PX)
+
 /** 화면색의 광도(0..255) — 경도 단조 팔이 잰다(작을수록 진하다) */
 export function lumaOf(hex: string): number {
   const n = parseInt(hex.slice(1), 16)

@@ -1,0 +1,100 @@
+{
+  "what": "web2-46 — ①재료 해칭이 같은 면에서 실제로 갈리는가(생성 선분의 방향·개수) ②톤 제안이 제안에 그치는가(시퀀스 값) — 픽셀 몫(마커 누적·경계·순서)은 mats46_e2e_web2_*.json",
+  "when_cmd": "npx vitest run test/mats46_measure.test.ts",
+  "pattern_wall": {
+    "def": "방 벽면(paint45 픽스처) 화면 판 해칭 — 재료별 생성 선분 수·주 방향 무리 수(화면 사영 방향 — 화면 판의 정의 좌표계). 판별은 (dirs·segs·angle) 셋의 짝",
+    "rows": {
+      "brick": {
+        "segs": 19,
+        "dirs": 1,
+        "angleDeg": 45,
+        "spacingPx": 8,
+        "cross": false
+      },
+      "conc": {
+        "segs": 20,
+        "dirs": 2,
+        "angleDeg": 45,
+        "spacingPx": 14,
+        "cross": true
+      },
+      "glass": {
+        "segs": 7,
+        "dirs": 1,
+        "angleDeg": 75,
+        "spacingPx": 18,
+        "cross": false
+      },
+      "wood": {
+        "segs": 17,
+        "dirs": 1,
+        "angleDeg": 0,
+        "spacingPx": 7,
+        "cross": false
+      },
+      "metal": {
+        "segs": 28,
+        "dirs": 1,
+        "angleDeg": 135,
+        "spacingPx": 5,
+        "cross": false
+      }
+    },
+    "degraded_probe": {
+      "def": "각도·간격을 벽돌 것으로 통일한 판(교차 깃발만 유지) — 같은 자에서 판별이 몇으로 주는가",
+      "distinct": 2
+    },
+    "note_5": "「dirs == cross ? 2 : 1」은 생성기의 구성적 귀결이다(평행선 한 벌 + 직교 한 벌). 측정의 몫은 segs(면 기하·간격이 정하는 값)와 다섯 짝의 상호 판별이다"
+  },
+  "suggest_seq": {
+    "def": "같은 두 면(슬라브·벽)에 자동/수동(톤 1)으로 칠한 결과 톤 — 자동은 분류를 따르고(0·2) 수동은 분류가 달라도 1·1",
+    "rows": [
+      {
+        "sel": "auto",
+        "face": "slab",
+        "got": 0
+      },
+      {
+        "sel": "auto",
+        "face": "wall",
+        "got": 2
+      },
+      {
+        "sel": "manual1",
+        "face": "slab",
+        "got": 1
+      },
+      {
+        "sel": "manual1",
+        "face": "wall",
+        "got": 1
+      }
+    ]
+  },
+  "gate_suggest_not_default": {
+    "registered": "commitPaint의 톤 해석(state.ts) — 자동일 때만 suggestTone",
+    "value": "manual1 행 둘 다 1",
+    "reachability": "자동 행(0·2)이 같은 실행에서 «제안이 실제로 작동함»을 낸다 — 제안이 죽어 있으면(늘 기본 톤) 자동 행이 0·2로 갈리지 않는다",
+    "reachability_value": [
+      0,
+      2
+    ],
+    "reachability_source": "mats46_web2.json/suggest_seq/rows[0..1]"
+  },
+  "gate_pattern_distinct": {
+    "registered": "MATERIALS의 무늬 다섯 — (dirs·segs·angle) 짝",
+    "value": "5종 전부 상이(pattern_wall.rows)",
+    "reachability": "퇴화 팔(각도·간격을 벽돌로 통일 — 교차 깃발만 유지)이 같은 면·같은 자에서 판별을 실제로 무너뜨린다 — 그 값이 원장 안에 있다(1차 [5] 대응: 복제 목록의 «1»은 정의라 버렸다)",
+    "reachability_value": "pattern_wall.degraded_probe.distinct < 5",
+    "reachability_source": "mats46_web2.json/pattern_wall/degraded_probe/distinct",
+    "note_5": "2차 [8] — 퇴화 값 «2»도 구성상 정해진다(각도·간격을 통일하면 남는 축이 2값짜리 cross뿐). 이 게이트가 재는 것은 값의 크기가 아니라 «표 편집 회귀(두 재료가 같은 무늬를 받는 것)를 판별식이 실제로 잡는가»다 — 보장이면 보장이라 적는 #5의 규약대로 여기 적고, 크기에 임계를 걸지 않는다"
+  },
+  "constants_used": {
+    "MARKER_SPACING": 0.2,
+    "MARKER_W_PX": 10,
+    "CP_W_PX": 2.5,
+    "HATCH_ALPHA": 0.3,
+    "HATCH_SPACING_PX": 11,
+    "HATCH_ANGLE_DEG": 45
+  }
+}

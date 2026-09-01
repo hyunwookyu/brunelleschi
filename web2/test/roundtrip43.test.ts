@@ -123,6 +123,14 @@ export function fullDocPlus() {
   })
   d.faces[0]!.cls = 'wall'
   d.faces[0]!.fill = 1
+  // 재료 칠·면 재료(web2-46) — 같은 기계가 Stroke.m·Stroke.i를 빨강으로 잡았다(실측 —
+  // 이 두 줄이 그 대응이다). 마커 칠 획 하나 + 면 재료 하나가 픽스처 대역에 든다.
+  const mw = hand(41, pt(640, 470), pt(710, 495), 5)
+  d.strokes.push({
+    id: app.nextId++, a: mw[0]!, b: mw[mw.length - 1]!, raw: mw,
+    paint: { f: d.faces[0]!.id, m: 'brick', t: 1, i: 1 }, mat: { grade: 'HB' },
+  })
+  d.faces[0]!.mat = 'conc'
   // 평행 사영이 실린 포즈로 그린 획(web2-42) — `view.proj` · 잉크 니브 굵기
   const par: Stroke = {
     id: app.nextId++, a: pt(960, 300), b: pt(1040, 340),
