@@ -108,6 +108,8 @@ export interface Op {
   fillChanged?: { id: number; to: boolean }[]
   /** **면 재료**(web2-46) — 사람이 한 것이므로 실행취소 대상이다 */
   matChanged?: { id: number; before: Face['mat']; after: Face['mat'] }[]
+  /** **놓은 사람**(web2-47) — 사람이 한 것이므로 실행취소 대상이다 */
+  personsAdded?: Person[]
   /** **광선이 바뀌어 대기 획을 버린 op**(web2-37 4번)가 함께 싣는 시점.
    *  ⚠⚠ 획만 되돌리면 «되살아난다»가 **쓸모없다**: 돌아온 대기 획의 내용은 「그 시점의
    *  화면 위 어디」인데 지금 시점이 그 시점이 아니고, 그 다음 시점 변경에서 **또 버려진다**
@@ -139,6 +141,15 @@ export interface App {
   grade: Grade
   /** 제도펜 니브 굵기 px */
   nib: number
+  /** **면 하이라이트**(web2-47 47-3) — 숫자의 근거를 밝힌다(#61: 어느 면들의 합인지
+   *  보인다). until(ms)이 지나면 표시 계층이 걷는다 — 상태가 아니라 순간의 표시다. */
+  hlFaces: { ids: number[]; until: number } | null
+  /** **실 다이어그램**(web2-47 47-4) — 켜면 실(벽으로 닫힌 영역)의 버블·연결이 겹쳐
+   *  보인다. 표시이지 문서가 아니다(끄면 사라진다 — 실 자체는 매번 계산·파생). */
+  showRooms: boolean
+  /** **사람 놓기 대기**(web2-47 47-2) — 참이면 다음 지면 탭이 그 자리다(자동으로 안
+   *  세운다 — 지시. 한 번 놓으면 풀린다). */
+  placePerson: boolean
   /** **칠 선택**(web2-46) — 붓의 재료·톤·도구. `i: 'brush'`가 45의 흑연 붓 그대로다
    *  (기본 — 무회귀). `t: 'auto'`는 «분류의 제안을 따른다»이고, 사람이 톤을 손으로
    *  고르면 그 값이 그대로 남는다(제안은 제안에 그친다 — 지시 문면·46 측정 항목). */
@@ -371,6 +382,9 @@ export function createApp(W: number, H: number): App {
     grade: 'HB',
     nib: C.NIB_PX,
     paintSel: { m: 'conc', t: 'auto', i: 'brush' },
+    hlFaces: null,
+    showRooms: false,
+    placePerson: false,
     eraserRadius: C.ERASER_PX,
     tipErase: false,
     activeErase: null,
@@ -1613,6 +1627,7 @@ export function faceFrontTarget(app: App): CamPose | null {
 
 import { splitByFace, liftPaint, frontFaceAt, classOf, faceClassOf, FACE_CLASSES, type FaceClass } from '../core/paint'
 import { materialOf, clampTone, suggestTone, cycleMat, isMatId, type MatId, type Instr } from '../core/palette'
+import type { Person } from '../core/types'
 
 export const paintActive = (app: Pick<App, 'tool'>): boolean => app.tool === 'paint'
 
@@ -1701,6 +1716,54 @@ export function cycleFaceMat(app: App, faceId: number): { name: string } | null 
   app.redoStack = []
   recompute(app)
   return { name: next === undefined ? '기본' : materialOf(next).name }
+}
+
+// ── 숫자와 표시(web2-47) — 사람 놓기 · 면적·부피 · 근거 하이라이트 ────────────
+
+import { pointOnGround } from '../core/camera'
+import { faceAreaU2, u2ToM2, floorArea, volume, type AreaReport, type VolumeReport } from '../core/area'
+
+/** 지면 탭 → 사람 하나(47-2). 자동으로 안 세운다 — placePerson이 참인 다음 탭 하나뿐이고
+ *  놓으면 풀린다. 지평선 위(지면과 안 만남)면 null — 좌표를 임의로 짓지 않는다. */
+export function placePersonAt(app: App, sp: Pt): Person | null {
+  const g = pointOnGround(app.lift.an, app.pose, sp)
+  if (!g) return null
+  const q: Person = { id: app.nextId++, g }
+  ;(app.doc.persons ??= []).push(q)
+  app.undoStack.push({ removed: [], added: [], personsAdded: [q] })
+  app.redoStack = []
+  app.placePerson = false
+  app.docVersion++
+  for (const l of app.listeners) l()
+  return q
+}
+
+/** 잡은 면의 면적(m²) — 근거는 잡힘 그 자체다(그 면이 이미 밝다). 축척 미정이면 null. */
+export function gripFaceArea(app: App): { id: number; m2: number } | null {
+  const fid = app.grip?.faceId
+  if (fid === undefined || fid === null) return null
+  const rf = app.faces.find(f => f.id === fid)
+  if (!rf) return null
+  const m2 = u2ToM2(faceAreaU2(rf), app.lift.mmPerUnit)
+  if (m2 === null) return null
+  return { id: fid, m2 }
+}
+
+export const floorAreaNow = (app: App): AreaReport | null =>
+  floorArea(app.faces, app.doc.faces, app.lift.mmPerUnit)
+
+export const volumeNow = (app: App): { report: VolumeReport | null; why: string | null } =>
+  volume(app.faces, app.doc.faces, app.lift.mmPerUnit)
+
+import { findRooms, type RoomGraph } from '../core/room'
+
+/** 실 그래프 — 매번 계산(파생 — 원칙 b: 벽이 바뀌면 실이 따라 바뀐다). */
+export const roomsNow = (app: App): RoomGraph => findRooms(app.faces, app.doc.faces)
+
+/** 근거를 밝힌다(#61) — 1.6초. 상태가 아니라 순간의 표시라 op가 아니다. */
+export function flashFaces(app: App, ids: number[], nowMs: number): void {
+  app.hlFaces = { ids, until: nowMs + 1600 }
+  for (const l of app.listeners) l()
 }
 
 // ── 재기(web2-32 6번) — 두 점을 짚으면 길이가 나온다 ────────────────────────
@@ -2083,6 +2146,11 @@ export function undo(app: App) {
     const f = app.doc.faces.find(x => x.id === mc.id)
     if (f) { if (mc.before === undefined) delete f.mat; else f.mat = mc.before }
   }
+  for (const q of op.personsAdded ?? []) {  // 놓은 사람(web2-47) — 걷는다
+    const arr = app.doc.persons ?? []
+    const i = arr.findIndex(x => x.id === q.id)
+    if (i >= 0) arr.splice(i, 1)
+  }
   // 광선이 바뀌어 버린 op는 **그 시점까지** 되돌린다(web2-37 4번 — 위 `Op.pose` 주석).
   // ⚠ `setPose`를 안 부른다: 그것을 부르면 이 복원이 다시 «광선이 바뀌었다»로 읽혀
   //    방금 돌려놓은 획을 그 자리에서 도로 버린다(자기 자신을 되돌리는 고리).
@@ -2140,6 +2208,7 @@ export function redo(app: App) {
     const f = app.doc.faces.find(x => x.id === mc.id)
     if (f) { if (mc.after === undefined) delete f.mat; else f.mat = mc.after }
   }
+  for (const q of op.personsAdded ?? []) (app.doc.persons ??= []).push(q)   // 다시 놓는다
   // 다시 실행 — 값 싣기는 **만든 자리와 같은 함수**를 다시 부른다(#54)
   if (op.dim) setDimension(app, op.dim.id, op.dim.mm)
   for (const m of op.measuresAdded ?? []) (app.doc.measures ??= []).push(m)

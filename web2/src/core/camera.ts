@@ -465,10 +465,17 @@ export function pointOnGround(an: Analysis, pose: CamPose, s: Pt): V3 | null {
   const r = rayThrough(an, pose, s)
   if (!r) return null
   if (r.d.y >= -1e-9) return null      // 위로 가거나 지면과 평행 — 안 만난다
-  const u = -pose.p.y / r.d.y          // P.y = 0 이 되는 광선 파라미터
+  // ⚠ 원점은 r.o다(web2-47이 잡은 결함): 원근에서는 r.o == pose.p라 같지만 **평행
+  // 사영은 광선마다 원점이 다르다**(rayThrough의 오프셋). pose.p를 쓰면 모든 화면 점이
+  // 같은 접지점을 낸다 — nums47 ④가 수리 전 실제로 그렇게 실패했다(D-2).
+  const u = -r.o.y / r.d.y             // P.y = 0 이 되는 광선 파라미터
   if (!(u > 0)) return null            // 눈이 이미 지면이거나 뒤쪽 — 안 만난다
-  return add3(pose.p, mul3(r.d, u))
+  return add3(r.o, mul3(r.d, u))
 }
+
+/** 접지점 위의 **눈점** — 지면에 선 사람의 눈(web2-47 47-2). 눈높이의 출처는 카메라
+ *  하나다(원칙 a — 이 앱의 근본 사실: 카메라가 눈높이에 있어 지평선 = 눈높이). */
+export const eyeAbove = (g: V3): V3 => ({ x: g.x, y: g.y + C.EYE_HEIGHT, z: g.z })
 
 /** 화면 점 → **천장(Y = 2·EYE_HEIGHT) 위의 점**(web2-27 1번).
  *
@@ -488,9 +495,9 @@ export function pointOnCeiling(an: Analysis, pose: CamPose, s: Pt): V3 | null {
   const r = rayThrough(an, pose, s)
   if (!r) return null
   if (r.d.y <= 1e-9) return null                       // 아래로 가거나 평행 — 안 만난다
-  const u = (2 * C.EYE_HEIGHT - pose.p.y) / r.d.y      // P.y = 2·EYE_HEIGHT 가 되는 파라미터
+  const u = (2 * C.EYE_HEIGHT - r.o.y) / r.d.y         // P.y = 2·EYE_HEIGHT (원점은 r.o — 위와 같은 수리)
   if (!(u > 0)) return null                            // 눈이 이미 그 평면이거나 뒤쪽
-  return add3(pose.p, mul3(r.d, u))
+  return add3(r.o, mul3(r.d, u))
 }
 
 /** **근평면 — 카메라 앞 잘라내기의 단 하나의 값**(#54).

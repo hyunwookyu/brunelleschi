@@ -1,0 +1,47 @@
+{
+  "what": "web2-47 — 화면 몫: 스케일바 잉크 · 사람 세움 · 면적 근거 하이라이트 · 실 토글",
+  "note_92": "#92 — 판정자는 픽셀(잉크 수)과 diag 값이다",
+  "scalebar": {
+    "def": "좌하 상자(16, H−70, 150×60) #ink 잉크 수 — 축척 전/후 · width_px = 막대 행 대역(±4px)의 잉크 x-범위(끝눈금 포함 — #92: 폭이 결과의 자리다)",
+    "before": 0,
+    "after": 1165,
+    "width_px": 61.5
+  },
+  "rooms_positive": {
+    "def": "앱 경로 4벽 방(단위 rooms_app_positive와 같은 픽스처·마우스판) — 실 1 · 버블 상자(400,390,160×100) #ink 잉크 전/중",
+    "rooms": {
+      "n": 1,
+      "links": 0,
+      "areas": [
+        7.80071
+      ]
+    },
+    "before": 177,
+    "during": 7053
+  },
+  "person": {
+    "def": "접지(400,620) 주변 상자(320,480,160×200) #ink 잉크 수 — 세움 전/후 · diag.persons",
+    "before": 0,
+    "after": 1122,
+    "persons": 1
+  },
+  "floor_area": {
+    "def": "바닥 면 안 상자(420,455,100×30) #ink 잉크 수 — 하이라이트 전/중/후 · diag.floor(m²·근거 id)",
+    "before": 112,
+    "during": 7972,
+    "after_fade": 112,
+    "floor_m2": 5.163977794943221,
+    "evidence": [
+      9
+    ]
+  },
+  "rooms_toggle": {
+    "def": "방 픽스처(벽 1) — 토글 상태·실 수(0이 참). 실이 서는 판은 단위 합성 팔(nums47_web2.json rooms)",
+    "rooms": {
+      "n": 0,
+      "links": 0,
+      "areas": []
+    }
+  },
+  "dpr_project": "dpr2"
+}
