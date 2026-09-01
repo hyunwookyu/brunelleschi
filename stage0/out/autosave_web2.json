@@ -1,14 +1,14 @@
 {
- "what": "web2-22 3부 — 자동 저장 직렬화 바이트(작은 문서·획 6 증분·획당 근사)와 70% 도달 추정.",
+ "what": "web2-22 3부 — 자동 저장 직렬화 바이트(작은 문서·획 6 증분·획당 근사)와 70% 도달 추정. ⚠ web2-43이 저장 자리를 IndexedDB로 옮겼다 — 아래 5MB는 **저장소 상한이 아니라 한 문서의 눈금**이다(C.AUTOSAVE_LIMIT_BYTES 주석이 정본).",
  "run": {
   "note": "정본 명령: LEDGER=1 npx playwright test autosave --workers=1(dpr1 판만 쓴다 — 바이트는 dpr 무관)",
   "date": "2026-08-28"
  },
  "small_doc_bytes": 917,
- "after_6_strokes_bytes": 2416,
- "approx_bytes_per_stroke": 250,
- "strokes_to_warn_at_70pct": 14686,
- "note": "획당 바이트는 raw 점렬 길이에 비례(이 팔의 획은 8이동 손 획 — 실사용 손 획은 점이 더 많아 더 크다). 상한 5MB는 가정(AS-C80).",
+ "after_6_strokes_bytes": 2739,
+ "approx_bytes_per_stroke": 304,
+ "strokes_to_warn_at_70pct": 12083,
+ "note": "획당 바이트는 raw 점렬 길이에 비례(이 팔의 획은 8이동 손 획 — 실사용 손 획은 점이 더 많아 훨씬 크다: files43_web2.json의 종이 손 획 100획 문서가 966530 units다). ⚠ 5MB는 web2-43부터 **한 문서의 눈금**이고 저장소 상한이 아니다 — localStorage 실측 상한은 store43_web2.json(5241856 units)이다.",
  "flags_explained": {
   "constants/metric_defs 스냅샷 없음": "web2 라인 공통 형태"
  }
