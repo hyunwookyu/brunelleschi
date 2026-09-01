@@ -3022,6 +3022,8 @@ const diag = {
       f: (h.userData as { faceId?: number }).faceId ?? null,
       stepMm: (h.userData as { repStepMm?: number }).repStepMm ?? null,
       visible: h.visible,
+      /** 판정 내역(2차 [4]) — gateRep이 남긴 «왜»: side(쪽)·lod(밀도)·pxPerMm */
+      gate: (h.userData as { gate?: { side: boolean; lod: boolean; pxPerMm?: number | null } }).gate ?? null,
       order: h.renderOrder,
       segs: ((h as unknown as { geometry: { getAttribute(n: string): { count: number } } }).geometry.getAttribute('position')?.count ?? 0) / 2,
     })),

@@ -434,16 +434,24 @@ function gateRep(r: R3D, app: App) {
     }
     const face = app.doc.faces.find(f => f.id === u.faceId)
     const rf = app.faces.find(f => f.id === u.faceId)
-    if (!face?.rep || !rf || !mm) { child.visible = false; continue }
-    if (paintSideAt(rf, app.pose) !== face.rep.s) { child.visible = false; continue }
+    // 판정 내역을 userData에 남긴다(web2-49 2차 [4] — «왜 안 보이는가»의 귀속을 팔이
+    // 읽는다: 쪽 때문인가 밀도 때문인가. 같은 계산의 기록이지 두 벌 계산이 아니다 #54).
+    if (!face?.rep || !rf || !mm) {
+      child.visible = false
+      child.userData.gate = { side: false, lod: false, why: 'unresolved' }
+      continue
+    }
+    const sideOk = paintSideAt(rf, app.pose) === face.rep.s
     // 투영 px/mm — 면 중심에서 가로축으로 0.01 세계단위를 옮겨 재고 줌을 얹는다
     const p0 = project(app.lift.an, app.pose, u.centroid)
     const p1 = project(app.lift.an, app.pose, {
       x: u.centroid.x + u.u.x * 0.01, y: u.centroid.y + u.u.y * 0.01, z: u.centroid.z + u.u.z * 0.01,
     })
-    if (!p0 || !p1) { child.visible = false; continue }
-    const pxPerUnit = Math.hypot(p1.x - p0.x, p1.y - p0.y) / 0.01 * vs
-    child.visible = repVisibleFamilies(u.repSteps.major, u.repSteps.minor, pxPerUnit / mm)[u.repFam]
+    const pxPerMm = p0 && p1 ? (Math.hypot(p1.x - p0.x, p1.y - p0.y) / 0.01 * vs) / mm : null
+    const lodOk = pxPerMm !== null &&
+      repVisibleFamilies(u.repSteps.major, u.repSteps.minor, pxPerMm)[u.repFam]
+    child.visible = sideOk && lodOk
+    child.userData.gate = { side: sideOk, lod: lodOk, pxPerMm }
   }
 }
 

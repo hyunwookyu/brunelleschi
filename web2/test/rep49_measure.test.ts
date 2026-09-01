@@ -119,19 +119,28 @@ describe('② 축척 통과 — mm는 상수, 세계는 축척의 함수', () =>
 describe('②-b 생성 비용 — 부하의 축은 «무늬 면적 ÷ 축척»이다 (리뷰어 [3])', () => {
   it('벽 면적 25배에서 선분 수·생성 시간이 그 축을 따라 는다', () => {
     const BIG = face(9, [v3(0, 0, 0), v3(150, 0, 0), v3(150, 125, 0), v3(0, 125, 0)], v3(0, 0, 1))
-    const t0 = performance.now()
-    const small = repSegments(WALL, 'brick', MM, 7)
-    const t1 = performance.now()
-    const big = repSegments(BIG, 'brick', MM, 7)
-    const t2 = performance.now()
-    const nS = small.major.length + small.minor.length
-    const nB = big.major.length + big.minor.length
+    // 단발 ms는 실행 변동(75% 대역 실측 — 2차 [6])보다 좁게 읽힌다 — 5회 중앙·최대로 적는다
+    const timed = (f2: ResolvedFace) => {
+      const ms: number[] = []
+      let n = 0
+      for (let i = 0; i < 5; i++) {
+        const a = performance.now()
+        const r2 = repSegments(f2, 'brick', MM, 7)
+        ms.push(performance.now() - a)
+        n = r2.major.length + r2.minor.length
+      }
+      ms.sort((a, b) => a - b)
+      return { segments: n, ms_median: +ms[2]!.toFixed(1), ms_max: +ms[4]!.toFixed(1) }
+    }
+    const small = timed(WALL)
+    const big = timed(BIG)
+    const nS = small.segments
+    const nB = big.segments
     expect(nB).toBeGreaterThan(nS * 10)
     OUT.gen_cost = {
       def: '벽돌 생성 — 3×2.5m(작은 벽) vs 15×12.5m(면적 25배). 프레임(e2e frame20)의 부하 축은 «면 수»가 아니라 **무늬가 덮는 면적 ÷ 축척**이고, 생성은 docVersion 캐시라 프레임이 아니라 편집 순간의 비용이다. 화면에 «보이는» 선분 밀도는 밀도 하한(REP_MIN_PX)이 구성적으로 묶는다',
-      small: { segments: nS, ms: +(t1 - t0).toFixed(1) },
-      big: { segments: nB, ms: +(t2 - t1).toFixed(1) },
-      note_82: '시간은 비가 아니라 값으로 적는다 — 러너 고정 몫이 섞인다(#82). 뜻은 자릿수다',
+      small, big,
+      note_82: '시간은 비가 아니라 값으로 적는다 — 러너 고정 몫이 섞인다(#82). 5회 중앙·최대(§5 «유효 2자리») — 뜻은 자릿수다. 게이트가 아니라 기록이다(반증 조건 비대상 — D-3의 «검사»가 아니다)',
     }
   })
 })
@@ -153,21 +162,27 @@ describe('③ 원근 축소 — 확인(사영의 구성 귀결 · #5)', () => {
     const mm = s.app.lift.mmPerUnit!
     const r = repSegments(rf, 'brick', mm, rf.id)
     expect(r.major.length).toBeGreaterThan(2)
-    // 각 켜 선분의 두 끝을 투영 — 왼끝·오른끝에서 이웃 켜와의 화면 간격을 갈라 잰다
-    const rows: { y0: number; y1: number }[] = []
+    // 각 켜 선분의 두 끝을 투영 — **끝의 정체는 화면 x로 정한다**(2차 [9]: 초판이
+    // min/max y로 갈라 좌우 라벨이 도중에 뒤바뀌었다 — 왼끝 = 작은 x·오른끝 = 큰 x).
+    const rows: { yL: number; yR: number }[] = []
     for (const seg of r.major) {
       const a = project(s.app.lift.an, s.app.pose, seg.a)
       const b = project(s.app.lift.an, s.app.pose, seg.b)
-      if (a && b) rows.push({ y0: Math.min(a.y, b.y), y1: Math.max(a.y, b.y) })
+      if (a && b) rows.push(a.x <= b.x ? { yL: a.y, yR: b.y } : { yL: b.y, yR: a.y })
     }
-    // 값을 남긴다(리뷰어 [15]) — 켜 선의 화면 y를 왼끝·오른끝에서 각각 정렬해 이웃 간격
-    const left = rows.map(r => r.y0).sort((a, b) => a - b)
-    const right = rows.map(r => r.y1).sort((a, b) => a - b)
-    const gapsOf = (ys: number[]) => ys.slice(1).map((y, i) => +(y - ys[i]!).toFixed(2))
+    const gapsOf = (ys: number[]) => {
+      const u = [...ys].sort((p2, q2) => p2 - q2)
+      return u.slice(1).map((y, i) => +(y - u[i]!).toFixed(2))
+    }
+    const gl = gapsOf(rows.map(r2 => r2.yL)), gr = gapsOf(rows.map(r2 => r2.yR))
+    const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length
+    // 얕은 끝(왼쪽·x 작은 쪽이 이 벽에서 가깝다)의 평균 간격이 깊은 끝보다 크다 — 원근
+    expect(mean(gl)).toBeGreaterThan(mean(gr))
     OUT.foreshorten = {
-      def: '원근 벽의 켜 선 투영 — 무늬가 세계 좌표라 원근을 «받는» 것 자체는 사영의 구성 귀결(#5) — 게이트를 안 건다. 픽셀 판은 e2e ③(rep49_e2e의 foreshorten_px)이 한다',
+      def: '원근 벽의 켜 선 투영 — 끝의 정체는 화면 x(왼 = 가까움 · 오른 = 깊음). 무늬가 세계 좌표라 원근을 «받는» 것 자체는 사영의 구성 귀결(#5) — 게이트를 안 건다. 픽셀 판은 e2e ③(rep49_e2e의 foreshorten_px)이 한다',
       n_courses: rows.length,
-      gaps_left_px: gapsOf(left), gaps_right_px: gapsOf(right),
+      gaps_near_px: gl, gaps_far_px: gr,
+      mean_near: +mean(gl).toFixed(3), mean_far: +mean(gr).toFixed(3),
       note_5: '확인이지 측정 게이트가 아니다',
     }
     expect(rows.length).toBeGreaterThan(0)
@@ -278,6 +293,7 @@ describe('원장 쓰기', () => {
       REP_CONC_PANEL_W_MM: C.REP_CONC_PANEL_W_MM, REP_CONC_PANEL_H_MM: C.REP_CONC_PANEL_H_MM,
       REP_MIN_PX: C.REP_MIN_PX, REP_ALPHA_MAJOR: C.REP_ALPHA_MAJOR, REP_ALPHA_MINOR: C.REP_ALPHA_MINOR,
     }
+    OUT.no_constants_snapshot = '**web2 라인 전체의 유보다** — 이 라인은 constantsSnapshot()을 안 쓰고 constants_used 블록을 스스로 든다(정본: lens31·close31 원장의 같은 필드)'
     const outDir = resolve(__dirname, '../../stage0/out')
     mkdirSync(outDir, { recursive: true })
     writeFileSync(resolve(outDir, 'rep49_web2.json'), JSON.stringify(OUT, null, 2))
