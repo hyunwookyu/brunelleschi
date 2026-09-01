@@ -336,10 +336,12 @@
     "ramp_max_lum": 243,
     "paper_lum": 243,
     "under_pattern": {
-      "repBase": 124504,
       "bandPx": 9857,
-      "repInBandBefore": 9580,
-      "repUnderPaint": 9580
+      "contrastPx": 1656
+    },
+    "under_pattern_over": {
+      "bandPx": 10051,
+      "contrastPx": 0
     },
     "line_under_band_dark": 96,
     "falsify_over": {
@@ -351,14 +353,20 @@
       "before": 10,
       "after": 10
     },
+    "constants_used": {
+      "PAINT50_LUM_TOL": 3,
+      "PAINT50_PATTERN_MIN_PX": 30,
+      "PAINT50_LINE_INK_MIN_PX": 20,
+      "PAINT50_FORESHORTEN_TOL": 0.12
+    },
     "note_alpha": "이 구조의 칠은 알파가 안 떨어진다(불투명 텍스처 + 곱) — «알파가 떨어질 때 RGB가 흰색으로»의 그 병리는 대역 자체가 소멸했고, 램프가 남기는 것은 «가장자리 어디에서도 종이보다 밝지 않다»다"
   },
   "gate_multiply": {
-    "registered": "C.PAINT50_LUM_TOL — ① brighter == 0(문턱 그 값) ② ramp_max_lum ≤ paper_lum + 문턱 ③ 띠 안 무늬 유지 비 > 0.8 ④ 선 상자 어두운 픽셀 > 20",
-    "value": "no_brighter.brighter · ramp_max_lum · under_pattern · line_under_band_dark",
-    "reachability": "반증 스위치(setPaintBlendForTest — over)가 같은 실행에서 brighter를 십만 대역으로 낸다",
-    "reachability_value": "falsify_over.brighter",
-    "reachability_source": "이 파일의 falsify_over ↔ no_brighter"
+    "registered": "① brighter == 0(문턱 C.PAINT50_LUM_TOL) ② ramp_max_lum ≤ paper_lum + 그 문턱 ③ 띠 안 대비 픽셀 > C.PAINT50_PATTERN_MIN_PX ④ 선 잉크 > C.PAINT50_LINE_INK_MIN_PX — 값은 constants_used가 든다(2차 [3])",
+    "value": "no_brighter.brighter · ramp_max_lum · under_pattern.contrastPx · line_under_band_dark",
+    "reachability": "반증 스위치(setPaintBlendForTest — over)가 같은 실행에서 ①을 brighter 십만 대역으로, ③을 대비 소수 대역(under_pattern_over)으로 뒤집는다(2차 [2] — 지표별 판별력)",
+    "reachability_value": "falsify_over.brighter · under_pattern_over.contrastPx",
+    "reachability_source": "이 파일의 falsify_over ↔ no_brighter · under_pattern_over ↔ under_pattern"
   },
   "orbit": {
     "before": 5238,
@@ -379,6 +387,8 @@
     "ratio": 1.275,
     "expected_ratio": 1.24,
     "tol_registered": "C.PAINT50_FORESHORTEN_TOL",
+    "tol_value": 0.12,
+    "note_dpr_bias": "실측/기대 잔차가 두 dpr 다 양의 방향(2차 [9]) — 띠 두께 계수(채널 차 문턱·±2열 평균·AA)의 dpr 의존 편의로 본다. 유보로 남긴다 — 문 안이고 방향이 판정(화면 고정 1.0과의 판별)을 돕는 쪽이다",
     "screen_fixed_would_give": 1,
     "left_out_px": 0,
     "right_out_px": 0,
@@ -404,7 +414,9 @@
         "w": 512,
         "h": 458,
         "visible": false,
-        "blending": 4
+        "blending": 4,
+        "screenPx": 505,
+        "clamped": false
       }
     ],
     "tex_after_restore": [
@@ -414,7 +426,9 @@
         "w": 512,
         "h": 458,
         "visible": true,
-        "blending": 4
+        "blending": 4,
+        "screenPx": 400,
+        "clamped": false
       }
     ],
     "note_identity": "restored == before(정확 일치가 나올 수 있다)는 **설계 보장**이다(§5.1 유형 3 — 같은 포즈·같은 문서의 재렌더). 이 팔의 측정은 behind == 0(쪽이 접는다)이고 복원은 그 대조의 닫음일 뿐 임계를 안 건다(rep49 [12]의 그 표기)",
@@ -453,6 +467,44 @@
       512
     ],
     "bytes_total": 3776512,
+    "screen_px_prequant": [
+      361,
+      352,
+      343,
+      334,
+      325,
+      317,
+      307,
+      298,
+      290,
+      269,
+      283,
+      295,
+      312,
+      327,
+      341,
+      356,
+      370
+    ],
+    "clamped": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
     "levels_zoomed_out": [
       128,
       128,
@@ -477,28 +529,29 @@
     "cap": 1024,
     "min": 64,
     "before_ms": {
-      "median": 16.899999618530273,
-      "p90": 18.800000190734863
+      "median": 16.800000190734863,
+      "p90": 18.700000286102295
     },
     "before2_ms": {
-      "median": 16.800000190734863,
-      "p90": 17.200000286102295
+      "median": 16.899999618530273,
+      "p90": 17.5
     },
     "noise_floor_ms": 0.1,
     "after_ms": {
       "median": 16.899999618530273,
-      "p90": 17.800000190734863
+      "p90": 17.699999809265137
     },
-    "delta_median_ms": 0.1,
-    "delta_p90_ms": 0.6,
-    "note_cap": "상한 1024의 근거 — 이 장면의 합계 바이트가 bytes_total이다(장당 평균은 정사각이 아니라 긴 변만 단계라 4.19MB보다 작다 — 2차 대응 [9]가 초판의 «수백 MB» 산술을 지웠다). 2048이면 면적 4배 — 이 장면 기준 ~4×bytes_total(dpr2 ~60MB 대역)이고, 실장면(면 수·양쪽 칠)이 그 위로 곱해진다",
+    "delta_median_ms": 0,
+    "delta_p90_ms": 0.2,
+    "note_cap": "상한 1024의 근거 — 이 장면의 합계 바이트가 bytes_total이다(장당 평균은 정사각이 아니라 긴 변만 단계라 1024²×4=4.19MB보다 작다). ⚠ «상한을 올리면 4×»는 **포화한 실행에만** 걸리는 산술이다(2차 [8] — clamped가 참인 장들만 상한을 따라 커진다): dpr2는 전 장 포화라 ~4×bytes_total(~60MB 대역), dpr1은 전 장 미포화(512)라 상한을 올려도 이 장면 바이트는 불변이다. 실장면(면 수·양쪽 칠·dpr)이 그 위로 곱해진다",
     "note_89": "목표 «스무 면»에 못 미치면 faces 값이 그 사실이다 — 상한을 조용히 줄이지 않는다(rep49 note_89 그대로 · 같은 픽스처가 세운 면이 17이다)",
     "note_levels": "기본 줌의 levels가 전부 같은 값인 것은 이 장면의 셀들이 비슷한 화면 크기라서다 — «작으면 낮게»의 실측은 levels_zoomed_out(줌 아웃에서 단계 하강)이 든다",
     "note_82": "중앙값이 vsync 바닥(16.7ms)에 붙은 실행에서는 차의 해상도가 눈금뿐이다(rep49 frame20의 그 유보 그대로). ⚠ dpr2의 delta_median_ms가 잡음 바닥 밖인 것은 헤드리스 소프트웨어 GL의 채움 비용 의심 — DEFERRED web2-50 행 · 실기기 관측 판정자"
   },
   "old_paint_notice": {
-    "def": "48 형식(uv 없음) 칠 1획이 든 저장물을 자동 저장 자리에 넣고 새로 고침 — #notice의 문구(행위 판 · #94)와 살아남은 획 수",
+    "def": "48 형식(uv 없음) 칠 1획이 든 저장물을 자동 저장 자리에 넣고 새로 고침 — #notice의 문구(행위 판 · #94)와 살아남은 획 수. 부정 대조 = 현행 형식 저장물의 같은 절차(문구 없음)",
     "notice": "옛 칠 1획을 버렸다 — 칠 구조가 바뀌었다(선·면은 그대로다)",
+    "notice_clean": "",
     "strokes_saved": 9,
     "strokes_kept": 8
   },
