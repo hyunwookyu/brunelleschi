@@ -24,17 +24,25 @@ import { C } from './constants'
 
 export type RepId = 'brick' | 'stone' | 'wood' | 'tile' | 'roof' | 'conc'
 export const REP_IDS: RepId[] = ['brick', 'stone', 'wood', 'tile', 'roof', 'conc']
-export const REP_NAMES: Record<RepId, string> = {
+/** web2-52 — 재료 집합의 정본: 무늬 여섯 + **단색 둘**(유리·금속 — 무늬가 없으니 톤만).
+ *  46의 다섯(색 묶음)은 폐기가 아니라 승격이다 — 지시 52 §왜. */
+export type MatRepId = RepId | 'glass' | 'metal'
+export const MATREP_IDS: MatRepId[] = [...REP_IDS, 'glass', 'metal']
+export const isMatRepId = (v: unknown): v is MatRepId =>
+  typeof v === 'string' && (MATREP_IDS as string[]).includes(v)
+export const REP_NAMES: Record<MatRepId, string> = {
   brick: '벽돌', stone: '석재', wood: '목재', tile: '타일', roof: '기와', conc: '콘크리트',
+  glass: '유리', metal: '금속',
 }
 export const isRepId = (v: unknown): v is RepId =>
   typeof v === 'string' && (REP_IDS as string[]).includes(v)
 
 /** 순환(손통 「표현」 줄) — 없음→벽돌→…→콘크리트→없음. cls·mat 순환과 같은 문법. */
-export const cycleRep = (cur: RepId | undefined): RepId | undefined => {
-  if (cur === undefined) return REP_IDS[0]
-  const i = REP_IDS.indexOf(cur)
-  return i + 1 < REP_IDS.length ? REP_IDS[i + 1] : undefined
+export const cycleRep = (cur: MatRepId | undefined): MatRepId | undefined => {
+  // web2-52: 순환이 여덟을 돈다(없음 → 무늬 여섯 → 유리 → 금속 → 없음)
+  if (cur === undefined) return MATREP_IDS[0]
+  const i = MATREP_IDS.indexOf(cur)
+  return i + 1 < MATREP_IDS.length ? MATREP_IDS[i + 1] : undefined
 }
 
 export interface Seg3 { a: V3; b: V3 }

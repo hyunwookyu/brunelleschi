@@ -14,10 +14,10 @@ import { C } from '../core/constants'
 import { projW } from '../core/camera'
 import { hatchSegments, type HatchMode } from '../core/hatch'
 import { hatchSpecOf, hatchHexOf, solidHexOf } from '../core/palette'
-import { repSegments, repBasis, repVisibleFamilies, isRepId, type Seg3 } from '../core/matrep'
+import { repSegments, repBasis, repVisibleFamilies, isRepId, isMatRepId, type Seg3 } from '../core/matrep'
 import { project } from '../core/camera'
 import { paintSideAt } from '../core/paint'
-import { uvBoxOf, texLevel, bakeFaceTex, type UvBox } from '../core/facetex'
+import { uvBoxOf, texLevel, bakeFaceTex, type UvBox, type RepBake } from '../core/facetex'
 import { faceHatchSpacingWorld } from '../core/hatch'
 import type { Grade, Stroke, Face } from '../core/types'
 
@@ -404,7 +404,12 @@ function repLs(segs: Seg3[], fam: 'major' | 'minor', faceId: number,
   return ls
 }
 
+const repLinesRetired = true as boolean   // web2-52 — 선분 겹 정지 스위치(삭제 전 단계)
 function syncRep(r: R3D, app: App) {
+  // ⚠ web2-52 — 무늬는 이제 면 텍스처에 굽는다(52-1 · syncPaintTex/bakeFaceTex).
+  //   이 GL 선분 경로는 정지 상태로 남긴다(A-4 — 폐기 코드는 게이트 통과 «뒤에» 지운다.
+  //   mats52 게이트가 초록이 된 마감 커밋에서 이 함수와 repGroup·gateRep을 걷는다).
+  if (repLinesRetired) return
   const reps = app.doc.faces.filter(f => f.rep !== undefined)
   const key = `${app.docVersion}|${reps.length}`
   if (key === repKey) return
@@ -451,6 +456,10 @@ interface PaintTexEntry {
    *  뒤에서 봐도 같은 세계 자리다 — 옛 LineSegments와 같은 거동) */
   side: 1 | -1 | 0
   level: number
+  /** web2-52 — 마지막 굽기의 무늬 계열 보임(major<<1|minor). 줌이 단계 경계를 안 넘어도
+   *  밀도 하한(REP_MIN_PX)이 계열을 갈랐으면 다시 굽는다(49 gateRep의 매 프레임 판정을
+   *  굽기 세계로 옮긴 것). */
+  famBits: number
 }
 let paintTexes = new Map<string, PaintTexEntry>()
 let paintKey = ''
@@ -490,6 +499,13 @@ function syncPaintTex(r: R3D, app: App) {
       }
     }
   }
+  // web2-52 — 재료 무늬가 붙은 면: 그 쪽의 텍스처가 서야 무늬가 구워진다(칠 유무 무관).
+  // 쪽 규약은 49 그대로(rep.s — 보고 있던 쪽에 붙는다). 반대쪽 칠과는 다른 항목이라 공존.
+  for (const f of app.doc.faces) {
+    if (f.rep === undefined || !isMatRepId(f.rep.m)) continue
+    if (f.rep.s !== 1 && f.rep.s !== -1) continue
+    wants.set(`${f.id}:${f.rep.s}`, { faceId: f.id, side: f.rep.s })
+  }
   for (const w of wants.values()) {
     const rf = app.faces.find(x => x.id === w.faceId)
     if (!rf || rf.tris.length < 3) continue               // 못 풀린 면 — 칠도 쉰다(면의 규약)
@@ -528,7 +544,7 @@ function syncPaintTex(r: R3D, app: App) {
     mesh.userData.centroid = { x: cx / rf.tris.length, y: cy / rf.tris.length, z: cz / rf.tris.length }
     r.paintGroup.add(mesh)
     paintTexes.set(`${w.faceId}:${w.side}`, {
-      canvas, tex, mesh, box, faceId: w.faceId, side: w.side, level: 0,
+      canvas, tex, mesh, box, faceId: w.faceId, side: w.side, level: 0, famBits: -1,
     })
   }
 }
@@ -558,13 +574,36 @@ function gatePaintTex(r: R3D, app: App) {
     }
     const screenPx = n >= 2 ? Math.max(x1 - x0, y1 - y0) * vs * dpr : C.FACETEX_MIN_PX
     const lv = texLevel(screenPx)
-    if (lv !== e.level) {
+    // web2-52 — 이 (면, 쪽)의 재료 몫: 쪽이 rep.s와 같을 때만 굽는다(49의 쪽 규약).
+    // px/mm은 49 gateRep의 그 자(면 중심에서 0.01 세계단위의 투영)를 그대로 쓴다(#54).
+    let rep: RepBake | null = null
+    let famBits = -1
+    const mm = app.lift.mmPerUnit
+    if (face?.rep && isMatRepId(face.rep.m) && mm && mm > 0 &&
+        (e.side === 0 ? true : face.rep.s === e.side)) {
+      const c = e.mesh.userData.centroid as { x: number; y: number; z: number }
+      const u = repBasis(rf).u
+      const p0 = project(app.lift.an, app.pose, c)
+      const p1 = project(app.lift.an, app.pose, {
+        x: c.x + u.x * 0.01, y: c.y + u.y * 0.01, z: c.z + u.z * 0.01,
+      })
+      const pxPerMm = p0 && p1 ? (Math.hypot(p1.x - p0.x, p1.y - p0.y) / 0.01 * vs) / mm : null
+      rep = { m: face.rep.m, seed: face.id, mm, pxPerMm, texelPerPx: lv / Math.max(1, screenPx) }
+      if (isRepId(face.rep.m)) {
+        // 계열 보임이 갈리면 같은 단계라도 다시 굽는다 — famBits가 굽기 열쇠의 일부다
+        const probe = repSegments(rf, face.rep.m, mm, face.id)
+        const fams = repVisibleFamilies(probe.majorStepMm, probe.minorStepMm, pxPerMm ?? 0)
+        famBits = (fams.major ? 2 : 0) | (fams.minor ? 1 : 0)
+      } else famBits = 4                                   // 단색(유리·금속) — 계열 없음
+    }
+    if (lv !== e.level || famBits !== e.famBits) {
       const hatch = hatchFaceMode && face?.fill === 1 && face
         ? { face, spacingWorld: faceHatchSpacingWorld(app.lift.an, rf, hatchSpecOf(face).spacingPx) } : null
       const strokes = e.side === 0 ? [] : paintStrokesOf(app, e.faceId, e.side)
-      bakeFaceTex(e.canvas, rf, e.box, lv, strokes, e.side === 0 ? 1 : e.side, hatch)
+      bakeFaceTex(e.canvas, rf, e.box, lv, strokes, e.side === 0 ? 1 : e.side, hatch, rep)
       e.tex.needsUpdate = true
       e.level = lv
+      e.famBits = famBits
     }
     e.mesh.visible = sideOk
     // screenPx(양자화 «전» 값)와 포화 여부를 기록한다(2차 [8] — 상한 포화와 «비슷한
@@ -587,14 +626,17 @@ export function setPaintBlendForTest(v: boolean) {
 }
 
 /** 진단·팔용 — 지금 서 있는 텍스처들의 요약(자리·단계·양자화 전 크기·포화·합성). */
-export function paintTexStats(): { key: string; level: number; w: number; h: number; visible: boolean; blending: number; screenPx: number | null; clamped: boolean }[] {
-  const out: { key: string; level: number; w: number; h: number; visible: boolean; blending: number; screenPx: number | null; clamped: boolean }[] = []
+export function paintTexStats(): { key: string; faceId: number; side: number; level: number; gateSide: boolean | null; w: number; h: number; visible: boolean; blending: number; screenPx: number | null; clamped: boolean; famBits: number }[] {
+  const out: ReturnType<typeof paintTexStats> = []
   for (const [k, e] of paintTexes) {
-    const gate = e.mesh.userData.gate as { screenPx?: number; clamped?: boolean } | undefined
+    const gate = e.mesh.userData.gate as { side?: boolean; screenPx?: number; clamped?: boolean } | undefined
     out.push({
-      key: k, level: e.level, w: e.canvas.width, h: e.canvas.height, visible: e.mesh.visible,
+      key: k, faceId: e.faceId, side: e.side, level: e.level, gateSide: gate?.side ?? null,
+      w: e.canvas.width, h: e.canvas.height, visible: e.mesh.visible,
       blending: (e.mesh.material as THREE.MeshBasicMaterial).blending,
       screenPx: gate?.screenPx ?? null, clamped: gate?.clamped ?? false,
+      // web2-52 — 무늬 계열 보임(major<<1|minor · 4=단색 · -1=재료 없음): LOD 판정의 기록
+      famBits: e.famBits,
     })
   }
   return out
@@ -727,11 +769,16 @@ function sortFaces(r: R3D, app: App) {
 export const facesRevealed = (app: Pick<App, 'tool'>): boolean =>
   app.tool === 'paint' || app.tool === 'face'
 
-/** 칠 안 한 면의 표시를 도구에 맞춘다(48-9). 칠한 면은 늘 보인다 — 그림이기 때문이다. */
+/** 칠 안 한 면의 표시를 도구에 맞춘다(48-9). 칠한 면은 늘 보인다 — 그림이기 때문이다.
+ *  ⚠ web2-52 — **재료가 깔린 면도 늘 보인다**(재료는 도면의 것 — 같은 이유). 곱 합성은
+ *  밑이 없으면 0이라, 면 메시가 숨으면 무늬 텍스처가 «visible인데 안 보이는» 상태가 된다
+ *  (D-2 재현: 연필 도구에서 벽 상자 안료가 rep 전후 정확히 같았다 — 49 무회귀의 그 자리). */
 function revealFaces(r: R3D, app: App) {
   const on = facesRevealed(app)
   for (const k of r.faceGroup.children) {
-    k.visible = (k.userData as { painted?: boolean }).painted === true || on
+    const fid = (k.userData as { faceId?: number }).faceId
+    const hasRep = fid !== undefined && app.doc.faces.find(f => f.id === fid)?.rep !== undefined
+    k.visible = (k.userData as { painted?: boolean }).painted === true || hasRep || on
   }
 }
 

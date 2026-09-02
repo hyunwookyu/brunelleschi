@@ -21,12 +21,12 @@
 // «흰 장막»이 구조로 소멸한다. DEFERRED «칠은 제 겹을 가져야 한다» 행이 이 형태로 닫혔다).
 
 import type { Stroke, Face, CamPose } from './types'
-import { repBasis } from './matrep'
+import { repBasis, repSegments, repVisibleFamilies, isRepId, type MatRepId } from './matrep'
 import type { ResolvedFace } from './face'
 import { hatch2d } from './hatch'
 import { facePlane } from './paint'
 import { rayThrough, type Analysis } from './camera'
-import { hatchSpecOf, hatchHexOf } from './palette'
+import { hatchSpecOf, hatchHexOf, materialOf, type MatId } from './palette'
 import { MAT, rng32 } from './material'
 import { C } from './constants'
 import { type Pt, type V3, pt, add3, mul3, dot3 } from './vec'
@@ -341,10 +341,14 @@ function drawStrokeTex(
  *  면 고정 해칭(hatchMode 'face' · web2-45의 둘째 판)은 획보다 **아래**에 깐다
  *  (52-4의 차례 «톤·무늬가 아래, 손으로 그은 것이 위»를 지금부터 지킨다).
  *  결정론: 같은 입력 → 같은 픽셀(캔버스 2D 벡터 연산뿐 — 시드 없음). */
+/** web2-52 — 굽기 입력의 재료 몫: 어느 재료를, 어느 시드로, 어느 밀도(px/mm)에서. */
+export interface RepBake { m: MatRepId; seed: number; mm: number; pxPerMm: number | null; texelPerPx: number }
+
 export function bakeFaceTex(
   canvas: HTMLCanvasElement, rf: ResolvedFace, box: UvBox, level: number,
   strokes: Stroke[], side: 1 | -1,
   hatchFace: { face: Face; spacingWorld: number } | null,
+  rep: RepBake | null = null,
 ): void {
   const dims = texDims(box, level)
   if (canvas.width !== dims.w || canvas.height !== dims.h) {
@@ -356,10 +360,53 @@ export function bakeFaceTex(
   g.globalAlpha = 1
   g.fillStyle = '#ffffff'                      // 곱의 항등 — 안 칠한 자리는 아래를 안 바꾼다
   g.fillRect(0, 0, dims.w, dims.h)
+  // 차례는 제도 그대로(52-4): 톤·무늬가 바닥 → 도면 위 면 고정 해칭 → 손으로 그은 칠
+  if (rep) drawRepTex(g, rf, box, dims, rep)
   if (hatchFace) drawHatchTex(g, rf, box, dims, hatchFace.face, hatchFace.spacingWorld)
   for (const s of strokes) {
     if (inTex(s, rf.id, side)) drawStrokeTex(g, s, box, dims)
   }
+}
+
+/** web2-52 — 재료를 텍스처에: 기본 톤(밝음)으로 바탕을 물들이고(곱 — 종이가 그 톤이 된다)
+ *  무늬 선(그림자 톤)을 얹는다. **생성은 49의 `repSegments` 그대로**고 그리는 자리만
+ *  바뀌었다(지시 52-1 «바뀌는 것은 어디에 그리는가 한 줄이다»). 계열 보임(밀도 하한)은
+ *  49의 `repVisibleFamilies`가 같은 문(C.REP_MIN_PX)으로 판정한다 — 굵기는 텍셀 1이고
+ *  텍스처 단계가 화면 크기를 따르므로 «굵기 화면 고정»의 49 규약이 근사로 산다.
+ *  유리·금속(단색)은 바탕 톤만이다 — 무늬가 없다는 것이 그 재료의 정의다(52-2). */
+function drawRepTex(
+  g: CanvasRenderingContext2D, rf: ResolvedFace, box: UvBox,
+  dims: { w: number; h: number; pxPerUnit: number }, rep: RepBake,
+) {
+  const mat = materialOf(rep.m as MatId)
+  if (!mat) return
+  g.save()
+  g.globalAlpha = 1
+  g.fillStyle = mat.tones[0]!                          // 밝음 — 종이 톤(곱이라 항상 어둡히기만)
+  g.fillRect(0, 0, dims.w, dims.h)
+  if (isRepId(rep.m) && rep.mm > 0) {
+    const segs = repSegments(rf, rep.m, rep.mm, rep.seed)
+    const fams = repVisibleFamilies(segs.majorStepMm, segs.minorStepMm, rep.pxPerMm ?? 0)
+    const draw = (list: { a: V3; b: V3 }[]) => {
+      g.beginPath()
+      for (const s of list) {
+        const a = uvOf(box.basis, s.a), b = uvOf(box.basis, s.b)
+        g.moveTo((a.x - box.u0) * dims.pxPerUnit, dims.h - (a.y - box.v0) * dims.pxPerUnit)
+        g.lineTo((b.x - box.u0) * dims.pxPerUnit, dims.h - (b.y - box.v0) * dims.pxPerUnit)
+      }
+      g.stroke()
+    }
+    g.strokeStyle = mat.tones[mat.tones.length - 1]!   // 그림자 — 줄눈·결의 선
+    // 선폭 = 화면 1px 상당 텍셀(49의 «굵기 화면 고정» — 1텍셀 고정이면 축소 표집에서
+    // 0.7px 대역으로 뭉개져 줄눈의 어두움이 바탕과 섞인다: rep49 ③이 실제로 걸렸다)
+    g.lineWidth = Math.max(1, rep.texelPerPx)
+    // 알파 1 — 0.85는 이중 감쇠였다(축소 표집이 이미 바탕과 섞는다 · dpr2에서 줄눈
+    // 어두움이 검출 문턱(370) 아래로 희석돼 rep49 ③이 걸렸다 — 그 실측이 이 값의 사유)
+    g.globalAlpha = 1
+    if (fams.major) draw(segs.major)
+    if (fams.minor) draw(segs.minor)
+  }
+  g.restore()
 }
 
 /** 면 고정 해칭을 텍스처에 — 생성(각도·간격·짝수-홀수 절단)은 45의 `hatch2d` 그대로다

@@ -1,11 +1,11 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "2026-09-02 (web2-51 마감)",
+  "measured_at": "2026-09-02 (web2-52 대응 — 마감 전)",
   "unit": {
-    "files": 125,
-    "tests": 1020,
+    "files": 126,
+    "tests": 1025,
     "wall_s": 31,
-    "note": "web2-51: +1파일(brush51.test) · +4건. 벽시계는 vitest Duration(30.87s 실측 반올림)"
+    "note": "web2-52: +1파일(mats52.test 5건) · 46 갱신"
   },
   "e2e": {
     "command": "npx playwright test --workers=1 (dpr1+dpr2)",
@@ -18,7 +18,11 @@
       "cells_added": 18,
       "note": "brush51 9팔×2dpr − dpr2 skip 1 = 17통과+1skip. 전량 벽시계는 마감 전량 실행에서 갱신한다(3차 [12] — «마감에서 채운다»를 여기 적는다)"
     },
-    "full_wall": "641통과+1skip · 1.0h (--workers=1 · dpr1+dpr2 · web2-51 마감 전량 — LEDGER 꺼짐 #89/#94)"
+    "full_wall": "641통과+1skip · 1.0h (--workers=1 · dpr1+dpr2 · web2-51 마감 전량 — LEDGER 꺼짐 #89/#94)",
+    "web2_52": {
+      "cells_added": 12,
+      "note": "mats52 6팔×2dpr. rep49는 이식(칸 수 불변 12) · mats46 줄 수 게이트 갱신. 전량 벽시계는 마감 전량 실행에서"
+    }
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",

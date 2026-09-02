@@ -1642,7 +1642,7 @@ export function faceFrontTarget(app: App): CamPose | null {
 import { splitByFace, frontFaceAt, classOf, faceClassOf, FACE_CLASSES, paintSideAt, type FaceClass } from '../core/paint'
 import { uvFromScreen, paintGeoOf } from '../core/facetex'
 import { cycleMat, isMatId, materialOf, type MatId, type Instr } from '../core/palette'
-import { cycleRep, isRepId, REP_NAMES, repBasis } from '../core/matrep'
+import { cycleRep, isRepId, isMatRepId, REP_NAMES, repBasis } from '../core/matrep'
 
 /** 이 면 중심에서의 «화면 px / 세계 단위»(지금 포즈·줌) — gateRep의 pxPerMm와 같은 식.
  *  ⚠ **u축(면의 수평) 방향 하나다** — 원근으로 축이 비등방이면 굵기 환산에는 못 쓴다
@@ -1844,7 +1844,8 @@ export function cycleFaceRep(app: App, faceId: number): { name: string; s: 1 | -
   const rf = app.faces.find(f => f.id === faceId)
   if (!rf) return null
   const before = face.rep ? { ...face.rep } : undefined
-  const nextM = cycleRep(isRepId(face.rep?.m) ? face.rep.m : undefined)
+  // web2-52 — 문지기가 isRepId(여섯)면 glass에서 brick으로 돌아가 단색 둘이 순환 밖이 된다
+  const nextM = cycleRep(isMatRepId(face.rep?.m) ? face.rep.m : undefined)
   const s = paintSideAt(rf, app.pose)
   const after = nextM === undefined ? undefined : { m: nextM, s }
   if (after === undefined) delete face.rep; else face.rep = { ...after }

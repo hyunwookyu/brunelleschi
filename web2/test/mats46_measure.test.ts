@@ -42,7 +42,7 @@ const OUT: Record<string, unknown> = {
   when_cmd: 'npx vitest run test/mats46_measure.test.ts',
 }
 
-describe('무늬 판별 — 같은 면, 다섯 재료', () => {
+describe('무늬 판별 — 같은 면, 여덟 재료(52가 셋을 더했다)', () => {
   it('생성된 해칭의 «주 방향 개수»와 선분 수가 재료마다 갈린다', () => {
     const { s, wall } = roomSession()
     // render3d.syncHatch와 같은 호출 형태(화면 판) — 두 자리에 다른 식을 안 둔다.
@@ -74,7 +74,7 @@ describe('무늬 판별 — 같은 면, 다섯 재료', () => {
     }
     // 어느 두 재료도 (방향 무리 수 · 선분 수 · 각도)가 전부 같지는 않다
     const sigs = Object.values(rows).map(r => `${r.dirs}|${r.segs}|${r.angleDeg}`)
-    expect(new Set(sigs).size).toBe(5)
+    expect(new Set(sigs).size).toBe(8)   // web2-52 — 재료 여덟(석재·타일·기와 추가 · D-W22): 서로 전부 다르다
     // **퇴화 팔**(1차 [5] — 도달 가능성을 항등이 아니라 값으로): 각도·간격을 벽돌 것으로
     // 통일하면(교차 깃발만 남긴다) 같은 면·같은 자에서 판별이 실제로 무너진다 —
     // 그 «몇으로 무너지는가»가 이 게이트의 도달 가능성 값이다(복제 목록의 «1»은 정의다).

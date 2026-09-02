@@ -1897,7 +1897,7 @@ const GRIP_ROWS = [
   { key: 'fmat', name: '재료', tip: '재료 — 잡은 면의 재료를 돌린다(채움의 무늬·색을 정한다)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="22" height="14"/><path d="M5 16 H27 M13 9 V16 M20 16 V23" stroke-width="1.1"/></svg>' },
   // web2-49 — 재료 표현(실치수 무늬 · 면 고정 · 보고 있는 쪽에 붙는다). 그림 정본은
   // docs/instrument-icons.md 「손통」 절 — 벽돌 켜 셋 + 어긋난 수직 줄눈(fmat의 한 켜와 갈린다).
-  { key: 'rep', name: '표현', tip: '표현 — 잡은 면의 재료 표현을 돌린다(벽돌·석재·목재·타일·기와·콘크리트 — 실치수로, 보고 있는 쪽에 붙는다)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="22" height="18"/><path d="M5 13 H27 M5 19 H27 M12 7 V13 M20 13 V19 M12 19 V25" stroke-width="1.1"/></svg>' },
+  { key: 'rep', name: '표현', tip: '표현 — 잡은 면의 재료를 돌린다(벽돌·석재·목재·타일·기와·콘크리트·유리·금속 — 무늬는 실치수로, 유리·금속은 톤만 · 보고 있는 쪽에 붙는다)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="22" height="18"/><path d="M5 13 H27 M5 19 H27 M12 7 V13 M20 13 V19 M12 19 V25" stroke-width="1.1"/></svg>' },
   // web2-47 — 잡은 면의 면적(근거 = 잡힌 그 면이 이미 밝다). 축척 미정이면 이유가 뜬다.
   { key: 'farea', name: '면적', tip: '면적 — 잡은 면의 면적. 축척이 없으면 숫자를 안 낸다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M10 20 h6 M10 20 v-4" stroke-width="1.1"/></svg>' },
 ] as const
@@ -2150,6 +2150,93 @@ function setPaintHex(hex: string, why: string) {
     paintSizeRow.set(w, b)
   }
   painttrayEl.append(sizeWrap)
+
+  // ── 브러시 프리셋(web2-52-3) — 도구 설정 묶음(종류·크기·색)을 **기기에** 저장한다 ──
+  // 문서가 아니다 — 손에 붙는 것이다(필압 보정과 같은 이유 · 지시 52-3). 세 칸:
+  // 탭 = 적용, 길게 누름(450ms — WRITE_HOLD_MS의 그 값 문법) = 지금 설정을 그 칸에 저장.
+  // Injector(51)와 역할이 안 겹친다 — Injector는 그린 것에서 «되찾고» 프리셋은 «미리 정한다».
+  // ⚠ 불투명도는 안 싣는다 — 이 앱에 불투명도 «손잡이»가 없다(도구의 성질·상수다).
+  //   값 손잡이가 생기면 그때 축이 된다(DEFERRED — 없는 축을 저장하면 유령 열쇠다).
+  const PRESET_KEY = 'b2.brushPresets.v1'
+  type BrushPreset = { i: Instr; w: number; hex: string }
+  const readPresets = (): (BrushPreset | null)[] => {
+    try {
+      const raw = localStorage.getItem(PRESET_KEY)
+      if (!raw) return [null, null, null]
+      const arr = JSON.parse(raw) as unknown
+      if (!Array.isArray(arr)) return [null, null, null]
+      return [0, 1, 2].map(k => {
+        const v = arr[k] as Partial<BrushPreset> | null
+        return v && typeof v.hex === 'string' && typeof v.w === 'number' &&
+          (v.i === 'brush' || v.i === 'marker' || v.i === 'cp' || v.i === 'pencil')
+          ? { i: v.i, w: v.w, hex: v.hex } : null
+      })
+    } catch { return [null, null, null] }
+  }
+  const writePresets = (ps: (BrushPreset | null)[]) => {
+    try { localStorage.setItem(PRESET_KEY, JSON.stringify(ps)) } catch { /* 세션 한정 */ }
+  }
+  const presetWrap = document.createElement('div')
+  presetWrap.id = 'paint-presets'
+  presetWrap.className = 'rrow prow'
+  const presetBtns: HTMLButtonElement[] = []
+  const paintPresetInstrName = (i: Instr): string =>
+    i === 'brush' ? '붓' : i === 'marker' ? '마커' : i === 'cp' ? '색연필' : '연필'
+  const renderPresets = () => {
+    const ps = readPresets()
+    presetBtns.forEach((b, k) => {
+      const v = ps[k]!
+      const dot = b.querySelector('.pdot') as HTMLElement
+      const lbl = b.querySelector('.plbl') as HTMLElement
+      if (v) {
+        dot.style.background = v.hex
+        dot.style.borderStyle = 'solid'
+        lbl.textContent = `${paintPresetInstrName(v.i)} ${v.w}`
+        b.title = `프리셋 ${k + 1} — ${paintPresetInstrName(v.i)} · ${v.w}px · ${v.hex}. 누르면 적용 · 길게 눌러 지금 설정으로 바꾼다(기기에 남는다)`
+      } else {
+        dot.style.background = 'transparent'
+        dot.style.borderStyle = 'dashed'
+        lbl.textContent = '비어 있다'
+        b.title = `프리셋 ${k + 1} — 비어 있다. 길게 눌러 지금 설정(도구·크기·색)을 저장한다(기기에 남는다 — 문서가 아니다)`
+      }
+    })
+  }
+  for (const k of [0, 1, 2]) {
+    const b = document.createElement('button')
+    b.id = `btn-preset-${k + 1}`
+    b.className = 'presetbtn'
+    b.dataset.act = 'state'
+    b.innerHTML = '<span class="pdot"></span><span class="plbl"></span>'
+    let holdT: number | null = null
+    let held = false
+    b.addEventListener('pointerdown', () => {
+      held = false
+      holdT = window.setTimeout(() => {
+        held = true
+        const ps = readPresets()
+        ps[k] = { i: app.paintSel.i, w: app.paintSel.w, hex: app.paintSel.hex }
+        writePresets(ps)
+        renderPresets()
+        status(`프리셋 ${k + 1}에 저장 — ${paintPresetInstrName(app.paintSel.i)} · ${app.paintSel.w}px · ${app.paintSel.hex}(이 기기)`)
+      }, C.WRITE_HOLD_MS)
+    })
+    const cancelHold = () => { if (holdT !== null) { clearTimeout(holdT); holdT = null } }
+    b.addEventListener('pointerup', cancelHold)
+    b.addEventListener('pointerleave', cancelHold)
+    b.addEventListener('click', () => {
+      if (held) return                                   // 저장 직후의 click은 적용이 아니다
+      const v = readPresets()[k]
+      if (!v) { status(`프리셋 ${k + 1}은 비어 있다 — 길게 눌러 지금 설정을 저장한다`); return }
+      app.paintSel = { i: v.i, w: v.w, hex: v.hex }
+      if (app.tool !== 'paint') setTool('paint')
+      syncPainttray()
+      status(`프리셋 ${k + 1} 적용 — ${paintPresetInstrName(v.i)} · ${v.w}px · ${v.hex}`)
+    })
+    presetBtns.push(b)
+    presetWrap.append(b)
+  }
+  renderPresets()
+  painttrayEl.append(presetWrap)
 
   // ── 색상 휠 — **기본이다**(48-7) ──────────────────────────────────────────
   const wheelWrap = document.createElement('div')
@@ -3064,7 +3151,8 @@ const diag = {
     PAINT51_CP_SKIP_ALPHA: C.PAINT51_CP_SKIP_ALPHA,
     PAINT51_MARKER_TIP_ALPHA: C.PAINT51_MARKER_TIP_ALPHA, PAINT51_MARKER_TIP_LEN_K: C.PAINT51_MARKER_TIP_LEN_K,
     PAINT51_BRUSH_BRISTLES: C.PAINT51_BRUSH_BRISTLES, PAINT51_BRUSH_SPLIT_T: C.PAINT51_BRUSH_SPLIT_T,
-    PAINT51_BRUSH_SPLIT_K: C.PAINT51_BRUSH_SPLIT_K, PAINT51_BRUSH_FLOW_NODES: C.PAINT51_BRUSH_FLOW_NODES }),
+    PAINT51_BRUSH_SPLIT_K: C.PAINT51_BRUSH_SPLIT_K, PAINT51_BRUSH_FLOW_NODES: C.PAINT51_BRUSH_FLOW_NODES,
+    MATS52_SCALE_TOL: C.MATS52_SCALE_TOL, REP_MIN_PX: C.REP_MIN_PX }),
   /** 저장물 원문(파일 저장과 같은 함수 — #54) — paint50 팔이 «텍스처가 파일에 없다»를 잰다 */
   serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
   corruptPaintTex: () => { const n = corruptPaintTexForTest(); invalidate(); return n },

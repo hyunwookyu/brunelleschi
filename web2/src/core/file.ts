@@ -8,7 +8,7 @@ import { GRADES } from './material'
 import { UNITS, type Unit } from './dim'
 import { validPressCal } from './press'
 import { isMatId, isHex6 } from './palette'
-import { isRepId } from './matrep'
+import { isMatRepId } from './matrep'
 import type { Measure } from './measure'
 import { C } from './constants'
 
@@ -307,7 +307,8 @@ export function parseBrnl(text: string, info?: ParseInfo): BrnlData | null {
       if (isMatId(f.mat)) face.mat = f.mat   // web2-46 — 모양이 틀리면 그 필드만 버린다
       // 재료 표현(web2-49) — m·s 둘이 **같이** 서야 산다(쪽 없는 무늬는 48-5 위반이라
       // 통째로 버린다 — 조용히 «양쪽에 보이는 무늬»를 만들지 않는다).
-      if (isRepId(f.rep?.m) && (f.rep.s === 1 || f.rep.s === -1)) {
+      // web2-52 — 재료 여덟(무늬 여섯 + 유리·금속). 무늬 텍스처는 파생이라 파일에 없다(43 목록 불변)
+      if (isMatRepId(f.rep?.m) && (f.rep.s === 1 || f.rep.s === -1)) {
         face.rep = { m: f.rep.m, s: f.rep.s }
       }
       faces.push(face)

@@ -2,36 +2,11 @@
   "what": "web2-49 — 화면 몫: 무늬 픽셀(켬/끔 차) · 면의 쪽 · 원근 단조(픽셀) · 밀도 하한(실배관) · 스무 면 프레임",
   "note_92": "판정자는 픽셀 차·화면 간격·프레임 ms다. 「rep을 붙였다」는 이름표라 안 센다",
   "on_off_side": {
-    "def": "벽 상자 #gl 잉크 — rep 끔/켬의 차 · 평면 건너편에서 돌아본 포즈: 장면은 보이고(획 잉크 > 0) 무늬 계열만 접힌다(children.visible 전 거짓). sd = 카메라의 평면 부호 거리(세계 단위 · 진단값 — 0이면 팔이 안 선다)",
-    "before": 262,
-    "after": 21694,
-    "delta": 21432,
-    "diag_children": [
-      {
-        "f": 9,
-        "stepMm": 67,
-        "visible": true,
-        "gate": {
-          "side": true,
-          "lod": true,
-          "pxPerMm": 0.12841722813789633
-        },
-        "order": -999,
-        "segs": 40
-      },
-      {
-        "f": 9,
-        "stepMm": 200,
-        "visible": true,
-        "gate": {
-          "side": true,
-          "lod": true,
-          "pxPerMm": 0.12841722813789633
-        },
-        "order": -999,
-        "segs": 591
-      }
-    ],
+    "def": "벽 상자 #gl 잉크 — rep 끔/켬의 차 · 평면 건너편에서 돌아본 포즈: 장면은 보이고(획 잉크 > 0) 무늬만 접힌다. ⚠ web2-52 이식: 무늬가 GL 선분에서 면 텍스처로 옮겨 가(52-1) 접힘의 판정자가 children.visible → 텍스처 엔트리 visible/gateSide(far_tex)가 됐다 — children은 이제 늘 빈 배열이다(정지 겹). sd = 카메라의 평면 부호 거리(세계 단위 · 진단값 — 0이면 팔이 안 선다)",
+    "before": 64762,
+    "after": 5960716,
+    "delta": 5895954,
+    "diag_children": [],
     "flipped": {
       "sd": 7.111111,
       "lookat_center_px": {
@@ -40,49 +15,40 @@
       },
       "onScreen": true
     },
-    "far_children": [
+    "far_children": [],
+    "far_tex": [
       {
-        "f": 9,
-        "stepMm": 67,
+        "key": "9:1",
+        "faceId": 9,
+        "side": 1,
+        "level": 512,
+        "gateSide": false,
+        "w": 512,
+        "h": 458,
         "visible": false,
-        "gate": {
-          "side": false,
-          "lod": true,
-          "pxPerMm": 0.1669067410596131
-        },
-        "order": -999,
-        "segs": 40
-      },
-      {
-        "f": 9,
-        "stepMm": 200,
-        "visible": false,
-        "gate": {
-          "side": false,
-          "lod": true,
-          "pxPerMm": 0.1669067410596131
-        },
-        "order": -999,
-        "segs": 591
+        "blending": 4,
+        "screenPx": 505,
+        "clamped": false,
+        "famBits": 3
       }
     ],
     "far_sd2": -8.533333,
     "rep_s": 1,
-    "far_whole_ink_strokes_visible": 6422,
+    "far_whole_ink_strokes_visible": 10079567,
     "note_ruler": "before/after는 벽 «상자»의 잉크이고 far_whole_ink는 «화면 전체»의 잉크다 — 같은 자(알파>8 물리 px 수), 다른 창(2차 [4]의 24배는 창 크기 차다). lookat_center_px는 문서 CSS px(project의 좌표 — dpr 무관)이고 frame(1200×800)이 그 자다",
     "note_zero": "⚠ 문면 정정(web2-50): 49 시점의 이 자리는 «면이 하나라 sortFaces가 이르게 반환(정렬은 둘부터) — 미작동이 아니라 설계다»였는데, **50이 그 이르기 반환을 결함으로 수리했다**(면 하나여도 층(면0·무늬+1·칠+2)이 서야 한다 — 곱 합성이 무늬 아래에 깔리는 실측이 잡았다). 그러므로 order는 이제 0이 아니라 음수 대역의 배정값이다 — 49가 selfcheck 0 플래그를 «설계»로 닫은 판단은 뒤집혔다(그 기록은 NOTES 50 대응 절)",
-    "back": 21694,
+    "back": 5960716,
     "note_back_identity": "back == after(정확 일치)는 설계 보장이다 — 같은 포즈의 결정론 렌더 복원(§5.1 자기참조 유형 3). 이 팔의 측정 몫은 «건너편에서 gate.side가 접고 부호가 반대»이고, 복원은 그 대조의 닫음일 뿐 임계를 안 건다"
   },
   "foreshorten_px": {
     "def": "벽돌 수직 줄눈의 화면 x 간격(물리 px) — 깊은 쪽(오른쪽 = 소실점 쪽)으로 줄어드는가. 화면 고정 무늬라면 등간격이라 이 단조가 없다(그것이 판별력이다 — D-3)",
     "columns": [
       16.5,
-      33.5,
-      51,
+      34,
+      51.5,
       67.5,
       84,
-      99.5,
+      100,
       115.5,
       130.5,
       145,
@@ -96,22 +62,22 @@
       250.5,
       262.5,
       274,
-      285.5,
+      285,
       296.5,
-      307.5,
+      307,
       318,
-      328.5,
-      338.5,
+      328,
+      339,
       348.5,
       358.5
     ],
     "gaps": [
-      17,
       17.5,
-      16.5,
-      16.5,
-      15.5,
+      17.5,
       16,
+      16.5,
+      16,
+      15.5,
       15,
       14.5,
       14.5,
@@ -124,16 +90,16 @@
       12,
       12,
       11.5,
+      11,
       11.5,
-      11,
-      11,
       10.5,
-      10.5,
+      11,
       10,
-      10,
+      11,
+      9.5,
       10
     ],
-    "first_gap": 17,
+    "first_gap": 17.5,
     "last_gap": 10,
     "slope": -0.306,
     "zoom_mm_retention": {
@@ -143,60 +109,49 @@
         "value": 0.2
       },
       "view_s_ratio": 1.492,
-      "gap_ratio": 1.457,
-      "normalized": 0.977,
+      "gap_ratio": 1.429,
+      "normalized": 0.958,
       "screen_fixed_would_give": 0.67,
       "falsify": "화면 고정이면 gap_ratio가 1이라 normalized = 1/z(screen_fixed_would_give — 문 밖)가 된다 — 판별 대상이 문을 실제로 넘는 값(분석 경계)"
     }
   },
   "lod_live": {
-    "def": "실배관(휠 줌)에서 계열 보임이 접히고 돌아오는가 + 픽셀. 문·계층 규칙의 단위판은 rep49_web2.json lod_gate",
+    "def": "실배관(휠 줌)에서 계열 보임이 접히고 돌아오는가 + 픽셀. ⚠ web2-52 이식: 판정자가 children.visible → 텍스처 famBits(계열 비트 — 굽기 열쇠). 문·계층 규칙의 단위판은 rep49_web2.json lod_gate",
     "near": {
-      "ink": 21694,
+      "ink": 5960716,
       "children": [
-        {
-          "f": 9,
-          "visible": true,
-          "stepMm": 67
-        },
-        {
-          "f": 9,
-          "visible": true,
-          "stepMm": 200
-        }
+        3
       ]
     },
     "zoomed_out_view_s": 0.30119421191220214,
     "far_children_visible": [
-      false,
-      false
+      0
     ],
     "back_children_visible": [
-      true,
-      true
+      3
     ],
-    "back_ink": 21694
+    "back_ink": 6055632
   },
   "frame20": {
-    "def": "분할 벽 장면 — 면 수·무늬 계열 수·선분 합과 프레임 dt(중앙·p90, ms). 판정은 «차»다(#82). ⚠ 이 장면의 차는 잡음 바닥(noise_floor — 같은 상태 두 번의 중앙값 차) 대역 안이라 **이 측정은 문(REP_FRAME_BUDGET_MS)을 시험하지 않는다** — 말할 수 있는 것은 «무늬의 프레임 비용이 이 장면에서 잡음보다 작다»까지다(2차 [2][3]). 음의 차는 그 잡음의 얼굴이다",
+    "def": "분할 벽 장면 — 면 수·무늬 텍스처 엔트리 수·텍셀 합과 프레임 dt(중앙·p90, ms — 52 이식: 선분 수 → 텍셀 수가 메모리의 자다). 판정은 «차»다(#82). ⚠ 이 장면의 차는 잡음 바닥(noise_floor — 같은 상태 두 번의 중앙값 차) 대역 안이라 **이 측정은 문(REP_FRAME_BUDGET_MS)을 시험하지 않는다** — 말할 수 있는 것은 «무늬의 프레임 비용이 이 장면에서 잡음보다 작다»까지다(2차 [2][3]). 음의 차는 그 잡음의 얼굴이다",
     "faces": 17,
-    "rep_children": 29,
-    "segments": 634,
+    "rep_tex_entries": 17,
+    "texel_total": 944128,
     "before_ms": {
-      "median": 16.90000009536743,
-      "p90": 19.199999809265137
+      "median": 16.800000190734863,
+      "p90": 18.100000381469727
     },
     "before2_ms": {
       "median": 16.90000009536743,
-      "p90": 17.5
+      "p90": 17.40000009536743
     },
-    "noise_floor_ms": 0,
+    "noise_floor_ms": 0.1,
     "after_ms": {
-      "median": 16.90000009536743,
-      "p90": 18.09999990463257
+      "median": 16.800000190734863,
+      "p90": 17.100000381469727
     },
-    "delta_median_ms": 0,
-    "delta_p90_ms": 0.6,
+    "delta_median_ms": -0.1,
+    "delta_p90_ms": -0.3,
     "gate": {
       "registered": "C.REP_FRAME_BUDGET_MS",
       "value": 8,
@@ -215,7 +170,7 @@
       "faceId": 9
     },
     "rep_button": {
-      "title": "표현 — 잡은 면의 재료 표현을 돌린다(벽돌·석재·목재·타일·기와·콘크리트 — 실치수로, 보고 있는 쪽에 붙는다)",
+      "title": "표현 — 잡은 면의 재료를 돌린다(벽돌·석재·목재·타일·기와·콘크리트·유리·금속 — 무늬는 실치수로, 유리·금속은 톤만 · 보고 있는 쪽에 붙는다)",
       "disabled": false,
       "clickable": true
     },

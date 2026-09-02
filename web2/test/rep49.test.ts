@@ -44,13 +44,15 @@ function slabFace(w: number, d: number): ResolvedFace {
 }
 
 describe('순환·판별', () => {
-  it('없음→벽돌→…→콘크리트→없음 · isRepId', () => {
+  it('없음→벽돌→…→금속→없음(52 — 여덟) · isRepId는 무늬 여섯만', () => {
+    // ⚠ web2-52가 순환을 여덟로 넓혔다(유리·금속 — 단색 재료). 무늬 판별(isRepId)은
+    // 여전히 여섯이다 — 생성기가 받는 집합과 순환 집합이 갈렸다(mats52.test가 정본).
     const seen: (string | undefined)[] = []
     let cur: ReturnType<typeof cycleRep> = undefined
-    for (let i = 0; i <= REP_IDS.length; i++) { cur = cycleRep(cur); seen.push(cur) }
-    expect(seen).toEqual([...REP_IDS, undefined])
+    for (let i = 0; i <= REP_IDS.length + 2; i++) { cur = cycleRep(cur); seen.push(cur) }
+    expect(seen).toEqual([...REP_IDS, 'glass', 'metal', undefined])
     expect(isRepId('brick')).toBe(true)
-    expect(isRepId('glass')).toBe(false)     // 46의 다섯과 **다른 집합**이다(설계 갈래)
+    expect(isRepId('glass')).toBe(false)     // 무늬 없음 — repSegments의 집합 밖(단색)
   })
 })
 

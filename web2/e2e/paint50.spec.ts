@@ -228,18 +228,42 @@ test('①② 곱 — 어느 픽셀도 안 밝아지고 · 아래 무늬가 비�
   // 칠 띠(파란 픽셀)의 75분위 밝기보다 12 이상 어두운 픽셀 수. 곱이면 무늬 선이 띠 몸통보다
   // 어둡게 남고, over(반증)면 띠가 균일해져 0 대역으로 죽는다 — 그것이 판별력이다.
   // (초판의 «유지 비»는 실측이 정확히 1.000이라 아무것도 안 갈랐다 — 그 실패가 이 지표를 골랐다.)
+  // ⚠ web2-52 이식 — 띠 «소속»의 자를 파랑 우세(b−r>30)에서 **기준 대비 어두워짐**으로:
+  // 무늬가 텍스처로 가며 벽 전체가 벽돌 톤(붉은 기)으로 물들어, 파란 마커 × 붉은 바탕의
+  // 역곱 값에서 파랑 우세 판이 죽었다(dpr1 bandPx 1000+ → 345 실측). «base 스냅숏보다
+  // 20 이상 어두워진 픽셀»은 색상 무관이고 획이 얹힌 자리의 정의 그 자체다. 대비 지표
+  // (p75−12)는 그대로다 — 곱이면 띠 안에 무늬 선이 남고 over면 균일해진다(판별력 불변).
   const bandContrast = (key: string) => page.evaluate((k) => {
     const w2 = window as any
     const B = w2.__p50[k as string] as ImageData
+    const A = w2.__p50.base as ImageData
+    const lumAt = (D: ImageData, i: number) => {
+      const a = D.data[i + 3]! / 255
+      return (0.299 * D.data[i]! + 0.587 * D.data[i + 1]! + 0.114 * D.data[i + 2]!) * a + 255 * (1 - a)
+    }
+    // 소속 = 어두워짐 ∧ **획 회랑 안**(두 세로획의 선분 거리 < 26 css px — 픽스처가 아는
+    // 좌표다). 회랑 없이는 반증(over)에서 무늬·해칭의 어두운 픽셀까지 띠로 세어져
+    // 판별력이 죽는다(over 대비 5521 vs 출하 5489 — 실측이 이 좁힘을 강제했다).
+    const dpr = window.devicePixelRatio || 1
+    const bw = Math.round(390 * dpr)
+    const segs = [
+      { x0: 700 - 505, y0: 680 - 335, x1: 750 - 505, y1: 340 - 335 },
+      { x0: 560 - 505, y0: 640 - 335, x1: 620 - 505, y1: 360 - 335 },
+    ]
+    const distToSeg = (px: number, py: number, s: { x0: number; y0: number; x1: number; y1: number }) => {
+      const dx = s.x1 - s.x0, dy = s.y1 - s.y0
+      const L2 = dx * dx + dy * dy
+      const tt = Math.max(0, Math.min(1, ((px - s.x0) * dx + (py - s.y0) * dy) / L2))
+      return Math.hypot(px - (s.x0 + tt * dx), py - (s.y0 + tt * dy))
+    }
     const lums: number[] = []
-    const idx: number[] = []
     for (let i = 0; i < B.data.length; i += 4) {
-      const a = B.data[i + 3]!
-      if (a > 16 && B.data[i + 2]! - B.data[i]! > 30) {
-        const al = a / 255
-        lums.push((0.299 * B.data[i]! + 0.587 * B.data[i + 1]! + 0.114 * B.data[i + 2]!) * al + 255 * (1 - al))
-        idx.push(i)
-      }
+      const pIdx = i / 4
+      const px = (pIdx % B.width) / dpr
+      const py = Math.floor(pIdx / B.width) / dpr
+      if (distToSeg(px, py, segs[0]!) > 26 && distToSeg(px, py, segs[1]!) > 26) continue
+      const lb = lumAt(B, i)
+      if (lumAt(A, i) - lb > 20) lums.push(lb)
     }
     if (lums.length === 0) return { bandPx: 0, contrastPx: 0 }
     const sorted = [...lums].sort((a, b) => a - b)
@@ -279,19 +303,34 @@ test('①② 곱 — 어느 픽셀도 안 밝아지고 · 아래 무늬가 비�
   await snapBox(page, 'over', WALL.x, WALL.y, WALL.w, WALL.h)
   const d2 = await diffBoxes(page, 'base', 'over', 3)
   expect(d2.brighter, '반증 — over 합성은 밝아지는 픽셀을 실제로 낸다').toBeGreaterThan(200)
-  // 반증 조건에서 ②의 지표도 같이 잰다(2차 [2] — 지표가 실제로 갈리는가): over면 띠가
-  // 균일해져 대비 픽셀이 출하의 소수 대역으로 죽는다.
   const underOver = await bandContrast('over')
-  expect(underOver.contrastPx, '반증 — over에서는 띠 안 대비가 죽는다(지표의 판별력)').toBeLessThan(under.contrastPx * 0.5)
   await page.evaluate(() => (window as any).__b2.diag.setPaintBlendForTest(false))
   await page.waitForTimeout(120)
+  // ⚠ web2-52 이식 — ② 지표의 반증 스위치가 바뀌었다: 무늬가 **같은 텍스처 캔버스 안**
+  // (획 아래 층 — 52-1)으로 들어와, over 합성에서도 획 아래로 비친다(비침의 기제가
+  // 층간 합성에서 층내 알파로 이사 — over 대비 5521 ≈ 출하 5489 실측이 그 증거다.
+  // 합성 반증의 몫은 위 ①의 «밝아짐»(d2.brighter)이 그대로 진다). ② 지표의 판별력은
+  // **무늬 끔**(재료 없음 복귀 후 재굽기)이 세운다: 무늬가 없으면 띠 안 대비가 죽는다.
+  const fidBand = await page.evaluate(() => (window as any).__b2.app.doc.faces[0].id)
+  for (let i = 0; i < 10; i++) {
+    const cur = await page.evaluate((id) => (window as any).__b2.app.doc.faces.find((x: any) => x.id === id)?.rep?.m ?? null, fidBand)
+    if (cur === null) break
+    await page.evaluate((id) => (window as any).__b2.diag.cycleRep49(id), fidBand)
+    await page.waitForTimeout(50)
+  }
+  await page.waitForTimeout(300)
+  await snapBox(page, 'norep', WALL.x, WALL.y, WALL.w, WALL.h)
+  const underNoRep = await bandContrast('norep')
+  expect(underNoRep.contrastPx, '반증 — 무늬를 끄면 띠 안 대비가 죽는다(지표의 판별력)')
+    .toBeLessThan(under.contrastPx * 0.5)
   // #97 — 텍스처 캔버스는 DOM에 안 붙는다(전역 canvas 규칙에 안 걸린다 — 값으로)
   const domCanvasAfter = await page.evaluate(() => document.querySelectorAll('canvas').length)
   expect(domCanvasAfter, '#97 — DOM 캔버스 수 불변(텍스처는 화면 밖)').toBe(domCanvasBefore)
   OUT.multiply = {
     def: '벽(무늬 벽돌) 상자 — 칠 전/후 픽셀 밝기(알파 미리곱을 종이 위 밝기로 편 값 · 문턱 C.PAINT50_LUM_TOL). 램프 = 세로획을 y=500에서 수평으로 가로지른 픽셀별 {a,r,g,b,lum}(지시 ①의 형식 그대로). under = 분자/분모(#16). 선 = 위 모서리 상자의 어두운 픽셀 수(칠 뒤). 반증 = NormalBlending 스위치(같은 실행)',
     no_brighter: d1, edge_ramp: ramp, ramp_max_lum: rampMax, paper_lum: +paperLum.toFixed(1),
-    under_pattern: under, under_pattern_over: underOver, line_under_band_dark: lineAfter,
+    under_pattern: under, under_pattern_over: underOver, under_pattern_norep: underNoRep, line_under_band_dark: lineAfter,
+    note_52: '52 이식 — 무늬가 텍스처 안(획 아래 층)으로 와 over에서도 비친다(over 대비 ≈ 출하 — 기록). ② 반증 = 무늬 끔 · 합성 반증 = ①의 밝아짐',
     falsify_over: d2,
     dom_canvas: { before: domCanvasBefore, after: domCanvasAfter },
     constants_used: {
@@ -632,14 +671,22 @@ test('옛 칠 알림 — 45~48 형식의 문서를 «열면» 화면에 한 줄�
   const jp = j.strokes.find((s: any) => s.paint !== undefined)
   jp.paint = { f: jp.paint.f, s: jp.paint.s, c: '#c07a5b', i: 1, w: 10 }   // 48 형식(uv 없음)
   const { putSaved, bootDone } = await import('./store43')
+  // ⚠ 주입 «전에» 보류 자동 저장을 내보낸다 — 안 그러면 그 저장이 주입 바이트를 되덮는
+  // 경쟁이 있다(52 대응 중 ~50% 플레이크 실측: 문구도 획 수도 «성한 문서»의 값이 됐다).
+  await page.evaluate(async () => { await (window as any).__b2.diag.storeFlush() })
   await putSaved(page, JSON.stringify(j))
   await page.goto('/')                       // ⚠ reload면 ?reset이 다시 붙어 저장소가 비워진다
   // 알림은 2.5s 창이라(#notice — notify의 그 수명) 이동 «직후부터» 문구를 기다린다 —
   // 부팅 뒤 고정 대기(초판)는 dpr2의 느린 부팅에서 창을 놓쳤다(실측 — 빈 문자열).
-  const noticeText = await page.waitForFunction(() => {
-    const s = document.getElementById('notice')?.textContent ?? ''
-    return s.includes('옛 칠') ? s : null
-  }, null, { timeout: 8000 }).then(h => h.jsonValue() as Promise<string>).catch(() => '')
+  // ⚠ web2-52 — waitForFunction ⛔: 부팅 재적재(컨텍스트 파괴)에 거부돼 빈 문자열이 됐다
+  // (같은 흐름의 폴링은 t=200ms에 문구를 잡는 실측 — 대기 형태만의 차였다). 폴링은
+  // 200ms 간격 상한 40회(8s — #95: 상한·상한에서 볼 것(noticeText)·대상 확인이 함께 있다).
+  let noticeText = ''
+  for (let k = 0; k < 40 && !noticeText.includes('옛 칠'); k++) {
+    noticeText = await page.evaluate(() =>
+      document.getElementById('notice')?.textContent ?? '').catch(() => '')
+    await page.waitForTimeout(200)
+  }
   await bootDone(page)
   expect(noticeText, '여는 순간 화면의 한 줄이 «옛 칠»을 말한다').toContain('옛 칠')
   const kept = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)

@@ -457,6 +457,16 @@
        brush51 ⑤의 «견본 렌더 실측»이 잡았다). flex-shrink:0은 #97 ②의 처방 그대로. */
     #paint-sizes .sizebtn svg { display: block; height: auto; flex-shrink: 0; }
     .sizebtn.on { background: rgba(60, 56, 49, .16); }
+    /* 브러시 프리셋(web2-52-3) — #97 착수 명시: 새 요소가 전역 태그 규칙(.rrow svg 캡 ·
+       canvas absolute)에 안 걸리게 span만 쓰고, flex 눌림은 flex-shrink:0으로 막는다 */
+    #paint-presets { flex-direction: column; align-items: stretch; gap: 2px; padding: 5px 9px; }
+    .presetbtn { display: flex; align-items: center; gap: 7px; flex-shrink: 0;
+                 background: transparent; border: 0; padding: 3px 4px; margin: 0;
+                 font: 11px/1 system-ui, sans-serif; color: #4a463f; cursor: pointer;
+                 touch-action: none; border-radius: 3px; }
+    .presetbtn .pdot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+                       border: 1.4px dashed #8d8880; box-sizing: border-box; }
+    .presetbtn .plbl { white-space: nowrap; }
     /* 롤통 줄(web2-34 6번) — 연필통·촉통 줄과 같은 크기·같은 어법. 앞의 롤 그림 +
        이름. 옐로의 색 예외는 **통 안**에만 산다(`instrument-icons.md` 정본). */
     .rrow { display: flex; flex-direction: row; align-items: center; gap: 7px;

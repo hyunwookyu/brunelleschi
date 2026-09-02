@@ -16,7 +16,10 @@
 import type { Face, Stroke } from './types'
 import { C } from './constants'
 
-export type MatId = 'brick' | 'conc' | 'glass' | 'wood' | 'metal'
+// web2-52: 다섯(46) → **여덟** — 무늬 여섯(matrep.RepId)과 단색 둘의 합집합.
+// 「palette 다섯 ↔ 재료 여섯의 집합 차」(D-W19 [2])를 52-2가 이렇게 정했다:
+// 재료는 **한 집합**이고 이 표가 톤·해칭 스펙의 정본이다(도면 해칭·칠 견본·면 무늬가 공유).
+export type MatId = 'brick' | 'stone' | 'conc' | 'glass' | 'wood' | 'metal' | 'tile' | 'roof'
 /** web2-51: 연필(pencil)이 넷째 도구로 늘었다 — 종이 결에 걸린 불연속(색은 hex — cp처럼). */
 export type Instr = 'brush' | 'marker' | 'cp' | 'pencil'
 
@@ -42,6 +45,11 @@ export const MATERIALS: Material[] = [
   { id: 'glass', name: '유리', tones: ['#bcd6d8', '#8fb8bd'], hatch: { angleDeg: 75, spacingPx: 18 } },
   { id: 'wood', name: '나무', tones: ['#d8b98c', '#b98f5e', '#8a6238'], hatch: { angleDeg: 0, spacingPx: 7 } },
   { id: 'metal', name: '금속', tones: ['#c2c7cc', '#959ca4', '#666d75'], hatch: { angleDeg: 135, spacingPx: 5 } },
+  // web2-52 — 셋을 더해 여덟: 석재(따뜻한 회갈)·타일(차가운 자기)·기와(점토).
+  // 톤 셋(밝음·중간·그림자)은 기존 다섯의 명도 사다리와 같은 간격 문법이다.
+  { id: 'stone', name: '석재', tones: ['#cdc8bb', '#a49f92', '#767165'], hatch: { angleDeg: 30, spacingPx: 11 } },
+  { id: 'tile', name: '타일', tones: ['#d8dee0', '#aeb9bd', '#7f8a8f'], hatch: { angleDeg: 90, spacingPx: 9, cross: true } },
+  { id: 'roof', name: '기와', tones: ['#c69086', '#9c6a60', '#6e463f'], hatch: { angleDeg: 15, spacingPx: 8 } },
 ]
 
 export const MAT_IDS: MatId[] = MATERIALS.map(m => m.id)

@@ -53,8 +53,9 @@ const wallPts = (): Pt[] => {
 }
 
 describe('46-1 팔레트 — 재료 목록의 성질', () => {
-  it('① 다섯 재료 · 톤 둘셋 · hex 성함 · 무늬(각도·간격·교차) 상호 판별', () => {
-    expect(MATERIALS.length).toBe(5)
+  it('① 재료 목록(46 다섯 → 52 여덟) · 톤 둘셋 · hex 성함 · 무늬(각도·간격·교차) 상호 판별', () => {
+    // ⚠ web2-52가 다섯 → **여덟**(석재·타일·기와 추가 — 무늬 여섯 + 단색 둘 · D-W22).
+    expect(MATERIALS.length).toBe(8)
     const specs = new Set<string>()
     for (const m of MATERIALS) {
       expect(m.tones.length).toBeGreaterThanOrEqual(2)
@@ -62,7 +63,7 @@ describe('46-1 팔레트 — 재료 목록의 성질', () => {
       for (const t of m.tones) expect(t).toMatch(/^#[0-9a-f]{6}$/)
       specs.add(`${m.hatch.angleDeg}|${m.hatch.spacingPx}|${m.hatch.cross ? 1 : 0}`)
     }
-    expect(specs.size).toBe(5)   // 어느 두 재료도 같은 무늬가 아니다
+    expect(specs.size).toBe(8)   // 어느 두 재료도 같은 무늬가 아니다
     // 반증(D-3): 판별식이 실제로 실패할 수 있다 — 무늬를 복제한 목록이면 집합이 준다
     const broken = MATERIALS.map(m => ({ ...m, hatch: MATERIALS[0]!.hatch }))
     expect(new Set(broken.map(m => `${m.hatch.angleDeg}|${m.hatch.spacingPx}|${m.hatch.cross ? 1 : 0}`)).size).toBe(1)
@@ -80,10 +81,10 @@ describe('46-1 팔레트 — 재료 목록의 성질', () => {
     // 두 톤 재료(유리)에 «그림자»를 물으면 마지막 톤으로 잘린다
     expect(clampTone(materialOf('glass'), 2)).toBe(1)
     expect(toneHex('glass', 2)).toBe(materialOf('glass').tones[1])
-    // 순환 — 없음→다섯→없음(한 바퀴가 정확히 6걸음)
+    // 순환 — 없음→여덟→없음(한 바퀴가 정확히 9걸음 — 52가 여덟로)
     let cur: MatId | undefined = undefined
     const seen: (MatId | undefined)[] = []
-    for (let i = 0; i < 6; i++) { cur = cycleMat(cur); seen.push(cur) }
+    for (let i = 0; i < 9; i++) { cur = cycleMat(cur); seen.push(cur) }
     expect(seen).toEqual([...MAT_IDS, undefined])
     expect(isMatId('gold')).toBe(false)
   })
@@ -179,15 +180,15 @@ describe('46-3 면 재료 — 순환·실행취소', () => {
     const face = () => s.app.doc.faces.find(f => f.id === wallId)!
     expect(face().mat).toBeUndefined()
     const names: string[] = []
-    for (let i = 0; i < 6; i++) names.push(cycleFaceMat(s.app, wallId)!.name)
-    expect(names).toEqual(['벽돌', '콘크리트', '유리', '나무', '금속', '기본'])
+    for (let i = 0; i < 9; i++) names.push(cycleFaceMat(s.app, wallId)!.name)
+    expect(names).toEqual(['벽돌', '콘크리트', '유리', '나무', '금속', '석재', '타일', '기와', '기본'])
     expect(face().mat).toBeUndefined()               // 한 바퀴 돌아 없음
-    undo(s.app)                                       // «금속»으로
-    expect(face().mat).toBe('metal')
+    undo(s.app)                                       // «기와»로(52 — 마지막 재료)
+    expect(face().mat).toBe('roof')
     undo(s.app)
-    expect(face().mat).toBe('wood')
+    expect(face().mat).toBe('tile')
     redo(s.app)
-    expect(face().mat).toBe('metal')
+    expect(face().mat).toBe('roof')
     redo(s.app)
     expect(face().mat).toBeUndefined()
   })

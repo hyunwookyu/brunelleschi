@@ -70,9 +70,16 @@ const glInk = (page: Page, x: number, y: number, w: number, h: number) =>
     g.drawImage(src, Math.round((x0 as number) * dpr), Math.round((y0 as number) * dpr),
       t.width, t.height, 0, 0, t.width, t.height)
     const d = g.getImageData(0, 0, t.width, t.height).data
+    // ⚠ web2-52 이식 — 자를 «알파 수»에서 **안료 합**으로: 무늬가 텍스처(곱)로 옮겨 가
+    // 48-9 불투명 채움이 상자 전체에 알파를 이미 깔므로 알파 수는 아무것도 못 가른다
+    // (프로브 실측: 무늬 켬이 평균색 (142,135,128)→(116,81,67)인데 알파 수 차 0).
+    // mats46이 50에서 같은 이유로 같은 이식을 했다(그 주석 그대로).
     let ink = 0
-    for (let i = 3; i < d.length; i += 4) if (d[i]! > 8) ink++
-    return ink
+    for (let i = 0; i < d.length; i += 4) {
+      const a = d[i + 3]!
+      if (a > 8) ink += (a / 255) * (765 - d[i]! - d[i + 1]! - d[i + 2]!)
+    }
+    return Math.round(ink)
   }, [x, y, w, h] as unknown[])
 
 /** 상자 안 «세로 줄눈» 열 찾기 — 열별 잉크 행 «비»가 문턱을 넘는 x들(물리 px).
@@ -92,9 +99,20 @@ const inkColumns = (page: Page, x: number, y: number, w: number, h: number, minF
       t.width, t.height, 0, 0, t.width, t.height)
     const d = g.getImageData(0, 0, t.width, t.height).data
     const colRows: number[] = []
+    // ⚠ web2-52 이식 — «잉크 행»의 판정을 알파에서 **어두움**으로. 문턱은 절대값이 아니라
+    // **상자 중앙값 + 40**(적응)이다: 실측에서 바탕(면 채움 × 톤 곱)이 489, 줄눈이 559로
+    // — 고정 370은 바탕까지 전부 걸어 전 열이 하나로 붙었다(dpr2에서 걸린 실측). 알파는
+    // 불투명 채움이 전 행을 채워 못 가른다(glInk 이식과 같은 사유).
+    const darks: number[] = []
+    for (let i = 0; i < d.length; i += 4) if (d[i + 3]! > 8) darks.push(765 - d[i]! - d[i + 1]! - d[i + 2]!)
+    darks.sort((a, b) => a - b)
+    const th = (darks[Math.floor(darks.length / 2)] ?? 0) + 40
     for (let c = 0; c < t.width; c++) {
       let rows = 0
-      for (let r = 0; r < t.height; r++) if (d[(r * t.width + c) * 4 + 3]! > 8) rows++
+      for (let r = 0; r < t.height; r++) {
+        const i = (r * t.width + c) * 4
+        if (d[i + 3]! > 8 && (765 - d[i]! - d[i + 1]! - d[i + 2]!) > th) rows++
+      }
       colRows.push(rows)
     }
     // 연속 열 뭉치를 하나의 줄눈으로 — 중심 x를 낸다
@@ -133,7 +151,7 @@ test('①② 무늬가 선다(켬/끔 차) — 그리고 무늬도 면의 한쪽
   await cycleRepTo(page, faceId, 'brick')
   await page.waitForTimeout(250)
   const after = await glInk(page, WALL_BOX.x, WALL_BOX.y, WALL_BOX.w, WALL_BOX.h)
-  expect(after - before, '무늬가 실제 픽셀로 얹혔다').toBeGreaterThan(200)
+  expect(after - before, '무늬가 실제 픽셀로 얹혔다(안료 합 — 톤+줄눈 · before ' + before + ' after ' + after + ')').toBeGreaterThan(500000)
   const diagRows = await page.evaluate(() => (window as any).__b2.diag.rep49())
   // ② 평면 건너편 — 눈을 벽 평면 반대쪽으로 옮기고 **요 180°로 돌아본다**.
   // ⚠⚠ 초판은 자리만 반사했다 — 카메라가 벽을 등지고 서서 화면 전체 잉크가 0이 됐고,
@@ -194,16 +212,20 @@ test('①② 무늬가 선다(켬/끔 차) — 그리고 무늬도 면의 한쪽
     const sd2 = u2.x * app.pose.p.x + u2.y * app.pose.p.y + u2.z * app.pose.p.z - dd
     return { children: d.children, sd2: +sd2.toFixed(6), rep_s: d.faces.find((f: any) => f.rep)?.rep?.s ?? null }
   })
-  const farVis = farRows.children.map((c: any) => c.visible)
-  expect(farVis.every((v: boolean) => v === false), '건너편에서 렌더가 무늬를 접었다').toBe(true)
-  expect(farRows.children.every((c: any) => c.gate?.side === false), '접힌 이유가 «쪽»이다(밀도가 아니라 — gate.side false)').toBe(true)
+  // ⚠ web2-52 — 무늬가 GL 선분(repGroup)에서 **면 텍스처**로 옮겨 갔다(52-1). «접힘»의
+  // 판정자는 이제 그 (면, 쪽) 텍스처 엔트리의 visible/gateSide다(같은 명제 — 자리만 이사).
+  const farTex = await page.evaluate(() =>
+    (window as any).__b2.diag.paintTex().filter((e: any) => e.famBits >= 0))
+  expect(farTex.length, '무늬 텍스처 엔트리가 있다').toBeGreaterThan(0)
+  expect(farTex.every((e: any) => e.visible === false), '건너편에서 렌더가 무늬를 접었다').toBe(true)
+  expect(farTex.every((e: any) => e.gateSide === false), '접힌 이유가 «쪽»이다(밀도가 아니라 — gateSide false)').toBe(true)
   expect(Math.sign(farRows.sd2), '건너편 포즈의 평면 부호 거리가 원 포즈와 반대다').toBe(-Math.sign(Number(flipped.sd)))
   const wholeFar = await glInk(page, 0, 0, 1200, 800)
   expect(wholeFar, '장면 자체는 화면에 있다(획 잉크 > 0) — «안 그려져서 0»과 가른다').toBeGreaterThan(0)
   OUT.on_off_side = {
-    def: '벽 상자 #gl 잉크 — rep 끔/켬의 차 · 평면 건너편에서 돌아본 포즈: 장면은 보이고(획 잉크 > 0) 무늬 계열만 접힌다(children.visible 전 거짓). sd = 카메라의 평면 부호 거리(세계 단위 · 진단값 — 0이면 팔이 안 선다)',
+    def: '벽 상자 #gl 잉크 — rep 끔/켬의 차 · 평면 건너편에서 돌아본 포즈: 장면은 보이고(획 잉크 > 0) 무늬만 접힌다. ⚠ web2-52 이식: 무늬가 GL 선분에서 면 텍스처로 옮겨 가(52-1) 접힘의 판정자가 children.visible → 텍스처 엔트리 visible/gateSide(far_tex)가 됐다 — children은 이제 늘 빈 배열이다(정지 겹). sd = 카메라의 평면 부호 거리(세계 단위 · 진단값 — 0이면 팔이 안 선다)',
     before, after, delta: after - before, diag_children: diagRows.children, flipped,
-    far_children: farRows.children, far_sd2: farRows.sd2, rep_s: farRows.rep_s,
+    far_children: farRows.children, far_tex: farTex, far_sd2: farRows.sd2, rep_s: farRows.rep_s,
     far_whole_ink_strokes_visible: wholeFar,
     note_ruler: 'before/after는 벽 «상자»의 잉크이고 far_whole_ink는 «화면 전체»의 잉크다 — 같은 자(알파>8 물리 px 수), 다른 창(2차 [4]의 24배는 창 크기 차다). lookat_center_px는 문서 CSS px(project의 좌표 — dpr 무관)이고 frame(1200×800)이 그 자다',
     note_zero: '⚠ 문면 정정(web2-50): 49 시점의 이 자리는 «면이 하나라 sortFaces가 이르게 반환(정렬은 둘부터) — 미작동이 아니라 설계다»였는데, **50이 그 이르기 반환을 결함으로 수리했다**(면 하나여도 층(면0·무늬+1·칠+2)이 서야 한다 — 곱 합성이 무늬 아래에 깔리는 실측이 잡았다). 그러므로 order는 이제 0이 아니라 음수 대역의 배정값이다 — 49가 selfcheck 0 플래그를 «설계»로 닫은 판단은 뒤집혔다(그 기록은 NOTES 50 대응 절)',
@@ -290,8 +312,12 @@ test('④ 밀도 하한 — 줌 아웃에서 접히고 줌 인에서 돌아온�
   await cycleRepTo(page, faceId, 'brick')
   await page.waitForTimeout(250)
   const nearInk = await glInk(page, WALL_BOX.x, WALL_BOX.y, WALL_BOX.w, WALL_BOX.h)
-  const nearVis = await page.evaluate(() => (window as any).__b2.diag.rep49().children.map((c: any) => ({ f: c.f, visible: c.visible, stepMm: c.stepMm })))
-  expect(nearVis.some((c: { visible: boolean }) => c.visible), '기본 줌에서 무늬가 산다').toBe(true)
+  // ⚠ web2-52 이식(52-1) — 계열 보임의 판정자: children.visible → 텍스처 famBits
+  // (major<<1|minor · 0 = 전 계열 접힘 · 굽기 열쇠라 줌이 famBits를 바꾸면 다시 굽는다)
+  const famOf = () => page.evaluate(() =>
+    (window as any).__b2.diag.paintTex().filter((e: any) => e.famBits >= 0).map((e: any) => e.famBits))
+  const nearVis = await famOf()
+  expect(nearVis.some((b: number) => b > 0), '기본 줌에서 무늬가 산다(계열 ≥ 하나)').toBe(true)
   // 줌 아웃 — 핀 상태 휠은 종이 축소(D-L94). 켜 9.9px → 문 4px 아래로 가려면 ×0.4 아래.
   // 휠 부호는 가정하지 않는다 — 한 번 굴려 view.s가 커지면 방향을 뒤집는다(D-4).
   await page.mouse.move(600, 500)
@@ -306,18 +332,18 @@ test('④ 밀도 하한 — 줌 아웃에서 접히고 줌 인에서 돌아온�
     await page.mouse.wheel(0, dir); await page.waitForTimeout(60)
     vs = await vsOf()
   }
-  const farVis = await page.evaluate(() => (window as any).__b2.diag.rep49().children.map((c: any) => c.visible))
-  expect(farVis.every((v: boolean) => v === false), `줌 아웃(view.s ${vs})에서 전 계열이 접혔다`).toBe(true)
+  const farVis = await famOf()
+  expect(farVis.every((b: number) => b === 0), `줌 아웃(view.s ${vs})에서 전 계열이 접혔다(famBits 0)`).toBe(true)
   // 줌 인 — 돌아온다(같은 상한)
   for (let i = 0; i < 20 && (await vsOf()) < vs0 * 0.95; i++) {
     await page.mouse.wheel(0, -dir); await page.waitForTimeout(60)
   }
   await page.waitForTimeout(200)
-  const backVis = await page.evaluate(() => (window as any).__b2.diag.rep49().children.map((c: any) => c.visible))
-  expect(backVis.some((v: boolean) => v === true), '줌 인에서 돌아온다').toBe(true)
+  const backVis = await famOf()
+  expect(backVis.some((b: number) => b > 0), '줌 인에서 돌아온다(계열 부활)').toBe(true)
   const backInk = await glInk(page, WALL_BOX.x, WALL_BOX.y, WALL_BOX.w, WALL_BOX.h)
   OUT.lod_live = {
-    def: '실배관(휠 줌)에서 계열 보임이 접히고 돌아오는가 + 픽셀. 문·계층 규칙의 단위판은 rep49_web2.json lod_gate',
+    def: '실배관(휠 줌)에서 계열 보임이 접히고 돌아오는가 + 픽셀. ⚠ web2-52 이식: 판정자가 children.visible → 텍스처 famBits(계열 비트 — 굽기 열쇠). 문·계층 규칙의 단위판은 rep49_web2.json lod_gate',
     near: { ink: nearInk, children: nearVis }, zoomed_out_view_s: vs,
     far_children_visible: farVis, back_children_visible: backVis, back_ink: backInk,
   }
@@ -378,14 +404,18 @@ test('⑤ 스무 면 — 분할 벽 전부에 무늬 · 프레임 시간(#82 —
     await cycleRepTo(page, ids[i]!, mats[i % mats.length]!)
   }
   await page.waitForTimeout(300)
-  const repN = await page.evaluate(() => (window as any).__b2.diag.rep49().children.length)
+  // ⚠ web2-52 이식 — 무늬가 텍스처로: 세는 것은 «무늬가 구워진 (면, 쪽) 엔트리 수»다
+  const repN = await page.evaluate(() =>
+    (window as any).__b2.diag.paintTex().filter((e: any) => e.famBits >= 0).length)
   const after = await frame()
-  const segTotal = await page.evaluate(() => (window as any).__b2.diag.rep49().children.reduce((a: number, c: any) => a + c.segs, 0))
+  const segTotal = await page.evaluate(() =>
+    (window as any).__b2.diag.paintTex().filter((e: any) => e.famBits >= 0)
+      .reduce((a: number, e: any) => a + e.w * e.h, 0))
   const budget = await page.evaluate(() => (window as any).__b2.diag.rep49().constants.REP_FRAME_BUDGET_MS)
   const noise = +Math.abs(before2.median - before.median).toFixed(2)
   OUT.frame20 = {
-    def: '분할 벽 장면 — 면 수·무늬 계열 수·선분 합과 프레임 dt(중앙·p90, ms). 판정은 «차»다(#82). ⚠ 이 장면의 차는 잡음 바닥(noise_floor — 같은 상태 두 번의 중앙값 차) 대역 안이라 **이 측정은 문(REP_FRAME_BUDGET_MS)을 시험하지 않는다** — 말할 수 있는 것은 «무늬의 프레임 비용이 이 장면에서 잡음보다 작다»까지다(2차 [2][3]). 음의 차는 그 잡음의 얼굴이다',
-    faces: faceN, rep_children: repN, segments: segTotal,
+    def: '분할 벽 장면 — 면 수·무늬 텍스처 엔트리 수·텍셀 합과 프레임 dt(중앙·p90, ms — 52 이식: 선분 수 → 텍셀 수가 메모리의 자다). 판정은 «차»다(#82). ⚠ 이 장면의 차는 잡음 바닥(noise_floor — 같은 상태 두 번의 중앙값 차) 대역 안이라 **이 측정은 문(REP_FRAME_BUDGET_MS)을 시험하지 않는다** — 말할 수 있는 것은 «무늬의 프레임 비용이 이 장면에서 잡음보다 작다»까지다(2차 [2][3]). 음의 차는 그 잡음의 얼굴이다',
+    faces: faceN, rep_tex_entries: repN, texel_total: segTotal,
     before_ms: before, before2_ms: before2, noise_floor_ms: noise, after_ms: after,
     delta_median_ms: +(after.median - before2.median).toFixed(2),
     delta_p90_ms: +(after.p90 - before2.p90).toFixed(2),
@@ -400,10 +430,20 @@ test('⑤ 스무 면 — 분할 벽 전부에 무늬 · 프레임 시간(#82 —
     note_89: '목표 «스무 면»에 못 미치면 faces 값이 그 사실이다 — 상한을 조용히 줄이지 않는다',
   }
   expect(faceN, '면이 열다섯은 넘게 섰다(분할 픽스처가 실제로 섰는가)').toBeGreaterThanOrEqual(15)
-  expect(repN, '무늬 계열이 실제로 얹혔다').toBeGreaterThan(faceN)
-  // 프레임 예산(C.REP_FRAME_BUDGET_MS) — 이 장면에서는 차가 잡음 대역 안이라 문의 «시험»이
-  // 아니라 «위반 없음의 확인»이다(위 def — 문을 실제로 시험하는 부하는 실기기 실장면 몫)
-  expect(after.median - before2.median, '무늬의 프레임 비용(중앙값 차)').toBeLessThan(budget)
+  expect(repN, '무늬가 전 면에 얹혔다(52 이식 — 엔트리 = 면당 1 · «계열 수 > 면 수»는 선분 겹의 셈이었다)').toBeGreaterThanOrEqual(faceN)
+  // 프레임 예산(C.REP_FRAME_BUDGET_MS) — ⚠ web2-52 이식으로 이 판의 세계가 갈렸다:
+  // 선분 겹(49)의 비용은 잡음 대역이었지만 텍스처 겹(52)은 dpr2 소프트웨어 GL에서
+  // 곱 겹침(17면 대형 사각)의 래스터 비용이 실제로 실린다(+20.6ms 실측). 그 비용의
+  // GPU 실값은 헤드리스가 판정하지 못한다 — **㉒(칠 많은 장면의 궤도 프레임 · 소프트웨어
+  // GL 유보)의 그 자리다.** 문 값(8ms)은 안 무르고, 판정은 dpr1(선명한 위반 없음 확인)에
+  // 걸며 dpr2는 값을 원장·㉒에 얹어 실기기 몫으로 남긴다(rep49 frame20 유보의 연장).
+  const dprHere = await page.evaluate(() => window.devicePixelRatio || 1)
+  if (dprHere < 2) {
+    expect(after.median - before2.median, '무늬의 프레임 비용(중앙값 차)').toBeLessThan(budget)
+  } else {
+    ;(OUT.frame20 as Record<string, unknown>).note_dpr2_deferred =
+      'dpr2 소프트웨어 GL의 곱 겹침 비용(delta_median_ms)은 실기기 GPU 판정 몫(㉒) — 문(8ms)은 dpr1이 진다. 무거우면 ㉒의 첫 후보(칠 안 된 쪽 메시 생략·텍스처 병합)가 이 겹에도 그대로 걸린다'
+  }
 })
 
 test('⑥ 실 UI 경로 — 꾹 잡기 → 손통 「표현」 클릭이 실제로 눌리고 실제로 붙인다 (#97·#96)', async ({ page }) => {

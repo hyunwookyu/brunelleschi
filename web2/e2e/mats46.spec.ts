@@ -122,8 +122,9 @@ test('① 칠통 — 재누름이 열고 · 견본이 화면과 같은 상태에
   await page.click('#btn-paint')
   expect(await page.locator('#painttray.open').count(), '재누름이 연다').toBe(1)
   const rows = await page.locator('#painttray .rrow').count()
-  // ⚠ web2-48이 10으로(자동 빠짐 · 크기·휠 들어옴), **web2-51이 11로**(연필 — 넷째 도구).
-  expect(rows, '도구 넷 + 크기 트레이 + 색상 휠 + 재료 다섯(51 — 연필이 늘었다)').toBe(11)
+  // ⚠ web2-48이 10으로(자동 빠짐 · 크기·휠 들어옴), web2-51이 11로(연필 — 넷째 도구),
+  // **web2-52가 15로**: 재료 다섯 → **여덟**(석재·타일·기와 — D-W22) + **프리셋 줄**(52-3).
+  expect(rows, '도구 넷 + 크기 + 프리셋 + 휠 + 재료 여덟(52 — 4+1+1+1+8)').toBe(15)
   await page.click('#swatch-wood-2')
   const sel = await page.evaluate(() => (window as any).__b2.diag.mats46().paintSel)
   // ⚠⚠ **web2-48 48-7이 상태의 모양을 바꿨다**: (재료, 톤) 쌀이 아니라 **색 hex 하나**다
