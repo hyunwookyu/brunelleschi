@@ -1,5 +1,5 @@
 {
-  "n_flags": 6299,
+  "n_flags": 6301,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -3176,6 +3176,16 @@
       "path": "free_curve.json:arms.straight_plus_span.in_space_axis_assigned.placed_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "gates54_web2.json:runs.green_final_tree.unexpected",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "gates54_web2.json:runs.green_final_tree.flaky",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "gates54_web2.json:gate2.green_subset_of_full.missing",
