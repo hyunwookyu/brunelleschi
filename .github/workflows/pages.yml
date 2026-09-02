@@ -56,11 +56,15 @@ jobs:
       # 계산 — 소실점·카메라·좌표·오스냅·재료. 몇 초면 돈다(외부 데이터 의존 없음)
       - run: npm test
       - run: npm run build
-      # **정적 배포 확인** — 하위 경로에서 열리는가 · 워커 scope · 오프라인 새로고침 ·
-      # **옛 배포에서의 인계**(캐시가 옛 앱에 묶지 않는가) · `?reset` 탈출구.
-      # ⚠ `dist/`가 있어야 돈다 — 위 `npm run build` 다음에 둔 이유다.
+      # **초록 실행**(web2-54 §1㉢) — 종전에는 `static_deploy.spec.ts` 하나만 돌았고
+      # `ui34 ④`가 34-3부터 빨간 채 배포돼 아무 회차도 못 봤다(#89의 사고). 이제 매 푸시가
+      # e2e:green(병렬 4 · 계측 넷 제외 · dpr2는 픽셀 목록만 — e2e/dpr2list.ts)을 돈다.
+      # 「초록」이 초록이 되는 것이 이 절의 목적이다. 전량(dpr2 전부·계측 포함)은
+      # e2e:night — 사람이 도는 세션·마감의 몫이다.
+      # ⚠ static_deploy.spec(하위 경로·워커 scope·옛 배포 인계·`?reset`)도 green 안에서
+      # 돈다 — `dist/`가 있어야 하므로 위 `npm run build` 다음에 둔 이유는 그대로다.
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test e2e/static_deploy.spec.ts
+      - run: npm run e2e:green
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web2/dist
