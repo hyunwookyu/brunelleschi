@@ -4,3 +4,4 @@ dist/
 .vite/
 e2e_full.log
 e2e_*.log
+tmp54/
