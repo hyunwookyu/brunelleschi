@@ -191,10 +191,10 @@ test('① 압력 — 진하기·굵기가 갈리고 농도 비 > 굵기 비 · D
   const wRatio = strong.rows / Math.max(1, weak.rows)
   const wRatioF = strongF.rows / Math.max(1, weakF.rows)
   OUT.pressure = {
-    def: '연필 가로획 둘(합성 펜 필압 0.2/0.9 · w20 · 40×34 상자). 폭 술어 = 위치 자기 기준(같은 자리의 평탄화 굵기가 자 — 원근 축척 소거): 강은 평탄보다 굵고(1.105>0.925) 약은 가늘다(0.79<0.925). 농도 게이트 = 픽셀당 안료 비 > 1+여유(픽셀당이라 축척 무관) · 반증 = 평탄화에서 같은 술어 반전. ⚠ 초판 교차-위치 비율 게이트(농도 비>폭 비)는 무효한 자였다 — 같은 w_world(0.3657)가 두 자리에서 19행/16행: 축척 ~12% 차가 비에 실렸고, 보정하면 결 가시성의 농도 누설이 폭 비를 지배(1.82>1.66). 기울기 부등식 자체는 단위 팔이 잰다(#54 — 단위 같은 함수). rows·px·extMean 기록',
-    weak, strong, flat: { weak: weakF, strong: strongF, density_ratio: +dRatioF.toFixed(3), width_ratio: +wRatioF.toFixed(3) },
+    def: '연필 가로획 둘(합성 펜 필압 0.2/0.9 · w20 · 40×34 상자). 폭 술어 = 위치 자기 기준(같은 자리의 평탄화 굵기가 자): 강은 평탄보다 굵고 약은 가늘다 — 기대 배수는 프로필 상수의 유도값(1.105/0.925/0.79 — «측정»은 rows 필드다, 3차 [3]). 농도 게이트 = 픽셀당 안료 비 > 1+여유(픽셀당이라 위치 무관) · 반증 = 평탄화에서 같은 술어 반전. 재등재 사유(초판 교차-위치 비율 게이트를 내린 근거 · 3차 [1][2]로 정정): (1) 결·가장자리 가시성이 농도의 함수라 폭의 가시성 자에 농도가 샌다(픽셀 수 자·열별 범위 자 둘 다 게이트 붕괴 — 결정론 재현 2회) (2) dpr1 잔여 여유 0.025가 행 양자 ~0.065보다 작아 견고하지 않다 (3) 기울기 부등식은 단위가 같은 프로필 함수의 몫(#54 — note_92의 선언 그대로 · 실측은 slope_measured). 철회: 한때 «원근 축척 ~12%가 자를 무효화»라 적었으나 그 근거(평탄 19행/16행)는 조건 대기 수리 전의 덜 그려진 상태(플레이크)였다 — 수리 후 flat.width_ratio 1.000이 두 자리의 축척 동등을 실측한다(D-2: 재현 안 되는 원인으로 고치지 않는다 — 그 어김의 기록). rows·px·extMean 기록',
+    weak, strong, flat: { weak: weakF, strong: strongF, density_ratio: +dRatioF.toFixed(3), width_ratio: +wRatioF.toFixed(3),
+      note_width_ratio: 'flat.width_ratio는 반증이 아니라 «두 측정 자리의 축척 동등성» 실측이다(3차 [14] — 같은 w_world·같은 배수의 두 띠가 같은 폭인가. 1.0은 구성상 강제가 아니다: 축척이 다르면 1이 아니게 된다). 압력 반증은 농도 술어 반전 + 폭 양방향 부호의 소멸이다' },
     density_ratio: +dRatio.toFixed(3), width_ratio: +wRatio.toFixed(3),
-    scale_probe: { w_world_equal: 0.3657, flat_rows: [19, 16], note: '평탄화(같은 w_world·같은 배수)가 두 자리에서 다른 행 수 — 교차-위치 비 자를 반증한 표식(dpr1 실측)' },
   }
   // 폭 술어(등재 — 위치 자기 기준·양방향): 무위 재굽기는 이 부호 쌍을 못 낸다
   expect(strong.rows, '강한 자리 — 실제 굵기 > 평탄 굵기').toBeGreaterThan(strongF.rows)
@@ -239,7 +239,7 @@ test('② 마커 팁 — 끝이 몸통보다 진하다 · D-3(평면 덮어쓰�
   await page.evaluate(() => (window as any).__b2.diag.setMarkerFlatForTest(false))
   await page.waitForTimeout(200)
   OUT.marker_tip = {
-    def: '마커 가로획 — 끝 상자(578..592) ↔ 몸통 상자(540..554)의 픽셀당 안료. 문 C.PAINT51_TIP_MIN_RATIO(값은 constants_used). 반증 = setMarkerFlatForTest(팁이 안 찍힌다 — 같은 술어가 죽는다)',
+    def: '마커 가로획 — 끝 상자(578..592) ↔ 몸통 상자(540..554)의 픽셀당 안료. 문 C.PAINT51_TIP_MIN_RATIO(값은 constants_used). 반증 = setMarkerFlatForTest(팁이 안 찍힌다 — 같은 술어가 죽는다). 두-자리 비교 주석(3차 [4]): 자가 픽셀당 안료(위치 축척 무관)이고, 위치 요인의 대조값은 flat.ratio(같은 두 상자·팁 없음)가 든다 — 0.93 대역이면 두 자리의 바닥 차가 문(1.05) 밖 여유를 안 먹는다',
     tip, mid, ratio: +(tip.pigPerPx / Math.max(1, mid.pigPerPx)).toFixed(3),
     flat: { tip: tipF, mid: midF, ratio: +(tipF.pigPerPx / Math.max(1, midF.pigPerPx)).toFixed(3) },
   }
@@ -300,6 +300,9 @@ test('③ 결이 면에 붙는다 — 줌 z배에서 상관 길이가 z배 · D-
   await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(true))
   await page.waitForTimeout(300)
   const cOff = await corrLen(552, 430)
+  // 3차 [8] — «결 없음»과 «획을 못 찾음»을 가르는 동반 증거: 같은 창의 채색 픽셀 수
+  const offBand = await bandStats(page, 517, 429, 70, 2)
+  expect(offBand.px, '결 끔에서도 획 자체는 창에 있다(0의 뜻 = 요동 소멸)').toBeGreaterThan(0)
   expect(cOff, '반증 — 결 끔에서 요동이 죽는다(상관 길이 0)').toBe(0)
   await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(false))
   await page.waitForTimeout(300)
@@ -312,7 +315,7 @@ test('③ 결이 면에 붙는다 — 줌 z배에서 상관 길이가 z배 · D-
   const ratio = c2 / Math.max(1, c1)
   OUT.grain_zoom = {
     def: '연필 획 가운데 행(70css px 창)의 결 상관 길이(물리 px · 40 회차의 그 자 #54) — 줌 전/후 + 궤도 회전 후. 결이 면 고정이면 비가 늘고 · 화면 고정이면 1. ⚠ 문은 «하한»(max(FLOOR, K·z))이다 — z 비례의 위쪽은 안 문다(2차 [12]). z·0.45 < FLOOR인 실행(dpr2 z=1.8 대역)에서는 z 의존 항이 발화하지 않고 상수 1.4가 문이다 — 그 사실이 이 문면이다. corr_len은 정수 물리 px라 비의 눈금이 ±20% 대역. 반증 = 결 끔에서 상관 길이 0(요동 소멸). 초판 두 자의 실패값(재설계의 사유): (1) «세로 어디든 채색» 이진 — 전 열 참, 전이 0(포화) (2) 전이 수 — 픽셀 잡음 지배로 줌 전후 비가 정확히 1.000',
-    corr_len_z1: c1, corr_len_zoomed: c2, corr_len_grain_off: cOff, zoom: z, ratio: +ratio.toFixed(3),
+    corr_len_z1: c1, corr_len_zoomed: c2, corr_len_grain_off: cOff, grain_off_band_px: offBand.px, zoom: z, ratio: +ratio.toFixed(3),
   }
   const csG = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   expect(ratio, '줌 인에서 상관 길이가 늘어난다(문 max(FLOOR, K x z) — 상수는 constants_used)')
@@ -392,7 +395,7 @@ test('⑤ 트레이 견본(원 지름 = w) == 자국 굵기(픽셀) · ⑥ Injec
     swatch_rendered_px: cells, tray_px: trays, stroke_px: rowsOf.map(v => +v.toFixed(2)),
     tol: cs.PAINT51_SWATCH_W_TOL,
     cross_mismatch: +(Math.abs(rowsOf[3]! - trays[4]!) / trays[4]!).toFixed(3),
-    note_bias: '자국 잔차가 전 칸 한 방향(+ · AA 가장자리 행이 채색으로 세어지는 몫 — 2차 [13])이고 2.5 칸은 행 눈금(±1행 = ±40%)이 문보다 거칠어 판정 밖(기록만 · «가장 가는 칸의 1:1»은 실기기 눈 판정 몫)이다',
+    note_bias: '자국 잔차가 전 칸 한 방향(+)이고 두 성분이다(3차 [13]): 상수 항(AA 가장자리 ~1행)과 40칸에서 두드러지는 비례 성분(+8~10% — dpr1 +4·dpr2 +3행. 원인 후보는 팁 덧찍음의 가장자리·환산 잔여이며 이 팔로는 못 가른다 — 실기기 확인 항목 ㉓에 얹는다). 판정은 문 SWATCH_W_TOL 안이다. 2.5 칸은 행 눈금(±1행 = ±40%)이 문보다 거칠어 판정 밖(기록만 · «가장 가는 칸의 1:1»은 실기기 눈 판정 몫)',
     note_reach: '렌더==구성 문(0.1)의 도달 가능성은 «수리 전» 실측이다 — 눌림 상태에서 20칸 16.07(편차 0.196)·40칸 18.75(0.531)로 둘 다 문 밖(NOTES 51 [7] 대응이 그 기록)',
   }
   for (let k = 1; k < trays.length; k++) {
@@ -481,7 +484,7 @@ test('⑦ 붓 — 끝 갈라짐(끝이 몸통보다 넓다) · 흐름(길이 방
     def: '붓 가로획 — 끝(578..594) ↔ 몸통(540..556)의 어두운 행 수(갈라짐 · 문 C.PAINT51_SPLIT_MIN_RATIO) · 열별 안료 변동 계수(흐름 · 문 C.PAINT51_FLOW_CV_MIN — 눈 판정은 실기기)',
     mid_rows: mid.rows, end_rows: end.rows, split_ratio: +(end.rows / Math.max(1, mid.rows)).toFixed(3),
     flow_cv: +(sd / Math.max(1, mean)).toFixed(3),
-    note_d3: 'D-3 — 스위치식 반증 없음: 갈라짐·흐름은 rng32(id) 고정 배치라 끔 스위치가 곧 다른 도구(연필)다 — 판별은 문(문턱 상수)과 도구 간 차가 든다',
+    note_d3: 'D-3 — 스위치식 반증 없음: 갈라짐·흐름은 rng32(id) 고정 배치라 끔 스위치가 곧 다른 도구(연필)다 — 판별은 문(문턱 상수)과 도구 간 차가 든다. 두-자리 비교 주석(3차 [4]): 끝↔몸통이 다른 자리다 — 위치 대조값이 따로 없어 축척 몫이 비(1.357)에 섞일 수 있으나 문(1.1)과의 차가 압력 flat 실측의 축척 동등(1.000) 대역 밖이다',
   }
   expect(sd / Math.max(1, mean), '흐름 — 요동이 실제로 있다(문 C.PAINT51_FLOW_CV_MIN)').toBeGreaterThan(csB.PAINT51_FLOW_CV_MIN)
 })
@@ -553,7 +556,7 @@ test('⑧ 색연필 — 색이 완전히 덮이지 않는다(빈 알갱이 > 마
   OUT.cp_coverage = {
     def: '같은 색·같은 굵기의 색연필(필압 0.7)·마커 — 띠 내부(가장자리 AA 깎음)의 «덜 덮인 픽셀»(중앙값 60% 아래 + 맨살) 비율. 판별 = cp > 마커 + C.PAINT51_CP_COVER_MARGIN. 초판 두 판의 실패값(재설계의 사유): (1) «채색 아님» 이진 — 건너뜀 도장(옅은 알파)도 채색으로 세어 cp 0.098 / mk 0.084(무변별) (2) 도장 건너뜀 구현 — 이웃 번짐이 칸을 메워 내부 맨살 0. 현행을 가른 값은 frac(0.23/0.39 대역 / 마커 0)이다',
     cp, marker: mk,
-    note_d3: 'D-3 — 스위치식 반증 없음: 판별은 도구 간 대조(마커의 평평한 띠 = 0 대역)가 든다. 같은 도구의 끔 스위치(구멍 끔)는 안 만들었다 — 구멍이 곧 cp의 정체라 끄면 cp가 아니다',
+    note_d3: 'D-3 — 스위치식 반증 없음: 판별은 도구 간 대조(마커의 평평한 띠 = 0 대역)가 든다. 같은 도구의 끔 스위치(구멍 끔)는 안 만들었다 — 구멍이 곧 cp의 정체라 끄면 cp가 아니다. 두-자리 비교 주석(3차 [4]): cp 획과 마커 획이 다른 자리이나 자가 «획 자신의 띠 안 비율»(각 획 내부 정규화)이라 위치 축척이 비율에 안 실린다',
   }
 })
 
@@ -610,14 +613,24 @@ test('⑨ 성능 — 브러시 넷이 든 뒤의 프레임(#82 — 차 · 잡음
     delta_p90_ms: +(after.p90 - before2.p90).toFixed(2),
     bake_ms: bake,
     note_20faces: '스무 면 축은 paint50 tex_budget(마커 40획 · 면 17)이 든다 — 이 팔은 «도구 넷» 축이다(#12의 축 배분)',
-    note_82: '중앙값이 vsync 바닥(16.7ms)에 붙은 실행에서는 차의 해상도가 눈금뿐이다(paint50 note_82 그대로 — dpr1이 그 조건이다). dpr2의 p90 차가 잡음 바닥 밖이면 그 판정(네 도구 몫인가)은 실기기 몫으로 남긴다 — 헤드리스 소프트웨어 GL의 유보(rep49 frame20)와 같은 자리',
+    note_82: '중앙값이 vsync 바닥(16.7ms)에 붙은 실행에서는 차의 해상도가 눈금뿐이다(paint50 note_82 그대로 — dpr1이 그 조건이다). 부호 주석(3차 [7]): dpr2는 동일 조건 기준선 둘(before/before2)의 차가 재려는 효과보다 커서 Δ의 부호가 기준 선택으로 뒤집힌다 — |Δ|>잡음 바닥이어도 신호로 못 읽는다(판정 불능을 그렇게 적는다). 실기기로 넘기는 것은 크기·부호 둘 다다 — 헤드리스 소프트웨어 GL의 유보(rep49 frame20)와 같은 자리',
   }
   expect(paints, '열두 붓이 실제로 섰다').toBeGreaterThanOrEqual(10)
 })
 
-test('원장', async () => {
+test('원장', async ({ page }, info) => {
   // ⚠ 초판은 여기서 전면 writeFileSync를 했다 — #99가 잡은 누산기 위험 그 자체(부분 실행의
   // OUT 5열쇠가 16열쇠 파일을 덮었다 — 2차 대응 중 실측). 쓰기는 afterEach 병합 하나뿐이다.
+  ;(OUT as any).dpr_project = info.project.name          // 3차 [9] — 파일 이름 밖의 dpr 표식
+  ;(OUT as any).regen_protocol = '정본 원장 = 파일 삭제 후 전량 실행 하나(병합-쓰기라 «한 파일 = 한 실행»은 재생성 규약이 보장한다 — 3차 [3])'
+  // 26-6의 실측(3차 [6]) — 프로필 «함수»가 실제로 낸 기울기(단위 팔과 같은 두 점 차분)
+  await page.goto('/?reset')
+  await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  ;(OUT as any).slope_measured = await page.evaluate(() => {
+    const pf = (window as any).__b2.diag.paintProfile
+    const d = (pf(0.6).d - pf(0.2).d) / 0.4, w = (pf(0.6).w - pf(0.2).w) / 0.4
+    return { density: +d.toFixed(4), width: +w.toFixed(4), holds: d > w }
+  })
   ;(OUT as any).no_constants_snapshot = true
   ;(OUT as any).pitfall_citations = [12, 26, 54, 81, 82, 90, 92, 94, 95, 97, 99]   // 실사용 전수(2차 [6] — #5는 초판 «SVG 구성» 논지와 함께 빠졌다)
 })

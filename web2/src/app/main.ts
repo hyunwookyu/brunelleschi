@@ -2584,7 +2584,7 @@ requestAnimationFrame(() => {
 
 // e2e 진단 통로 — 앱과 같은 함수·같은 상태를 본다(측정 경로와 앱 경로를 가르지 않는다)
 import { project, screenAxes, vpMarks, frameAxes, isParallel, projW, horizonScreenY } from '../core/camera'
-import { setMarkerFlatForTest, setPressFlatForTest, setGrainOffForTest } from '../core/facetex'
+import { setMarkerFlatForTest, setPressFlatForTest, setGrainOffForTest, paintDensity, paintWidthFactor } from '../core/facetex'
 import { forwardOf, yawDir } from '../core/level'
 import { loopAt, buildGraph, cyclesOf, planesOf, faceScreen } from '../core/face'
 import { geomSize3 } from '../core/osnap'
@@ -3073,6 +3073,8 @@ const diag = {
   setMarkerFlatForTest: (v: boolean) => { setMarkerFlatForTest(v); rebakePaintTexForTest(); invalidate() },
   /** 51 반증 둘(D-3) — 압력 평탄화 · 결 끔. 켜고 재굽기 — 해당 게이트가 죽어야 한다 */
   setPressFlatForTest: (v: boolean) => { setPressFlatForTest(v); rebakePaintTexForTest(); invalidate() },
+  // 26-6의 실측 통로(3차 [6]) — 원장이 프로필 «함수»의 기울기를 값으로 들게 한다
+  paintProfile: (p: number) => ({ d: paintDensity(p), w: paintWidthFactor(p) }),
   setGrainOffForTest: (v: boolean) => { setGrainOffForTest(v); rebakePaintTexForTest(); invalidate() },
   setPaintBlendForTest: (v: boolean) => { setPaintBlendForTest(v); invalidate() },
   /** **안 실린 수리를 손으로 걸어 보는 손잡이**(web2-48 48-1 — 수리는 되돌렸다).
