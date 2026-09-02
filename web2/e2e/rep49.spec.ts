@@ -510,14 +510,28 @@ test('⑥ 실 UI 경로 — 꾹 잡기 → 손통 「표현」 클릭이 실제�
   }
 })
 
+// #99 근본 수리의 확산(52 1차 [12] — 이 파일을 편집한 회차가 옮긴다는 열 조건이 52에서
+// 발동했다): 팔마다 병합-쓰기 + 읽기 실패 방어. 전면 writeFileSync ⛔(판별 ③).
+import { readFileSync } from 'node:fs'
+test.afterEach(async ({}, info) => {
+  const f = resolve(HERE, `../../stage0/out/rep49_e2e_web2_dpr${info.project.name === 'dpr2' ? 2 : 1}.json`)
+  let prev: Record<string, unknown> = {}
+  let readFailed = false
+  try { prev = JSON.parse(readFileSync(f, 'utf8')) } catch { readFailed = true }
+  if (readFailed) {
+    try { if (readFileSync(f, 'utf8').length > 0) return } catch { /* 첫 실행 */ }
+  }
+  mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
+  writeFileSync(f, JSON.stringify({ ...prev, ...OUT }, null, 2))
+})
+
 test('원장 쓰기', async ({ page }, testInfo) => {
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
-  const dpr = await page.evaluate(() => window.devicePixelRatio || 1)
   OUT.constants_used = await page.evaluate(() => (window as any).__b2.diag.rep49().constants)
   OUT.no_constants_snapshot = '**web2 라인 전체의 유보다** — 이 라인은 constantsSnapshot()을 안 쓰고 constants_used 블록을 스스로 든다(정본: lens31·close31 원장의 같은 필드)'
-  const outDir = resolve(HERE, '../../stage0/out')
-  mkdirSync(outDir, { recursive: true })
-  writeFileSync(resolve(outDir, `rep49_e2e_web2_dpr${dpr}.json`), JSON.stringify(OUT, null, 2))
+  // 52 1차 [13] — 이식이 이 필드를 떨어뜨렸다(재생성이 옛 목록을 안 옮겼다): 복원 + 갱신
+  ;(OUT as any).pitfall_citations = [5, 28, 54, 82, 92, 94, 96, 97]
+  ;(OUT as any).dpr_project = testInfo.project.name
   expect(testInfo.project.name).toContain('dpr')
 })

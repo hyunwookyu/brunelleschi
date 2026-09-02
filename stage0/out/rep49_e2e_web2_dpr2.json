@@ -138,20 +138,20 @@
     "rep_tex_entries": 17,
     "texel_total": 3769344,
     "before_ms": {
-      "median": 29.59999990463257,
-      "p90": 31.90000009536743
+      "median": 30.5,
+      "p90": 33.90000009536743
     },
     "before2_ms": {
-      "median": 31.199999809265137,
-      "p90": 37.69999980926514
+      "median": 30.299999713897705,
+      "p90": 34.700000286102295
     },
-    "noise_floor_ms": 1.6,
+    "noise_floor_ms": 0.2,
     "after_ms": {
-      "median": 49.30000019073486,
-      "p90": 52.5
+      "median": 50.40000009536743,
+      "p90": 54.19999980926514
     },
-    "delta_median_ms": 18.1,
-    "delta_p90_ms": 14.8,
+    "delta_median_ms": 20.1,
+    "delta_p90_ms": 19.5,
     "gate": {
       "registered": "C.REP_FRAME_BUDGET_MS",
       "value": 8,
@@ -198,5 +198,16 @@
     "REP_FRAME_BUDGET_MS": 8,
     "REP_ZOOM_RETENTION_TOL": 0.2
   },
-  "no_constants_snapshot": "**web2 라인 전체의 유보다** — 이 라인은 constantsSnapshot()을 안 쓰고 constants_used 블록을 스스로 든다(정본: lens31·close31 원장의 같은 필드)"
+  "no_constants_snapshot": "**web2 라인 전체의 유보다** — 이 라인은 constantsSnapshot()을 안 쓰고 constants_used 블록을 스스로 든다(정본: lens31·close31 원장의 같은 필드)",
+  "pitfall_citations": [
+    5,
+    28,
+    54,
+    82,
+    92,
+    94,
+    96,
+    97
+  ],
+  "dpr_project": "dpr2"
 }

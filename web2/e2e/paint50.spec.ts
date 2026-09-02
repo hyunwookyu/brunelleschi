@@ -306,12 +306,23 @@ test('①② 곱 — 어느 픽셀도 안 밝아지고 · 아래 무늬가 비�
   const underOver = await bandContrast('over')
   await page.evaluate(() => (window as any).__b2.diag.setPaintBlendForTest(false))
   await page.waitForTimeout(120)
-  // ⚠ web2-52 이식 — ② 지표의 반증 스위치가 바뀌었다: 무늬가 **같은 텍스처 캔버스 안**
-  // (획 아래 층 — 52-1)으로 들어와, over 합성에서도 획 아래로 비친다(비침의 기제가
-  // 층간 합성에서 층내 알파로 이사 — over 대비 5521 ≈ 출하 5489 실측이 그 증거다.
-  // 합성 반증의 몫은 위 ①의 «밝아짐»(d2.brighter)이 그대로 진다). ② 지표의 판별력은
-  // **무늬 끔**(재료 없음 복귀 후 재굽기)이 세운다: 무늬가 없으면 띠 안 대비가 죽는다.
+  // ⚠ web2-52 이식 · 52 1차 [1]이 판을 다시 세웠다 — 비침의 기제는 층간 합성이 아니라
+  // **획 알파 < 1**이다: 무늬가 같은 캔버스 안(획 아래 층)으로 와, over 합성에서도 마커
+  // 알파 0.55가 아래를 45% 비춘다(over 대비 ≈ 출하 대비 실측 — 그 잔존은 합성의 문제가
+  // 아니었다. 합성 반증의 몫은 위 ①의 «밝아짐»(d2.brighter)이 그대로 진다).
+  // ② 지표의 반증 = **불투명 재굽기**(마커 알파 1 — setPaintOpaqueForTest): 획이 무늬를
+  // 실제로 덮으면 띠 안 대비가 죽는다 — «비침» 그 자체를 뒤집는 스위치다(초판의 «무늬
+  // 끔»은 분모까지 무너지는 자명 항등이었다 — 리뷰어 [1]. 그 실행값은 norep 필드에 기록).
   const fidBand = await page.evaluate(() => (window as any).__b2.app.doc.faces[0].id)
+  await page.evaluate(() => (window as any).__b2.diag.setPaintOpaqueForTest(true))
+  await page.waitForTimeout(300)
+  await snapBox(page, 'opaque', WALL.x, WALL.y, WALL.w, WALL.h)
+  const underOpaque = await bandContrast('opaque')
+  expect(underOpaque.contrastPx, '반증 — 불투명 획은 무늬를 덮는다(비침 술어의 반전)')
+    .toBeLessThan(under.contrastPx * 0.5)
+  await page.evaluate(() => (window as any).__b2.diag.setPaintOpaqueForTest(false))
+  await page.waitForTimeout(200)
+  // 대상 확인(자명 항등 쪽 — 기록만): 무늬를 끄면 분모(회랑 안 어두워짐)째 준다
   for (let i = 0; i < 10; i++) {
     const cur = await page.evaluate((id) => (window as any).__b2.app.doc.faces.find((x: any) => x.id === id)?.rep?.m ?? null, fidBand)
     if (cur === null) break
@@ -321,16 +332,14 @@ test('①② 곱 — 어느 픽셀도 안 밝아지고 · 아래 무늬가 비�
   await page.waitForTimeout(300)
   await snapBox(page, 'norep', WALL.x, WALL.y, WALL.w, WALL.h)
   const underNoRep = await bandContrast('norep')
-  expect(underNoRep.contrastPx, '반증 — 무늬를 끄면 띠 안 대비가 죽는다(지표의 판별력)')
-    .toBeLessThan(under.contrastPx * 0.5)
   // #97 — 텍스처 캔버스는 DOM에 안 붙는다(전역 canvas 규칙에 안 걸린다 — 값으로)
   const domCanvasAfter = await page.evaluate(() => document.querySelectorAll('canvas').length)
   expect(domCanvasAfter, '#97 — DOM 캔버스 수 불변(텍스처는 화면 밖)').toBe(domCanvasBefore)
   OUT.multiply = {
     def: '벽(무늬 벽돌) 상자 — 칠 전/후 픽셀 밝기(알파 미리곱을 종이 위 밝기로 편 값 · 문턱 C.PAINT50_LUM_TOL). 램프 = 세로획을 y=500에서 수평으로 가로지른 픽셀별 {a,r,g,b,lum}(지시 ①의 형식 그대로). under = 분자/분모(#16). 선 = 위 모서리 상자의 어두운 픽셀 수(칠 뒤). 반증 = NormalBlending 스위치(같은 실행)',
     no_brighter: d1, edge_ramp: ramp, ramp_max_lum: rampMax, paper_lum: +paperLum.toFixed(1),
-    under_pattern: under, under_pattern_over: underOver, under_pattern_norep: underNoRep, line_under_band_dark: lineAfter,
-    note_52: '52 이식 — 무늬가 텍스처 안(획 아래 층)으로 와 over에서도 비친다(over 대비 ≈ 출하 — 기록). ② 반증 = 무늬 끔 · 합성 반증 = ①의 밝아짐',
+    under_pattern: under, under_pattern_over: underOver, under_pattern_opaque: underOpaque, under_pattern_norep: underNoRep, line_under_band_dark: lineAfter,
+    note_52: '52 이식 — 비침의 기제 = 획 알파 0.55(층이 같은 캔버스여도 45%가 비친다 — over 대비 ≈ 출하 대비가 그 실측). ② 반증 = 불투명 재굽기(underOpaque — 비침 술어의 반전) · norep는 대상 확인(분모째 주는 자명 항등 — 기록·문 없음, 52 1차 [1]) · 합성 반증 = ①의 밝아짐',
     falsify_over: d2,
     dom_canvas: { before: domCanvasBefore, after: domCanvasAfter },
     constants_used: {
@@ -655,7 +664,7 @@ test('⚑ 성능 — 스무 면 · 칠 40획: 프레임(#82 — 차)과 텍스�
     note_cap: '상한 1024의 근거 — 장당 최악 1024²×4=4.19MB(2048이면 16.7MB — 4배)이고 이 장면의 실제 합은 bytes_total이다(긴 변만 단계라 장당 그보다 작다). «상한을 올리면 커진다»는 **clamped가 참인 장에만** 걸리는 산술이다(2차 [8]) — 이 장면은 clamped 합이 그 판정이다(0이면 상한 증설에 불변 · dpr2의 단일 1024도 포화가 아니라 올림 양자화일 수 있다 — screen_px_prequant가 가른다). 상한을 실제로 누르는 것은 큰 면·줌 인 장면이고 실기기 관측 판정자다(DEFERRED)',
     note_89: '목표 «스무 면»에 못 미치면 faces 값이 그 사실이다 — 상한을 조용히 줄이지 않는다(rep49 note_89 그대로 · 같은 픽스처가 세운 면이 17이다)',
     note_levels: '기본 줌의 levels가 전부 같은 값인 것은 이 장면의 셀들이 비슷한 화면 크기라서다 — «작으면 낮게»의 실측은 levels_zoomed_out(줌 아웃에서 단계 하강)이 든다',
-    note_82: '중앙값이 vsync 바닥(16.7ms)에 붙은 실행에서는 차의 해상도가 눈금뿐이다(rep49 frame20의 그 유보 그대로). ⚠ dpr2의 delta_median_ms가 잡음 바닥 밖인 것은 헤드리스 소프트웨어 GL의 채움 비용 의심 — DEFERRED web2-50 행 · 실기기 관측 판정자',
+    note_82: '중앙값이 vsync 바닥(16.7ms)에 붙은 실행에서는 차의 해상도가 눈금뿐이다(rep49 frame20의 그 유보 그대로). ⚠ dpr2의 delta_median_ms가 잡음 바닥 밖인 것은 헤드리스 소프트웨어 GL의 채움 비용 의심 — DEFERRED web2-50 행 · 실기기 관측 판정자. ⚠⚠ 이 실행의 noise_floor_ms가 정확히 0이면(반복 2회 점추정 — #14) 「바닥 밖」 판정은 그 위에 못 선다 — 바닥 0은 판정 불능으로 읽는다(52 1차 [17])',
   }
 })
 

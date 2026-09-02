@@ -514,10 +514,18 @@ test('⑦ 성능 — 획 200 장면: 재료 없이 vs 재료 칠 포함(대조�
   expect(withMats.median, '재그리기가 실제로 돌았다').toBeGreaterThan(0)
 })
 
-test.afterAll(async ({ }, testInfo) => {
-  const outDir = resolve(HERE, '../../stage0/out')
-  mkdirSync(outDir, { recursive: true })
-  OUT.dpr_project = testInfo.project.name
-  // constants_used(2차 [9]) — ① 팔이 diag에서 미리 담아 둔다(아래 constants가 그 사본)
-  writeFileSync(resolve(outDir, `mats46_e2e_web2_${testInfo.project.name}.json`), JSON.stringify(OUT, null, 2))
+// #99 근본 수리의 확산(52 1차 [12] — 이 파일을 편집한 회차가 옮긴다): 팔마다 병합-쓰기 +
+// 읽기 실패 방어. afterAll 단일 쓰기는 워커 재시작에서 빈 원장을 낸다(#99의 그 기제).
+import { readFileSync } from 'node:fs'
+test.afterEach(async ({}, info) => {
+  const f = resolve(HERE, `../../stage0/out/mats46_e2e_web2_${info.project.name}.json`)
+  let prev: Record<string, unknown> = {}
+  let readFailed = false
+  try { prev = JSON.parse(readFileSync(f, 'utf8')) } catch { readFailed = true }
+  if (readFailed) {
+    try { if (readFileSync(f, 'utf8').length > 0) return } catch { /* 첫 실행 */ }
+  }
+  OUT.dpr_project = info.project.name
+  mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
+  writeFileSync(f, JSON.stringify({ ...prev, ...OUT }, null, 2))
 })

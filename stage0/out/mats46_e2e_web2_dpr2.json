@@ -17,6 +17,7 @@
     "HATCH_ALPHA": 0.3,
     "HATCH_SPACING_PX": 11
   },
+  "dpr_project": "dpr2",
   "marker_overlap": {
     "def": "같은 길이(60px) 가로획을 같은 자리에 1·2·3번 — 상자(60×16)의 안료 합(알파 가중 (765−r−g−b) · #gl — 채움 바닥은 세 상자에 공통이라 계단에 안 실린다). 반증 짝 = ① 1획의 왼/오른 반쪽 차 ② 평면 덮어쓰기 재굽기(setMarkerFlatForTest — 겹침이 안 쌓이는 대역)",
     "alpha_ship": "C.PAINT_MARKER_ALPHA(원장 constants 블록)",
@@ -229,16 +230,15 @@
     "def": "전량 재그리기 ms(5회 min/median/max) — plain: 재료 없는 197획 / with_mats: 같은 장면 + 마커 칠 3(콘크리트) ≥200획. 같은 페이지 연속 실측이라 환경이 같다. 헤드리스 소프트웨어 GL의 수(실기기 판정은 사람 — **관측이지 판정이 아니다**: 통과선을 안 건다)",
     "plain": {
       "strokes": 197,
-      "min": 48.6,
-      "median": 55.6,
-      "max": 61.5
+      "min": 48.5,
+      "median": 55.8,
+      "max": 73
     },
     "with_mats": {
       "strokes": 200,
-      "min": 49.1,
-      "median": 50.3,
-      "max": 57
+      "min": 48.8,
+      "median": 56.1,
+      "max": 90.3
     }
-  },
-  "dpr_project": "dpr2"
+  }
 }

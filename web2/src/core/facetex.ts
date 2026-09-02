@@ -125,6 +125,12 @@ const inTex = (s: Stroke, faceId: number, side: 1 | -1): boolean =>
  *  어두워진다(실측: 상대 계단 0.44 — 절반 문을 안 넘었다). 제품 경로는 안 부른다. */
 let markerFlatOverride = false
 export function setMarkerFlatForTest(v: boolean): void { markerFlatOverride = v }
+/** 52 1차 [1] — «획 아래로 무늬가 비친다»의 반증 스위치: 마커를 알파 1(불투명)로 굽는다.
+ *  비침의 기제가 층간 합성이 아니라 **획 알파 < 1**(층이 같은 캔버스 안이어도)임을 가른다 —
+ *  켜면 획이 무늬를 덮어 띠 안 대비가 죽어야 한다. 제품 경로는 안 부른다. */
+let paintOpaqueOverride = false
+export function setPaintOpaqueForTest(v: boolean): void { paintOpaqueOverride = v }
+export const paintOpaqueForTest = (): boolean => paintOpaqueOverride
 
 // ── 자국의 질(web2-51) — 압력 프로필·결 해시(팔과 제품이 같은 함수 — #54) ─────────
 
@@ -210,8 +216,8 @@ function drawStrokeTex(
 
   if (p.i === 1 && p.c) {
     // ── 마커 — 평평한 띠(multiply · 겹치면 진해진다) + **팁**(양 끝 덧찍음 — 51) ────
-    g.globalCompositeOperation = markerFlatOverride ? 'source-over' : 'multiply'
-    g.globalAlpha = markerFlatOverride ? 1 : C.PAINT_MARKER_ALPHA
+    g.globalCompositeOperation = (markerFlatOverride || paintOpaqueOverride) ? 'source-over' : 'multiply'
+    g.globalAlpha = (markerFlatOverride || paintOpaqueOverride) ? 1 : C.PAINT_MARKER_ALPHA
     g.strokeStyle = p.c
     g.lineWidth = wPx
     g.beginPath()

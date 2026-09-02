@@ -147,30 +147,41 @@ const gapMedian = (centers: number[]): number => {
 
 test('① 단색 재료 — 유리·금속이 면 픽셀을 그 톤으로 물들인다 · 반증 = 없음 복귀', async ({ page }) => {
   const fid = await bigBox(page)
-  const base = await boxStats(page, WALL_BOX.x, WALL_BOX.y, WALL_BOX.w, WALL_BOX.h)
+  // ⚠ 52 1차 [4]가 초판의 자 둘을 내렸다: ㉠ 전체 상자 «안료 합» 1.2배 문 — 바탕(연필
+  // 모드에서 면이 숨어 획 픽셀 262개뿐)과의 비가 80배라 «재료가 붙었다»는 이름표밖에 못
+  // 가른다(#92) ㉡ 서열의 3% 여유 없는 엄격 부등 — 획·종이 희석(11% 모형 오차)에 잠긴다.
+  // 재등재: **획 없는 부분 상자**(CLEAN — 획·모서리를 피한 벽 안쪽)의 «덮인 픽셀 평균
+  // 안료(pigment/n)»가 자다. 바탕(재료 없음·연필 모드)은 그 상자가 비고(n≈0 — 면 숨김),
+  // 재료가 붙으면 차서 순수 틴트가 희석 없이 실린다 — 서열 여유가 설 자리가 생긴다.
+  const CLEAN = { x: 700, y: 430, w: 60, h: 40 }
+  const perPx = (s: { pigment: number; n: number }) => (s.n > 0 ? s.pigment / s.n : 0)
+  const base = await boxStats(page, CLEAN.x, CLEAN.y, CLEAN.w, CLEAN.h)
+  const area = Math.round(CLEAN.w * CLEAN.h * 0.5)   // 덮임 판정의 바닥(물리 px는 dpr²배)
   await cycleRepTo(page, fid, 'glass')
   await page.waitForTimeout(250)
-  const glass = await boxStats(page, WALL_BOX.x, WALL_BOX.y, WALL_BOX.w, WALL_BOX.h)
-  // ⚠ 자는 «안료 합»과 그 서열이다 — 평균색의 색상차(파랑−빨강)는 못 쓴다: #gl의 알파가
-  // 낮은 자리(~36/255)에서 역곱(un-premultiply) 양자화가 색상 관계를 부순다(프로브 실측 —
-  // 유리 톤을 얹어도 b−r가 0). 안료는 알파 가중이라 그 왜곡을 안 받는다(mats46의 그 자).
-  expect(glass.pigment, '유리 — 톤이 실제로 실렸다(안료 > 바탕 1.2배)').toBeGreaterThan(base.pigment * 1.2)
+  const glass = await boxStats(page, CLEAN.x, CLEAN.y, CLEAN.w, CLEAN.h)
+  expect(glass.n, '유리 — 깨끗한 상자가 실제로 덮였다').toBeGreaterThan(area)
+  expect(perPx(glass), '유리 — 픽셀당 안료가 바탕(빈 상자) 위로').toBeGreaterThan(20)
   await cycleRepTo(page, fid, 'metal')
   await page.waitForTimeout(250)
-  const metal = await boxStats(page, WALL_BOX.x, WALL_BOX.y, WALL_BOX.w, WALL_BOX.h)
-  expect(metal.pigment, '금속 — 톤이 실렸다(안료 > 바탕 1.2배)').toBeGreaterThan(base.pigment * 1.2)
-  // 두 단색이 서로 다르다 — 금속 톤(합 597)이 유리(618)보다 어둡다. 순수 틴트 기대비
-  // 1.14가 화면에서는 획·종이 몫에 희석돼 1.03 대역(실측)이라 여유는 못 세운다 —
-  // 서열(엄격 부등)만 등재하고 값은 기록한다(판별의 몫은 위 1.2배 문 + 없음 반증이 진다)
-  expect(metal.pigment, '금속이 유리보다 어둡다(톤 서열이 픽셀에 실렸다 — 희석 실측은 def)').toBeGreaterThan(glass.pigment)
-  // 반증(D-3) — 없음으로 돌리면 톤이 걷힌다(같은 자에서 같은 술어가 거짓이 된다)
+  const metal = await boxStats(page, CLEAN.x, CLEAN.y, CLEAN.w, CLEAN.h)
+  // 서열 — 기대비의 산술(1차 [4] 재유도): 순진한 톤 비 1.14는 틀린 모형이다 — 면 채움
+  // (#ded9d1)과의 곱이 어두움 비를 1.073으로, 저알파(≈36/255) 판독 양자화가 ~1.03으로
+  // 압축한다(실측 1.032 — CLEAN 상자에서도. 희석이 아니라 **압축**이 원인이었다).
+  // 여유 1.02의 유도: 이 장면은 결정론이라(같은 실행 반복이 비트 동일 — 잡음 바닥 0)
+  // 눈금은 픽셀당 안료의 판독 양자(평균 2400px에서 비 ~0.5%)뿐 — 1.02 = 그 4배이고
+  // 압축 기대(1.03) 아래다.
+  expect(perPx(metal), '금속이 유리보다 어둡다(픽셀당 — 압축 기대 ~1.03 · 여유 1.02)')
+    .toBeGreaterThan(perPx(glass) * 1.02)
+  // 반증(D-3) — 없음 복귀: 연필 모드에서 면이 다시 숨어 상자가 빈다(덮임 술어의 반전)
   await cycleRepTo(page, fid, null)
   await page.waitForTimeout(250)
-  const off = await boxStats(page, WALL_BOX.x, WALL_BOX.y, WALL_BOX.w, WALL_BOX.h)
-  expect(off.pigment > base.pigment * 1.2, '반증 — 없음에서 유리·금속 술어가 거짓').toBe(false)
+  const off = await boxStats(page, CLEAN.x, CLEAN.y, CLEAN.w, CLEAN.h)
+  expect(off.n > area, '반증 — 없음에서 덮임 술어가 거짓(상자가 빈다)').toBe(false)
   OUT.solid_mats = {
-    def: '벽 상자 안료(알파 가중 어두움) — 유리·금속 각각 바탕 1.2배 초과 + 서열(금속 > 유리 — 엄격 부등: 순수 틴트 기대비 1.14가 획·종이 희석으로 1.03 대역이라 여유를 못 세운다 · 실측 비는 metal/glass 필드). 반증 = 없음 복귀에서 같은 술어 반전. ⚠ 평균색 색상차는 자로 못 쓴다: 저알파 역곱 양자화가 색상 관계를 부순다(프로브 실측 — def에 남긴 사유). 유리·금속에 무늬 «선»이 없는 것은 재료의 정의(52-2 — 구성이라 안 센다 #5)',
+    def: '획 없는 부분 상자(CLEAN 700,430,60,40 — 획·모서리 밖)의 덮임(n)과 픽셀당 안료(pigment/n). 술어: 덮임(n > 상자 절반) · 유리 픽셀당 > 20 · 서열 금속 > 유리 × 1.02(기대비의 산술: 톤 1.14 → ×면 채움 곱 1.073 → 저알파 판독 압축 ~1.03 실측 — 여유 1.02는 결정론 장면의 판독 양자(비 ~0.5%)의 4배, 52 1차 [4] 재유도). 반증 = 없음 복귀에서 덮임 반전(연필 모드 면 숨김 — 48-9). ⚠ 초판 두 자(전체 상자 합 1.2배 — 바탕 비 80배의 이름표 · 여유 없는 서열)는 [4]가 내렸다. 평균색 색상차도 자로 못 쓴다(저알파 역곱 양자화 — 프로브 실측)',
     base, glass, metal, off,
+    per_px: { glass: +perPx(glass).toFixed(1), metal: +perPx(metal).toFixed(1), ratio: +(perPx(metal) / Math.max(1e-6, perPx(glass))).toFixed(3) },
   }
 })
 
@@ -208,9 +219,15 @@ test('② 재료는 면에, 칠은 획에 — 재료 변경이 획 목록을 안
     sig2 = await sigOf()
   }
   expect(sig2, '반증 — 실행취소가 획에 닿으면 서명이 실제로 변한다(자의 판별력)').not.toBe(sig1)
+  // 픽셀 쪽 반증(52 1차 [7] — 서명만 뒤집으면 픽셀 술어는 틴트에 잠길 수 있다):
+  // 획이 빠진 상자의 안료가 실제로 준다(재료 틴트는 남으므로 0이 아니라 «감소»가 술어다)
+  await page.waitForTimeout(300)
+  const afterUndo = await boxStats(page, 550, 395, 120, 35)
+  expect(afterUndo.pigment, '반증 — 획을 지우면 그 자리 안료가 실제로 준다(픽셀 술어의 판별력)')
+    .toBeLessThan(afterMat.pigment * 0.9)
   OUT.mat_vs_paint = {
     def: '획 서명 = paint 획의 (id·f·uv·c·w) JSON. 재료 변경(벽돌→석재) 전후 서명 동일 + 획 자리 안료 잔존(0.5배 초과 — 무늬 배경이 변해 정확 일치는 안 건다). 반증 = 획 제거에서 서명 변화. 「무늬는 파생, 획은 정본」(52-4)의 행위판',
-    sig_len: JSON.parse(sig0).length, paint_box: { withPaint, afterMat },
+    sig_len: JSON.parse(sig0).length, paint_box: { withPaint, afterMat, afterUndo },
   }
 })
 
@@ -233,9 +250,16 @@ test('③ 축척 통과 — 치수 2배 재매김에 켜 화면 간격이 절반
   expect(Math.abs(ratio - 0.5), '간격 비 0.5 ± C.MATS52_SCALE_TOL — 실치수(67mm)가 축척을 지난다')
     .toBeLessThan(cs.MATS52_SCALE_TOL)
   OUT.scale_pass = {
-    def: '벽돌 켜(어두운 가로선 — 행 어두움 중앙값+40 적응 문턱) 화면 간격의 중앙값 — 치수 2500→5000 재매김 전후 비. 문 |비−0.5| < C.MATS52_SCALE_TOL. mm↔세계 환산의 순수판은 rep49_web2.json scale_pass(49 — falsify_run 포함)가 정본이고, 이 팔은 그 환산이 «화면까지» 지나는 것을 잰다',
+    def: '벽돌 켜(어두운 가로선 — 행 어두움 중앙값+40 적응 문턱 · 좁은 세로 띠 10px) 화면 간격의 중앙값 — 치수 2500→5000 재매김 전후 비. 문 |비−0.5| < C.MATS52_SCALE_TOL. mm↔세계 환산의 순수판은 rep49_web2.json scale_pass(49 — falsify_run 포함)가 정본이고, 이 팔은 그 환산이 «화면까지» 지나는 것을 잰다',
     rows1_n: rows1.length, rows2_n: rows2.length,
     gap1_css_px: +gap1.toFixed(2), gap2_css_px: +gap2.toFixed(2), ratio: +ratio.toFixed(3),
+    screen_fixed_would_give: 1.0,
+    gate: {
+      registered: 'C.MATS52_SCALE_TOL', value: cs.MATS52_SCALE_TOL,
+      derivation: '유도(#88 · 52 1차 [9]): 재매김 후 간격 ~5 css px에서 뭉치 중심의 눈금이 켜당 ±0.5px 대역 → 비의 눈금 ±0.1 — 문 0.2 = 그 눈금의 2배(더 조이면 자가 못 잰다). REP_ZOOM_RETENTION_TOL 0.2(상대 ±20%)와 숫자가 같아도 뜻이 다르다(이쪽은 0.5 기준 절대차 = 상대 ±40%)',
+      reachability: '같은 자(darkRows 간격 비)가 문 대역(0.3~0.7) 밖 값을 실제로 낸다 — 줌 팔의 실측 1.947(selfcheck 0/1 금지 규약: 가설값 1.0이 아니라 다른 팔의 수치를 적는다)',
+      reachability_value: 1.947, reachability_source: 'two_layers/pat_ratio',
+    },
   }
 })
 
@@ -277,9 +301,14 @@ test('④ 두 겹의 대비(49 무회귀) — 줌 인: 해칭 간격 불변 · �
   expect(patGap2 / Math.max(0.01, patGap1), `무늬 간격이 줌(×${zoomRatio.toFixed(2)})을 따라 늘었다(면 고정)`)
     .toBeGreaterThan(1.3)
   OUT.two_layers = {
-    def: '같은 면에 무늬(brick rep — 면 텍스처)와 도면 해칭(fill=1 · hatchMode screen)을 함께 켜고 줌 인 — 무늬 켜 간격(어두운 가로선)은 늘어난다(문 1.3배 초과 · 줌 ~1.9). 해칭의 화면 고정은 spacingPx가 화면 상수인 구성(#5 — hatch2d 인자에 줌 항이 없다)이라 픽셀로 안 세고, 무늬의 «증가»가 같은 화면에서의 대조군이다. 49가 가른 «둘은 다른 물건»의 실측',
+    def: '같은 면에 무늬(brick rep — 면 텍스처)와 도면 해칭(fill=1 · hatchMode screen)을 함께 켜고 줌 인 — 무늬 켜 간격(어두운 가로선)은 늘어난다(문 1.3배 초과). 해칭의 화면 고정은 spacingPx가 화면 상수인 구성(#5 — hatch2d 인자에 줌 항이 없다)이라 픽셀로 안 세고, 무늬의 «증가»가 같은 화면에서의 대조군이다. 49가 가른 «둘은 다른 물건»의 실측. 잔차 주석(52 1차 [10]): 간격 비(1.947)가 줌 비(2.054)보다 ~5% 작다 — 뭉치 중심의 부픽셀 양자화(rep49 ③의 그 2~4% 대역) + 문턱 적응의 경계 이동 몫. dpr 주석([16]): 세 값이 dpr1·2에서 같은 것은 자가 css px(중심을 dpr로 나눔)이고 장면이 결정론이라 같은 눈금에 얹히기 때문 — dpr 축의 실림은 같은 파일 scale_pass(rows 24/21로 갈림)가 든다',
     zoom: +zoomRatio.toFixed(3), pat_gap_before: +patGap1.toFixed(2), pat_gap_after: +patGap2.toFixed(2),
     pat_ratio: +(patGap2 / Math.max(0.01, patGap1)).toFixed(3),
+    gate: {
+      registered: '문 1.3(스펙 상수 — 간격 비 눈금 ±0.1의 3배 위·줌 하한 1.9 아래)', value: 1.3,
+      reachability: '같은 자가 문(1.3) 아래 값을 실제로 낸다 — 축척 팔의 실측 0.526(같은 규약: 가설값 1.0 대신 다른 팔의 수치)',
+      reachability_value: 0.526, reachability_source: 'scale_pass/ratio',
+    },
   }
 })
 
@@ -291,6 +320,23 @@ test('⑤ 브러시 프리셋 — 저장·적용·기기 지속(#94) · 반증 =
   await page.click('#btn-paint'); await page.click('#btn-paint')
   await page.waitForTimeout(100)
   expect(await page.locator('#paint-presets .presetbtn').count(), '프리셋 세 칸').toBe(3)
+  // #97 — 행위 값(52 1차 [3]㉢ — 문면 선언이 아니라 elementFromPoint · 49 ui_path의 그 자):
+  // 세 칸 각각의 중심이 그 단추를 낸다(가로채는 겹이 없다) + 넘침 0
+  const hit = await page.evaluate(() => {
+    const out: { id: string; clickable: boolean }[] = []
+    for (const id of ['btn-preset-1', 'btn-preset-2', 'btn-preset-3']) {
+      const b = document.getElementById(id)!
+      const r = b.getBoundingClientRect()
+      const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
+      out.push({ id, clickable: b === el || b.contains(el) })
+    }
+    const tray = document.getElementById('painttray')!
+    return { hits: out, overflow: { sw: tray.scrollWidth, cw: tray.clientWidth, sh: tray.scrollHeight, ch: tray.clientHeight } }
+  })
+  expect(hit.hits.every(h => h.clickable), '#97 — 세 칸 전부 실제로 눌린다(elementFromPoint)').toBe(true)
+  expect(hit.overflow.sw, '#97 짝 — 가로 넘침 0').toBe(hit.overflow.cw)
+  expect(hit.overflow.sh, '#97 짝 — 세로 넘침 0').toBe(hit.overflow.ch)
+  ;(OUT as any).presets_97 = hit
   // 반증(D-3) 먼저 — 빈 칸 탭은 paintSel을 안 바꾼다
   const sel0 = await page.evaluate(() => JSON.stringify((window as any).__b2.app.paintSel))
   await page.click('#btn-preset-1')
@@ -336,7 +382,7 @@ test('원장', async ({ page }, info) => {
   ;(OUT as any).dpr_project = info.project.name
   ;(OUT as any).regen_protocol = '정본 원장 = 파일 삭제 후 전량 실행 하나(#99 — 병합-쓰기 · 전면 쓰기 없음이 판별 ③)'
   ;(OUT as any).no_constants_snapshot = true
-  ;(OUT as any).pitfall_citations = [5, 90, 92, 94, 99]
+  ;(OUT as any).pitfall_citations = [5, 88, 90, 92, 94, 95, 96, 97, 99]   // 실사용 전수(52 1차 [13])
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   ;(OUT as any).constants_used = await page.evaluate(() => {
