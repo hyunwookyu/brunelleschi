@@ -658,15 +658,13 @@ test('옛 칠 알림 — 45~48 형식의 문서를 «열면» 화면에 한 줄�
   }
 })
 
-test('원장', async ({}, info) => {
-  const dpr = info.project.name === 'dpr2' ? 2 : 1
+test('원장', async () => {
+  // ⚠ 전면 writeFileSync ⛔ — #99가 잡은 누산기 위험(brush51에서 부분 실행 5열쇠가 16열쇠
+  // 파일을 덮은 실측 — 2차 대응 중). 쓰기는 afterEach 병합 하나뿐이다.
   OUT.constants_used = { note: 'web2 라인은 constantsSnapshot 기계가 없다(라인 유보 — lens31의 no_constants_snapshot이 정본)' }
   ;(OUT as any).no_constants_snapshot = true
   ;(OUT as any).pitfall_citations = [5, 12, 16, 54, 80, 82, 88, 92, 94, 97]
   ;(OUT as any).fixture_axes = {
     note_12: 'D-5의 축 배분(#12): dpr 1·2 = 이 파일 둘 다 · 도구 = 마커(이 파일)·붓(paint45 ①)·색연필(mats46 ④) · 면 분류(벽·슬라브·경사)와 축척 유/무 = 단위(facetex.test — uv 왕복이 세 분류를 돈다 · uv는 축척 무관이 설계) · 개구부 = 단위(삼각분할) + 경계 절단(e2e ⑤)',
   }
-  const dir = resolve(HERE, '../../stage0/out')
-  mkdirSync(dir, { recursive: true })
-  writeFileSync(resolve(dir, `paint50_web2_dpr${dpr}.json`), JSON.stringify(OUT, null, 2))
 })

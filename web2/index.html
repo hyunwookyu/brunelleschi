@@ -445,7 +445,7 @@
     #paint-wheel-cv { position: static; inset: auto; display: block; touch-action: none; cursor: crosshair; }
     #paint-hex { min-width: 0; font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #4a463f; }
     /* 크기 트레이 — **줄마다 그 굵기의 실제 자국**이다(1:1). 자국은 SVG 선 하나이고
-       `stroke-width`가 곧 그 굵기 px라, 「1:1」이 문면이 아니라 기하로 참이다.
+       `stroke-width`가 곧 그 굵기 px다. ⚠ «SVG 구성이라 1:1이 기하로 참»(48-2의 이 줄)은 web2-51이 반증했다 — 케스케이드 눌림이 렌더를 갈랐다(아래 .sizebtn 주석). 1:1의 판정자는 렌더 실측(brush51 ⑤)이다.
        칸은 세로로 쌓는다 — 펜 촉통(#pentray)·지우개 크기통(#etray)과 같은 배열이다. */
     #paint-sizes { flex-direction: column; align-items: stretch; gap: 2px; padding: 5px 9px; }
     .sizebtn { display: flex; align-items: center; justify-content: flex-start;

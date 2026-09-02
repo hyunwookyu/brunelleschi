@@ -1,5 +1,5 @@
 {
-  "n_flags": 6290,
+  "n_flags": 6291,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -355,6 +355,11 @@
       "path": "basic_flow.json:thresholds.console_errors_max",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "brush51_web2_dpr1.json:pressure.flat.width_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "brush51_web2_dpr1.json:grain_zoom.corr_len_grain_off",
