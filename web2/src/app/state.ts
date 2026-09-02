@@ -164,6 +164,18 @@ export interface App {
    *  · `w` 자국 굵기 px(48-2 — 크기 트레이. 슬라이더 ⛔ R1).
    *  ⛔ `t: 'auto'`(46의 「톤 자동」)는 48-8이 없앴다. */
   paintSel: { hex: string; i: Instr; w: number }
+  /** **면 고름**(web2-54 54-2) — 잡기(꾹 누름)로 고른 면들. 차례가 뜻이다: **마지막이
+   *  정면의 대상**(54-3 — 예측 가능한 쪽). 도구를 바꿔도 산다(핀셋으로 골라 놓고 칠
+   *  도구를 들면 그대로 — 「칠 도구를 든 채로 고르기」를 안 만들고도 되는 길). 잡은 채
+   *  또 잡으면 더해지고, 빈 곳을 꾹 누르면 풀린다(R7의 어법). ⛔ **저장하지 않는다** —
+   *  그림이 아니라 세션 상태다(46의 paintSel과 같은 자리 · KEY_ORDER 무변이 게이트). */
+  faceSel: number[]
+  /** **획은 자기 면에만 남는다**(54-1)의 스위치 — 기본 참. D-3 반증 전용(끄면 옛 거동 —
+   *  여러 면이 같이 칠해짐 — 이 돌아온다는 것을 팔이 잰다). 화면 손잡이 ⛔(54-1 문면). */
+  paintOwnGate: boolean
+  /** **정면 왕복**(54-3) — 정면으로 날기 직전의 자세. 있으면 「다시 누르면 직전 시점으로
+   *  돌아온다」의 목적지다. 궤도(orbitBy)가 돌면 비운다 — 그 뒤의 「정면」은 새 비행이다. */
+  frontBack: CamPose | null
   eraserRadius: number
   /** **지금 이 획이 펜의 지우개 끝으로 그어지는 중인가**(web2-15 2-b).
    *  ⚠ 도구(`tool`)는 **안 바꾼다.** 안드로이드 크롬은 지우개 끝을 호버에 안 알리므로
@@ -394,6 +406,9 @@ export function createApp(W: number, H: number): App {
     // 기본 색은 46의 콘크리트 중간톤 그대로다 — 값이 바뀌면 46의 픽셀 팔이 이유 없이
     // 흔들린다(무회귀). 기본 굵기는 마커 촉 폭(C.MARKER_W_PX = 크기 트레이의 가운데 칸).
     paintSel: { hex: '#a8a29a', i: 'brush', w: C.MARKER_W_PX },
+    faceSel: [],
+    paintOwnGate: true,
+    frontBack: null,
     hlFaces: null,
     showRooms: false,
     placePerson: false,
@@ -1232,10 +1247,22 @@ export type HoldResult =
   | { kind: 'write'; via: 'dim' | 'line' }
   | { kind: 'grip-add'; n: number }
   | { kind: 'grip-connect'; n: number }
-  | { kind: 'face'; n: number }
+  | { kind: 'face'; n: number; faces: number }
   | { kind: 'manip-edit' }
   | { kind: 'locked'; id: number }
+  | { kind: 'sel-clear'; n: number }
   | null
+
+/** **살아 있는 면 고름**(web2-54) — 고른 순서를 지키되 지금 풀린 면만. 지워진 면의 id는
+ *  목록에 남아 있어도 여기서 걸러진다(경계가 돌아오면 고름도 돌아온다 — 면의 규약). */
+export const liveFaceSel = (app: App): number[] =>
+  app.faceSel.filter(id => app.faces.some(f => f.id === id))
+
+/** 정면의 대상 — **마지막에 고른 면**(54-3 · 예측 가능한 쪽). 없으면 잡은 면(44 그대로). */
+export const lastSelFace = (app: App): number | null => {
+  const live = liveFaceSel(app)
+  return live.length > 0 ? live[live.length - 1]! : (app.grip?.faceId ?? null)
+}
 
 /** 잡은 면의 경계 획 id들 — 잠긴 경계는 못 잡으므로 뺀다(잡기 규칙 그대로) */
 function faceStrokeIds(app: App, faceId: number): number[] {
@@ -1260,7 +1287,18 @@ function faceStrokeIds(app: App, faceId: number): number[] {
  *  부른다(치수 쓰기 보존). 잡기·여럿·이어짐·면·값 수정이 그 곁에 얹힌 갈래들이다. */
 export function beginHold(app: App, p: Pt, now: number): HoldResult {
   const hit = holdTargetAt(app, p)
-  if (!hit) return null
+  if (!hit) {
+    // **빈 곳을 꾹 누르면 고름이 풀린다**(54-2 — R7의 어법: 밖을 누르면 접힌다).
+    // 탭이 아니라 꾹 누름이다 — 탭은 그리기의 시작이라 뜻을 뺏으면 안 된다.
+    if (app.faceSel.length > 0) {
+      const n = app.faceSel.length
+      app.faceSel = []
+      app.frontBack = null                     // 왕복의 발판도 고름과 함께 걷는다
+      for (const l of app.listeners) l()
+      return { kind: 'sel-clear', n }
+    }
+    return null
+  }
   if (hit.kind === 'dim') {
     const via = beginWriting(app, p, now)
     return via === null ? null : { kind: 'write', via }
@@ -1288,6 +1326,11 @@ export function beginHold(app: App, p: Pt, now: number): HoldResult {
     if (!app.grip) app.grip = { ids: [], faceId: null, manip: null, live: null }
     for (const id of ids) if (!app.grip.ids.includes(id)) app.grip.ids.push(id)
     app.grip.faceId = hit.id
+    // **면 고름**(web2-54 54-2) — 잡은 채 또 잡으면 더해진다. 같은 면을 다시 잡으면
+    // 맨 뒤로 온다(마지막에 고른 면이 정면을 정한다 — 54-3). 도구를 바꿔도 산다(잡기
+    // 세션(grip)과 달리 endWriting이 안 걷는다 — faceSel은 별도 상태다).
+    app.faceSel = app.faceSel.filter(x => x !== hit.id)
+    app.faceSel.push(hit.id)
     // 글씨 상태도 연다(잡기 세션 = 글씨 세션 — 위 머리주석) · 대상은 첫 경계 획
     if (!app.write) {
       app.write = {
@@ -1299,7 +1342,7 @@ export function beginHold(app: App, p: Pt, now: number): HoldResult {
       }
     }
     for (const l of app.listeners) l()
-    return { kind: 'face', n: app.grip.ids.length }
+    return { kind: 'face', n: app.grip.ids.length, faces: liveFaceSel(app).length }
   }
   // 선
   if (!app.grip) {
@@ -1619,12 +1662,14 @@ export function joinGrip(app: App): JoinResult {
   return { ok: true, P: j.P, rel, changed }
 }
 
-/** **면 정면 뷰**의 목표 자세 — 잡은 면이 있어야 선다. 평행이 허용되면 평행으로
- *  (지시: 원근이면 정면이라도 여전히 줄어든다). 전환·보간은 호출자(main)가 42의 길로. */
+/** **면 정면 뷰**의 목표 자세 — 고른(또는 잡은) 면이 있어야 선다. 평행이 허용되면 평행으로
+ *  (지시: 원근이면 정면이라도 여전히 줄어든다). 전환·보간은 호출자(main)가 42의 길로.
+ *  ⚠ web2-54 54-3: 대상이 «잡은 면 하나»에서 **마지막에 고른 면**(faceSel의 끝)이 됐다 —
+ *  여럿을 골랐을 때 예측 가능한 쪽. 고름이 없으면 잡은 면(44 그대로 — lastSelFace의 대체). */
 export function faceFrontTarget(app: App): CamPose | null {
-  const g = app.grip
-  if (!g || g.faceId === null) return null
-  const f = app.faces.find(x => x.id === g.faceId)
+  const fid = lastSelFace(app)
+  if (fid === null) return null
+  const f = app.faces.find(x => x.id === fid)
   if (!f) return null
   let cx = 0, cy = 0, cz = 0
   for (const p of f.outer) { cx += p.x; cy += p.y; cz += p.z }
@@ -1632,6 +1677,23 @@ export function faceFrontTarget(app: App): CamPose | null {
   const dist = Math.max(1e-6, len3(sub3(app.pose.p, center)))
   const pose = faceFrontPose(center, f.normal, app.pose, dist)
   return parallelAllowed(app.lift.an) ? parallelPose(pose, center) : pose
+}
+
+/** **정면 왕복**(web2-54 54-3) — 날아가는 길만 있고 돌아오는 길이 없으면 안 쓰게 된다.
+ *  · 발판(frontBack)이 없으면: 지금 자세를 발판으로 적고 정면 자세를 낸다(back=false)
+ *  · 발판이 있으면: 그 발판을 내고 비운다(back=true) — 「다시 누르면 직전 시점으로」
+ *  발판은 궤도(orbitBy)가 돌면 비워진다 — 그 뒤의 「정면」은 새 비행이다(App.frontBack 주석).
+ *  보간은 호출자가 42의 길(glide)로 — 여기서는 목표만 낸다. */
+export function frontFlyTarget(app: App): { to: CamPose; back: boolean } | null {
+  if (app.frontBack) {
+    const to = app.frontBack
+    app.frontBack = null
+    return { to, back: true }
+  }
+  const to = faceFrontTarget(app)
+  if (!to) return null
+  app.frontBack = clonePose(app.pose)
+  return { to, back: false }
 }
 
 // ── 칠하기(web2-45 45-3) — 면 위에서의 lift ──────────────────────────────────
@@ -1683,8 +1745,24 @@ export const paintActive = (app: Pick<App, 'tool'>): boolean => app.tool === 'pa
 
 /** 한 붓을 확정한다 — 지나간 면마다 나뉘어 얹힌다(지시 문면 · 사용자는 의식하지 않는다).
  *  면 밖 점은 센다(조용히 버리지 않는다 — 진단이 읽는다). */
-export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: number; offFace: number } {
-  const { runs, offFace } = splitByFace(app.lift, app.pose, app.faces, pts)
+export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: number; offFace: number; offOwn: number } {
+  const { runs: allRuns, offFace } = splitByFace(app.lift, app.pose, app.faces, pts)
+  // ── **칠의 자리**(web2-54) — 획이 얹힐 면을 좁힌다. 스위치(paintOwnGate)는 D-3 반증
+  // 전용이다(끄면 옛 거동 — 지나간 면마다 얹힘 — 이 돌아온다는 것을 팔이 잰다).
+  //   · 고른 면이 있으면(54-2) 획은 그 집합 **안에서만** 이어진다 — 밖은 안 칠해진다
+  //   · 고른 면이 없으면(54-1) 획이 **시작한 면**이 그 획의 주인이다 — 다른 면에 한
+  //     픽셀도 안 남는다(지금 결함 — 다른 면도 의도치 않게 같이 칠해짐 — 이 여기서 사라진다)
+  // 잘린 점은 offOwn으로 센다(조용히 버리지 않는다 — offFace(허공)와 다른 축이다).
+  let runs = allRuns
+  let offOwn = 0
+  if (app.paintOwnGate) {
+    const sel = liveFaceSel(app)
+    const keep = sel.length > 0
+      ? allRuns.filter(r => sel.includes(r.f))
+      : allRuns.length > 0 ? allRuns.filter(r => r.f === allRuns[0]!.f) : allRuns
+    for (const r of allRuns) if (!keep.includes(r)) offOwn += r.pts.length
+    runs = keep
+  }
   const added: Stroke[] = []
   for (const r of runs) {
     // ⚠⚠ **web2-50 — 정본이 면 위 좌표(uv)다**(「자국의 뿌리」). 그은 순간의 광선을 그
@@ -1731,7 +1809,7 @@ export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: nu
   } else {
     for (const l of app.listeners) l()
   }
-  return { placed: added.length, offFace }
+  return { placed: added.length, offFace, offOwn }
 }
 
 /** **Injector**(web2-51) — 칠 도구의 탭이 짚은 칠 획의 속성 전부(도구·색·굵기)를 지금
@@ -3111,6 +3189,7 @@ export const fingerPans = (app: Pick<App, 'penUsed' | 'lift'>): boolean =>
 
 export function orbitBy(app: App, dx: number, dy: number) {
   if (app.lift.lifted.size === 0) return // 돌 것이 없다 — **소실점 개수가 아니라 기하의 유무다**
+  app.frontBack = null   // 손이 궤도를 돌면 정면 왕복의 발판은 낡았다(54-3 — 새 비행이 맞다)
   const pivot = orbitPivot(app)
   rotateAroundPivot(app, v3(0, 1, 0), -dx * ORBIT_RAD_PER_PX, pivot)
   const right = quatRotate(app.pose.q, v3(1, 0, 0))

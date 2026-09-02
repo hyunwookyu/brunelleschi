@@ -5,6 +5,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   handwritingGroup, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
+  frontFlyTarget, liveFaceSel, lastSelFace,
   commitPaint, injectPaintAt, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen,
   placePersonAt, gripFaceArea, floorAreaNow, volumeNow, flashFaces, screenToDoc, roomsNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
@@ -459,7 +460,14 @@ inputApi = initInput(ink, app, {
         break
       case 'grip-add': status(`${r.n}개 잡음 — 같은 선을 또 누르면 이어진 것까지`); break
       case 'grip-connect': status(`이어진 것까지 ${r.n}개 잡음`); break
-      case 'face': status('면을 잡음 — 손통에서 「정면」이 열린다'); break
+      case 'face':
+        // 몇 장이 골라졌는지 화면이 말한다(54-2 · R6) — 고름은 칠에도 걸린다.
+        status(r.faces > 1
+          ? `면 ${r.faces}장 고름 — 칠은 그 안에서만 · 「정면」은 마지막 면 · 빈 곳을 꾹 누르면 풀린다`
+          : '면을 잡음 — 손통·칠통에서 「정면」이 열린다 · 칠은 이 면에만')
+        syncPainttray()
+        break
+      case 'sel-clear': status(`면 고름 ${r.n}장을 풀었다`); syncPainttray(); invalidate(); break
       case 'manip-edit': status('값 — 그 곁에 숫자를 쓴다'); break
       case 'locked':
         // 잠긴 선 — 조용히 안 잡히면 고장으로 읽힌다. 여는 길을 같은 줄에 둔다.
@@ -496,7 +504,14 @@ inputApi = initInput(ink, app, {
   onPaint(pts, press) {
     const r = commitPaint(app, pts, press)
     // 알림은 오류가 있을 때만(4-b) — 얹혔으면 화면이 말한다. 통째로 허공이면 이유를.
-    if (r.placed === 0) notify('칠할 면이 없다 — 면을 먼저 지정한다(칠은 면 위에만 얹힌다)')
+    // 54: 고름·주인 면이 통째로 잘랐을 때도 이유를 — 조용히 사라지면 고장으로 읽힌다.
+    if (r.placed === 0) {
+      notify(r.offOwn > 0
+        ? (liveFaceSel(app).length > 0
+          ? '고른 면 밖이다 — 칠은 고른 면 안에서만 이어진다(빈 곳을 꾹 누르면 고름이 풀린다)'
+          : '시작한 면 밖이다 — 획은 자기 면에만 남는다(여러 면은 꾹 눌러 골라 둔다)')
+        : '칠할 면이 없다 — 면을 먼저 지정한다(칠은 면 위에만 얹힌다)')
+    }
     invalidate()
   },
   onWriteStroke(pts) {
@@ -1970,9 +1985,12 @@ function doGripAction(key: string) {
     else if (r.why === 'dim') notify('치수가 길이를 쥐고 있다 — 치수를 지우면 맺는다')
     else if (r.why === 'notLifted') notify('아직 3D로 올라가지 않은 선이다')
   } else if (key === 'front') {
-    const to = faceFrontTarget(app)
-    if (!to) { notify('정면은 면을 잡아야 한다'); return }
-    autolevel.glide(to)   // 42와 같은 길로 보간한다(즉시 튀면 어디로 갔는지 잃는다)
+    // web2-54 54-3 — 왕복이 됐다: 한 번은 정면, 다시 누르면 직전 시점으로(발판은 state).
+    const r = frontFlyTarget(app)
+    if (!r) { notify('정면은 면을 잡아야 한다'); return }
+    autolevel.glide(r.to)   // 42와 같은 길로 보간한다(즉시 튀면 어디로 갔는지 잃는다)
+    status(r.back ? '직전 시점으로 돌아간다' : '정면 — 다시 누르면 직전 시점으로 돌아온다')
+    syncPainttray()
   } else if (key === 'cls') {
     // 분류 정정(45-2) — 자동은 틀리므로 사람이 돌린다: 자동 → 슬라브 → 벽 → 경사 → 자동
     const r = cycleFaceClass(app, app.grip!.faceId!)
@@ -2110,6 +2128,27 @@ function setPaintHex(hex: string, why: string) {
     })
     painttrayEl.append(b)
     paintInstrRow.set(r.i, b)
+  }
+
+  // ── **정면**(web2-54 54-3) — 44의 「정면」이 칠통에서도 닿는다. 새 기제가 아니라
+  // 손통 front와 **같은 배선**(frontFlyTarget — #54: 판정은 state 하나)이다. 왕복이다:
+  // 다시 누르면 직전 시점으로. 대상은 마지막에 고른 면(54-2의 faceSel — 핀셋으로 골라
+  // 놓고 칠 도구를 들면 그대로다). ⚠ #97 — 이 요소는 <button>(전역 canvas 규칙 밖)이고
+  // painttray 자식은 index.html의 `#painttray > * { flex-shrink: 0 }`이 이미 눌림을 막는다.
+  {
+    const b = document.createElement('button')
+    b.id = 'btn-paint-front'
+    b.className = 'rrow'
+    b.dataset.act = 'state'   // 시점 이동은 색 고르기를 안 끊는다 — 통이 안 접힌다
+    b.innerHTML = `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg><span id="paint-front-lbl">정면</span>`
+    b.addEventListener('click', () => {
+      const r = frontFlyTarget(app)
+      if (!r) { notify('정면은 면을 골라야 한다 — 연필을 든 채로 면 안쪽을 꾹 눌러 고른 뒤 칠로 돌아온다'); return }
+      autolevel.glide(r.to)
+      status(r.back ? '직전 시점으로 돌아간다' : '정면 — 다시 누르면 직전 시점으로 돌아온다')
+      syncPainttray()
+    })
+    painttrayEl.append(b)
   }
 
   // ── 크기 트레이(48-2) — **각 줄에 그 굵기의 실제 자국을 1:1로** 그린다 ────────
@@ -2297,6 +2336,22 @@ function setPaintHex(hex: string, why: string) {
 }
 let wheelDrag: WheelPart = null
 function syncPainttray() {
+  // 정면 줄(54-3) — **몇 장이 골라졌는지 화면이 말한다**(54-2 · R6). 툴팁은 쓸 수 있는
+  // 상태에서도 뜬다(#96 — «못 쓸 때만 설명»은 뒤집힌 거동이다).
+  {
+    const b = document.getElementById('btn-paint-front')
+    const lbl = document.getElementById('paint-front-lbl')
+    if (b && lbl) {
+      const n = liveFaceSel(app).length
+      const can = lastSelFace(app) !== null
+      lbl.textContent = n > 1 ? `정면 · 면 ${n}장 고름` : n === 1 ? '정면 · 면 1장 고름' : '정면'
+      b.classList.toggle('disabled', !can)
+      b.title = can
+        ? (app.frontBack ? '정면 — 다시 누르면 직전 시점으로 돌아온다'
+          : `정면 — ${n > 1 ? '마지막에 고른 면' : '고른 면'}을 정면으로 본다(평행)`)
+        : '정면은 면을 골라야 한다 — 연필을 든 채로 면 안쪽을 꾹 눌러 고른 뒤 칠로 돌아온다'
+    }
+  }
   for (const [i, b] of paintInstrRow) b.classList.toggle('on', app.paintSel.i === i)
   for (const [w, b] of paintSizeRow) b.classList.toggle('on', app.paintSel.w === w)
   drawWheel(wheelHsv())

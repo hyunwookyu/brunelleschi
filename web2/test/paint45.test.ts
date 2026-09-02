@@ -42,21 +42,34 @@ function roomSession(): { s: Session; floorId: number; wallId: number } {
 }
 
 describe('45-3 칠하기 — 면 배정·분할·왕복', () => {
-  it('① 한 붓이 벽·바닥 둘을 지나면 면마다 나뉘어 얹힌다 · 허공 점은 센다', () => {
+  it('① 한 붓은 시작한 면에만 남는다(web2-54가 45의 «면마다 나뉨»을 바꿨다) · 끈 판(반증)에서는 나뉜다 · 허공 점은 센다', () => {
     const { s, floorId, wallId } = roomSession()
     // 벽 안(550,430) → 벽 왼 모서리(x=500)를 넘어 **바닥 전용 구역**(x<500) → 허공.
-    // ⚠ 겹침 구역(벽 뒤에 바닥이 비치는 x≥500 띠)에서는 앞 면(벽)이 이긴다 — 그 규칙
-    //   자체는 아래 frontFaceAt 팔이 잰다. 나뉨을 재려면 전용 구역을 지나야 한다.
+    // ⚠ web2-54 54-1: 옛 계약(지나간 면마다 얹힘)은 사용자가 결함으로 지목했다(「다른
+    //   면도 의도치않게 같이 칠해진다」). 새 계약 — 고름이 없으면 **시작한 면(벽)이
+    //   주인**이고 바닥 몫은 offOwn으로 세어진다. 옛 거동은 paintOwnGate=false(D-3
+    //   반증 스위치)에서 그대로 돌아온다 — 아래 반증 갈래가 그것을 잰다.
     const pts: Pt[] = []
     for (let t = 0; t <= 20; t++) pts.push({ x: 550 - t * 5, y: 430 + t * 2.4 })    // 벽→바닥(450,478)
     for (let t = 1; t <= 5; t++) pts.push({ x: 450 - t * 45, y: 478 + t * 32 })     // 바닥→허공
     const r = commitPaint(s.app, pts)
-    expect(r.placed).toBeGreaterThanOrEqual(2)
+    expect(r.placed).toBeGreaterThanOrEqual(1)
     const paints = s.app.doc.strokes.filter(x => x.paint !== undefined)
     const fs = new Set(paints.map(x => x.paint!.f))
-    expect(fs.has(wallId)).toBe(true)
-    expect(fs.has(floorId)).toBe(true)
+    expect(fs.has(wallId), '시작한 면(벽)에 남는다').toBe(true)
+    expect(fs.has(floorId), '바닥에는 한 조각도 안 남는다(54-1)').toBe(false)
+    expect(r.offOwn, '잘린 바닥 몫이 세어진다(조용히 안 버린다)').toBeGreaterThan(0)
     expect(r.offFace).toBeGreaterThan(0)              // 허공 몫이 실제로 세어진다
+    // 반증(D-3) — 스위치를 끄면 옛 거동(면마다 나뉨)이 같은 점렬에서 돌아온다
+    {
+      const s2 = roomSession()
+      s2.s.app.paintOwnGate = false
+      const r2 = commitPaint(s2.s.app, pts)
+      expect(r2.placed).toBeGreaterThanOrEqual(2)
+      const fs2 = new Set(s2.s.app.doc.strokes.filter(x => x.paint !== undefined).map(x => x.paint!.f))
+      expect(fs2.has(s2.wallId) && fs2.has(s2.floorId), '끈 판 — 벽·바닥 둘 다').toBe(true)
+      expect(r2.offOwn, '끈 판은 아무것도 안 자른다').toBe(0)
+    }
     // 리프팅·카메라 오염 없음 — 칠 획은 lifted·waiting 어디에도 없다
     for (const p of paints) {
       expect(s.app.lift.lifted.has(p.id)).toBe(false)
