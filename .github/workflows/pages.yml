@@ -56,15 +56,21 @@ jobs:
       # 계산 — 소실점·카메라·좌표·오스냅·재료. 몇 초면 돈다(외부 데이터 의존 없음)
       - run: npm test
       - run: npm run build
-      # **초록 실행**(web2-54 §1㉢) — 종전에는 `static_deploy.spec.ts` 하나만 돌았고
-      # `ui34 ④`가 34-3부터 빨간 채 배포돼 아무 회차도 못 봤다(#89의 사고). 이제 매 푸시가
-      # e2e:green(병렬 4 · 계측 넷 제외 · dpr2는 픽셀 목록만 — e2e/dpr2list.ts)을 돈다.
-      # 「초록」이 초록이 되는 것이 이 절의 목적이다. 전량(dpr2 전부·계측 포함)은
-      # e2e:night — 사람이 도는 세션·마감의 몫이다.
-      # ⚠ static_deploy.spec(하위 경로·워커 scope·옛 배포 인계·`?reset`)도 green 안에서
-      # 돈다 — `dist/`가 있어야 하므로 위 `npm run build` 다음에 둔 이유는 그대로다.
+      # **CI의 e2e는 종전대로 `static_deploy.spec.ts` 하나다** — web2-54 §1㉢이
+      # `e2e:green`(병렬 · 계측 제외 · dpr2 목록)으로 바꿔 **한 번 실측했고**(run
+      # 33639029509 · 29.6분 · **537/547 — 아홉 빨강**), 같은 커밋이 로컬(8코어 ·
+      # 기계 비움)에서는 초록 셋 연속 546/546이었다. 빨강의 성격이 «이 저장소의 팔이
+      # 리눅스 러너에서 다른 값을 재는 것»이라 워커 수로 안 풀린다 — 실증 둘:
+      #   · ui34 ④′(반증 팔) — 리눅스 글꼴의 글리프 잉크가 창 폭과 6.6000004 vs 6.601로
+      #     겹쳐 «옛 판이 빨개진다»의 전제가 그 플랫폼에 없다(부하 무관)
+      #   · waitink37 ③ — 정착 후 색상 이동이 14.8(문 3.65)로 남는다(소프트웨어 GL 차)
+      # 그래서 ㉢은 **되돌리고 열 조건을 남긴다**(CHAIN3의 §1 되돌림 조항 — 무르느니
+      # 되돌린다. 느린/좁은 것이 모르는 것보다 낫다): CI 초록을 켜는 조건은 「초록 스펙
+      # 전부가 리눅스 러너에서도 같은 판정을 낸다」이고 그 이식은 별도 라운드다
+      # (DEFERRED web2-54 절 · 사람 몫 ⚑ — 매 푸시 ~30분 비용 판단 포함).
+      # 로컬 명령(e2e:green/night/ledger)과 §1의 게이트(gates54_web2.json)는 그대로다.
       - run: npx playwright install --with-deps chromium
-      - run: npm run e2e:green
+      - run: npx playwright test e2e/static_deploy.spec.ts
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web2/dist
