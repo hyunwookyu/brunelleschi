@@ -22589,3 +22589,10 @@ waitink37 46→46(통과라 부검 열쇠 없음) · brush51 178→**179**(+`ret
 **포트 하드코딩 전수(#88)**: 5파일 8곳 전부 수리 · 잔존 0 — DEFERRED 행이 값의 자리.
 **KEY_ORDER(roundtrip43 게이트 ②)**: 55 필드 전부 등재(e·ex·clsDefs·slab/wall/extw/intw/slope·
 off/pri/core — t·mat·s는 기존 전역 열쇠) · 단위 1038이 바이트로 확인.
+
+**배포 확인(⛳ 마감 규약)**: main `4eecab5` 푸시 → Pages 실행 completed/success(attempt 1 ·
+run 33695222599) → `node tools/deploy-check.mjs` = **「배포됨」 — 화면 빌드 식별자 `4eecab5`
+== 배포 커밋** ✓. **도는 백그라운드 없음(실측 · #81)**: node.exe 프로세스 **0** ·
+포트 53xx 리스너 **0**(netstat) · 세션 백그라운드 작업 5종 전부 completed
+(부모 밤 2회 · 6차 초록+밤 · 원장 3종 · CI 감시 — 상한 있는 대기로 돌았다 #95).
+사슬 3은 여기서 절단(사람 지시) — **56은 새 세션** · 53 착수 금지(조건: 56 완주) 유지.
