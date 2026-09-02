@@ -348,15 +348,19 @@ test('④ dpr 1↔3 — 굵기(물리 px ÷ dpr) 비가 1 ± C.PAINT51_DPR_W_TOL
   await pickInstr(page, 'pencil', '#3a6b35', 10)
   await drawPen(page, 515, 430, 585, 430, 0.6)
   await page.waitForTimeout(250)
-  const s1 = await bandStats(page, 530, 418, 40, 24)
+  let s1 = await bandStats(page, 530, 418, 40, 24)
+  // #93(55 마감) — 부하에서 250ms 뒤에도 렌더 전이라 rows 0(n55·n55b) — 폴링 상한 30×100ms(#95)
+  for (let i = 0; i < 30 && s1.rows === 0; i++) { await page.waitForTimeout(100); s1 = await bandStats(page, 530, 418, 40, 24) }
   // dpr3 문맥 — 같은 장면을 다시 세운다
-  const ctx3 = await browser.newContext({ deviceScaleFactor: 3, viewport: { width: 1200, height: 800 }, baseURL: 'http://localhost:5301' })
+  const ctx3 = await browser.newContext({ deviceScaleFactor: 3, viewport: { width: 1200, height: 800 }, // #70 계열(55 마감): 박은 포트(5301)가 PW_PORT 평행 규약을 깨고 있었다
+    baseURL: `http://localhost:${process.env.PW_PORT ?? 5301}` })
   const p3 = await ctx3.newPage()
   await room(p3)
   await pickInstr(p3, 'pencil', '#3a6b35', 10)
   await drawPen(p3, 515, 430, 585, 430, 0.6)
   await p3.waitForTimeout(250)
-  const s3 = await bandStats(p3, 530, 418, 40, 24)
+  let s3 = await bandStats(p3, 530, 418, 40, 24)
+  for (let i = 0; i < 30 && s3.rows === 0; i++) { await p3.waitForTimeout(100); s3 = await bandStats(p3, 530, 418, 40, 24) }
   await ctx3.close()
   const w1 = s1.rows / 1, w3 = s3.rows / 3
   const tol = (await page.evaluate(() => (window as any).__b2.diag.paint50Constants())).PAINT51_DPR_W_TOL ?? 0.15

@@ -283,6 +283,7 @@ test('34-4 ⑤ **예외** — 치수 리본은 작업대다: 캔버스를 눌러
 })
 
 test('34-4 ⑥ **반증** — away를 빼면 ①②③이, 삼키면 ②만 빨개진다 (D-3)', async ({ page }) => {
+  test.setTimeout(120_000)   // #93(55 마감) — 병렬 4 부하에서 60s 초과(값 오류 아님 · 긴 D-3 순회)
   /** 통 전수에 대해 「바깥을 눌렀을 때 접혔나 · 그 누름의 제 일이 살았나」를 한 번에 낸다 */
   async function sweep(mode: 'on' | 'off' | 'swallow') {
     await page.evaluate(m => (window as any).__b2.diag.boxAwayModeForTest(m), mode)

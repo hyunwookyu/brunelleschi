@@ -287,22 +287,18 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
     undefined, { timeout: 5000 })
   await settle(page)
   // 안정화 읽기(web2-55 마감 · #93) — 부하에서 창이 닫힌 «뒤»에도 재도장이 밀려
-  // 전이 잔상을 읽는다(g55 dpr2 실측 5.88 vs 문 3.65). 같은 값이 두 번 나올 때까지
-  // 읽는다 — 상한 15회(#95: 상한 + 걸리면 마지막 값으로 판정).
-  await page.evaluate(async () => {
-    let prev = NaN
-    for (let i = 0; i < 15; i++) {
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null))))
-      const el = document.getElementById('brushc') as HTMLCanvasElement
-      // 가벼운 안정 신호 — 캔버스 내용 해시 대신 한 줄 합(전체 읽기는 비싸다)
-      const g = el.getContext('2d')!
-      const row = g.getImageData(0, Math.floor(el.height / 2), el.width, 1).data
-      let sum = 0
-      for (let j = 0; j < row.length; j += 16) sum += row[j]! + row[j + 2]!
-      if (sum === prev) break
-      prev = sum
+  // 전이 잔상을 읽는다(g55 dpr2 실측 5.88 vs 문 3.65). 같은 판독기(hueOf — drawImage
+  // 경유라 컨텍스트 종류 무관)로 값이 두 번 같을 때까지 다시 읽는다 — 상한 12회(#95).
+  // ⚠ 초판 프로브는 #brushc에 getContext('2d')를 불러 몸살넔다(몸은 렌더러 모드에 따라 webgl — null) — 그 사고의 재발 방지 메모.
+  {
+    let prev = await hueOf(page, 'brushc', box)
+    for (let i = 0; i < 12; i++) {
+      await settle(page)
+      const cur = await hueOf(page, 'brushc', box)
+      if (cur.shift === prev.shift && cur.painted === prev.painted) break
+      prev = cur
     }
-  })
+  }
   const trace = await page.evaluate(() => {
     const tr = (window as never as { __wi37: { ids: number[]; maxShift: number; frames: number; stop: boolean } }).__wi37
     tr.stop = true
