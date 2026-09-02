@@ -37,6 +37,7 @@ import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
 import { add3, mul3 } from '../core/vec'
 import { borderQuads } from '../core/border'
+import { DEFAULT_CLS } from '../core/clsdef'
 import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS, WRITE_HOLD_MS_MIN, WRITE_HOLD_MS_MAX } from '../core/constants'
 import { WAIT_INK, setWaitInkMode, waitInkMode, type WaitInkMode } from '../core/waitfade'
 import {
@@ -2012,9 +2013,11 @@ function doGripAction(key: string) {
     }
     w.thickOp = undefined      // 모드가 바뀌면 새 op다(일괄과 예외는 다른 대상)
     const cur = info === null ? '' : ` · 지금 ${info.t}mm${info.ex ? '(예외)' : ''}`
-    status(w.thickEx === 1
+    // 축척 미정(1차 [11]) — 값은 실리되 화면에 안 그려진다: 조용한 무동작이 안 되게 말한다
+    const noScale = app.lift.mmPerUnit === null ? ' ⚠ 축척이 아직 없다 — 치수를 하나 매기면 두께가 그려진다(값은 남는다)' : ''
+    status((w.thickEx === 1
       ? `두께(예외) — 숫자를 쓰면 **이 면만** 그 두께가 된다${cur} · 다시 누르면 일괄로`
-      : `두께 — 숫자를 쓰면 ${clsName} 분류 **전부**의 두께(mm)가 된다${cur} · 다시 누르면 이 면만`)
+      : `두께 — 숫자를 쓰면 ${clsName} 분류 **전부**의 두께(mm)가 된다${cur} · 다시 누르면 이 면만`) + noScale)
   } else if (key === 'cls') {
     // 분류 정정(45-2) — 자동은 틀리므로 사람이 돌린다: 자동 → 슬라브 → 벽 → 경사 → 자동
     const r = cycleFaceClass(app, app.grip!.faceId!)
@@ -2933,10 +2936,21 @@ const diag = {
    *  지키고(thick55.test의 applyRecognized 갈래), e2e는 이 손잡이로 값을 넣어 «보이는
    *  자리»(기하·픽셀)를 잰다. 앱 흐름은 그대로 setClsThickness/setFaceThicknessEx 하나다(#54). */
   setThickForTest: (fid: number, mm: number, ex?: boolean) => {
-    if (ex) setFaceThicknessEx(app, fid, mm); else setClsThickness(app, fid, mm)
+    const r = ex ? (setFaceThicknessEx(app, fid, mm) !== null ? { ex: true } : null)
+      : (() => { const q = setClsThickness(app, fid, mm); return q ? { cls: q.cls, n: q.n } : null })()
     invalidate()
+    return r
   },
   clearThickExForTest: (fid: number) => { setFaceThicknessEx(app, fid, undefined); invalidate() },
+  /** 분류 정의 기본값(초판) — 원장 defaults 블록의 출처(1차 [5] — 근거를 원장에) */
+  clsDefaults: () => DEFAULT_CLS,
+  /** 렌더 자원 요약(1차 [3] — 20면 성능의 메모리 자) — three renderer.info + 그룹 수 */
+  r3dInfo: () => ({
+    faceMeshes: r3d.faceGroup.children.length,
+    paintMeshes: r3d.paintGroup.children.length,
+    lines: r3d.group.children.length,
+    gl: { geometries: r3d.renderer.info.memory.geometries, textures: r3d.renderer.info.memory.textures },
+  }),
   /** 두께 진단 — 슬롯(세계 단위)과 띠 사각의 «화면» 꼭짓점(팔이 띠를 누를 자리를 이걸로 찾는다) */
   thick55: (fid: number) => {
     const rf = app.faces.find(f => f.id === fid)
