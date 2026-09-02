@@ -121,6 +121,22 @@ test('31-1 ②③④ 누르면 축 틀에서 90° 돌고, 보간하며, 네 번�
   await construct(page)
   const before = await frame(page) as Fr
 
+  // ③의 자 — **rAF 추적자를 누르기 «전에» 심는다**(web2-54 마감 · #93: 표본 «한 번»은
+  // 느린 프레임에서 보간 끝자락을 읽는다 — dpr2 실측 52.010° vs 손수치 문 52.0으로
+  // 0.01° 차 빨강. waitink37 ③과 같은 수리: 문턱이 아니라 팔을 고친다). 프레임마다
+  // 자세를 그 자리에서 기록하면 보간의 «중간»이 한 프레임이라도 있는 한 반드시 잡힌다.
+  await page.evaluate(() => {
+    const w = window as any
+    w.__t31 = { qs: [] as { x: number; y: number; z: number; w: number }[], stop: false }
+    const tick = () => {
+      if (w.__t31.stop) return
+      const q = w.__b2.app.pose.q
+      w.__t31.qs.push({ x: q.x, y: q.y, z: q.z, w: q.w })
+      requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
+
   // ② 화살표 자리를 누른다 — 큐브 면이 아니라 화살표로 읽혀야 한다
   const p = await arrowPoint(page, 'right')
   await page.mouse.move(p.x, p.y)
@@ -133,9 +149,11 @@ test('31-1 ②③④ 누르면 축 틀에서 90° 돌고, 보간하며, 네 번�
   const midGap = gapDeg(before, mid)
   console.log(`[31-1 ③] 누른 직후 진행 ${midGap.toFixed(3)}° (즉시 점프면 52.24°에 이미 닿아 있다)`)
   expect(midGap, '조금은 움직였다').toBeGreaterThan(0)
-  // 목표는 52.238756°다 — 그보다 **작으면** 보간이 있었다는 뜻이다(즉시 점프면 정확히 그 값).
-  // 실측: dpr1 4.797° · dpr2 34.897°(느린 프레임). 문을 52.0에 둬 느린 기계에서 흔들리지 않게 한다.
-  expect(midGap, '아직 목표가 아니다 — 보간 중이다').toBeLessThan(52)
+  // ⚠ 종전 판은 여기서 midGap < 52(손수치 — 목표 52.238756°에서 0.24° 여유)를 걸었다.
+  // web2-54 마감의 초록 재실측이 그 자리를 잡았다: dpr2 느린 프레임에서 settle(2 rAF)이
+  // 보간 전체를 삼켜 52.010°가 나왔다 — «보간이 있었다»(52.24 미만)는 참인데 손수치
+  // 문(52.0)이 갈랐다. 판정을 추적자로 옮긴다(아래 — step1이 선 뒤에 잰다). #88: 문은
+  // 손수치가 아니라 **그 실행의 목표(step1)에서 유도**한다.
 
   await page.waitForTimeout(500)
   await settle(page)
@@ -143,6 +161,30 @@ test('31-1 ②③④ 누르면 축 틀에서 90° 돌고, 보간하며, 네 번�
   const step1 = gapDeg(before, after1)
   console.log(`[31-1 ②] 첫 누름 뒤 자세 변화 ${step1.toFixed(6)}° — **90°가 아니다**(축 틀로 양자화한 뒤 90°)`)
   expect(step1).toBeGreaterThan(1)
+
+  // ③' 추적자 판독 — 보간의 «중간 프레임»이 실재했다(0.5° 초과 · 목표−0.05° 미만).
+  // 즉시 점프였다면 모든 프레임이 0 또는 step1이라 중간이 없다 — 그것이 이 판의 반증이다.
+  {
+    const qs = await page.evaluate(() => {
+      const t = (window as any).__t31
+      t.stop = true
+      return t.qs as { x: number; y: number; z: number; w: number }[]
+    })
+    const frOf = (q: { x: number; y: number; z: number; w: number }): Fr => {
+      const rot = (v: number[]) => {
+        const [x, y, z] = v as [number, number, number]
+        const cx = q.y * z - q.z * y, cy = q.z * x - q.x * z, cz = q.x * y - q.y * x
+        const tx = 2 * cx, ty = 2 * cy, tz = 2 * cz
+        const c2x = q.y * tz - q.z * ty, c2y = q.z * tx - q.x * tz, c2z = q.x * ty - q.y * tx
+        return [x + q.w * tx + c2x, y + q.w * ty + c2y, z + q.w * tz + c2z]
+      }
+      return { right: rot([1, 0, 0]), up: rot([0, 1, 0]), back: rot([0, 0, 1]) }
+    }
+    const gaps = qs.map(q => gapDeg(before, frOf(q)))
+    const inter = gaps.filter(g => g > 0.5 && g < step1 - 0.05)
+    console.log(`[31-1 ③'] 추적자 ${qs.length}프레임 · 중간 프레임 ${inter.length}개 (최소 ${Math.min(...gaps).toFixed(3)}° · 최대 ${Math.max(...gaps).toFixed(3)}°)`)
+    expect(inter.length, '보간의 중간 프레임이 실재한다 — 즉시 점프가 아니다').toBeGreaterThan(0)
+  }
 
   // ④ **거기서** 네 번 더 — 네 번이 한 바퀴다(첫 누름은 «양자화 + 90°»라 주기 밖이다)
   for (let i = 0; i < 4; i++) {

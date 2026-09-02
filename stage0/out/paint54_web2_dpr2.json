@@ -43,6 +43,7 @@
       "wallB": 12
     },
     "px_delta": {
+      "wallA": 119,
       "floor": 0,
       "wallB": 0
     }
@@ -59,6 +60,8 @@
       "wallB": 12
     },
     "px_delta": {
+      "wallA": 119,
+      "wallB": 108,
       "floor": 0
     }
   },
@@ -67,7 +70,8 @@
     "dot": 1,
     "other_dot": 0,
     "proj": "parallel",
-    "return_diff": 0
+    "return_diff": 0,
+    "falsify_cross_dot": 0
   },
   "ui34": {
     "def": "#96/#97/34-6 — 툴팁 두 상태 · R6 고름 수 · 정면 줄 rect(화면 안 — 값) · elementFromPoint(가로채는 겹 없음 — 행위 #94) · 칠통 넘침(scrollWH==clientWH — mats52 ⑤와 같은 자 · 리뷰어 [10])",

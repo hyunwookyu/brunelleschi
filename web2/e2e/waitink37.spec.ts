@@ -301,7 +301,11 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
     during_shift: +trace.maxShift.toFixed(2),
     after_shift: +after.shift.toFixed(2),
     after_painted: after.painted,
-    note: '한 획이 색을 바꾼다 — 창이 닫힌 뒤 그 상자에 남는 것은 흑연 하나다(청색 잔상 없음). during_shift는 web2-54부터 rAF 추적자의 창-안 최대값이다(표본 한 번은 부하에서 창을 놓친다 — #93)',
+    // 추적자의 생존 값(2차 [N2]) — frames = 창 안에서 실제로 본 프레임 수(반증 조건:
+    // 창이 안 열리면 0으로 실패한다) · ids = 창 안에서 정착 중이던 획들
+    trace_frames: trace.frames,
+    trace_ids: trace.ids,
+    note: '한 획이 색을 바꾼다 — 창이 닫힌 뒤 그 상자에 남는 것은 흑연 하나다(청색 잔상 없음). during_shift는 web2-54부터 rAF 추적자의 창-안 최대값이다(표본 한 번은 부하에서 창을 놓친다 — #93). 술어: ① trace_ids ∋ 그 획 ② trace_frames > 0(반증 조건) ③ during > after ④ before > WAIT_MIN·자 ⑤ |after| < CONF_MAX·자 — ④⑤와 창 길이는 37-2 그대로(무른 문턱 없음)',
   }
 
   expect(before.shift).toBeGreaterThan(scale * WAIT_HUE.WAIT_MIN)   // 대기였다

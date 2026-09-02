@@ -57,8 +57,12 @@
   "settle_ms": 300,
   "waiting_shift": 32.17,
   "during_shift": 35.92,
-  "after_shift": -1.52,
+  "after_shift": -0.85,
   "after_painted": 296,
-  "note": "한 획이 색을 바꾼다 — 창이 닫힌 뒤 그 상자에 남는 것은 흑연 하나다(청색 잔상 없음). during_shift는 web2-54부터 rAF 추적자의 창-안 최대값이다(표본 한 번은 부하에서 창을 놓친다 — #93)"
+  "trace_frames": 8,
+  "trace_ids": [
+   5
+  ],
+  "note": "한 획이 색을 바꾼다 — 창이 닫힌 뒤 그 상자에 남는 것은 흑연 하나다(청색 잔상 없음). during_shift는 web2-54부터 rAF 추적자의 창-안 최대값이다(표본 한 번은 부하에서 창을 놓친다 — #93). 술어: ① trace_ids ∋ 그 획 ② trace_frames > 0(반증 조건) ③ during > after ④ before > WAIT_MIN·자 ⑤ |after| < CONF_MAX·자 — ④⑤와 창 길이는 37-2 그대로(무른 문턱 없음)"
  }
 }

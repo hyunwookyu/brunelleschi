@@ -24,7 +24,8 @@ if (process.env.LEDGER !== '1') {
 }
 
 const HERE = dirname(fileURLToPath(import.meta.url))
-const [g1, g2, g3, night, full, ...walls] = process.argv.slice(2)
+// 여섯째 인자(gfinal)는 선택 — 최종 트리(스펙 보강 뒤)의 초록 1회를 함께 봉인한다(2차 [N3])
+const [g1, g2, g3, night, full, gfinal, ...walls] = process.argv.slice(2)
 
 function collect(file) {
   const root = JSON.parse(readFileSync(file, 'utf8'))
@@ -41,7 +42,8 @@ function collect(file) {
   return out
 }
 
-const runs = { green1: g1, green2: g2, green3: g3, night, full1w: full }
+const runs = { green1: g1, green2: g2, green3: g3, night, full1w: full,
+  ...(gfinal && !/^\d+$/.test(gfinal) ? { green_final_tree: gfinal } : {}) }
 const sets = Object.fromEntries(Object.entries(runs).map(([k, f]) => [k, collect(f)]))
 const summary = {}
 Object.entries(sets).forEach(([k, m], i) => {
@@ -93,6 +95,35 @@ const out = {
     night_vs_full: (({ missing, diff }) => ({ missing, diff }))(cmp(sets.night, sets.full1w)),
   },
   not_in_green: notInGreen,
+  // 초록의 범위 «자체»를 원장에(2차 [N11]) — green이 도는 dpr2 스펙 목록(조건의 산출물 ·
+  // 정본은 e2e/dpr2list.ts)과 계측 넷. green 통과 집합의 원자료도 함께 — 게이트 2의
+  // green 축이 이 파일만으로 재유도된다.
+  dpr2_specs: (() => {
+    const src = readFileSync(resolve(HERE, '../e2e/dpr2list.ts'), 'utf8')
+    const m = src.match(/DPR2_SPECS = \[([\s\S]*?)\]/)
+    return m ? [...m[1].matchAll(/'([^']+)'/g)].map(x => x[1]) : []
+  })(),
+  measure_specs: ['cost18', 'cost20', 'cost22', 'brushperf'],
+  green_passset: [...sets.green1.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([id, st]) => `${st === 'expected' ? 'ok' : st}|${id}`),
+  // 수리 «전» 판의 실패(D-2의 전 절반 · 2차 [N5]) — ⚠ **원장 밖 사실이다**: 그 실행의
+  // 보고 JSON(tmp54/g1.json 초판)은 수리 후 재실행이 같은 이름으로 덮었다. 아래는 세션이
+  // 그 시점에 파서로 뜬 값의 옮김이고, 재검증 불가함을 명시한다(#89 — 범위를 적는다).
+  before_fix: {
+    tree: '6e6e36b (mats52 예산·waitink37 추적자 수리 «전»)',
+    run: 'green 1회차 · 547칸 · 543 expected + 1 skip + 3 unexpected',
+    reds: [
+      'dpr1|mats52.spec.ts|⑤ 브러시 프리셋 — #97 짝 세로 넘침: expected 788 received 801',
+      'dpr2|mats52.spec.ts|⑤ 브러시 프리셋 — #97 짝 세로 넘침: expected 788 received 801',
+      'dpr2|waitink37.spec.ts|37-2 ③ 정착 전이 — settling 배열이 비었다(toContain 5 vs [])',
+    ],
+    provenance: 'session-captured (원장 아님 — 재검증 불가)',
+  },
+  full_passset_note: (() => {
+    const n = sets.full1w.size
+    const ok = [...sets.full1w.values()].filter(v => v === 'expected').length
+    const sk = [...sets.full1w.values()].filter(v => v === 'skipped').length
+    return `목록 ${n}줄 = 통과 ${ok} + skip ${sk} (2차 [N6] — 세어서 적는다)`
+  })(),
   full_passset: [...sets.full1w.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([id, st]) => `${st === 'expected' ? 'ok' : st}|${id}`),
 }
 

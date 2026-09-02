@@ -215,20 +215,21 @@ test('③ 고름 하나 — 획이 그 면 밖으로 나가면 밖은 0', async 
   expect(await page.evaluate(() => (window as any).__b2.app.faceSel.length), '고름 1').toBe(1)
   await page.click('#btn-paint')                              // 도구를 바꿔도 고름이 산다
   expect(await page.evaluate(() => (window as any).__b2.app.faceSel.length), '칠로 바꿔도 그대로').toBe(1)
-  const before = { floor: await glDark(page, ...BOX.floor), wallB: await glDark(page, ...BOX.wallB) }
+  const before = { floor: await glDark(page, ...BOX.floor), wallA: await glDark(page, ...BOX.wallA), wallB: await glDark(page, ...BOX.wallB) }
   const n0 = await strokeCount(page)
   await strokeAcross(page)                                    // 바닥 시작 — 고른 면은 벽 왼판
   const by = await paintByFaceSince(page, n0)
-  const after = { floor: await glDark(page, ...BOX.floor), wallB: await glDark(page, ...BOX.wallB) }
+  const after = { floor: await glDark(page, ...BOX.floor), wallA: await glDark(page, ...BOX.wallA), wallB: await glDark(page, ...BOX.wallB) }
   OUT.sel_one = {
     def: '고름 하나(벽 왼판): 세 면을 가로지르는 붓이 그 판에만 남는다 — 시작한 면(바닥)도 밖이다(고름이 주인 규칙을 이긴다). px_delta = 밖 두 면 상자의 어두운 픽셀 증가분(«한 픽셀도 안 남는다»의 값 — 리뷰어 [12])',
-    by_face: by, ids, px_delta: { floor: after.floor - before.floor, wallB: after.wallB - before.wallB },
+    by_face: by, ids, px_delta: { wallA: after.wallA - before.wallA, floor: after.floor - before.floor, wallB: after.wallB - before.wallB },
   }
   expect(by[ids.wallA] ?? 0, '고른 면(벽 왼판)에 남았다').toBeGreaterThan(0)
   expect(by[ids.floor] ?? 0, '바닥(고름 밖) 0').toBe(0)
   expect(by[ids.wallB] ?? 0, '벽 오른판(고름 밖) 0').toBe(0)
   expect(after.floor - before.floor, '바닥 픽셀 증가 0(한 픽셀도)').toBe(0)
   expect(after.wallB - before.wallB, '벽 오른판 픽셀 증가 0(한 픽셀도)').toBe(0)
+  expect(after.wallA - before.wallA, '고른 면(안)에는 픽셀이 실제로 늘었다 — «밖 0»의 자가 살았다(2차 [N1])').toBeGreaterThan(0)
 })
 
 test('④ 고름 둘 — 두 면에 걸친 획이 둘 다에 남고 셋째는 0 (연속해서 칠하기)', async ({ page }) => {
@@ -239,19 +240,21 @@ test('④ 고름 둘 — 두 면에 걸친 획이 둘 다에 남고 셋째는 0 
   await holdAt(page, 578, 435)                                // + 벽 오른판 (잡은 채 또 잡으면 더해진다)
   expect(await page.evaluate(() => (window as any).__b2.app.faceSel.length), '고름 2').toBe(2)
   await page.click('#btn-paint')
-  const before = { floor: await glDark(page, ...BOX.floor) }
+  const before = { floor: await glDark(page, ...BOX.floor), wallA: await glDark(page, ...BOX.wallA), wallB: await glDark(page, ...BOX.wallB) }
   const n0 = await strokeCount(page)
   await strokeAcross(page)
   const by = await paintByFaceSince(page, n0)
-  const after = { floor: await glDark(page, ...BOX.floor) }
+  const after = { floor: await glDark(page, ...BOX.floor), wallA: await glDark(page, ...BOX.wallA), wallB: await glDark(page, ...BOX.wallB) }
   OUT.sel_two = {
     def: '고름 둘(벽 두 판): 이음매를 넘는 붓이 둘 다에 남고 바닥(셋째)은 0 — «연속해서 칠하기»의 실측(사용자 문면의 그 장면)',
-    by_face: by, ids, px_delta: { floor: after.floor - before.floor },
+    by_face: by, ids, px_delta: { wallA: after.wallA - before.wallA, wallB: after.wallB - before.wallB, floor: after.floor - before.floor },
   }
   expect(by[ids.wallA] ?? 0, '벽 왼판에 남았다').toBeGreaterThan(0)
   expect(by[ids.wallB] ?? 0, '벽 오른판에 남았다').toBeGreaterThan(0)
   expect(by[ids.floor] ?? 0, '바닥 0').toBe(0)
   expect(after.floor - before.floor, '바닥 픽셀 증가 0(한 픽셀도)').toBe(0)
+  expect(after.wallA - before.wallA, '벽 왼판(안) 픽셀 양성').toBeGreaterThan(0)
+  expect(after.wallB - before.wallB, '벽 오른판(안) 픽셀 양성').toBeGreaterThan(0)
 })
 
 /** 포즈가 멈출 때까지(보간 종료) — 상한 3s(#95: 상한 + 걸리면 마지막 포즈를 본다) */
@@ -309,6 +312,42 @@ test('⑤ 정면 — 법선이 카메라 축과 평행(값) · 다시 누르면 
     Math.abs(back.q.z - pose0.q.z), Math.abs(back.q.w - pose0.q.w))
   ;(OUT.front as Record<string, unknown>).return_diff = +diff.toExponential(3)
   expect(diff, '직전 포즈로 돌아왔다').toBeLessThan(1e-6)
+  // ── 반증 «실행»(D-3 · 2차 [N9]) — other_dot(직교 구성값)만으로는 «실패시켜 본» 것이
+  // 아니다. **실제로 다른 면(바닥)의 정면으로 날고**, 그 포즈에서 원래 대상(벽 오른판)의
+  // 법선과의 |cos|를 잰다 — 배선이 바닥으로 틀렸다면 dot이 이 값이 됐다. 부등식(>0.9999)을
+  // 이 실측이 실제로 깬다(픽스처 직교의 «귀결»이 아니라 다른 비행의 «실측»이다).
+  // ⚠ 바닥 고름은 상태로 놓는다 — 꾹 누름 경로는 ③④⑦이 이미 행위로 재고, 이 방(바닥
+  // 다이아 40px 폭)은 어디를 눌러도 선 반경(16px) 안이라 면 잡기가 안 선다(초판 실측 —
+  // 이 팔의 대상은 «비행 배선»이지 잡기가 아니다).
+  const wallTarget = await page.evaluate(() => {
+    const app = (window as any).__b2.app
+    return app.faceSel[app.faceSel.length - 1]
+  })
+  await page.evaluate(() => {
+    const app = (window as any).__b2.app
+    const floor = app.faces.find((f: any) => Math.abs(f.normal.y) > 0.5)
+    app.faceSel = app.faceSel.filter((x: number) => x !== floor.id)
+    app.faceSel.push(floor.id)                                // 마지막 고름 = 바닥
+  })
+  await page.click('#btn-paint-front')                        // 바닥 정면으로 실제로 난다
+  await waitPoseSettled(page)
+  const cross = await page.evaluate((wallId) => {
+    const app = (window as any).__b2.app
+    const f = app.faces.find((x: any) => x.id === wallId)
+    const q = app.pose.q
+    const rot = (v: number[]) => {
+      const { x, y, z, w } = q
+      const ux = y * v[2]! - z * v[1]!, uy = z * v[0]! - x * v[2]!, uz = x * v[1]! - y * v[0]!
+      const uux = y * uz - z * uy, uuy = z * ux - x * uz, uuz = x * uy - y * ux
+      return [v[0]! + 2 * (w * ux + uux), v[1]! + 2 * (w * uy + uuy), v[2]! + 2 * (w * uz + uuz)]
+    }
+    const fwd = rot([0, 0, -1])
+    const n = f.normal
+    const nl = Math.hypot(n.x, n.y, n.z), fl = Math.hypot(fwd[0]!, fwd[1]!, fwd[2]!)
+    return Math.abs((n.x * fwd[0]! + n.y * fwd[1]! + n.z * fwd[2]!) / (nl * fl))
+  }, wallTarget)
+  ;(OUT.front as Record<string, unknown>).falsify_cross_dot = +cross.toFixed(6)
+  expect(cross, '반증 실행 — 다른 면의 정면에서는 원래 대상의 술어가 실제로 깨진다').toBeLessThan(0.9999)
 })
 
 test('⑥ 34-0 몫(#96) — 정면 줄의 툴팁·막힘 사유·고름 수 표시 · 통이 화면 안(34-6)', async ({ page }) => {
