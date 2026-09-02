@@ -433,6 +433,12 @@
        ⚠ `.prow`는 **줄이지 버튼이 아니다**(div) — `.rrow`의 배경·여백만 물려받고
        누름 문법은 안 받는다. 46의 재료 줄이 쓰던 그 자리를 그대로 쓴다. */
     .prow { cursor: default; }
+    /* web2-54 — 칠통 세로 예산(#97 짝 · mats52 ⑤가 «넘침 0»으로 지킨다): 「정면」 줄이
+       들어오며 내용이 800px 화면을 13px 넘었다(실측 801 vs 788). 자리는 요소가 아니라
+       규칙에서 낸다(#38) — 칠통의 «줄»(.prow — 크기·프리셋·휠·재료 11줄)의 세로 패딩을
+       1px씩 줄인다(5→4 · 줄당 2px × 11 = 22px). 터치 표적(스와치 16px·프리셋 규격·휠
+       132px)은 그대로다 — 줄 간 여백만 준다. 도구 줄(버튼 .rrow)은 안 건드린다. */
+    #painttray .prow { padding-top: 4px; padding-bottom: 4px; }
     #paint-wheel { flex-direction: column; gap: 4px; padding: 7px 9px; }
     /* ⚠⚠ `position: static`을 **명시해야 한다**(web2-48 48-7 — e2e가 잡은 결함):
        이 파일 위쪽에 `canvas { position: absolute; inset: 0; display: block; }`이 있다 —

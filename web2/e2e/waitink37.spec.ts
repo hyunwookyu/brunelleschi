@@ -76,31 +76,6 @@ const boxOf = (a: [number, number], b: [number, number], pad = 8) => ({
  *  둘을 두 번의 `evaluate`로 나누면 그 사이에 300ms 창이 닫힐 수 있다 — dpr2는 픽셀 읽기가
  *  네 배라 실제로 닫혔다(`settling` 빈 배열). 읽는 «순서»를 정하는 것으로는 못 막는다:
  *  **같은 시각의 두 값이어야** 「이 픽셀은 그 창 안의 것이다」가 성립한다. */
-function hueAndInk(page: Page, layer: string, r: { x: number; y: number; w: number; h: number }, id: number) {
-  return page.evaluate(([lid, x, y, w, h, sid]) => {
-    const b = (window as never as { __b2: { app: { lift: { lifted: Map<number, unknown> } }; diag: { waitInk: () => { settling: { id: number }[]; settleMs: number } } } }).__b2
-    const ink = b.diag.waitInk()
-    const lifted = b.app.lift.lifted.has(sid as number)
-    const src = document.getElementById(lid as string) as HTMLCanvasElement
-    const dpr = window.devicePixelRatio || 1
-    const t = document.createElement('canvas')
-    t.width = Math.max(1, Math.round((w as number) * dpr))
-    t.height = Math.max(1, Math.round((h as number) * dpr))
-    const g = t.getContext('2d')!
-    g.drawImage(src, Math.round((x as number) * dpr), Math.round((y as number) * dpr),
-      t.width, t.height, 0, 0, t.width, t.height)
-    const d = g.getImageData(0, 0, t.width, t.height).data
-    let wsum = 0, shift = 0, n = 0
-    for (let i = 0; i < d.length; i += 4) {
-      const a = d[i + 3]! / 255
-      if (a <= 0) continue
-      n++; wsum += a; shift += (d[i + 2]! - d[i]!) * a
-    }
-    return { painted: n, shift: wsum > 0 ? shift / wsum : 0, lifted,
-      settlingIds: ink.settling.map(z => z.id), settleMs: ink.settleMs }
-  }, [layer, r.x, r.y, r.w, r.h, id] as const)
-}
-
 function hueOf(page: Page, layer: string, r: { x: number; y: number; w: number; h: number }) {
   return page.evaluate(([id, x, y, w, h]) => {
     const src = document.getElementById(id as string) as HTMLCanvasElement
@@ -239,39 +214,87 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
   const scale = await inkScale(page)
   const before = await hueOf(page, 'brushc', box)
 
+  // ⚠⚠ **web2-54 §1 게이트 1이 이 팔을 잡았다**(#93 — 병렬 4에서 표본 «한 번»이 창을
+  // 놓친다): 종전 판은 사슬을 긋고 나서 evaluate 한 번으로 «전이 중»을 떴는데, 기기가
+  // 붐비면 그 왕복이 정착 창(settleMs)보다 늦어 settling이 **이미 빈 배열**이었다
+  // (기록: 조용한 기계의 리허설 초록에서도 dpr2가 그 자리로 빨갰다). 문턱·창 길이는
+  // 안 만진다 — **팔을 표본에서 «추적자»로 바꾼다**: 사슬을 긋기 «전에» 페이지 안에
+  // rAF 루프를 심어, 창이 열린 프레임마다 (settling id · 그 순간의 상자 청색 이동)을
+  // 그 자리에서 기록한다. 창이 1프레임이라도 열리면 반드시 잡힌다 — 시각 경합이 없다.
+  await page.evaluate(([x, y, w, h, sid]) => {
+    const wnd = window as never as { __wi37?: { ids: number[]; maxShift: number; frames: number; stop: boolean }; __b2: any }
+    const tr = { ids: [] as number[], maxShift: -Infinity, frames: 0, stop: false }
+    wnd.__wi37 = tr
+    const shiftOf = () => {
+      const src = document.getElementById('brushc') as HTMLCanvasElement
+      const dpr = window.devicePixelRatio || 1
+      const t = document.createElement('canvas')
+      t.width = Math.max(1, Math.round((w as number) * dpr))
+      t.height = Math.max(1, Math.round((h as number) * dpr))
+      const g = t.getContext('2d')!
+      g.drawImage(src, Math.round((x as number) * dpr), Math.round((y as number) * dpr),
+        t.width, t.height, 0, 0, t.width, t.height)
+      const d = g.getImageData(0, 0, t.width, t.height).data
+      let wsum = 0, shift = 0
+      for (let i = 0; i < d.length; i += 4) {
+        const a = d[i + 3]! / 255
+        if (a <= 0) continue
+        wsum += a; shift += (d[i + 2]! - d[i]!) * a
+      }
+      return wsum > 0 ? shift / wsum : 0
+    }
+    const tick = () => {
+      if (tr.stop) return
+      const s = wnd.__b2.diag.waitInk()
+      for (const z of s.settling) if (!tr.ids.includes(z.id)) tr.ids.push(z.id)
+      if (s.settling.some((z: { id: number }) => z.id === (sid as number))) {
+        tr.frames++
+        const v = shiftOf()
+        if (v > tr.maxShift) tr.maxShift = v
+      }
+      requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  }, [box.x, box.y, box.w, box.h, id] as const)
+
   // 사슬 — 다리 둘이 승격되고 연쇄가 이 획을 올린다(«승격은 연쇄한다»)
   await drawLine(page, 500, 500, 700, 450, 12)
   await drawLine(page, 700, 450, 700, 250, 12)
-  // ⚠ **읽는 순서가 판정의 일부다**(시각 경합을 없앤다): 픽셀을 **먼저** 뜨고 상태를
-  // 나중에 읽는다. 나중 시각에 창이 아직 열려 있었다면 **먼저 뜬 픽셀은 반드시 그 창
-  // 안**이다 — 반대 순서로 읽으면 느린 기기에서 창이 닫힌 뒤의 픽셀을 «전이 중»이라
-  // 부르게 된다(그 팔은 조용히 아무것도 안 재게 된다).
-  // ⚠ **한 evaluate 안에서** 픽셀과 상태를 함께 뜬다 — 읽는 «순서»로는 못 막는다(위 주석).
-  const mid = await hueAndInk(page, 'brushc', box, id)
-  const midHue = { shift: mid.shift, painted: mid.painted }
-  const during = { settling: mid.settlingIds.map(z => ({ id: z })), settleMs: mid.settleMs }
+  const mid = await page.evaluate((sid) => {
+    const wnd = window as never as { __wi37: { ids: number[]; maxShift: number; frames: number; stop: boolean }; __b2: any }
+    return {
+      lifted: wnd.__b2.app.lift.lifted.has(sid as number) as boolean,
+      settleMs: wnd.__b2.diag.waitInk().settleMs as number,
+    }
+  }, id)
   expect(mid.lifted).toBe(true)
 
   // 창이 닫히기를 기다린다 — **길이도 앱에서 읽는다**(팔이 ms를 안 든다 · #88)
   await page.waitForFunction(() => (window as any).__b2.diag.waitInk().settling.length === 0,
     undefined, { timeout: 5000 })
   await settle(page)
+  const trace = await page.evaluate(() => {
+    const tr = (window as never as { __wi37: { ids: number[]; maxShift: number; frames: number; stop: boolean } }).__wi37
+    tr.stop = true
+    return { ids: tr.ids, maxShift: tr.maxShift, frames: tr.frames }
+  })
   const after = await hueOf(page, 'brushc', box)
 
-  console.log(`[측정] 정착 — 대기 ${before.shift.toFixed(1)} · 전이 중 ${midHue.shift.toFixed(1)}`
-    + ` · 끝난 뒤 ${after.shift.toFixed(1)} (px ${after.painted}) · 창 ${during.settleMs}ms`)
+  console.log(`[측정] 정착 — 대기 ${before.shift.toFixed(1)} · 전이 중(최대) ${trace.maxShift.toFixed(1)}`
+    + ` (${trace.frames}프레임) · 끝난 뒤 ${after.shift.toFixed(1)} (px ${after.painted}) · 창 ${mid.settleMs}ms`)
   ledger['settle'] = {
-    settle_ms: during.settleMs,
+    settle_ms: mid.settleMs,
     waiting_shift: +before.shift.toFixed(2),
-    during_shift: +midHue.shift.toFixed(2),
+    during_shift: +trace.maxShift.toFixed(2),
     after_shift: +after.shift.toFixed(2),
     after_painted: after.painted,
-    note: '한 획이 색을 바꾼다 — 창이 닫힌 뒤 그 상자에 남는 것은 흑연 하나다(청색 잔상 없음).',
+    note: '한 획이 색을 바꾼다 — 창이 닫힌 뒤 그 상자에 남는 것은 흑연 하나다(청색 잔상 없음). during_shift는 web2-54부터 rAF 추적자의 창-안 최대값이다(표본 한 번은 부하에서 창을 놓친다 — #93)',
   }
 
   expect(before.shift).toBeGreaterThan(scale * WAIT_HUE.WAIT_MIN)   // 대기였다
-  expect(during.settling.map((x: { id: number }) => x.id)).toContain(id)  // 전이가 실제로 걸렸다
-  expect(midHue.shift).toBeGreaterThan(after.shift)                  // 전이 중이 더 청색이다
+  expect(trace.ids).toContain(id)                                    // 전이가 실제로 걸렸다(창 안 프레임에서)
+  expect(trace.frames).toBeGreaterThan(0)                            // 추적자가 창 안을 실제로 봤다(반증: 창이 안 열리면 0)
+  expect(trace.maxShift).toBeGreaterThan(after.shift)                // 전이 중이 더 청색이다
   expect(after.painted).toBeGreaterThan(10)                          // 획이 사라지지 않는다
   expect(Math.abs(after.shift)).toBeLessThan(scale * WAIT_HUE.CONF_MAX)  // 청색이 남지 않았다
 })
