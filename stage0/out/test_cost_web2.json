@@ -1,6 +1,6 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "2026-09-02 (web2-52 대응 — 마감 전)",
+  "measured_at": "2026-09-02 (web2-52 마감)",
   "unit": {
     "files": 126,
     "tests": 1025,
@@ -9,8 +9,8 @@
   },
   "e2e": {
     "command": "npx playwright test --workers=1 (dpr1+dpr2)",
-    "cells": 624,
-    "passed": 624,
+    "cells": 656,
+    "passed": 655,
     "failed": 0,
     "wall_m": 60,
     "note": "web2-50 마감 전량 — 608 → 624(paint50 8칸×2dpr 추가(⚠ «9칸»은 51 리뷰어가 잡은 셈 오류 — 624−608=16) · 이관 재작성은 칸 수 중립 대역). 벽시계 1.0h — 49 마감(608칸 1.0h)과 같은 대역(이 기기 · 디스크 여유 3~4GB). ⚠ 49 마감 몫(608/0 · 1.0h)도 이 세션이 채웠다(49 세션이 비워 둔 칸).",
@@ -18,7 +18,7 @@
       "cells_added": 18,
       "note": "brush51 9팔×2dpr − dpr2 skip 1 = 17통과+1skip. 전량 벽시계는 마감 전량 실행에서 갱신한다(3차 [12] — «마감에서 채운다»를 여기 적는다)"
     },
-    "full_wall": "641통과+1skip · 1.0h (--workers=1 · dpr1+dpr2 · web2-51 마감 전량 — LEDGER 꺼짐 #89/#94)",
+    "full_wall": "655통과+1skip · 1.0h (--workers=1 · dpr1+dpr2 · web2-52 마감 전량 — LEDGER 꺼짐 #89/#94)",
     "web2_52": {
       "cells_added": 12,
       "note": "mats52 6팔×2dpr. rep49는 이식(칸 수 불변 12) · mats46 줄 수 게이트 갱신. 전량 벽시계는 마감 전량 실행에서"
@@ -347,9 +347,9 @@
     },
     {
       "note": "전량 칸 수·벽시계는 52 마감 전량 실행이 채운다",
-      "at": "web2-52(마감 전)",
+      "at": "web2-52",
       "unit": 1025,
-      "e2e": null
+      "e2e": 656
     }
   ],
   "environment": {

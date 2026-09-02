@@ -384,56 +384,10 @@ const repMats: Record<'major' | 'minor', THREE.LineBasicMaterial> = {
     depthTest: false, depthWrite: false,
   }),
 }
-function repLs(segs: Seg3[], fam: 'major' | 'minor', faceId: number,
-  steps: { major: number; minor: number },
-  centroid: { x: number; y: number; z: number }, u: { x: number; y: number; z: number }): THREE.LineSegments {
-  const pos = new Float32Array(segs.length * 6)
-  segs.forEach((s, i) => {
-    pos[i * 6] = s.a.x; pos[i * 6 + 1] = s.a.y; pos[i * 6 + 2] = s.a.z
-    pos[i * 6 + 3] = s.b.x; pos[i * 6 + 4] = s.b.y; pos[i * 6 + 5] = s.b.z
-  })
-  const g = new THREE.BufferGeometry()
-  g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-  const ls = new THREE.LineSegments(g, repMats[fam])
-  ls.userData.faceId = faceId
-  ls.userData.repFam = fam
-  ls.userData.repStepMm = steps[fam]
-  ls.userData.repSteps = steps
-  ls.userData.centroid = centroid
-  ls.userData.u = u
-  return ls
-}
 
-const repLinesRetired = true as boolean   // web2-52 — 선분 겹 정지 스위치(삭제 전 단계)
-function syncRep(r: R3D, app: App) {
-  // ⚠ web2-52 — 무늬는 이제 면 텍스처에 굽는다(52-1 · syncPaintTex/bakeFaceTex).
-  //   이 GL 선분 경로는 정지 상태로 남긴다(A-4 — 폐기 코드는 게이트 통과 «뒤에» 지운다.
-  //   mats52 게이트가 초록이 된 마감 커밋에서 이 함수와 repGroup·gateRep을 걷는다).
-  if (repLinesRetired) return
-  const reps = app.doc.faces.filter(f => f.rep !== undefined)
-  const key = `${app.docVersion}|${reps.length}`
-  if (key === repKey) return
-  repKey = key
-  for (const child of [...r.repGroup.children]) {
-    r.repGroup.remove(child)
-    ;(child as THREE.LineSegments).geometry?.dispose()
-  }
-  const mm = app.lift.mmPerUnit
-  if (!mm || mm <= 0) return                            // 축척 미정 — 대기(안 그린다)
-  for (const face of reps) {
-    if (!isRepId(face.rep!.m)) continue
-    const rf = app.faces.find(x => x.id === face.id)
-    if (!rf) continue                                   // 못 풀린 면 — 무늬도 쉰다(면의 규약)
-    const segs = repSegments(rf, face.rep!.m, mm, face.id)
-    let cx = 0, cy = 0, cz = 0
-    for (const p of rf.outer) { cx += p.x; cy += p.y; cz += p.z }
-    const centroid = { x: cx / rf.outer.length, y: cy / rf.outer.length, z: cz / rf.outer.length }
-    const u = repBasis(rf).u
-    const steps = { major: segs.majorStepMm, minor: segs.minorStepMm }
-    if (segs.major.length > 0) r.repGroup.add(repLs(segs.major, 'major', face.id, steps, centroid, u))
-    if (segs.minor.length > 0) r.repGroup.add(repLs(segs.minor, 'minor', face.id, steps, centroid, u))
-  }
-}
+// web2-52 마감 — 옛 GL 선분 겹(syncRep·gateRep·repLs)을 걷었다(A-4: mats52·rep49
+// 게이트가 초록이 된 뒤). 무늬는 면 텍스처(bakeFaceTex의 rep 단계)가 정본이다.
+// repGroup은 빈 그룹으로 남는다(diag.rep49().children — 이식 기록의 «빈 배열» 문면 유지).
 
 // ── 면 텍스처(web2-50) — 칠은 텍스처에 그리고, 텍스처를 입은 면이 3D에 놓인다 ───────
 //
@@ -662,40 +616,6 @@ export function rebakePaintTexForTest(): void {
   for (const e of paintTexes.values()) e.level = 0
 }
 
-/** 시점의 몫 — 매 프레임. ① **쪽**(48-5 무회귀): 카메라가 붙인 쪽일 때만 보인다.
- *  ② **밀도 하한**: 면 중심에서 잰 무늬 간격의 투영 px가 `C.REP_MIN_PX` 아래면 그 계열을
- *  숨긴다(작은 축척에서 재료 표현 생략 — 제도 관례). 굵기는 화면 고정, 간격은 면 고정. */
-function gateRep(r: R3D, app: App) {
-  if (r.repGroup.children.length === 0) return
-  const mm = app.lift.mmPerUnit
-  const vs = viewScale(app)
-  for (const child of r.repGroup.children) {
-    const u = child.userData as {
-      faceId: number; repFam: 'major' | 'minor'; repSteps: { major: number; minor: number }
-      centroid: { x: number; y: number; z: number }; u: { x: number; y: number; z: number }
-    }
-    const face = app.doc.faces.find(f => f.id === u.faceId)
-    const rf = app.faces.find(f => f.id === u.faceId)
-    // 판정 내역을 userData에 남긴다(web2-49 2차 [4] — «왜 안 보이는가»의 귀속을 팔이
-    // 읽는다: 쪽 때문인가 밀도 때문인가. 같은 계산의 기록이지 두 벌 계산이 아니다 #54).
-    if (!face?.rep || !rf || !mm) {
-      child.visible = false
-      child.userData.gate = { side: false, lod: false, why: 'unresolved' }
-      continue
-    }
-    const sideOk = paintSideAt(rf, app.pose) === face.rep.s
-    // 투영 px/mm — 면 중심에서 가로축으로 0.01 세계단위를 옮겨 재고 줌을 얹는다
-    const p0 = project(app.lift.an, app.pose, u.centroid)
-    const p1 = project(app.lift.an, app.pose, {
-      x: u.centroid.x + u.u.x * 0.01, y: u.centroid.y + u.u.y * 0.01, z: u.centroid.z + u.u.z * 0.01,
-    })
-    const pxPerMm = p0 && p1 ? (Math.hypot(p1.x - p0.x, p1.y - p0.y) / 0.01 * vs) / mm : null
-    const lodOk = pxPerMm !== null &&
-      repVisibleFamilies(u.repSteps.major, u.repSteps.minor, pxPerMm)[u.repFam]
-    child.visible = sideOk && lodOk
-    child.userData.gate = { side: sideOk, lod: lodOk, pxPerMm }
-  }
-}
 
 /** **면 깊이 정렬**(web2-45 45-1) — 겹친 화면 자리에서 **앞 면이 위에** 그려진다.
  *  기준선 실측(faces45_web2.json scene_depth): 배열 순서 렌더는 지정 순서가 나쁘면
@@ -785,8 +705,6 @@ function revealFaces(r: R3D, app: App) {
 export function render3d(r: R3D, app: App) {
   syncCamera(r, app)
   syncHatch(r, app)
-  syncRep(r, app)      // 재료 표현(49) — 문서가 바뀌었을 때만 다시 만든다(면 고정)
-  gateRep(r, app)      // 시점의 몫 — 쪽(48-5)·밀도 하한은 매 프레임
   syncPaintTex(r, app) // 면 텍스처(50) — 문서가 바뀌었을 때만 메시를 다시 세운다
   gatePaintTex(r, app) // 시점의 몫 — 쪽 · 해상도 단계(단계가 바뀔 때만 굽는다)
   revealFaces(r, app)
