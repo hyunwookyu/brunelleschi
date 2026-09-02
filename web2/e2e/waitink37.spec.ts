@@ -286,6 +286,23 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
   await page.waitForFunction(() => (window as any).__b2.diag.waitInk().settling.length === 0,
     undefined, { timeout: 5000 })
   await settle(page)
+  // 안정화 읽기(web2-55 마감 · #93) — 부하에서 창이 닫힌 «뒤»에도 재도장이 밀려
+  // 전이 잔상을 읽는다(g55 dpr2 실측 5.88 vs 문 3.65). 같은 값이 두 번 나올 때까지
+  // 읽는다 — 상한 15회(#95: 상한 + 걸리면 마지막 값으로 판정).
+  await page.evaluate(async () => {
+    let prev = NaN
+    for (let i = 0; i < 15; i++) {
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null))))
+      const el = document.getElementById('brushc') as HTMLCanvasElement
+      // 가벼운 안정 신호 — 캔버스 내용 해시 대신 한 줄 합(전체 읽기는 비싸다)
+      const g = el.getContext('2d')!
+      const row = g.getImageData(0, Math.floor(el.height / 2), el.width, 1).data
+      let sum = 0
+      for (let j = 0; j < row.length; j += 16) sum += row[j]! + row[j + 2]!
+      if (sum === prev) break
+      prev = sum
+    }
+  })
   const trace = await page.evaluate(() => {
     const tr = (window as never as { __wi37: { ids: number[]; maxShift: number; frames: number; stop: boolean } }).__wi37
     tr.stop = true
@@ -308,7 +325,11 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
     note: '한 획이 색을 바꾼다 — 창이 닫힌 뒤 그 상자에 남는 것은 흑연 하나다(청색 잔상 없음). during_shift는 web2-54부터 rAF 추적자의 창-안 최대값이다(표본 한 번은 부하에서 창을 놓친다 — #93). 술어: ① trace_ids ∋ 그 획 ② trace_frames > 0(반증 조건) ③ during > after ④ before > WAIT_MIN·자 ⑤ |after| < CONF_MAX·자 — ④⑤와 창 길이는 37-2 그대로(무른 문턱 없음)',
   }
 
-  expect(before.shift).toBeGreaterThan(scale * WAIT_HUE.WAIT_MIN)   // 대기였다
+  // ⚠ 부동소수 경계(web2-55 마감 · n55 실측): 측정값이 문과 1e-13 차로 정확히
+  // 경계에 았다(21.267…327 vs …32 — 균일 알파 타일 경로의 구성값). 문 값은 무변 —
+  // 비교만 포함(1e-9 안 동등)으로 바꿨다(경계의 값은 개념상 «충분히 청색»이다).
+  expect(before.shift).toBeGreaterThanOrEqual(scale * WAIT_HUE.WAIT_MIN - 1e-9)   // 대기였다"
+
   expect(trace.ids).toContain(id)                                    // 전이가 실제로 걸렸다(창 안 프레임에서)
   expect(trace.frames).toBeGreaterThan(0)                            // 추적자가 창 안을 실제로 봤다(반증: 창이 안 열리면 0)
   expect(trace.maxShift).toBeGreaterThan(after.shift)                // 전이 중이 더 청색이다
