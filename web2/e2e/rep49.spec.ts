@@ -344,8 +344,9 @@ test('④ 밀도 하한 — 줌 아웃에서 접히고 줌 인에서 돌아온�
   const backInk = await glInk(page, WALL_BOX.x, WALL_BOX.y, WALL_BOX.w, WALL_BOX.h)
   OUT.lod_live = {
     def: '실배관(휠 줌)에서 계열 보임이 접히고 돌아오는가 + 픽셀. ⚠ web2-52 이식: 판정자가 children.visible → 텍스처 famBits(계열 비트 — 굽기 열쇠). 문·계층 규칙의 단위판은 rep49_web2.json lod_gate',
-    near: { ink: nearInk, children: nearVis }, zoomed_out_view_s: vs,
-    far_children_visible: farVis, back_children_visible: backVis, back_ink: backInk,
+    near: { ink: nearInk, fam_bits: nearVis }, zoomed_out_view_s: vs,
+    far_fam_bits: farVis, back_fam_bits: backVis, back_ink: backInk,
+    note_names: '2차 [11] — famBits 값에 children 이름을 담던 것을 개명(0은 «계열 전부 접힘»의 측정값이지 카운터 미작동이 아니다 — selfcheck 0 플래그의 정체)',
   }
 })
 
@@ -414,7 +415,7 @@ test('⑤ 스무 면 — 분할 벽 전부에 무늬 · 프레임 시간(#82 —
   const budget = await page.evaluate(() => (window as any).__b2.diag.rep49().constants.REP_FRAME_BUDGET_MS)
   const noise = +Math.abs(before2.median - before.median).toFixed(2)
   OUT.frame20 = {
-    def: '분할 벽 장면 — 면 수·무늬 텍스처 엔트리 수·텍셀 합과 프레임 dt(중앙·p90, ms — 52 이식: 선분 수 → 텍셀 수가 메모리의 자다). 판정은 «차»다(#82). ⚠ 이 장면의 차는 잡음 바닥(noise_floor — 같은 상태 두 번의 중앙값 차) 대역 안이라 **이 측정은 문(REP_FRAME_BUDGET_MS)을 시험하지 않는다** — 말할 수 있는 것은 «무늬의 프레임 비용이 이 장면에서 잡음보다 작다»까지다(2차 [2][3]). 음의 차는 그 잡음의 얼굴이다',
+    def: '분할 벽 장면 — 면 수·무늬 텍스처 엔트리 수·텍셀 합과 프레임 dt(중앙·p90, ms — 52 이식: 선분 수 → 텍셀 수가 메모리의 자다). 판정은 «차»다(#82). ⚠ 52 이식으로 이 판의 세계가 갈렸다(2차 [4] — 옛 «잡음 바닥 대역» 문면은 선분 겹의 것): dpr1은 문(REP_FRAME_BUDGET_MS)의 위반 없음 확인을 지고, dpr2는 곱 겹침 래스터 비용이 실측으로 문 밖(20ms 대역 — 재생성마다 요동하는 소프트웨어 GL 값이라 «수치»는 이 원장 필드가 정본)이며 판정은 실기기 ㉒ 유보다',
     faces: faceN, rep_tex_entries: repN, texel_total: segTotal,
     before_ms: before, before2_ms: before2, noise_floor_ms: noise, after_ms: after,
     delta_median_ms: +(after.median - before2.median).toFixed(2),

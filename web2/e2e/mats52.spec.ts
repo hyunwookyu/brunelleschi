@@ -223,10 +223,14 @@ test('② 재료는 면에, 칠은 획에 — 재료 변경이 획 목록을 안
   // 획이 빠진 상자의 안료가 실제로 준다(재료 틴트는 남으므로 0이 아니라 «감소»가 술어다)
   await page.waitForTimeout(300)
   const afterUndo = await boxStats(page, 550, 395, 120, 35)
-  expect(afterUndo.pigment, '반증 — 획을 지우면 그 자리 안료가 실제로 준다(픽셀 술어의 판별력)')
+  // ⚠ 2차 [5] — 이 감소는 세 몫의 합이다: 획 잉크 제거 + 48-9 불투명 채움 해제(칠 획이
+  // 빠지면 면이 비불투명으로 돌아가 알파 가중 안료가 ~1/7로 준다 — 지배 몫) + 재료가 한
+  // 걸음 되돌아간 것(석재→벽돌 — 실행취소가 재료 변경 연산 먼저 되돌린다). 술어는
+  // «획 제거가 픽셀 상태에 실제로 실린다»의 방향까지고 몫 분해는 안 건다(정직 표기).
+  expect(afterUndo.pigment, '반증 — 획을 지우면 픽셀 상태가 실제로 변한다(합몫 — def의 정직 표기)')
     .toBeLessThan(afterMat.pigment * 0.9)
   OUT.mat_vs_paint = {
-    def: '획 서명 = paint 획의 (id·f·uv·c·w) JSON. 재료 변경(벽돌→석재) 전후 서명 동일 + 획 자리 안료 잔존(0.5배 초과 — 무늬 배경이 변해 정확 일치는 안 건다). 반증 = 획 제거에서 서명 변화. 「무늬는 파생, 획은 정본」(52-4)의 행위판',
+    def: '획 서명 = paint 획의 (id·f·uv·c·w) JSON. 재료 변경(벽돌→석재) 전후 서명 동일 + 획 자리 안료 잔존(0.5배 초과). 반증 = 실행취소: 서명 변화(정본 판) + 픽셀 변화(⚠ 2차 [5] — afterUndo 감소는 획 잉크·48-9 불투명 해제(지배 몫 ~1/7 알파 가중)·재료 한 걸음 복귀(석재→벽돌)의 합몫이다: 몫 분해는 안 걸고 «실렸다»까지만. 안료 자는 알파 가중이라 불투명↔비불투명 상태 비교는 상태 차를 싣는다 — 그 사실이 이 문면). 「무늬는 파생, 획은 정본」(52-4)의 행위판',
     sig_len: JSON.parse(sig0).length, paint_box: { withPaint, afterMat, afterUndo },
   }
 })
@@ -257,8 +261,8 @@ test('③ 축척 통과 — 치수 2배 재매김에 켜 화면 간격이 절반
     gate: {
       registered: 'C.MATS52_SCALE_TOL', value: cs.MATS52_SCALE_TOL,
       derivation: '유도(#88 · 52 1차 [9]): 재매김 후 간격 ~5 css px에서 뭉치 중심의 눈금이 켜당 ±0.5px 대역 → 비의 눈금 ±0.1 — 문 0.2 = 그 눈금의 2배(더 조이면 자가 못 잰다). REP_ZOOM_RETENTION_TOL 0.2(상대 ±20%)와 숫자가 같아도 뜻이 다르다(이쪽은 0.5 기준 절대차 = 상대 ±40%)',
-      reachability: '같은 자(darkRows 간격 비)가 문 대역(0.3~0.7) 밖 값을 실제로 낸다 — 줌 팔의 실측 1.947(selfcheck 0/1 금지 규약: 가설값 1.0이 아니라 다른 팔의 수치를 적는다)',
-      reachability_value: 1.947, reachability_source: 'two_layers/pat_ratio',
+      reachability: '같은 자(darkRows 간격 비)가 문 대역(0.3~0.7) 밖 값을 실제로 낸다 — 줌 팔의 실측(값은 원장 팔이 «이 실행의» two_layers.pat_ratio로 채운다: 2차 [2]가 dpr 간 복사값을 잡았다)',
+      reachability_value: null as number | null, reachability_source: 'two_layers/pat_ratio',
     },
   }
 })
@@ -298,16 +302,17 @@ test('④ 두 겹의 대비(49 무회귀) — 줌 인: 해칭 간격 불변 · �
   const patRows2 = await darkRows(page, 545, WALL_BOX.y, 10, WALL_BOX.h)
   const patGap2 = gapMedian(patRows2)
   const zoomRatio = vs1 / vs0
-  expect(patGap2 / Math.max(0.01, patGap1), `무늬 간격이 줌(×${zoomRatio.toFixed(2)})을 따라 늘었다(면 고정)`)
-    .toBeGreaterThan(1.3)
+  const csT = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
+  expect(patGap2 / Math.max(0.01, patGap1), `무늬 간격이 줌(×${zoomRatio.toFixed(2)})을 따라 늘었다(면 고정 · 문 C.MATS52_TWO_LAYER_MIN)`)
+    .toBeGreaterThan(csT.MATS52_TWO_LAYER_MIN)
   OUT.two_layers = {
     def: '같은 면에 무늬(brick rep — 면 텍스처)와 도면 해칭(fill=1 · hatchMode screen)을 함께 켜고 줌 인 — 무늬 켜 간격(어두운 가로선)은 늘어난다(문 1.3배 초과). 해칭의 화면 고정은 spacingPx가 화면 상수인 구성(#5 — hatch2d 인자에 줌 항이 없다)이라 픽셀로 안 세고, 무늬의 «증가»가 같은 화면에서의 대조군이다. 49가 가른 «둘은 다른 물건»의 실측. 잔차 주석(52 1차 [10]): 간격 비(1.947)가 줌 비(2.054)보다 ~5% 작다 — 뭉치 중심의 부픽셀 양자화(rep49 ③의 그 2~4% 대역) + 문턱 적응의 경계 이동 몫. dpr 주석([16]): 세 값이 dpr1·2에서 같은 것은 자가 css px(중심을 dpr로 나눔)이고 장면이 결정론이라 같은 눈금에 얹히기 때문 — dpr 축의 실림은 같은 파일 scale_pass(rows 24/21로 갈림)가 든다',
     zoom: +zoomRatio.toFixed(3), pat_gap_before: +patGap1.toFixed(2), pat_gap_after: +patGap2.toFixed(2),
     pat_ratio: +(patGap2 / Math.max(0.01, patGap1)).toFixed(3),
     gate: {
-      registered: '문 1.3(스펙 상수 — 간격 비 눈금 ±0.1의 3배 위·줌 하한 1.9 아래)', value: 1.3,
-      reachability: '같은 자가 문(1.3) 아래 값을 실제로 낸다 — 축척 팔의 실측 0.526(같은 규약: 가설값 1.0 대신 다른 팔의 수치)',
-      reachability_value: 0.526, reachability_source: 'scale_pass/ratio',
+      registered: 'C.MATS52_TWO_LAYER_MIN', value: csT.MATS52_TWO_LAYER_MIN,
+      reachability: '같은 자가 문 아래 값을 실제로 낸다 — 축척 팔의 실측(원장 팔이 이 실행의 scale_pass.ratio로 채운다 · 같은 규약)',
+      reachability_value: null as number | null, reachability_source: 'scale_pass/ratio',
     },
   }
 })
@@ -336,7 +341,16 @@ test('⑤ 브러시 프리셋 — 저장·적용·기기 지속(#94) · 반증 =
   expect(hit.hits.every(h => h.clickable), '#97 — 세 칸 전부 실제로 눌린다(elementFromPoint)').toBe(true)
   expect(hit.overflow.sw, '#97 짝 — 가로 넘침 0').toBe(hit.overflow.cw)
   expect(hit.overflow.sh, '#97 짝 — 세로 넘침 0').toBe(hit.overflow.ch)
-  ;(OUT as any).presets_97 = hit
+  // 눌림 축(2차 [7] — 넘침 0은 눌림에 둔감하다: 51의 그 사례): 렌더 크기 == 규격
+  const sizes = await page.evaluate(() => {
+    const dot = document.querySelector('#btn-preset-1 .pdot')!.getBoundingClientRect()
+    const btn = document.getElementById('btn-preset-1')!.getBoundingClientRect()
+    return { dot_w: +dot.width.toFixed(1), dot_h: +dot.height.toFixed(1), btn_h: +btn.height.toFixed(1) }
+  })
+  expect(sizes.dot_w, '색 점 렌더 폭 == 규격 14px(눌림 없음 실측)').toBe(14)
+  expect(sizes.dot_h, '색 점 렌더 높이 == 규격 14px').toBe(14)
+  expect(sizes.btn_h, '칸 높이가 점보다 크다(줄이 서 있다)').toBeGreaterThan(14)
+  ;(OUT as any).presets_97 = { ...hit, sizes }
   // 반증(D-3) 먼저 — 빈 칸 탭은 paintSel을 안 바꾼다
   const sel0 = await page.evaluate(() => JSON.stringify((window as any).__b2.app.paintSel))
   await page.click('#btn-preset-1')
@@ -378,11 +392,36 @@ test('⑤ 브러시 프리셋 — 저장·적용·기기 지속(#94) · 반증 =
   }
 })
 
+test('⑥ 타일·기와 — 이번에 더한 무늬가 화면에서 켜·격자로 선다(#12 — 픽셀 대역 확장)', async ({ page }) => {
+  // 2차 [8] — 픽셀 팔이 벽돌 하나였다(D-5 문면보다 좁은 대역). 타일(300mm 격자)·기와
+  // (345mm 켜)의 가로선 수·간격을 좁은 띠에서 재고, 간격이 실치수 비(300:345)를 따르는지
+  // 기록한다(문은 «여럿 선다» — 간격 비는 눈금(±1행/뭉치)이 거칠어 기록·실기기 ㉔ 몫).
+  const fid = await bigBox(page)
+  const rows: Record<string, number[]> = {}
+  for (const m of ['tile', 'roof'] as const) {
+    await cycleRepTo(page, fid, m)
+    await page.waitForTimeout(300)
+    rows[m] = await darkRows(page, 545, WALL_BOX.y, 10, WALL_BOX.h)
+    expect(rows[m]!.length, `${m} — 켜·격자 가로선이 여럿 선다`).toBeGreaterThanOrEqual(4)
+  }
+  const gT = gapMedian(rows.tile!), gR = gapMedian(rows.roof!)
+  OUT.tile_roof = {
+    def: '타일·기와(52가 더한 셋 중 픽셀 팔 없던 둘 — 석재는 시드 단위가 잰다)의 가로선 검출(darkRows 좁은 띠 · 적응 문턱) — 수 ≥ 4 · 간격 중앙값 기록. 간격 비의 기대는 실치수 비 300:345 ≈ 0.87(기록 — 눈금이 거칠어 문은 안 건다 · 실기기 ㉔)',
+    tile_rows: rows.tile!.length, roof_rows: rows.roof!.length,
+    tile_gap: +gT.toFixed(2), roof_gap: +gR.toFixed(2),
+    gap_ratio_tile_over_roof: +(gT / Math.max(0.01, gR)).toFixed(3), expected_mm_ratio: +(300 / 345).toFixed(3),
+  }
+})
+
 test('원장', async ({ page }, info) => {
   ;(OUT as any).dpr_project = info.project.name
   ;(OUT as any).regen_protocol = '정본 원장 = 파일 삭제 후 전량 실행 하나(#99 — 병합-쓰기 · 전면 쓰기 없음이 판별 ③)'
   ;(OUT as any).no_constants_snapshot = true
-  ;(OUT as any).pitfall_citations = [5, 88, 90, 92, 94, 95, 96, 97, 99]   // 실사용 전수(52 1차 [13])
+  ;(OUT as any).pitfall_citations = [5, 12, 88, 92, 94, 95, 96, 97, 99]   // 실사용 전수(2차 [10] — #90은 스펙 머리말 인용이라 뺐다 · ⑥이 #12를 더했다)
+  // 2차 [2] — 도달 가능성은 «이 실행의» 다른 팔 값으로(dpr 간 복사 ⛔)
+  const sp = (OUT as any).scale_pass, tl = (OUT as any).two_layers
+  if (sp?.gate && tl) sp.gate.reachability_value = tl.pat_ratio
+  if (tl?.gate && sp) tl.gate.reachability_value = sp.ratio
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   ;(OUT as any).constants_used = await page.evaluate(() => {

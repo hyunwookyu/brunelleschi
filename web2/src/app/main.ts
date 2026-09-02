@@ -3152,7 +3152,7 @@ const diag = {
     PAINT51_MARKER_TIP_ALPHA: C.PAINT51_MARKER_TIP_ALPHA, PAINT51_MARKER_TIP_LEN_K: C.PAINT51_MARKER_TIP_LEN_K,
     PAINT51_BRUSH_BRISTLES: C.PAINT51_BRUSH_BRISTLES, PAINT51_BRUSH_SPLIT_T: C.PAINT51_BRUSH_SPLIT_T,
     PAINT51_BRUSH_SPLIT_K: C.PAINT51_BRUSH_SPLIT_K, PAINT51_BRUSH_FLOW_NODES: C.PAINT51_BRUSH_FLOW_NODES,
-    MATS52_SCALE_TOL: C.MATS52_SCALE_TOL, REP_MIN_PX: C.REP_MIN_PX }),
+    MATS52_SCALE_TOL: C.MATS52_SCALE_TOL, MATS52_TWO_LAYER_MIN: C.MATS52_TWO_LAYER_MIN, REP_MIN_PX: C.REP_MIN_PX }),
   /** 저장물 원문(파일 저장과 같은 함수 — #54) — paint50 팔이 «텍스처가 파일에 없다»를 잰다 */
   serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
   corruptPaintTex: () => { const n = corruptPaintTexForTest(); invalidate(); return n },

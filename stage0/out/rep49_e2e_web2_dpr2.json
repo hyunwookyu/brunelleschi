@@ -119,39 +119,40 @@
     "def": "실배관(휠 줌)에서 계열 보임이 접히고 돌아오는가 + 픽셀. ⚠ web2-52 이식: 판정자가 children.visible → 텍스처 famBits(계열 비트 — 굽기 열쇠). 문·계층 규칙의 단위판은 rep49_web2.json lod_gate",
     "near": {
       "ink": 23458333,
-      "children": [
+      "fam_bits": [
         3
       ]
     },
     "zoomed_out_view_s": 0.301194211912202,
-    "far_children_visible": [
+    "far_fam_bits": [
       0
     ],
-    "back_children_visible": [
+    "back_fam_bits": [
       3
     ],
-    "back_ink": 23651864
+    "back_ink": 23651864,
+    "note_names": "2차 [11] — famBits 값에 children 이름을 담던 것을 개명(0은 «계열 전부 접힘»의 측정값이지 카운터 미작동이 아니다 — selfcheck 0 플래그의 정체)"
   },
   "frame20": {
-    "def": "분할 벽 장면 — 면 수·무늬 텍스처 엔트리 수·텍셀 합과 프레임 dt(중앙·p90, ms — 52 이식: 선분 수 → 텍셀 수가 메모리의 자다). 판정은 «차»다(#82). ⚠ 이 장면의 차는 잡음 바닥(noise_floor — 같은 상태 두 번의 중앙값 차) 대역 안이라 **이 측정은 문(REP_FRAME_BUDGET_MS)을 시험하지 않는다** — 말할 수 있는 것은 «무늬의 프레임 비용이 이 장면에서 잡음보다 작다»까지다(2차 [2][3]). 음의 차는 그 잡음의 얼굴이다",
+    "def": "분할 벽 장면 — 면 수·무늬 텍스처 엔트리 수·텍셀 합과 프레임 dt(중앙·p90, ms — 52 이식: 선분 수 → 텍셀 수가 메모리의 자다). 판정은 «차»다(#82). ⚠ 52 이식으로 이 판의 세계가 갈렸다(2차 [4] — 옛 «잡음 바닥 대역» 문면은 선분 겹의 것): dpr1은 문(REP_FRAME_BUDGET_MS)의 위반 없음 확인을 지고, dpr2는 곱 겹침 래스터 비용이 실측으로 문 밖(20ms 대역 — 재생성마다 요동하는 소프트웨어 GL 값이라 «수치»는 이 원장 필드가 정본)이며 판정은 실기기 ㉒ 유보다",
     "faces": 17,
     "rep_tex_entries": 17,
     "texel_total": 3769344,
     "before_ms": {
-      "median": 30.5,
-      "p90": 33.90000009536743
+      "median": 30.600000381469727,
+      "p90": 33
     },
     "before2_ms": {
-      "median": 30.299999713897705,
-      "p90": 34.700000286102295
+      "median": 31,
+      "p90": 35.30000019073486
     },
-    "noise_floor_ms": 0.2,
+    "noise_floor_ms": 0.4,
     "after_ms": {
-      "median": 50.40000009536743,
-      "p90": 54.19999980926514
+      "median": 51.09999990463257,
+      "p90": 56.5
     },
     "delta_median_ms": 20.1,
-    "delta_p90_ms": 19.5,
+    "delta_p90_ms": 21.2,
     "gate": {
       "registered": "C.REP_FRAME_BUDGET_MS",
       "value": 8,

@@ -339,7 +339,7 @@ test('①② 곱 — 어느 픽셀도 안 밝아지고 · 아래 무늬가 비�
     def: '벽(무늬 벽돌) 상자 — 칠 전/후 픽셀 밝기(알파 미리곱을 종이 위 밝기로 편 값 · 문턱 C.PAINT50_LUM_TOL). 램프 = 세로획을 y=500에서 수평으로 가로지른 픽셀별 {a,r,g,b,lum}(지시 ①의 형식 그대로). under = 분자/분모(#16). 선 = 위 모서리 상자의 어두운 픽셀 수(칠 뒤). 반증 = NormalBlending 스위치(같은 실행)',
     no_brighter: d1, edge_ramp: ramp, ramp_max_lum: rampMax, paper_lum: +paperLum.toFixed(1),
     under_pattern: under, under_pattern_over: underOver, under_pattern_opaque: underOpaque, under_pattern_norep: underNoRep, line_under_band_dark: lineAfter,
-    note_52: '52 이식 — 비침의 기제 = 획 알파 0.55(층이 같은 캔버스여도 45%가 비친다 — over 대비 ≈ 출하 대비가 그 실측). ② 반증 = 불투명 재굽기(underOpaque — 비침 술어의 반전) · norep는 대상 확인(분모째 주는 자명 항등 — 기록·문 없음, 52 1차 [1]) · 합성 반증 = ①의 밝아짐',
+    note_52: '52 이식 — 비침의 기제 = 획 알파 0.55(층이 같은 캔버스여도 45%가 비친다 — over 대비 ≈ 출하 대비가 그 실측). ② 반증 = 불투명 재굽기(underOpaque — 비침 술어의 반전. contrastPx의 정확한 0은 분모(bandPx)가 산 채로 대비만 죽은 측정값이다 — 자명 항등 아님) · norep는 대상 확인(분모째 주는 자명 항등 — 기록·문 없음, 52 1차 [1]) · 합성 반증 = ①의 밝아짐',
     falsify_over: d2,
     dom_canvas: { before: domCanvasBefore, after: domCanvasAfter },
     constants_used: {

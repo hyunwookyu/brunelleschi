@@ -46,7 +46,7 @@
     }
   },
   "mat_vs_paint": {
-    "def": "획 서명 = paint 획의 (id·f·uv·c·w) JSON. 재료 변경(벽돌→석재) 전후 서명 동일 + 획 자리 안료 잔존(0.5배 초과 — 무늬 배경이 변해 정확 일치는 안 건다). 반증 = 획 제거에서 서명 변화. 「무늬는 파생, 획은 정본」(52-4)의 행위판",
+    "def": "획 서명 = paint 획의 (id·f·uv·c·w) JSON. 재료 변경(벽돌→석재) 전후 서명 동일 + 획 자리 안료 잔존(0.5배 초과). 반증 = 실행취소: 서명 변화(정본 판) + 픽셀 변화(⚠ 2차 [5] — afterUndo 감소는 획 잉크·48-9 불투명 해제(지배 몫 ~1/7 알파 가중)·재료 한 걸음 복귀(석재→벽돌)의 합몫이다: 몫 분해는 안 걸고 «실렸다»까지만. 안료 자는 알파 가중이라 불투명↔비불투명 상태 비교는 상태 차를 싣는다 — 그 사실이 이 문면). 「무늬는 파생, 획은 정본」(52-4)의 행위판",
     "sig_len": 1,
     "paint_box": {
       "withPaint": {
@@ -90,7 +90,7 @@
       "registered": "C.MATS52_SCALE_TOL",
       "value": 0.2,
       "derivation": "유도(#88 · 52 1차 [9]): 재매김 후 간격 ~5 css px에서 뭉치 중심의 눈금이 켜당 ±0.5px 대역 → 비의 눈금 ±0.1 — 문 0.2 = 그 눈금의 2배(더 조이면 자가 못 잰다). REP_ZOOM_RETENTION_TOL 0.2(상대 ±20%)와 숫자가 같아도 뜻이 다르다(이쪽은 0.5 기준 절대차 = 상대 ±40%)",
-      "reachability": "같은 자(darkRows 간격 비)가 문 대역(0.3~0.7) 밖 값을 실제로 낸다 — 줌 팔의 실측 1.947(selfcheck 0/1 금지 규약: 가설값 1.0이 아니라 다른 팔의 수치를 적는다)",
+      "reachability": "같은 자(darkRows 간격 비)가 문 대역(0.3~0.7) 밖 값을 실제로 낸다 — 줌 팔의 실측(값은 원장 팔이 «이 실행의» two_layers.pat_ratio로 채운다: 2차 [2]가 dpr 간 복사값을 잡았다)",
       "reachability_value": 1.947,
       "reachability_source": "two_layers/pat_ratio"
     }
@@ -102,9 +102,9 @@
     "pat_gap_after": 18.5,
     "pat_ratio": 1.947,
     "gate": {
-      "registered": "문 1.3(스펙 상수 — 간격 비 눈금 ±0.1의 3배 위·줌 하한 1.9 아래)",
+      "registered": "C.MATS52_TWO_LAYER_MIN",
       "value": 1.3,
-      "reachability": "같은 자가 문(1.3) 아래 값을 실제로 낸다 — 축척 팔의 실측 0.526(같은 규약: 가설값 1.0 대신 다른 팔의 수치)",
+      "reachability": "같은 자가 문 아래 값을 실제로 낸다 — 축척 팔의 실측(원장 팔이 이 실행의 scale_pass.ratio로 채운다 · 같은 규약)",
       "reachability_value": 0.526,
       "reachability_source": "scale_pass/ratio"
     }
@@ -129,6 +129,11 @@
       "cw": 150,
       "sh": 767,
       "ch": 767
+    },
+    "sizes": {
+      "dot_w": 14,
+      "dot_h": 14,
+      "btn_h": 20
     }
   },
   "presets": {
@@ -141,13 +146,22 @@
     },
     "applied2_survives_reload": true
   },
+  "tile_roof": {
+    "def": "타일·기와(52가 더한 셋 중 픽셀 팔 없던 둘 — 석재는 시드 단위가 잰다)의 가로선 검출(darkRows 좁은 띠 · 적응 문턱) — 수 ≥ 4 · 간격 중앙값 기록. 간격 비의 기대는 실치수 비 300:345 ≈ 0.87(기록 — 눈금이 거칠어 문은 안 건다 · 실기기 ㉔)",
+    "tile_rows": 6,
+    "roof_rows": 4,
+    "tile_gap": 42.5,
+    "roof_gap": 49,
+    "gap_ratio_tile_over_roof": 0.867,
+    "expected_mm_ratio": 0.87
+  },
   "dpr_project": "dpr1",
   "regen_protocol": "정본 원장 = 파일 삭제 후 전량 실행 하나(#99 — 병합-쓰기 · 전면 쓰기 없음이 판별 ③)",
   "no_constants_snapshot": true,
   "pitfall_citations": [
     5,
+    12,
     88,
-    90,
     92,
     94,
     95,
