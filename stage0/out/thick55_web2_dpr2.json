@@ -9,10 +9,18 @@
     "roundtrip_bytes": 0
   },
   "batch": {
-    "def": "분류 일괄(벽 t=200): 같은 분류 두 판 중 예외(350) 없는 판만 바뀐다 · 바닥(슬라브)은 무변 · 반증 = 예외 걷기 뒤 벽B가 200으로(픽셀 변화 >0)",
+    "def": "일괄(1차 [6] 재작성): ① 예외 없는 벽 두 판에 t=200 — n=2 · 두 상자 픽셀 각각 변화(propagate_px) ② 벽B 예외 350 후 일괄 250 — 예외 상자 픽셀 0 · 바닥 상자 0 ③ 반증 = 예외 걷기(제품 상태 경로 setFaceThicknessEx(undefined) — 지시 문면 «분류 t를 다시 밀어 넣으면 예외가 덮인다»의 구현 의미가 이 길이다: 예외를 걷어야 분류가 다스린다 — D-W24 · 화면 손잡이는 DEFERRED)",
+    "n_batch_200": 2,
+    "n_batch_250": 1,
+    "propagate_px": {
+      "wallA": 1398,
+      "wallB": 2562
+    },
+    "ex_hold_px": 0,
+    "floor_px": 0,
     "wallA": {
       "cls": "wall",
-      "t": 200,
+      "t": 250,
       "ex": false
     },
     "wallB": {
@@ -25,7 +33,7 @@
       "t": 0,
       "ex": false
     },
-    "falsify_clear_ex_px": 2288
+    "falsify_clear_ex_px": 1749
   },
   "paint_roundtrip": {
     "def": "칠(마커) 후 t 0→200→0: 복귀 바이트 차 0(칠이 같은 자리 — uv 불변의 픽셀판) · 중간(t=200)은 실제로 달랐다(이동의 실재)",
@@ -54,8 +62,28 @@
     }
   },
   "ui34_thick": {
-    "def": "#96/#97 — 손통 두께 줄: 쓸 수 있는 상태의 툴팁 · elementFromPoint 눌림 · 재누름 모드 전환(값 넣는 길은 단위 ⑦이 판정)",
-    "tip": "두께 — 숫자를 쓰면 이 분류 전부의 두께(mm)가 된다 · 다시 누르면 이 면만(예외)"
+    "def": "#96/#97/34-6 — 손통 두께 줄: 툴팁 두 상태(막힘 = 잡는 법 안내) · rect(화면 안) · elementFromPoint 눌림 · 손통 넘침 sh==ch(실측 — 1차 [12]) · 재누름 모드 전환 값(값 넣는 길은 단위 ⑦이 판정)",
+    "blocked_tip": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+    "ok_tip": "두께 — 숫자를 쓰면 이 분류 전부의 두께(mm)가 된다 · 다시 누르면 이 면만(예외)",
+    "rect": {
+      "x": 1073.5,
+      "y": 413.5,
+      "w": 71.5,
+      "h": 32.5
+    },
+    "viewport": {
+      "w": 1200,
+      "h": 800
+    },
+    "clickable": true,
+    "overflow": {
+      "sw": 72,
+      "cw": 72,
+      "sh": 334,
+      "ch": 334
+    },
+    "mode_after_press": 1,
+    "mode_after_repress_ex": 1
   },
   "conditions": {
     "workers": 1,
@@ -106,5 +134,44 @@
     "def": "코너 계단의 크기(슬롯 유도 구성값 — 접합에 손을 안 대섰다는 값의 기록이자 56의 입력): 벽⊥바닥 모서리에서 buried = 바닥 앞면 오프셋(mm) · step = 벽 앞면 오프셋(mm). 56이 병합 걸음으로 이 계단을 ㄴ자로 만든다",
     "buried_mm": 75,
     "step_mm": 100
+  },
+  "perf20": {
+    "def": "면 20개(분할 벽 · 전부 단색 칠) 장면 — t=0 대비 벽 일괄 t=200의 프레임(median/p90 ms)·syncStrokes·메시 수·GL 자원 차. 절대값은 기계 못(#47 · SW GL) — 추세 측정이라 문턱 없음(#82)",
+    "faces": 19,
+    "batch_n": 19,
+    "off": {
+      "frame": {
+        "median": 27.2,
+        "p90": 29.2
+      },
+      "sync": 0.3,
+      "r3d": {
+        "faceMeshes": 19,
+        "paintMeshes": 0,
+        "lines": 27,
+        "gl": {
+          "geometries": 47,
+          "textures": 0
+        }
+      }
+    },
+    "on": {
+      "frame": {
+        "median": 45.5,
+        "p90": 49.8
+      },
+      "sync": 0.6,
+      "r3d": {
+        "faceMeshes": 57,
+        "paintMeshes": 0,
+        "lines": 27,
+        "gl": {
+          "geometries": 85,
+          "textures": 0
+        }
+      }
+    },
+    "frame_delta_median_ms": 18.3,
+    "heap_mb": 19.6
   }
 }
