@@ -293,6 +293,9 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
   {
     let prev = await hueOf(page, 'brushc', box)
     for (let i = 0; i < 12; i++) {
+      // ⚠ 재도장을 강제한다(g55c 실측) — 무효화 없이는 아무것도 다시 그려지지 않아
+      // 전이 잔상이 «안정된 값»으로 읽힌다(캔버스는 그리기 전까지 그대로다).
+      await page.evaluate(() => (window as any).__b2.diag.invalidate?.())
       await settle(page)
       const cur = await hueOf(page, 'brushc', box)
       if (cur.shift === prev.shift && cur.painted === prev.painted) break

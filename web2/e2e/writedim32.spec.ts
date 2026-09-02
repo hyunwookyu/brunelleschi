@@ -102,8 +102,8 @@ test('㉠ 닫힌 한 붓 — 밖에서는 작도선이고, 꾹 누른 뒤에는 
 })
 
 test('㉡ 승인 단계가 없다 — 제안 줄이 화면에 없다 (진입은 꾹 누름이다)', async ({ page }) => {
-  await page.evaluate(() => (window as any).__b2.diag.writeIdleForTest(8000))  // #93(55 마감) — 멈춤 문 고정: 재는 것은 승인-없음이지 손 속도가 아니다(n55b 실측 「25」→「5」)
   await boot(page)
+  await page.evaluate(() => (window as any).__b2.diag.writeIdleForTest(8000))  // #93(55 마감) — 멈춤 문 고정(재는 것은 승인-없음이지 손 속도가 아니다 · n55b 실측 「25」→「5」) — ⚠ 초판이 boot 앞에 끼워 __b2 미정의로 죽었다(자백)
   expect(await page.locator('#dimsuggest').count(), '29-2의 제안 줄이 사라졌다').toBe(0)
   await pressHold(page, 500, 610)
   expect(await writing(page), '꾹 눌러 들어간다').not.toBeNull()
