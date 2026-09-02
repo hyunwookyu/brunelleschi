@@ -23,6 +23,7 @@ import { clsDefOf, DEFAULT_CLS, slotOffsets, faceThickness } from '../src/core/c
 import { borderQuads, borderTo3 } from '../src/core/border'
 import { serializeBrnl, parseBrnl } from '../src/core/file'
 import { sub3, len3, dot3, norm3 } from '../src/core/vec'
+import { C } from '../src/core/constants'
 
 const W = 1200, H = 800
 
@@ -139,14 +140,14 @@ describe('55 ⑤ 띠 좌표는 세계 단위다 — t가 커져도 자국 자리
     const d = sub3(P300, P200)
     const alongN = dot3(d, n)
     const inPlane = len3(sub3(d, { x: n.x * alongN, y: n.y * alongN, z: n.z * alongN }))
-    expect(inPlane, '평면 안 성분 0 — (s,u)는 미터라 t와 무관').toBeLessThan(1e-9)
+    expect(inPlane, '평면 안 성분 0 — (s,u)는 미터라 t와 무관').toBeLessThan(C.THICK55_U_PLANE_EPS)
     expect(Math.abs(alongN), '법선 성분 = 뒤 표면의 이동량').toBeCloseTo(
       Math.abs(of300.back - of200.back), 9)
     // 반증(D-3) — 정규화(u를 tW 비율로 저장)했다면: 같은 «비율»의 3D는 u 자리가 실제로 는다
     const uNorm = probe.u / (200 / mmPer)                 // t=200에서의 비율
     const Pn300 = borderTo3(rf, of300.front, of300.back, probe.s, uNorm * (300 / mmPer))!
     const dn = len3(sub3(Pn300, P300))
-    expect(dn, '정규화 저장이었다면 자국이 1.5배 자리로 밀린다 — 그 어긋남이 실재').toBeGreaterThan(1e-6)
+    expect(dn, '정규화 저장이었다면 자국이 1.5배 자리로 밀린다 — 그 어긋남이 실재').toBeGreaterThan(C.THICK55_U_FALSIFY_MIN)
   })
   it('borderQuads — 외곽+개구부 전부 · 누적 호길이가 총합과 맞는다', () => {
     const { s, wallId } = roomSession()
@@ -207,5 +208,43 @@ describe('55 ⑦ 손글씨 배선 — applyRecognized의 두께 갈래(값 넣�
     expect(applyRecognized(s.app, 'abc')).toBe('unread')
     endWriting(s.app, 'idle')
     expect(s.app.write).toBeNull()
+  })
+})
+
+
+describe('55 ⑤′ — u축 정본 값의 원장(2차 [N3] · LEDGER=1에서만 쓴다)', () => {
+  it('정상 판 inPlane·alongN과 정규화 반증 이동을 thick55_unit_web2.json에', async () => {
+    const { s, wallId } = roomSession()
+    withScale(s)
+    const rf = s.app.faces.find(f => f.id === wallId)!
+    const mmPer = s.app.lift.mmPerUnit!
+    const n = norm3(rf.normal)
+    const probe = { s: 0.7, u: 0.02 }
+    const of200 = slotOffsets(200 / mmPer, 'c')
+    const of300 = slotOffsets(300 / mmPer, 'c')
+    const P200 = borderTo3(rf, of200.front, of200.back, probe.s, probe.u)!
+    const P300 = borderTo3(rf, of300.front, of300.back, probe.s, probe.u)!
+    const d = sub3(P300, P200)
+    const alongN = dot3(d, n)
+    const inPlane = len3(sub3(d, { x: n.x * alongN, y: n.y * alongN, z: n.z * alongN }))
+    const uNorm = probe.u / (200 / mmPer)
+    const Pn300 = borderTo3(rf, of300.front, of300.back, probe.s, uNorm * (300 / mmPer))!
+    const dn = len3(sub3(Pn300, P300))
+    const { writeFileSync, mkdirSync } = await import('../tools/ledgerfs')
+    const { resolve, dirname } = await import('node:path')
+    const { fileURLToPath } = await import('node:url')
+    const here = dirname(fileURLToPath(import.meta.url))
+    mkdirSync(resolve(here, '../../stage0/out'), { recursive: true })
+    writeFileSync(resolve(here, '../../stage0/out/thick55_unit_web2.json'), JSON.stringify({
+      what: 'web2-55 — 테두리 위험 축(u=두께 방향)의 정본 값(세계 단위 · 단위 ⑤의 그 계산). 픽셀 자(thick55 e2e ④)는 이 축을 못 본다(u 사영 ~6px) — 그 가름의 정본이 이 파일이다',
+      conditions: { canonical: 'LEDGER=1 npx vitest run test/thick55.test.ts', gates: 'C.THICK55_U_PLANE_EPS(1e-9) · C.THICK55_U_FALSIFY_MIN(1e-6)' },
+      probe_su_world: probe,
+      in_plane_disp_world: inPlane,
+      along_normal_disp_world: Math.abs(alongN),
+      expected_along_normal: Math.abs(of300.back - of200.back),
+      falsify_norm_disp_world: dn,
+    }, null, 2))
+    expect(inPlane).toBeLessThan(C.THICK55_U_PLANE_EPS)
+    expect(dn).toBeGreaterThan(C.THICK55_U_FALSIFY_MIN)
   })
 })

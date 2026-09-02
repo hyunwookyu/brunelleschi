@@ -349,8 +349,26 @@ test('④ 테두리 칠 — e=1로 서고 · t 200→300에서 uv 불변·자국
     }
     return { sExt: s1 - s0, uExt: p1v - p0v }
   }, [...BOXALL, axisU.x, axisU.y] as number[])
+  const blueMass = () => page.evaluate(([x0, y0, ww, hh]) => {
+    const src = document.getElementById('gl') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const t = document.createElement('canvas')
+    t.width = Math.max(1, Math.round((ww as number) * dpr))
+    t.height = Math.max(1, Math.round((hh as number) * dpr))
+    const g = t.getContext('2d')!
+    g.drawImage(src, Math.round((x0 as number) * dpr), Math.round((y0 as number) * dpr),
+      t.width, t.height, 0, 0, t.width, t.height)
+    const d = g.getImageData(0, 0, t.width, t.height).data
+    let mass = 0
+    for (let i = 0; i < d.length; i += 4) {
+      const blue = (d[i + 2]! - d[i]!)
+      if (blue > 8 && d[i + 3]! > 8) mass += blue * (d[i + 3]! / 255)
+    }
+    return Math.round(mass)
+  }, BOXALL as unknown as number[])
   const b200 = await blueBox()
   const e200 = await blueExtent()
+  const m200 = await blueMass()
   expect(b200.n, '띠 칠이 화면에 실재한다').toBeGreaterThan(10)
   await page.evaluate((fid) => (window as any).__b2.diag.setThickForTest(fid, 300), ids.walls[0])
   await settle(page); await settle(page)
@@ -361,15 +379,32 @@ test('④ 테두리 칠 — e=1로 서고 · t 200→300에서 uv 불변·자국
   expect(stroke300, 'uv(저장)가 t 변경에 불변 — 미터 자').toEqual(stroke!.uv)
   const b300 = await blueBox()
   const e300 = await blueExtent()
+  const m300 = await blueMass()
   OUT.border_meter = {
     def: '띠 칠(e=1 · uv 세계 단위). ⚠ 판정자 가름(1차 [1]): 위험 축(u=두께 방향)의 정규화 반증은 픽셀 자가 못 본다(u 사영 ~6px) — 그 축의 정본은 단위 ⑤(세계 단위 · 문 1e-9/1e-6)다. 이 팔이 재는 것: s축 길이(sExt)와 대각이 t 200→300에 안 늘고(비 ≤ C.THICK55_RATIO_MAX), s축 1.5배 반증을 같은 자가 잡는다(≥ C.THICK55_FALSIFY_MIN). px_t300 > px_t200(+6~20%)은 자국 성장이 아니라 «띠 절단의 완화»다 — t가 커져 띠가 넓어지면 붓 폭(w)이 덜 잘린다(uExt = u축 픽셀 폭 — 붓 폭 상한으로 수렴)',
     diag_t200: +b200.diag.toFixed(1), diag_t300: +b300.diag.toFixed(1),
     ratio: +(b300.diag / Math.max(1, b200.diag)).toFixed(3), px_t200: b200.n, px_t300: b300.n,
     s_ext_t200: +e200.sExt.toFixed(1), s_ext_t300: +e300.sExt.toFixed(1),
     u_ext_t200: +e200.uExt.toFixed(1), u_ext_t300: +e300.uExt.toFixed(1),
+    mass_t200: m200, mass_t300: m300, mass_ratio: +(m300 / Math.max(1, m200)).toFixed(3),
   }
   expect(b300.diag / Math.max(1, b200.diag), '자국이 t와 함께 늘지 않는다').toBeLessThan(C.THICK55_RATIO_MAX)
   expect(e300.sExt / Math.max(1, e200.sExt), 's축 길이도 안 는다').toBeLessThan(C.THICK55_RATIO_MAX)
+  // 수렴점(2차 [N2]의 결정 실험) — 질량 증가가 «절단 완화»라면 t=400에서 수렴하고(≈붓 폭 상한),
+  // «비례(UV)»라면 ×1.33씩 계속 자란다 — 두 가설이 여기서 갈린다.
+  await page.evaluate((fid) => (window as any).__b2.diag.setThickForTest(fid, 400), ids.walls[0])
+  await settle(page); await settle(page)
+  const m400 = await blueMass()
+  await page.evaluate((fid) => (window as any).__b2.diag.setThickForTest(fid, 500), ids.walls[0])
+  await settle(page); await settle(page)
+  const m500 = await blueMass()
+  ;(OUT.border_meter as Record<string, unknown>).mass_t400 = m400
+  ;(OUT.border_meter as Record<string, unknown>).mass_t500 = m500
+  ;(OUT.border_meter as Record<string, unknown>).mass_ratio_500_400 = +(m500 / Math.max(1, m400)).toFixed(3)
+  // 수렴 = 띄 폭이 붓 폭(세계 고정)을 넘으면 성장이 멈춘다. 비례(UV)였다면 500/400 = ×1.25가 계속된다.
+  expect(m500 / Math.max(1, m400), '질량 성장이 붓 폭 상한에서 멈춘다(절단 완화) — 비례가 아니다').toBeLessThan(1.15)
+  await page.evaluate((fid) => (window as any).__b2.diag.setThickForTest(fid, 300), ids.walls[0])
+  await settle(page); await settle(page)
   // 반증(D-3) — 저장이 «비례»였다면 t 200→300에서 자국이 1.5배가 됐을 것이다. 그 1.5배를
   // **실제로 만들어**(uv의 s축을 평균 중심으로 1.5배) 이 픽셀 자(diag)가 그것을 잡는지
   // 본다 — 위 «안 는다» 판정의 판별력. ⚠ 두께 방향(u) 정규화의 세계-단위 반증은 단위
@@ -501,7 +536,7 @@ test('⑥ 손통 「두께」 줄 — 34-0 몫(#96) · 모드 전환(일괄↔�
     blocked_tip: blockedTip, ok_tip: gripBtnState!.title,
     rect: gripBtnState!.rect, viewport: gripBtnState!.viewport,
     clickable: gripBtnState!.clickable, overflow: gripBtnState!.overflow,
-    mode_after_press: 1, mode_after_repress_ex: 1,
+    mode_seq: ['batch(thick=1,ex=null)', 'ex(thick=1,ex=1)'],
   }
 })
 
@@ -576,7 +611,7 @@ test('⑦ 성능 — 면 20개(분할 벽)의 프레임·메모리 (지시 게�
   const on = { frame: await frame(), sync: await syncMs(), r3d: await page.evaluate(() => (window as any).__b2.diag.r3dInfo()) }
   const heap = await page.evaluate(() => (performance as any).memory?.usedJSHeapSize ?? null)
   OUT.perf20 = {
-    def: '면 20개(분할 벽 · 전부 단색 칠) 장면 — t=0 대비 벽 일괄 t=200의 프레임(median/p90 ms)·syncStrokes·메시 수·GL 자원 차. 절대값은 기계 못(#47 · SW GL) — 추세 측정이라 문턱 없음(#82)',
+    def: '면 19개(분할 벽 · 전부 단색 칠 — 2차 [N8] 세어 적음) 장면 — t=0 대비 벽 일괄 t=200의 프레임(median/p90 ms)·syncStrokes·메시 수·GL 자원 차. 절대값은 기계 못(#47 · SW GL) — 추세 측정이라 문턱 없음(#82). ⚠ dpr1 frame은 vsync 상한(16.7ms)에 붙어 판별력 없음(#46) — 판별은 dpr2가 한다(2차 [N1]: dpr2 frame_delta_median +18.3ms 실측). ⚠ gl.geometries는 읽는 시점에 흔들리는 수 — 회귀 자 아님(2차 [N7] · dpr간 1↔47). ⚠ heap_mb는 양자화로 판별력 제한(2차 [N9])',
     faces: faceN, batch_n: rWall?.n ?? null,
     off, on,
     frame_delta_median_ms: +(on.frame.median - off.frame.median).toFixed(2),

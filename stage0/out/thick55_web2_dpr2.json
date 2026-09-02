@@ -51,6 +51,12 @@
     "s_ext_t300": 130,
     "u_ext_t200": 5,
     "u_ext_t300": 5,
+    "mass_t200": 56585,
+    "mass_t300": 61552,
+    "mass_ratio": 1.088,
+    "mass_t400": 72915,
+    "mass_t500": 73109,
+    "mass_ratio_500_400": 1.003,
     "falsify_s15_ratio": 1.453
   },
   "perf": {
@@ -58,7 +64,7 @@
     "sync_ms": {
       "median": 0.2,
       "min": 0.1,
-      "max": 0.4
+      "max": 0.3
     }
   },
   "ui34_thick": {
@@ -82,8 +88,10 @@
       "sh": 334,
       "ch": 334
     },
-    "mode_after_press": 1,
-    "mode_after_repress_ex": 1
+    "mode_seq": [
+      "batch(thick=1,ex=null)",
+      "ex(thick=1,ex=1)"
+    ]
   },
   "conditions": {
     "workers": 1,
@@ -136,13 +144,13 @@
     "step_mm": 100
   },
   "perf20": {
-    "def": "면 20개(분할 벽 · 전부 단색 칠) 장면 — t=0 대비 벽 일괄 t=200의 프레임(median/p90 ms)·syncStrokes·메시 수·GL 자원 차. 절대값은 기계 못(#47 · SW GL) — 추세 측정이라 문턱 없음(#82)",
+    "def": "면 19개(분할 벽 · 전부 단색 칠 — 2차 [N8] 세어 적음) 장면 — t=0 대비 벽 일괄 t=200의 프레임(median/p90 ms)·syncStrokes·메시 수·GL 자원 차. 절대값은 기계 못(#47 · SW GL) — 추세 측정이라 문턱 없음(#82). ⚠ dpr1 frame은 vsync 상한(16.7ms)에 붙어 판별력 없음(#46) — 판별은 dpr2가 한다(2차 [N1]: dpr2 frame_delta_median +18.3ms 실측). ⚠ gl.geometries는 읽는 시점에 흔들리는 수 — 회귀 자 아님(2차 [N7] · dpr간 1↔47). ⚠ heap_mb는 양자화로 판별력 제한(2차 [N9])",
     "faces": 19,
     "batch_n": 19,
     "off": {
       "frame": {
-        "median": 27.2,
-        "p90": 29.2
+        "median": 27.3,
+        "p90": 29.5
       },
       "sync": 0.3,
       "r3d": {
@@ -157,8 +165,8 @@
     },
     "on": {
       "frame": {
-        "median": 45.5,
-        "p90": 49.8
+        "median": 45.1,
+        "p90": 49.1
       },
       "sync": 0.6,
       "r3d": {
@@ -171,7 +179,13 @@
         }
       }
     },
-    "frame_delta_median_ms": 18.3,
-    "heap_mb": 19.6
+    "frame_delta_median_ms": 17.8,
+    "heap_mb": 18.4
+  },
+  "pre_tree": {
+    "def": "지시 중심 게이트 문면 그대로의 측정(1차 [2] · 2차 [N6]가 dpr2 확장) — «t=0이면 지금(착수 전)과 픽셀이 같다»: 같은 장면(room3s+벽A 칠 · 상자 380,350,320,180)의 #gl sha256을 55 갈래 부모 트리(f483f0e · 워크트리)와 현행 트리(t=0)에서 각각 떠 대조. 일회 측정(세션 수행 · 스펙 비상주 — 56 착수 표가 재측정을 옮겨 적는다: 접합이 기하를 건드린 뒤 이 항등이 t=0에서 유지되는가)",
+    "sha_pre_f483f0e": "ac57f5f4269df382a47ef117c92ae6c904a317bd6771d6a49c05aa9199aa8806",
+    "sha_now_t0": "ac57f5f4269df382a47ef117c92ae6c904a317bd6771d6a49c05aa9199aa8806",
+    "equal": true
   }
 }

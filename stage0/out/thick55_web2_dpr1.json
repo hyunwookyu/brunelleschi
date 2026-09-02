@@ -51,6 +51,12 @@
     "s_ext_t300": 64,
     "u_ext_t200": 3,
     "u_ext_t300": 3,
+    "mass_t200": 12694,
+    "mass_t300": 16268,
+    "mass_ratio": 1.282,
+    "mass_t400": 17545,
+    "mass_t500": 18691,
+    "mass_ratio_500_400": 1.065,
     "falsify_s15_ratio": 1.452
   },
   "perf": {
@@ -82,11 +88,13 @@
       "sh": 334,
       "ch": 334
     },
-    "mode_after_press": 1,
-    "mode_after_repress_ex": 1
+    "mode_seq": [
+      "batch(thick=1,ex=null)",
+      "ex(thick=1,ex=1)"
+    ]
   },
   "pre_tree": {
-    "def": "지시 중심 게이트의 문면 그대로의 측정(1차 [2]) — «t=0이면 지금(착수 전)과 픽셀이 같다»: 같은 장면(room3s+벽A 칠 · 상자 380,350,320,180 · dpr1)의 #gl sha256을 55 갈래 «부모 트리»(f483f0e · 워크트리)와 현행 트리(t=0)에서 각각 떠 대조했다. 일회 측정(세션 수행 · 스펙은 안 남김 — 다른 트리를 스펙이 못 잰다)",
+    "def": "지시 중심 게이트 문면 그대로의 측정(1차 [2] · 2차 [N6]가 dpr2 확장) — «t=0이면 지금(착수 전)과 픽셀이 같다»: 같은 장면(room3s+벽A 칠 · 상자 380,350,320,180)의 #gl sha256을 55 갈래 부모 트리(f483f0e · 워크트리)와 현행 트리(t=0)에서 각각 떠 대조. 일회 측정(세션 수행 · 스펙 비상주 — 56 착수 표가 재측정을 옮겨 적는다: 접합이 기하를 건드린 뒤 이 항등이 t=0에서 유지되는가)",
     "sha_pre_f483f0e": "89479066a6ccbf9475dfb702e3d19afaea47d6bd8758ec36e83823e0ffc0c611",
     "sha_now_t0": "89479066a6ccbf9475dfb702e3d19afaea47d6bd8758ec36e83823e0ffc0c611",
     "equal": true
@@ -142,13 +150,13 @@
     "step_mm": 100
   },
   "perf20": {
-    "def": "면 20개(분할 벽 · 전부 단색 칠) 장면 — t=0 대비 벽 일괄 t=200의 프레임(median/p90 ms)·syncStrokes·메시 수·GL 자원 차. 절대값은 기계 못(#47 · SW GL) — 추세 측정이라 문턱 없음(#82)",
+    "def": "면 19개(분할 벽 · 전부 단색 칠 — 2차 [N8] 세어 적음) 장면 — t=0 대비 벽 일괄 t=200의 프레임(median/p90 ms)·syncStrokes·메시 수·GL 자원 차. 절대값은 기계 못(#47 · SW GL) — 추세 측정이라 문턱 없음(#82). ⚠ dpr1 frame은 vsync 상한(16.7ms)에 붙어 판별력 없음(#46) — 판별은 dpr2가 한다(2차 [N1]: dpr2 frame_delta_median +18.3ms 실측). ⚠ gl.geometries는 읽는 시점에 흔들리는 수 — 회귀 자 아님(2차 [N7] · dpr간 1↔47). ⚠ heap_mb는 양자화로 판별력 제한(2차 [N9])",
     "faces": 19,
     "batch_n": 19,
     "off": {
       "frame": {
         "median": 16.9,
-        "p90": 18.3
+        "p90": 18.4
       },
       "sync": 0.3,
       "r3d": {
@@ -163,10 +171,10 @@
     },
     "on": {
       "frame": {
-        "median": 16.9,
-        "p90": 18
+        "median": 16.7,
+        "p90": 18.2
       },
-      "sync": 0.5,
+      "sync": 0.6,
       "r3d": {
         "faceMeshes": 57,
         "paintMeshes": 0,
@@ -177,7 +185,7 @@
         }
       }
     },
-    "frame_delta_median_ms": 0,
+    "frame_delta_median_ms": -0.2,
     "heap_mb": 19.6
   }
 }
