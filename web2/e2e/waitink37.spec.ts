@@ -292,13 +292,16 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
   // ⚠ 초판 프로브는 #brushc에 getContext('2d')를 불러 몸살넔다(몸은 렌더러 모드에 따라 webgl — null) — 그 사고의 재발 방지 메모.
   {
     let prev = await hueOf(page, 'brushc', box)
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 24; i++) {
       // ⚠ 재도장을 강제한다(g55c 실측) — 무효화 없이는 아무것도 다시 그려지지 않아
       // 전이 잔상이 «안정된 값»으로 읽힌다(캔버스는 그리기 전까지 그대로다).
       await page.evaluate(() => (window as any).__b2.diag.invalidate?.())
       await settle(page)
       const cur = await hueOf(page, 'brushc', box)
-      if (cur.shift === prev.shift && cur.painted === prev.painted) break
+      // 수렴 판정(4차 밤 실측 6.28 — 재도장에도 살아 있는 푸른 기다): 값이 안정이어도
+      // 아직 파랑이면(느린 감쇠 가설) 계속 기다린다 — 상한은 루프 수가 진다(#95).
+      const doneBlue = Math.abs(cur.shift) < (await inkScale(page)) * WAIT_HUE.CONF_MAX
+      if (doneBlue && cur.shift === prev.shift && cur.painted === prev.painted) break
       prev = cur
     }
   }
@@ -333,5 +336,18 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
   expect(trace.frames).toBeGreaterThan(0)                            // 추적자가 창 안을 실제로 봤다(반증: 창이 안 열리면 0)
   expect(trace.maxShift).toBeGreaterThan(after.shift)                // 전이 중이 더 청색이다
   expect(after.painted).toBeGreaterThan(10)                          // 획이 사라지지 않는다
+  if (Math.abs(after.shift) >= scale * WAIT_HUE.CONF_MAX) {
+    // 부검(4차 밤까지 회전 재발 — 다음 빨강이 자기 설명을 싣게) — 상태·색·목록
+    const autopsy = await page.evaluate((sid) => {
+      const w2 = (window as any).__b2
+      return {
+        waiting: w2.app.lift.waiting, lifted: w2.app.lift.lifted.has(sid),
+        settling: w2.diag.waitInk().settling, renderer: localStorage.getItem('b2-renderer'),
+        strokes: w2.app.doc.strokes.length,
+      }
+    }, id)
+    console.log(`[부검 37-2③] after=${after.shift.toFixed(2)} rgb=${JSON.stringify((after as any).rgb)} ` + JSON.stringify(autopsy))
+    ledger['settle_autopsy'] = { after_shift: +after.shift.toFixed(2), ...autopsy }
+  }
   expect(Math.abs(after.shift)).toBeLessThan(scale * WAIT_HUE.CONF_MAX)  // 청색이 남지 않았다
 })

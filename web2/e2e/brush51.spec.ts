@@ -362,11 +362,27 @@ test('④ dpr 1↔3 — 굵기(물리 px ÷ dpr) 비가 1 ± C.PAINT51_DPR_W_TOL
   let s3 = await bandStats(p3, 530, 418, 40, 24)
   for (let i = 0; i < 30 && s3.rows === 0; i++) { await p3.waitForTimeout(100); s3 = await bandStats(p3, 530, 418, 40, 24) }
   await ctx3.close()
+  // 4차 밤 실측 — dpr3 문맥(5번째 브라우저)이 병렬 GPU 경합에서 통째로 빈 화면을
+  // 낸다(rows 0 · 3s 폴링도 무응답). 문맥 재생성 1회로 재시도한다(#95 — 상한 1회 · 재시도 사실을 기록).
+  let retried3 = false
+  if (s3.rows === 0) {
+    retried3 = true
+    const ctx3b = await browser.newContext({ deviceScaleFactor: 3, viewport: { width: 1200, height: 800 },
+      baseURL: `http://localhost:${process.env.PW_PORT ?? 5301}` })
+    const p3b = await ctx3b.newPage()
+    await room(p3b)
+    await pickInstr(p3b, 'pencil', '#3a6b35', 10)
+    await drawPen(p3b, 515, 430, 585, 430, 0.6)
+    await p3b.waitForTimeout(400)
+    s3 = await bandStats(p3b, 530, 418, 40, 24)
+    for (let i = 0; i < 30 && s3.rows === 0; i++) { await p3b.waitForTimeout(100); s3 = await bandStats(p3b, 530, 418, 40, 24) }
+    await ctx3b.close()
+  }
   const w1 = s1.rows / 1, w3 = s3.rows / 3
   const tol = (await page.evaluate(() => (window as any).__b2.diag.paint50Constants())).PAINT51_DPR_W_TOL ?? 0.15
   OUT.dpr_width = {
     def: '같은 획(연필 · 필압 0.6)의 채색 행 수 ÷ dpr — dpr 1 ↔ 3(#26-2 계열). 문 = 1 ± C.PAINT51_DPR_W_TOL',
-    w_css_dpr1: w1, w_css_dpr3: +w3.toFixed(2), ratio: +(w3 / Math.max(1, w1)).toFixed(3), tol,
+    w_css_dpr1: w1, w_css_dpr3: +w3.toFixed(2), ratio: +(w3 / Math.max(1, w1)).toFixed(3), tol, retried3,
   }
   expect(Math.abs(w3 / Math.max(1, w1) - 1), 'dpr 1↔3 굵기 비').toBeLessThan(tol)
 })
