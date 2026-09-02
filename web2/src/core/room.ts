@@ -10,7 +10,7 @@
 
 import type { ResolvedFace } from './face'
 import type { Face } from './types'
-import { classOf } from './paint'
+import { classOf, wallish } from './paint'
 import { C } from './constants'
 
 export interface Room {
@@ -54,7 +54,7 @@ let rotForTest: 1 | -1 = 1
 export function setRoomRotForTest(v: 1 | -1): void { rotForTest = v }
 
 export function findRooms(faces: ResolvedFace[], docFaces: Face[]): RoomGraph {
-  const walls = faces.filter(rf => classOf(docFaces.find(f => f.id === rf.id), rf, C.FACE_CLASS_DEG) === 'wall')
+  const walls = faces.filter(rf => wallish(classOf(docFaces.find(f => f.id === rf.id), rf, C.FACE_CLASS_DEG)))
   const segs: Seg2[] = []
   let size = 1
   for (const w of walls) {

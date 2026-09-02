@@ -151,8 +151,13 @@ export function paintScreenPts(
 
 // ── 분류(45-2) — 법선만 본다 ─────────────────────────────────────────────────
 
-export type FaceClass = 'slab' | 'wall' | 'slope'
-export const FACE_CLASSES: FaceClass[] = ['slab', 'wall', 'slope']
+// web2-55 — 어휘가 넓어졌다(지시: 「45의 법선 분류를 갈아엎지 마라 — 어휘를 넓히는
+// 일이다(벽 → 외벽·내벽)」). 자동(faceClassOf)은 여전히 'wall'까지다 — 법선은 외/내를
+// 모른다. extw·intw는 **사람 정정(손통 「분류」)만이** 가른다.
+export type FaceClass = 'slab' | 'wall' | 'extw' | 'intw' | 'slope'
+export const FACE_CLASSES: FaceClass[] = ['slab', 'wall', 'extw', 'intw', 'slope']
+/** «벽 족»인가 — 45의 'wall' 판정을 쓰던 소비자(방·면적)는 이것을 쓴다(외벽·내벽도 벽이다) */
+export const wallish = (c: FaceClass): boolean => c === 'wall' || c === 'extw' || c === 'intw'
 
 /** 법선 → 분류. 임계는 `C.FACE_CLASS_DEG` — 법선의 «기울기 각»(수직에서 잰다):
  *  0° = 법선이 수직(슬라브) · 90° = 법선이 수평(벽) · 사이 = 경사.

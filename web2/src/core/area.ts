@@ -8,7 +8,7 @@
 
 import type { ResolvedFace } from './face'
 import type { Face } from './types'
-import { classOf } from './paint'
+import { classOf, wallish } from './paint'
 import { sub3, cross3, len3, type V3 } from './vec'
 import { C } from './constants'
 
@@ -67,7 +67,7 @@ export function volume(
   if (mmPerUnit === null || !(mmPerUnit > 0)) return { report: null, why: 'no-scale' }
   const slabs = faces.filter(rf => classOf(docFaces.find(f => f.id === rf.id), rf, C.FACE_CLASS_DEG) === 'slab')
   if (slabs.length === 0) return { report: null, why: 'no-slab' }
-  const walls = faces.filter(rf => classOf(docFaces.find(f => f.id === rf.id), rf, C.FACE_CLASS_DEG) === 'wall')
+  const walls = faces.filter(rf => wallish(classOf(docFaces.find(f => f.id === rf.id), rf, C.FACE_CLASS_DEG)))
   if (walls.length === 0) return { report: null, why: 'no-wall' }
   // 벽 높이 = 그 벽 정점 y의 범위(슬라브 면 기준이 아니라 벽 자신의 — 바닥이 y=0 국면이다)
   const hs = walls.map(w => {

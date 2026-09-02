@@ -126,6 +126,16 @@ export function fullDocPlus() {
   })
   d.faces[0]!.cls = 'wall'
   d.faces[0]!.fill = 1
+  // 두께와 분류(web2-55) — 분류 정의 덮어쓰기(clsDefs — 부분)와 면 예외(ex.t)가 픽스처
+  // 대역에 든다. 게이트 ②가 새 필드 등재를 강제로 잡았고(빨강 실측) 이 줄이 그 대응이다.
+  d.faces[0]!.ex = { t: 150 }
+  d.clsDefs = { extw: { t: 200, off: 's', pri: 5, core: 1, mat: 'brick' }, wall: { t: 100 } }
+  // 테두리 슬롯 칠(web2-55 — e=1 · uv=(경계거리 s, 두께 u) · 쪽 없음)
+  d.strokes.push({
+    id: app.nextId++, a: pw[0]!, b: pw[pw.length - 1]!,
+    paint: { f: d.faces[0]!.id, e: 1, uv: [0.0, 0.01, 0.4, 0.05, 0.8, 0.02], w: 0.02, c: '#8a6238', i: 1 },
+    mat: { grade: 'HB' },
+  })
   // 재료 칠·면 재료(web2-46) — 같은 기계가 Stroke.m·Stroke.i를 빨강으로 잡았다(실측 —
   // 이 두 줄이 그 대응이다). 마커 칠 획 하나 + 면 재료 하나가 픽스처 대역에 든다.
   // ⚠ **web2-48**: 칠의 열쇠가 셋 바뀌었다 — `s`(면의 쪽 · 48-5) · `c`(색 hex · 48-7) ·

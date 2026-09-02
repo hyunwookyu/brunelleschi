@@ -64,9 +64,13 @@ export const uvTo3 = (b: UvBox['basis'], u: number, v: number): V3 =>
  *  광선을 그 면의 평면에 떨어뜨리고(45 liftPaint의 그 식) 기저로 사영한다.
  *  평면과 평행하거나 뒤로 가는 점은 건너뛴다 — 두 점 미만이면 null(그 조각은 못 선다). */
 export function uvFromScreen(
-  an: Analysis, pose: CamPose, rf: ResolvedFace, pts: Pt[],
+  an: Analysis, pose: CamPose, rf: ResolvedFace, pts: Pt[], shift = 0,
 ): number[] | null {
-  const pl = facePlane(rf)
+  // web2-55: shift = 광선을 떨어뜨릴 평면의 법선 방향 오프셋(세계 단위) — 두께가 있으면
+  // 붓이 닿는 것은 중심면이 아니라 **앞/뒤 표면**이다(커서 밑에 칠이 앉으려면 그 평면).
+  // uv 기저는 중심면 것 그대로라 저장 값의 뜻은 안 바뀐다(t는 렌더 오프셋일 뿐).
+  const pl0 = facePlane(rf)
+  const pl = shift === 0 ? pl0 : { n: pl0.n, d: pl0.d + shift }
   const basis = repBasis(rf)
   const out: number[] = []
   for (const p of pts) {
@@ -109,9 +113,11 @@ export function texDims(box: UvBox, level: number): { w: number; h: number; pxPe
   return { w: Math.max(2, Math.ceil(su * k)), h: Math.max(2, Math.ceil(sv * k)), pxPerUnit: k }
 }
 
-/** 이 획이 이 (면, 쪽)의 텍스처에 드는가 — 쪽 없는 옛 형식은 파서가 이미 버렸다. */
-const inTex = (s: Stroke, faceId: number, side: 1 | -1): boolean =>
-  s.paint !== undefined && s.paint.f === faceId && s.paint.s === side &&
+/** 이 획이 이 (면, 쪽)의 텍스처에 드는가 — 쪽 없는 옛 형식은 파서가 이미 버렸다.
+ *  web2-55: side 'e' = 테두리 슬롯(획의 e=1 · 쪽 없음)이다. */
+const inTex = (s: Stroke, faceId: number, side: 1 | -1 | 'e'): boolean =>
+  s.paint !== undefined && s.paint.f === faceId &&
+  (side === 'e' ? s.paint.e === 1 : s.paint.s === side && s.paint.e === undefined) &&
   s.paint.uv !== undefined && s.paint.uv.length >= 4
 
 /** 칠 한 획을 텍스처 캔버스에 긋는다 — 도구별 합성(질은 51의 몫 — 여기는 «옮기기»만):
@@ -352,7 +358,7 @@ export interface RepBake { m: MatRepId; seed: number; mm: number; pxPerMm: numbe
 
 export function bakeFaceTex(
   canvas: HTMLCanvasElement, rf: ResolvedFace, box: UvBox, level: number,
-  strokes: Stroke[], side: 1 | -1,
+  strokes: Stroke[], side: 1 | -1 | 'e',
   hatchFace: { face: Face; spacingWorld: number } | null,
   rep: RepBake | null = null,
 ): void {

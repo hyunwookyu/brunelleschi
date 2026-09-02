@@ -8,7 +8,7 @@ import { Line2 } from 'three/addons/lines/Line2.js'
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js'
 import type { App } from './state'
-import { viewXf, viewScale } from './state'
+import { viewXf, viewScale, faceSlotsOf } from './state'
 import { MAT, gradeOf, widthOf } from '../core/material'
 import { C } from '../core/constants'
 import { projW } from '../core/camera'
@@ -17,6 +17,8 @@ import { hatchSpecOf, hatchHexOf, solidHexOf } from '../core/palette'
 import { repSegments, repBasis, repVisibleFamilies, isRepId, isMatRepId, type Seg3 } from '../core/matrep'
 import { project } from '../core/camera'
 import { paintSideAt } from '../core/paint'
+import { borderQuads } from '../core/border'
+import { norm3, add3, mul3 } from '../core/vec'
 import { uvBoxOf, texLevel, bakeFaceTex, type UvBox, type RepBake } from '../core/facetex'
 import { faceHatchSpacingWorld } from '../core/hatch'
 import type { Grade, Stroke, Face } from '../core/types'
@@ -171,29 +173,66 @@ export function syncStrokes(r: R3D, app: App) {
   for (const f of app.doc.faces) if (f.fill === 1 || f.fill === 2) painted.add(f.id)
   for (const f of app.faces) {
     if (f.tris.length < 3) continue
-    const pos = new Float32Array(f.tris.length * 3)
-    let cx = 0, cy = 0, cz = 0
-    f.tris.forEach((p, i) => {
-      pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z
-      cx += p.x; cy += p.y; cz += p.z
-    })
-    const g = new THREE.BufferGeometry()
-    g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
     const face = app.doc.faces.find(x => x.id === f.id)
     const isPainted = painted.has(f.id)
-    // 단색 채움(48-3)이면 그 색, 아니면 종이색이다 — 「칠했다」는 곧 «여기 표면이 있다»라
-    // 종이 한 장이 서 있는 것과 같다(칠 자체는 #brushc가 그 위에 그린다).
-    const mesh = new THREE.Mesh(g, isPainted
+    // web2-55 — 두께: 분류의 t(+ 면 예외)가 앞/뒤 오프셋과 띠를 낸다. **t=0이면 slots가
+    // null이라 아래 오프셋 0·띠 없음 — 오늘의 화면 그대로다**(중심 게이트의 코드 자리).
+    const slots = faceSlotsOf(app, f)
+    const n55 = slots ? norm3(f.normal) : null
+    const matOf55 = () => isPainted
       ? solidMatOf(face?.fill === 2 ? solidHexOf(face) : C.PAPER_HEX)
-      : r.faceMat)
-    mesh.userData.painted = isPainted
-    // 깊이 정렬(web2-45 45-1)의 재료 — 자리는 sortFaces가 매 프레임 잡는다(포즈의 함수라
-    // 여기(docVersion)서 굳히면 궤도에서 낡는다). 중심은 삼각분할 정점 평균으로 충분하다 —
-    // 겹치는 면들은 서로 다른 평면이라 중심 깊이가 순서를 가른다(같은 평면 겹침은 없다:
-    // planesOf가 한 평면의 순환을 서로 소로 낸다).
-    mesh.userData.centroid = { x: cx / f.tris.length, y: cy / f.tris.length, z: cz / f.tris.length }
-    mesh.userData.faceId = f.id
-    r.faceGroup.add(mesh)
+      : r.faceMat
+    const addFaceMesh = (off: number) => {
+      const pos = new Float32Array(f.tris.length * 3)
+      let cx = 0, cy = 0, cz = 0
+      f.tris.forEach((p, i) => {
+        const q = n55 && off !== 0 ? add3(p, mul3(n55, off)) : p
+        pos[i * 3] = q.x; pos[i * 3 + 1] = q.y; pos[i * 3 + 2] = q.z
+        cx += q.x; cy += q.y; cz += q.z
+      })
+      const g = new THREE.BufferGeometry()
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+      // 단색 채움(48-3)이면 그 색, 아니면 종이색이다 — 「칠했다」는 곧 «여기 표면이 있다»라
+      // 종이 한 장이 서 있는 것과 같다(칠 자체는 면 텍스처가 그 위에 얹는다).
+      const mesh = new THREE.Mesh(g, matOf55())
+      mesh.userData.painted = isPainted
+      // 깊이 정렬(web2-45 45-1)의 재료 — 자리는 sortFaces가 매 프레임 잡는다(포즈의 함수라
+      // 여기(docVersion)서 굳히면 궤도에서 낡는다). 중심은 삼각분할 정점 평균으로 충분하다.
+      mesh.userData.centroid = { x: cx / f.tris.length, y: cy / f.tris.length, z: cz / f.tris.length }
+      mesh.userData.faceId = f.id
+      r.faceGroup.add(mesh)
+    }
+    if (!slots) {
+      addFaceMesh(0)
+    } else {
+      addFaceMesh(slots.frontW)
+      addFaceMesh(slots.backW)
+      // 띠(테두리 — 셋째 슬롯의 몸): 경계 사각들. 자유단 캡 = 평평(butt) — 코너 계단은
+      // 56의 몫이다(지시: 「여기서 접합에 손대면 두 라운드가 섞인다」).
+      const { quads, n } = borderQuads(f)
+      if (quads.length > 0) {
+        const pos = new Float32Array(quads.length * 6 * 3)
+        let bx = 0, by = 0, bz = 0, k = 0
+        const put = (P: { x: number; y: number; z: number }) => {
+          pos[k * 3] = P.x; pos[k * 3 + 1] = P.y; pos[k * 3 + 2] = P.z
+          bx += P.x; by += P.y; bz += P.z; k++
+        }
+        for (const q of quads) {
+          const af = add3(q.a, mul3(n, slots.frontW)), bf = add3(q.b, mul3(n, slots.frontW))
+          const ab = add3(q.a, mul3(n, slots.backW)), bb = add3(q.b, mul3(n, slots.backW))
+          put(af); put(bf); put(bb)
+          put(af); put(bb); put(ab)
+        }
+        const g = new THREE.BufferGeometry()
+        g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+        const mesh = new THREE.Mesh(g, matOf55())
+        mesh.userData.painted = isPainted
+        mesh.userData.centroid = { x: bx / k, y: by / k, z: bz / k }
+        mesh.userData.faceId = f.id
+        mesh.userData.slot55 = 'e'
+        r.faceGroup.add(mesh)
+      }
+    }
   }
   hatchKey = ''   // 문서가 바뀌었다 — 해칭도 다시 짓는다(syncHatch가 다음 렌더에서)
   for (const [id, seg] of app.lift.lifted) {
@@ -408,7 +447,7 @@ interface PaintTexEntry {
   faceId: number
   /** ±1 = 칠의 쪽(카메라가 그 쪽일 때만 보임) · 0 = 해칭 전용(양쪽 — 평면 위 무늬는
    *  뒤에서 봐도 같은 세계 자리다 — 옛 LineSegments와 같은 거동) */
-  side: 1 | -1 | 0
+  side: 1 | -1 | 0 | 'e'
   level: number
   /** web2-52 — 마지막 굽기의 무늬 계열 보임(major<<1|minor). 줌이 단계 경계를 안 넘어도
    *  밀도 하한(REP_MIN_PX)이 계열을 갈랐으면 다시 굽는다(49 gateRep의 매 프레임 판정을
@@ -422,6 +461,13 @@ let paintKey = ''
 function paintStrokesOf(app: App, faceId: number, side: 1 | -1): Stroke[] {
   return app.doc.strokes.filter(s =>
     s.paint !== undefined && s.paint.f === faceId && s.paint.s === side &&
+    s.paint.uv !== undefined && s.paint.uv.length >= 4)
+}
+
+/** 테두리 슬롯(web2-55)의 칠 획들 — e=1 · uv=(s,u) 세계 단위. */
+function borderStrokesOf(app: App, faceId: number): Stroke[] {
+  return app.doc.strokes.filter(s =>
+    s.paint !== undefined && s.paint.f === faceId && s.paint.e === 1 &&
     s.paint.uv !== undefined && s.paint.uv.length >= 4)
 }
 
@@ -439,7 +485,7 @@ function syncPaintTex(r: R3D, app: App) {
   // 어느 (면, 쪽)에 텍스처가 서는가 — ① 칠 획이 있는 쪽 ② 면 고정 해칭(fill=1 ·
   // hatchMode 'face')은 칠이 있으면 그 쪽 텍스처들에 깔리고, 칠이 없으면 쪽 0 하나.
   const hatchFaceMode = getHatchMode() === 'face'
-  const wants = new Map<string, { faceId: number; side: 1 | -1 | 0 }>()
+  const wants = new Map<string, { faceId: number; side: 1 | -1 | 0 | 'e' }>()
   for (const s of app.doc.strokes) {
     if (s.paint?.uv === undefined || s.paint.uv.length < 4) continue
     if (s.paint.s !== 1 && s.paint.s !== -1) continue
@@ -460,17 +506,71 @@ function syncPaintTex(r: R3D, app: App) {
     if (f.rep.s !== 1 && f.rep.s !== -1) continue
     wants.set(`${f.id}:${f.rep.s}`, { faceId: f.id, side: f.rep.s })
   }
+  // web2-55 — 테두리 슬롯: 띠에 칠 획이 있으면 그 면의 e 텍스처가 선다(두께가 있어야 몸이 있다)
+  for (const st of app.doc.strokes) {
+    if (st.paint?.e !== 1 || st.paint.uv === undefined || st.paint.uv.length < 4) continue
+    wants.set(`${st.paint.f}:e`, { faceId: st.paint.f, side: 'e' })
+  }
   for (const w of wants.values()) {
     const rf = app.faces.find(x => x.id === w.faceId)
     if (!rf || rf.tris.length < 3) continue               // 못 풀린 면 — 칠도 쉰다(면의 규약)
+    // web2-55 — 두께: 앞/뒤 텍스처는 그 표면으로 오프셋되고, 'e'는 띠 위에 선다.
+    const slots = faceSlotsOf(app, rf)
+    if (w.side === 'e') {
+      if (!slots) continue                                // t=0 — 띠가 없다(칠은 대기)
+      const { quads, n: bn, total } = borderQuads(rf)
+      if (quads.length === 0 || total <= 0) continue
+      const box: UvBox = {
+        basis: { origin: rf.outer[0]!, u: { x: 1, y: 0, z: 0 }, v: { x: 0, y: 1, z: 0 } },
+        u0: 0, u1: total, v0: 0, v1: slots.frontW - slots.backW,
+      } as UvBox
+      const pos = new Float32Array(quads.length * 6 * 3)
+      const uvA = new Float32Array(quads.length * 6 * 2)
+      let cx = 0, cy = 0, cz = 0, k = 0
+      const tW = slots.frontW - slots.backW
+      const put = (P: { x: number; y: number; z: number }, sVal: number, uVal: number) => {
+        pos[k * 3] = P.x; pos[k * 3 + 1] = P.y; pos[k * 3 + 2] = P.z
+        uvA[k * 2] = sVal / total
+        uvA[k * 2 + 1] = uVal / Math.max(1e-9, tW)
+        cx += P.x; cy += P.y; cz += P.z; k++
+      }
+      for (const q of quads) {
+        const af = add3(q.a, mul3(bn, slots.frontW)), bf = add3(q.b, mul3(bn, slots.frontW))
+        const ab = add3(q.a, mul3(bn, slots.backW)), bb = add3(q.b, mul3(bn, slots.backW))
+        put(af, q.s0, tW); put(bf, q.s0 + q.len, tW); put(bb, q.s0 + q.len, 0)
+        put(af, q.s0, tW); put(bb, q.s0 + q.len, 0); put(ab, q.s0, 0)
+      }
+      const g = new THREE.BufferGeometry()
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+      g.setAttribute('uv', new THREE.BufferAttribute(uvA, 2))
+      const canvas = document.createElement('canvas')
+      const tex = new THREE.CanvasTexture(canvas)
+      tex.colorSpace = THREE.SRGBColorSpace
+      const mat = new THREE.MeshBasicMaterial({
+        map: tex, premultipliedAlpha: true,
+        blending: paintBlendNormalForTest ? THREE.NormalBlending : THREE.MultiplyBlending,
+        transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide,
+      })
+      const mesh = new THREE.Mesh(g, mat)
+      mesh.userData.faceId = w.faceId
+      mesh.userData.centroid = { x: cx / k, y: cy / k, z: cz / k }
+      r.paintGroup.add(mesh)
+      paintTexes.set(`${w.faceId}:e`, {
+        canvas, tex, mesh, box, faceId: w.faceId, side: 'e', level: 0, famBits: -1,
+      })
+      continue
+    }
+    const off55 = slots ? (w.side === -1 ? slots.backW : w.side === 1 ? slots.frontW : 0) : 0
+    const n55 = off55 !== 0 ? norm3(rf.normal) : null
     const box = uvBoxOf(rf)
     const pos = new Float32Array(rf.tris.length * 3)
     const uv = new Float32Array(rf.tris.length * 2)
     const su = Math.max(1e-9, box.u1 - box.u0), sv = Math.max(1e-9, box.v1 - box.v0)
     let cx = 0, cy = 0, cz = 0
     rf.tris.forEach((p, i) => {
-      pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z
-      cx += p.x; cy += p.y; cz += p.z
+      const q = n55 ? add3(p, mul3(n55, off55)) : p
+      pos[i * 3] = q.x; pos[i * 3 + 1] = q.y; pos[i * 3 + 2] = q.z
+      cx += q.x; cy += q.y; cz += q.z
       const dx = p.x - box.basis.origin.x, dy = p.y - box.basis.origin.y, dz = p.z - box.basis.origin.z
       const uu = dx * box.basis.u.x + dy * box.basis.u.y + dz * box.basis.u.z
       const vv = dx * box.basis.v.x + dy * box.basis.v.y + dz * box.basis.v.z
@@ -514,7 +614,7 @@ function gatePaintTex(r: R3D, app: App) {
     const rf = app.faces.find(x => x.id === e.faceId)
     const face = app.doc.faces.find(f => f.id === e.faceId)
     if (!rf) { e.mesh.visible = false; continue }
-    const sideOk = e.side === 0 ? true : paintSideAt(rf, app.pose) === e.side
+    const sideOk = e.side === 0 || e.side === 'e' ? true : paintSideAt(rf, app.pose) === e.side
     // 투영 크기 — 외곽 정점의 화면 bbox(문서 px) × 줌 × dpr. 사영 안 되는 정점은 뺀다.
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, n = 0
     for (const P of rf.outer) {
@@ -533,7 +633,7 @@ function gatePaintTex(r: R3D, app: App) {
     let rep: RepBake | null = null
     let famBits = -1
     const mm = app.lift.mmPerUnit
-    if (face?.rep && isMatRepId(face.rep.m) && mm && mm > 0 &&
+    if (e.side !== 'e' && face?.rep && isMatRepId(face.rep.m) && mm && mm > 0 &&
         (e.side === 0 ? true : face.rep.s === e.side)) {
       const c = e.mesh.userData.centroid as { x: number; y: number; z: number }
       const u = repBasis(rf).u
@@ -551,10 +651,12 @@ function gatePaintTex(r: R3D, app: App) {
       } else famBits = 4                                   // 단색(유리·금속) — 계열 없음
     }
     if (lv !== e.level || famBits !== e.famBits) {
-      const hatch = hatchFaceMode && face?.fill === 1 && face
+      // web2-55 — 테두리('e')는 띠의 몸만 굽는다: 해칭·무늬는 면의 것이라 띠에 없다.
+      const hatch = e.side !== 'e' && hatchFaceMode && face?.fill === 1 && face
         ? { face, spacingWorld: faceHatchSpacingWorld(app.lift.an, rf, hatchSpecOf(face).spacingPx) } : null
-      const strokes = e.side === 0 ? [] : paintStrokesOf(app, e.faceId, e.side)
-      bakeFaceTex(e.canvas, rf, e.box, lv, strokes, e.side === 0 ? 1 : e.side, hatch, rep)
+      const strokes = e.side === 'e' ? borderStrokesOf(app, e.faceId)
+        : e.side === 0 ? [] : paintStrokesOf(app, e.faceId, e.side)
+      bakeFaceTex(e.canvas, rf, e.box, lv, strokes, e.side === 0 ? 1 : e.side, hatch, e.side === 'e' ? null : rep)
       e.tex.needsUpdate = true
       e.level = lv
       e.famBits = famBits
@@ -580,7 +682,7 @@ export function setPaintBlendForTest(v: boolean) {
 }
 
 /** 진단·팔용 — 지금 서 있는 텍스처들의 요약(자리·단계·양자화 전 크기·포화·합성). */
-export function paintTexStats(): { key: string; faceId: number; side: number; level: number; gateSide: boolean | null; w: number; h: number; visible: boolean; blending: number; screenPx: number | null; clamped: boolean; famBits: number }[] {
+export function paintTexStats(): { key: string; faceId: number; side: number | string; level: number; gateSide: boolean | null; w: number; h: number; visible: boolean; blending: number; screenPx: number | null; clamped: boolean; famBits: number }[] {
   const out: ReturnType<typeof paintTexStats> = []
   for (const [k, e] of paintTexes) {
     const gate = e.mesh.userData.gate as { side?: boolean; screenPx?: number; clamped?: boolean } | undefined
