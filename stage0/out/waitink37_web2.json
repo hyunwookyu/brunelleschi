@@ -57,9 +57,9 @@
   "settle_ms": 300,
   "waiting_shift": 32.17,
   "during_shift": 35.92,
-  "after_shift": -0.85,
+  "after_shift": -0.11,
   "after_painted": 296,
-  "trace_frames": 8,
+  "trace_frames": 7,
   "trace_ids": [
    5
   ],

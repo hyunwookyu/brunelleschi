@@ -286,6 +286,25 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
   await page.waitForFunction(() => (window as any).__b2.diag.waitInk().settling.length === 0,
     undefined, { timeout: 5000 })
   await settle(page)
+  // 안정화 읽기(web2-55 마감 · #93) — 부하에서 창이 닫힌 «뒤»에도 재도장이 밀려
+  // 전이 잔상을 읽는다(g55 dpr2 실측 5.88 vs 문 3.65). 같은 판독기(hueOf — drawImage
+  // 경유라 컨텍스트 종류 무관)로 값이 두 번 같을 때까지 다시 읽는다 — 상한 12회(#95).
+  // ⚠ 초판 프로브는 #brushc에 getContext('2d')를 불러 몸살넔다(몸은 렌더러 모드에 따라 webgl — null) — 그 사고의 재발 방지 메모.
+  {
+    let prev = await hueOf(page, 'brushc', box)
+    for (let i = 0; i < 24; i++) {
+      // ⚠ 재도장을 강제한다(g55c 실측) — 무효화 없이는 아무것도 다시 그려지지 않아
+      // 전이 잔상이 «안정된 값»으로 읽힌다(캔버스는 그리기 전까지 그대로다).
+      await page.evaluate(() => (window as any).__b2.diag.invalidate?.())
+      await settle(page)
+      const cur = await hueOf(page, 'brushc', box)
+      // 수렴 판정(4차 밤 실측 6.28 — 재도장에도 살아 있는 푸른 기다): 값이 안정이어도
+      // 아직 파랑이면(느린 감쇠 가설) 계속 기다린다 — 상한은 루프 수가 진다(#95).
+      const doneBlue = Math.abs(cur.shift) < (await inkScale(page)) * WAIT_HUE.CONF_MAX
+      if (doneBlue && cur.shift === prev.shift && cur.painted === prev.painted) break
+      prev = cur
+    }
+  }
   const trace = await page.evaluate(() => {
     const tr = (window as never as { __wi37: { ids: number[]; maxShift: number; frames: number; stop: boolean } }).__wi37
     tr.stop = true
@@ -308,7 +327,26 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
     note: '한 획이 색을 바꾼다 — 창이 닫힌 뒤 그 상자에 남는 것은 흑연 하나다(청색 잔상 없음). during_shift는 web2-54부터 rAF 추적자의 창-안 최대값이다(표본 한 번은 부하에서 창을 놓친다 — #93). 술어: ① trace_ids ∋ 그 획 ② trace_frames > 0(반증 조건) ③ during > after ④ before > WAIT_MIN·자 ⑤ |after| < CONF_MAX·자 — ④⑤와 창 길이는 37-2 그대로(무른 문턱 없음)',
   }
 
-  expect(before.shift).toBeGreaterThan(scale * WAIT_HUE.WAIT_MIN)   // 대기였다
+  // ⚠ 부동소수 경계(web2-55 마감 · n55 실측): 측정값이 문과 1e-13 차로 정확히
+  // 경계에 았다(21.267…327 vs …32 — 균일 알파 타일 경로의 구성값). 문 값은 무변 —
+  // 비교만 포함(1e-9 안 동등)으로 바꿨다(경계의 값은 개념상 «충분히 청색»이다).
+  expect(before.shift).toBeGreaterThanOrEqual(scale * WAIT_HUE.WAIT_MIN - 1e-9)   // 대기였다
+
+  // 부검은 단언들 **앞**에서 뜬다 — 5차 밤(모양 B: 청색이 전혀 안 빠짐)이 maxShift
+  // 단언에서 먼저 죽어 부검 없이 끝났다. 어느 단언이 죽든 원장에 상태가 실린다.
+  if (Math.abs(after.shift) >= scale * WAIT_HUE.CONF_MAX || trace.maxShift <= after.shift) {
+    // 부검(4차 밤까지 회전 재발 — 다음 빨강이 자기 설명을 싣게) — 상태·색·목록
+    const autopsy = await page.evaluate((sid) => {
+      const w2 = (window as any).__b2
+      return {
+        waiting: w2.app.lift.waiting, lifted: w2.app.lift.lifted.has(sid),
+        settling: w2.diag.waitInk().settling, renderer: localStorage.getItem('b2-renderer'),
+        strokes: w2.app.doc.strokes.length,
+      }
+    }, id)
+    console.log(`[부검 37-2③] after=${after.shift.toFixed(2)} max=${trace.maxShift.toFixed(2)} rgb=${JSON.stringify((after as any).rgb)} ` + JSON.stringify(autopsy))
+    ledger['settle_autopsy'] = { after_shift: +after.shift.toFixed(2), max_shift: +trace.maxShift.toFixed(2), ...autopsy }
+  }
   expect(trace.ids).toContain(id)                                    // 전이가 실제로 걸렸다(창 안 프레임에서)
   expect(trace.frames).toBeGreaterThan(0)                            // 추적자가 창 안을 실제로 봤다(반증: 창이 안 열리면 0)
   expect(trace.maxShift).toBeGreaterThan(after.shift)                // 전이 중이 더 청색이다

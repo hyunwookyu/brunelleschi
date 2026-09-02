@@ -28,7 +28,7 @@ import { cubeLayoutFor, parallelAllowed, parallelPose } from '../core/viewcube'
 import { fitPose, fitView, type Screen as FitScreen } from '../core/zoomfit'
 import { lensAllowed, lensAn, lensF, lensK, lensView, clampViewF, lensFromStops } from '../core/lens'
 import { calFromMedians, median } from '../core/press'
-import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
+import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, norm3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
 export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink' | 'face' | 'dim' | 'measure' | 'paint'
 
@@ -116,6 +116,12 @@ export interface Op {
   repChanged?: { id: number; before: Face['rep']; after: Face['rep'] }[]
   /** **놓은 사람**(web2-47) — 사람이 한 것이므로 실행취소 대상이다 */
   personsAdded?: Person[]
+  /** **분류 두께(정의 덮어쓰기)**(web2-55) — 사람이 한 것이므로 실행취소 대상이다.
+   *  before/after는 그 분류의 덮어쓰기 «전체»의 깊은 사본이다(부분 병합이라 필드 하나를
+   *  적으면 다른 필드의 전값을 잃는다 — rep의 규약). */
+  clsDefChanged?: { cls: import('../core/paint').FaceClass; before: Partial<import('../core/clsdef').ClsDef> | undefined; after: Partial<import('../core/clsdef').ClsDef> | undefined }[]
+  /** **면 예외**(web2-55) — 사람이 한 것이므로 실행취소 대상이다(깊은 사본) */
+  exChanged?: { id: number; before: Face['ex']; after: Face['ex'] }[]
   /** **광선이 바뀌어 대기 획을 버린 op**(web2-37 4번)가 함께 싣는 시점.
    *  ⚠⚠ 획만 되돌리면 «되살아난다»가 **쓸모없다**: 돌아온 대기 획의 내용은 「그 시점의
    *  화면 위 어디」인데 지금 시점이 그 시점이 아니고, 그 다음 시점 변경에서 **또 버려진다**
@@ -343,6 +349,10 @@ export interface App {
    *  `C.WRITE_HOLD_MS`이고 사람이 `WRITE_HOLD_MS_MIN`~`MAX`에서 고친다.
    *  `holdMs`와 같은 갈래다 — **기기 설정**(localStorage)이지 문서가 아니다. */
   writeHoldMs: number
+  /** e2e 전용(#93 · web2-55 마감) — 멈춤 문(C.WRITE_IDLE_MS)의 시험 덤씩기.
+   *  소비자가 둘(입력측 writeIdleNow · main 타이머)이라 상태에 둔다(#54 — 초판이
+   *  main에만 두어 입력측 판정이 샐다). 제품 경로는 안 건드린다(null = C 그대로). */
+  writeIdleMsForTest: number | null
   // ── 재기(web2-32 6번) — **두 결과 중 기본은 «패널에 표시만»이다** ────────────
   // 도면에 아무것도 안 남는다. 남기려면 `measureKeep`을 켠다(그때도 숫자는 저장 ⛔).
   /** 첫 점을 짚었다 — 둘째 점을 기다린다. 런타임(저장 ⛔). */
@@ -450,6 +460,7 @@ export function createApp(W: number, H: number): App {
     dimEdit: null,
     write: null,
     writeHoldMs: C.WRITE_HOLD_MS,
+    writeIdleMsForTest: null,
     measureFrom: null,
     measurePair: null,
     measureKeep: false,
@@ -620,8 +631,24 @@ function recompute(app: App) {
   for (const s of app.doc.strokes) {
     if (s.paint === undefined) continue
     const rf = app.faces.find(x => x.id === s.paint!.f)
-    const g = rf ? paintGeoOf(rf, s) : null
-    if (g) app.paintGeo.set(s.id, g)
+    if (!rf) continue
+    // web2-55 — 테두리 슬롯(e=1)은 띠 좌표(s,u)에서, 앞/뒤 슬롯은 uv에서 온다. 두께가
+    // 있으면 앞/뒤 파생 3D도 그 표면으로 오프셋된다(렌더·지우개·Injector가 같은 자리를 본다).
+    const slots = faceSlotsOf(app, rf)
+    if (s.paint.e === 1) {
+      if (!slots) continue                     // t=0 — 띠가 없다: 대기(빠졌다가 t가 오면 돌아온다)
+      const g = borderGeoOf(rf, slots.frontW, slots.backW, s.paint.uv ?? [])
+      if (g) app.paintGeo.set(s.id, g)
+      continue
+    }
+    const g = paintGeoOf(rf, s)
+    if (g) {
+      if (slots) {
+        const n = norm3(rf.normal)
+        const off = s.paint.s === -1 ? slots.backW : slots.frontW
+        app.paintGeo.set(s.id, g.map(P => add3(P, mul3(n, off))))
+      } else app.paintGeo.set(s.id, g)
+    }
   }
   markSettled(app, wasWaiting)
   app.docVersion++
@@ -847,6 +874,15 @@ export interface WriteMode {
   manip?: 1
   /** 조작 값이 실렸다 — 상태가 끝날 때 잉크를 걷는다(치수의 규약 준용) */
   manipDone?: 1
+  /** **두께 쓰기 상태**(web2-55) — 손통 「두께」로 들어왔다. 읽힌 숫자는 치수/조작이 아니라
+   *  분류의 t(mm)로 간다(setClsThickness). 재누름은 예외 모드(thickEx — 이 면만)를 켠다. */
+  thick?: 1
+  thickEx?: 1
+  /** 두께 값이 실렸다 — 상태가 끝날 때 잉크를 걷는다(조작 값의 규약 준용) */
+  thickDone?: 1
+  /** 이 상태가 쌓은 두께 op — 값이 획마다 다시 실릴 때(«2»→«25»→«250») 이 하나를
+   *  갱신한다(32-2 「실행취소 한 번」의 규약 — op가 자리마다 쌓이면 깨진다). */
+  thickOp?: Op
 }
 
 export const writeActive = (app: App): boolean => app.write !== null
@@ -925,7 +961,7 @@ export function endWriting(app: App, _why: WriteEnd) {
   // 조작 값의 손글씨(web2-44) — 값은 이미 실렸다(applyManipValue). 잉크만 걷는다.
   // op는 «걷힌 획»으로 남아 실행취소가 잉크를 되살린다(조작 자체의 칸은 따로 있다 —
   // finishManip이 쌓은 moved op. 잉크 한 번 · 기하 한 번, 두 칸이다).
-  if (w.manipDone === 1 && w.op) {
+  if ((w.manipDone === 1 || w.thickDone === 1) && w.op) {
     const removed: Op['removed'] = []
     for (let i = app.doc.strokes.length - 1; i >= 0; i--) {
       if (w.ids.includes(app.doc.strokes[i]!.id)) removed.push({ stroke: app.doc.strokes[i]!, index: i })
@@ -977,7 +1013,7 @@ export function writeFarPts(app: App, pts: Pt[]): boolean {
 export function writeIdleNow(app: App, now: number): boolean {
   const w = app.write
   if (!w || w.ids.length === 0) return false
-  return writeIdle(w.last, now, C.WRITE_IDLE_MS)
+  return writeIdle(w.last, now, app.writeIdleMsForTest ?? C.WRITE_IDLE_MS)
 }
 
 /** 방금 확정된 획을 글씨 뭉치에 싣는다 — `commitStroke`가 부른다(배선 하나). */
@@ -1043,6 +1079,25 @@ export function applyRecognized(app: App, text: string): DimResult | 'unread' {
     if (!Number.isFinite(v) || v < 0) return 'unread'
     if (!applyManipValue(app, v)) return 'unread'
     w.manipDone = 1
+    return 'applied'
+  }
+  // 두께(web2-55) — 치수 문법 그대로 읽어(단위 접미 허용 — parseDim) 분류의 t 또는 면
+  // 예외로 싣는다. 대상 면은 잡은 면(grip.faceId — 두께 줄이 그 문맥에서만 열린다).
+  if (w.thick === 1) {
+    const mm = parseDim(text, app.doc.unit)
+    if (mm === null || mm < 0) return 'unread'
+    const fid = app.grip?.faceId ?? lastSelFace(app)
+    if (fid === null) return 'unread'
+    if (w.thickEx === 1) {
+      const op = setFaceThicknessEx(app, fid, mm, w.thickOp)
+      if (op === null) return 'unread'
+      w.thickOp = op
+    } else {
+      const r = setClsThickness(app, fid, mm, w.thickOp)
+      if (r === null) return 'unread'
+      w.thickOp = r.op
+    }
+    w.thickDone = 1
     return 'applied'
   }
   const mm = parseDim(text, app.doc.unit)
@@ -1702,6 +1757,8 @@ export function frontFlyTarget(app: App): { to: CamPose; back: boolean } | null 
 // 한 붓 → 면별 조각 → 획 여럿(paint 태그) → 한 op(붓 하나가 실행취소 한 칸이다).
 
 import { splitByFace, frontFaceAt, classOf, faceClassOf, FACE_CLASSES, paintSideAt, type FaceClass } from '../core/paint'
+import { faceThickness, slotOffsets } from '../core/clsdef'
+import { borderGeoOf, borderHitAt } from '../core/border'
 import { uvFromScreen, paintGeoOf } from '../core/facetex'
 import { cycleMat, isMatId, materialOf, type MatId, type Instr } from '../core/palette'
 import { cycleRep, isRepId, isMatRepId, REP_NAMES, repBasis } from '../core/matrep'
@@ -1746,6 +1803,65 @@ export const paintActive = (app: Pick<App, 'tool'>): boolean => app.tool === 'pa
 /** 한 붓을 확정한다 — 지나간 면마다 나뉘어 얹힌다(지시 문면 · 사용자는 의식하지 않는다).
  *  면 밖 점은 센다(조용히 버리지 않는다 — 진단이 읽는다). */
 export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: number; offFace: number; offOwn: number } {
+  // ── **테두리 슬롯**(web2-55) — 첫 점이 어느 면의 «띠»를 짚으면 그 한 붓은 통째로
+  // 그 띠의 칠이다(주인 면 규칙(54-1)의 띠판 — 붓 하나는 한 슬롯이다). 띠 밖으로 나간
+  // 점은 세고 버린다(splitByFace의 offFace 규약 그대로). 면 판정보다 먼저 보는 이유:
+  // 띠는 면 폴리곤 «가장자리 바깥»이라 frontFaceAt이 어차피 못 짚는 자리이고, 겹치는
+  // 픽셀(비스듬히 볼 때 띠가 면 앞을 지나는 자리)에서는 «띠가 앞»이 물리적으로 맞다
+  // (borderHitAt이 광선 깊이로 이미 가장 가까운 사각을 고른다).
+  if (pts.length >= 2) {
+    let bFace: number | null = null
+    let bSlots: { frontW: number; backW: number } | null = null
+    for (const rf of app.faces) {
+      const slots = faceSlotsOf(app, rf)
+      if (!slots) continue
+      const hit = borderHitAt(app.lift.an, app.pose, rf, slots.frontW, slots.backW, pts[0]!)
+      if (hit) { bFace = rf.id; bSlots = slots; break }
+    }
+    if (bFace !== null && bSlots) {
+      const rf = app.faces.find(x => x.id === bFace)!
+      const uv: number[] = []
+      let off = 0
+      for (const p of pts) {
+        const h = borderHitAt(app.lift.an, app.pose, rf, bSlots.frontW, bSlots.backW, p)
+        if (h) { uv.push(h.s, h.u) } else off++
+      }
+      if (uv.length < 4) {
+        for (const l of app.listeners) l()
+        return { placed: 0, offFace: off, offOwn: 0 }
+      }
+      const s: Stroke = {
+        id: app.nextId++,
+        a: { ...pts[0]! }, b: { ...pts[pts.length - 1]! },
+        paint: { f: bFace, e: 1, uv },
+        mat: { grade: activeGrade(app) },
+      }
+      if (app.paintSel.i !== 'brush') {
+        s.paint!.c = app.paintSel.hex
+        s.paint!.i = app.paintSel.i === 'marker' ? 1 : app.paintSel.i === 'cp' ? 2 : 3
+      }
+      // 굵기 — 세계 단위(50의 규약). 띠 위 (s,u)는 이미 세계 단위라 화면 px → 세계 환산은
+      // 커밋 시점의 화면 자(viewScale)와 그 자리의 원근 배율이 필요하다 — worldPerPxPerp의
+      // 그 자를 못 쓰므로(면 기저가 아니다) **띠 폭 근사**: 첫 두 적중의 3D 화면 사영
+      // 간격으로 환산한다. 근사의 유보는 원장 def가 든다(질은 51 계열의 몫).
+      {
+        const A = borderGeoOf(rf, bSlots.frontW, bSlots.backW, uv.slice(0, 4))
+        if (A && A.length >= 2) {
+          const pa = project(app.lift.an, app.pose, A[0]!)
+          const pb = project(app.lift.an, app.pose, A[1]!)
+          const world = len3(sub3(A[1]!, A[0]!))
+          const px = pa && pb ? Math.hypot(pb.x - pa.x, pb.y - pa.y) * viewScale(app) : 0
+          s.paint!.w = px > 1e-6 ? app.paintSel.w * (world / px) : C.PAINT_W_FALLBACK_UNITS
+        } else s.paint!.w = C.PAINT_W_FALLBACK_UNITS
+      }
+      if (!isDrawPose(app.pose)) s.view = clonePose(app.pose)
+      app.doc.strokes.push(s)
+      app.undoStack.push({ removed: [], added: [s] })
+      app.redoStack = []
+      recompute(app)
+      return { placed: 1, offFace: off, offOwn: 0 }
+    }
+  }
   const { runs: allRuns, offFace } = splitByFace(app.lift, app.pose, app.faces, pts)
   // ── **칠의 자리**(web2-54) — 획이 얹힐 면을 좁힌다. 스위치(paintOwnGate)는 D-3 반증
   // 전용이다(끄면 옛 거동 — 지나간 면마다 얹힘 — 이 돌아온다는 것을 팔이 잰다).
@@ -1771,12 +1887,17 @@ export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: nu
     // 쪽 없는 칠·uv 없는 칠은 이제 존재하지 않는다(파서도 같은 문이다).
     const rf = app.faces.find(x => x.id === r.f)
     if (!rf) { continue }
-    const uv = uvFromScreen(app.lift.an, app.pose, rf, r.pts)
+    // web2-55 — 두께가 있으면 붓이 닿는 평면은 «지금 보는 쪽 표면»이다(커서 밑에 칠이
+    // 앉는다). uv 기저·저장 뜻은 불변 — t는 렌더 오프셋일 뿐(왕복 게이트의 근거).
+    const side = paintSideAt(rf, app.pose)
+    const slots55 = faceSlotsOf(app, rf)
+    const shift = slots55 ? (side === -1 ? slots55.backW : slots55.frontW) : 0
+    const uv = uvFromScreen(app.lift.an, app.pose, rf, r.pts, shift)
     if (!uv) continue
     const s: Stroke = {
       id: app.nextId++,
       a: { ...r.pts[0]! }, b: { ...r.pts[r.pts.length - 1]! },
-      paint: { f: r.f, s: paintSideAt(rf, app.pose), uv },
+      paint: { f: r.f, s: side, uv },
       mat: { grade: activeGrade(app) },
     }
     // 점별 필압(50 — 정본 목록의 «압력») — 펜이 준 값만, 조각의 원래 자리(idx)로 정렬.
@@ -1876,6 +1997,94 @@ export function faceClassNow(app: App, faceId: number): FaceClass | null {
   const rf = app.faces.find(f => f.id === faceId)
   if (!rf) return null
   return classOf(face, rf, C.FACE_CLASS_DEG)
+}
+
+// ── 두께(web2-55) — 분류가 들고 면은 예외만 덮는다(core/clsdef.ts가 정본) ──────────
+
+/** **분류 두께(일괄)** — 이 면의 «지금» 분류에 t(mm)를 싣는다. 그 분류를 가리키는 면
+ *  전부가 따라 바뀐다(예외 준 면만 안 바뀐다 — 지시 게이트). 반환 n = 따라 바뀌는 면 수. */
+export function setClsThickness(app: App, faceId: number, tMm: number, reuse?: Op): { cls: FaceClass; n: number; op: Op } | null {
+  const face = app.doc.faces.find(f => f.id === faceId)
+  const rf = app.faces.find(f => f.id === faceId)
+  if (!rf || !Number.isFinite(tMm) || tMm < 0) return null
+  const cls = classOf(face, rf, C.FACE_CLASS_DEG)
+  const cur = app.doc.clsDefs?.[cls] ? { ...app.doc.clsDefs![cls] } : undefined
+  if (!app.doc.clsDefs) app.doc.clsDefs = {}
+  let op: Op
+  const prev = reuse?.clsDefChanged?.[0]
+  if (reuse && prev && prev.cls === cls) {
+    // 같은 글씨 뭉치의 재적용(«2»→«25») — before는 그대로 두고 after만 갱신한다
+    const after = { ...(prev.before ?? {}), t: tMm }
+    app.doc.clsDefs[cls] = { ...after }
+    prev.after = { ...after }
+    op = reuse
+  } else {
+    const after = { ...(cur ?? {}), t: tMm }
+    app.doc.clsDefs[cls] = { ...after }
+    op = { removed: [], added: [], clsDefChanged: [{ cls, before: cur, after: { ...after } }] }
+    app.undoStack.push(op)
+    app.redoStack = []
+  }
+  recompute(app)
+  let n = 0
+  for (const f2 of app.faces) {
+    const df = app.doc.faces.find(x => x.id === f2.id)
+    if (classOf(df, f2, C.FACE_CLASS_DEG) === cls && df?.ex?.t === undefined) n++
+  }
+  return { cls, n, op }
+}
+
+/** **면 예외** — 이 면만 t(mm)를 다르게. undefined면 예외를 걷는다(분류 값으로 복귀 —
+ *  D-3 반증의 그 길: 예외가 걷히면 분류의 t가 다시 이 면을 다스린다). */
+export function setFaceThicknessEx(app: App, faceId: number, tMm: number | undefined, reuse?: Op): Op | null {
+  const face = app.doc.faces.find(f => f.id === faceId)
+  if (!face) return null
+  if (tMm !== undefined && (!Number.isFinite(tMm) || tMm < 0)) return null
+  const prev = reuse?.exChanged?.[0]
+  let op: Op
+  if (reuse && prev && prev.id === faceId) {
+    if (tMm === undefined) delete face.ex
+    else face.ex = { t: tMm }
+    prev.after = face.ex ? { ...face.ex } : undefined
+    op = reuse
+  } else {
+    const before = face.ex ? { ...face.ex } : undefined
+    if (tMm === undefined) delete face.ex
+    else face.ex = { t: tMm }
+    const after = face.ex ? { ...face.ex } : undefined
+    op = { removed: [], added: [], exChanged: [{ id: faceId, before, after }] }
+    app.undoStack.push(op)
+    app.redoStack = []
+  }
+  recompute(app)
+  return op
+}
+
+/** 이 면의 유효 두께 «지금 값»(표시용) — {분류, t(mm), 예외인가}. */
+export function faceThicknessNow(app: App, faceId: number): { cls: FaceClass; t: number; ex: boolean } | null {
+  const face = app.doc.faces.find(f => f.id === faceId)
+  const rf = app.faces.find(f => f.id === faceId)
+  if (!rf) return null
+  const cls = classOf(face, rf, C.FACE_CLASS_DEG)
+  const th = faceThickness(app.doc, face, cls)
+  return { cls, t: th.t, ex: th.ex }
+}
+
+/** 이 면의 **세 슬롯 기하**(세계 단위) — 두께 0이거나 축척 미정이면 null(오늘의 화면
+ *  그대로 — «t=0이면 지금과 픽셀이 같다»가 이 null에서 나온다). t는 mm가 정본이고
+ *  환산 자는 lift.mmPerUnit 하나다(#54 — 49의 실치수 무늬와 같은 자). */
+export function faceSlotsOf(
+  app: Pick<App, 'doc' | 'lift'>, rf: ResolvedFace,
+): { tW: number; frontW: number; backW: number; ex: boolean } | null {
+  const face = app.doc.faces.find(f => f.id === rf.id)
+  const cls = classOf(face, rf, C.FACE_CLASS_DEG)
+  const th = faceThickness(app.doc, face, cls)
+  if (th.t <= 0) return null
+  const mmPer = app.lift.mmPerUnit
+  if (mmPer === null || mmPer <= 0) return null   // 축척 미정 — 실측 mm를 못 그린다(값은 남는다)
+  const tW = th.t / mmPer
+  const o = slotOffsets(tW, th.off)
+  return { tW, frontW: o.front, backW: o.back, ex: th.ex }
 }
 
 /** **채움을 돌린다**(45-4 · web2-48 48-3) — 면의 성질이다(픽셀로 굽지 않는다).
@@ -2353,6 +2562,17 @@ export function undo(app: App) {
     const f = app.doc.faces.find(x => x.id === cc.id)
     if (f) { if (cc.before === undefined) delete f.cls; else f.cls = cc.before }
   }
+  // 분류 두께·면 예외(web2-55) — «전»으로
+  for (const tc of op.clsDefChanged ?? []) {
+    if (!app.doc.clsDefs) app.doc.clsDefs = {}
+    if (tc.before === undefined) delete app.doc.clsDefs[tc.cls]
+    else app.doc.clsDefs[tc.cls] = { ...tc.before }
+    if (Object.keys(app.doc.clsDefs).length === 0) delete app.doc.clsDefs
+  }
+  for (const ec of op.exChanged ?? []) {
+    const f = app.doc.faces.find(x => x.id === ec.id)
+    if (f) { if (ec.before === undefined) delete f.ex; else f.ex = { ...ec.before } }
+  }
   for (const fc of op.fillChanged ?? []) {                // 채움(48-3에서 순환) — «전»으로
     const f = app.doc.faces.find(x => x.id === fc.id)
     if (f) { if (fc.before === undefined) delete f.fill; else f.fill = fc.before }
@@ -2418,6 +2638,17 @@ export function redo(app: App) {
   for (const cc of op.clsChanged ?? []) {
     const f = app.doc.faces.find(x => x.id === cc.id)
     if (f) { if (cc.after === undefined) delete f.cls; else f.cls = cc.after }
+  }
+  // 분류 두께·면 예외(web2-55) — «후»로
+  for (const tc of op.clsDefChanged ?? []) {
+    if (!app.doc.clsDefs) app.doc.clsDefs = {}
+    if (tc.after === undefined) delete app.doc.clsDefs[tc.cls]
+    else app.doc.clsDefs[tc.cls] = { ...tc.after }
+    if (Object.keys(app.doc.clsDefs).length === 0) delete app.doc.clsDefs
+  }
+  for (const ec of op.exChanged ?? []) {
+    const f = app.doc.faces.find(x => x.id === ec.id)
+    if (f) { if (ec.after === undefined) delete f.ex; else f.ex = { ...ec.after } }
   }
   for (const fc of op.fillChanged ?? []) {                // 채움(48-3에서 순환) — «후»로
     const f = app.doc.faces.find(x => x.id === fc.id)

@@ -96,9 +96,13 @@ const KEY_ORDER: string[] = [
   // 면·치수 줄에도 있는 이름이라 여기서 새로 안 적는다(이 배열은 열쇠 «차례»의 전역
   // 목록이고 이름이 겹치는 것은 정상이다 — 43-1 ①이 바이트로 지킨다).
   // web2-50: uv(면 위 좌표 — 정본)가 늘었다. press는 아래 줄에 이미 있다(전역 차례 목록).
-  'paint', 'f', 'uv', 'm', 'i', 'c',
+  // web2-55: e(테두리 슬롯 표지 — uv가 (경계거리, 두께 방향)이 된다)
+  'paint', 'f', 'e', 'uv', 'm', 'i', 'c',
   // rep(web2-49 — 재료 표현 {m, s}: 열쇠 m·s는 위 칠 줄과 면 줄에 이미 있다)
-  'faces', 'loops', 'edges', 'kind', 's', 't', 'ox', 'oy', 'cls', 'fill', 'rep',
+  // web2-55: ex(면 예외 {t}) · clsDefs(분류 정의 덮어쓰기 {t,off,pri,core,mat} — 분류 id
+  // 열쇠 slab/wall/extw/intw/slope 다섯 포함) — t·mat·s는 전역 목록에 이미 있다.
+  'faces', 'loops', 'edges', 'kind', 's', 't', 'ox', 'oy', 'cls', 'fill', 'rep', 'ex',
+  'clsDefs', 'slab', 'wall', 'extw', 'intw', 'slope', 'off', 'pri', 'core',
   'unit', 'scaleRef', 'grade', 'press', 'w', 'h', 'D', 'tiltX', 'tiltY', 'twist',
   'nextId', 'sheets', 'thumb',
   'layers', 'sheet', 'paper', 'rect', 'on', 'locked', 'p0', 'p1', 'gamma',
@@ -141,6 +145,8 @@ export function serializeBrnl(d: BrnlData, opt: SerializeOptions = {}): string {
     ...(d.doc.measures && d.doc.measures.length > 0 ? { measures: d.doc.measures } : {}),
     // 놓은 사람(web2-47) — 접지점뿐이다(모습은 기기의 스텐실 — 원칙 b). 없으면 열쇠 없음.
     ...(d.doc.persons && d.doc.persons.length > 0 ? { persons: d.doc.persons } : {}),
+    // 분류 정의 덮어쓰기(web2-55) — **바뀐 것만** · 없으면 열쇠 없음(t=0 문서 바이트 무변)
+    ...(d.doc.clsDefs && Object.keys(d.doc.clsDefs).length > 0 ? { clsDefs: d.doc.clsDefs } : {}),
     // 작도 시점(web2-17 3-c) — 없으면 열쇠 자체를 안 쓴다(왕복 동일성 — 2-c ② 팔)
     ...(d.drawView ? { drawView: d.drawView } : {}),
   }, KEY_ORDER)
@@ -241,11 +247,16 @@ export function parseBrnl(text: string, info?: ParseInfo): BrnlData | null {
       const p = s.paint
       const uvOk = Array.isArray(p.uv) && p.uv.length >= 4 && p.uv.length % 2 === 0 &&
         p.uv.every((v: unknown) => isNum(v))
-      if (!isNum(p.f) || !uvOk || !(p.s === 1 || p.s === -1)) {
+      // web2-55: 테두리 슬롯(e=1)은 쪽(s)이 **없어야** 산다(띠는 실제 표면 — 쪽 개념 밖).
+      // 앞/뒤 슬롯은 종전 그대로 쪽(±1)이 있어야 산다. 어느 쪽도 아니면 획째 버리고 센다.
+      const slotOk = p.e === 1 ? p.s === undefined : (p.s === 1 || p.s === -1) && p.e === undefined
+      if (!isNum(p.f) || !uvOk || !slotOk) {
         if (info) info.droppedPaint++
         continue                             // 이 획을 통째로 버린다(다음 획으로)
       }
-      st.paint = { f: p.f, s: p.s, uv: p.uv.map(Number) }
+      st.paint = p.e === 1
+        ? { f: p.f, e: 1, uv: p.uv.map(Number) }
+        : { f: p.f, s: p.s, uv: p.uv.map(Number) }
       // 점별 필압(50 — 정본 목록의 «압력») — 길이가 uv 점 수와 같아야 받는다. 틀리면
       // 그 필드만 버린다(질은 51의 몫이라 잃어도 조용히 틀린 기하가 안 난다).
       if (Array.isArray(p.press) && p.press.length === p.uv.length / 2 &&
@@ -301,7 +312,11 @@ export function parseBrnl(text: string, info?: ParseInfo): BrnlData | null {
       const face: Face = { id: f.id, loops }
       // 분류 정정·채움(web2-45) — 모양이 틀리면 **그 필드만 버린다**(own3의 규약:
       // 잃어도 «자동 분류»·«채움 없음»일 뿐이라 조용히 틀린 기하가 안 난다).
-      if (f.cls === 'slab' || f.cls === 'wall' || f.cls === 'slope') face.cls = f.cls
+      // web2-55 — 어휘가 넓어졌다(extw·intw): 모르는 값이면 그 필드만 버린다(자동 분류로)
+      if (f.cls === 'slab' || f.cls === 'wall' || f.cls === 'extw' || f.cls === 'intw' || f.cls === 'slope') face.cls = f.cls
+      // 예외 두께(web2-55) — 유한 음 아님이어야 산다. 모양이 틀리면 그 필드만 버린다
+      // (잃어도 «분류의 값»일 뿐 — 조용히 틀린 기하가 안 난다)
+      if (f.ex !== undefined && isNum(f.ex?.t) && f.ex.t >= 0) face.ex = { t: f.ex.t }
       // 채움(web2-45 1=해칭 · **web2-48 48-3에서 2=단색**) — 모르는 값이면 그 필드만 버린다
       if (f.fill === 1 || f.fill === 2) face.fill = f.fill
       if (isMatId(f.mat)) face.mat = f.mat   // web2-46 — 모양이 틀리면 그 필드만 버린다
@@ -400,6 +415,25 @@ export function parseBrnl(text: string, info?: ParseInfo): BrnlData | null {
       if (!isNum(m?.id) || !isMeasurePoint(m?.a) || !isMeasurePoint(m?.b)) return null
       measures.push({ id: m.id, a: { s: m.a.s, t: m.a.t }, b: { s: m.b.s, t: m.b.t } })
     }
+  }
+
+  // 분류 정의 덮어쓰기(web2-55) — 필드 단위 검증: 모양이 틀린 «필드만» 버린다(cls의
+  // 규약 — 잃어도 기본값(t=0 등)일 뿐 조용히 틀린 기하가 안 난다). 빈 덮어쓰기는 안 담는다.
+  let clsDefs: Doc['clsDefs']
+  if (raw.clsDefs !== undefined && typeof raw.clsDefs === 'object' && raw.clsDefs !== null) {
+    const out: NonNullable<Doc['clsDefs']> = {}
+    for (const k of ['slab', 'wall', 'extw', 'intw', 'slope'] as const) {
+      const v = (raw.clsDefs as Record<string, unknown>)[k] as Record<string, unknown> | undefined
+      if (v === undefined || typeof v !== 'object' || v === null) continue
+      const d: NonNullable<Doc['clsDefs']>[typeof k] = {}
+      if (isNum(v.t) && v.t >= 0) d.t = v.t
+      if (v.off === 'c' || v.off === 's') d.off = v.off
+      if (isNum(v.pri)) d.pri = Math.round(v.pri)
+      if (v.core === 0 || v.core === 1) d.core = v.core
+      if (isMatId(v.mat)) d.mat = v.mat
+      if (Object.keys(d).length > 0) out[k] = d
+    }
+    if (Object.keys(out).length > 0) clsDefs = out
   }
 
   // 놓은 사람(web2-47) — 접지점. 모양이 틀린 항은 **그 항만 버린다**(layer의 규약 —
@@ -510,6 +544,7 @@ export function parseBrnl(text: string, info?: ParseInfo): BrnlData | null {
   const keptMeasures = measures.filter(m => strokeIds.has(m.a.s) && strokeIds.has(m.b.s))
   if (keptMeasures.length > 0) doc.measures = keptMeasures
   if (persons.length > 0) doc.persons = persons   // 빈 배열이면 열쇠 없음(왕복 동일성)
+  if (clsDefs !== undefined) doc.clsDefs = clsDefs // web2-55 — 덮어쓰기 없으면 열쇠 없음(동일성)
   // 필압 보정(web2-26 6번) — **성립하는 값만 받는다**(`validPressCal`이 저장·복원·보정
   // 절차의 술어 하나다 #54). 깨진 값은 조용히 버린다: 그림은 그대로 열리고 옵션만 꺼진다
   // (문서를 거부하지 않는다 — scaleRef·면의 선례 그대로).

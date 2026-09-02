@@ -1,0 +1,15 @@
+{
+  "what": "web2-55 — 테두리 위험 축(u=두께 방향)의 정본 값(세계 단위 · 단위 ⑤의 그 계산). 픽셀 자(thick55 e2e ④)는 이 축을 못 본다(u 사영 ~6px) — 그 가름의 정본이 이 파일이다",
+  "conditions": {
+    "canonical": "LEDGER=1 npx vitest run test/thick55.test.ts",
+    "gates": "C.THICK55_U_PLANE_EPS(1e-9) · C.THICK55_U_FALSIFY_MIN(1e-6)"
+  },
+  "probe_su_world": {
+    "s": 0.7,
+    "u": 0.02
+  },
+  "in_plane_disp_world": 1.3283950133694437e-16,
+  "along_normal_disp_world": 0.0384000000000001,
+  "expected_along_normal": 0.038400000000000004,
+  "falsify_norm_disp_world": 0.010000000000000096
+}

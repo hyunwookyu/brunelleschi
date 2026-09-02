@@ -94,23 +94,40 @@ test('42 ① 면을 누르면 평행으로 가고 이름이 뜬다 · 가운데�
   expect(before.parallel).toBe(false)
   expect(before.name).toBe('투시')
 
+  // 보간의 자 — **rAF 추적자를 누르기 «전에» 심는다**(web2-55 마감 · #93: 표본 «한 번»은
+  // 느린 프레임에서 보간 끝(w=1)을 읽는다 — n55 dpr2 실측이 정확히 1을 냈다. turn31 ②·
+  // waitink37 ③과 같은 수리: 문턱이 아니라 팔을 고친다).
+  await page.evaluate(() => {
+    const w2 = window as any
+    w2.__v42 = { ws: [] as number[], stop: false }
+    const tick = () => {
+      if (w2.__v42.stop) return
+      w2.__v42.ws.push(w2.__b2.diag.view42().w)
+      requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
   const fp = await facePoint(page)
   await tap(page, fp.x, fp.y)
   await settle(page)
-  const mid = await view42(page)          // 보간 중 — 아직 1이 아니다
   await page.waitForTimeout(500)
   await settle(page)
   const after = await view42(page)
+  const trace = await page.evaluate(() => {
+    const t = (window as any).__v42
+    t.stop = true
+    return t.ws as number[]
+  })
+  const inter = trace.filter(w => w > 0 && w < 1)
 
-  console.log(`[42 ①] 면 클릭 — w ${mid.w.toFixed(3)} → ${after.w} · 이름 ${after.name} · D ${after.D}`)
+  console.log(`[42 ①] 면 클릭 — 추적 ${trace.length}프레임 · 중간(0<w<1) ${inter.length}개 → ${after.w} · 이름 ${after.name} · D ${after.D}`)
   expect(after.parallel, '평행으로 갔다').toBe(true)
   expect(after.w).toBe(1)
   expect(['평면', '저면', '정면', '후면', '좌측면', '우측면']).toContain(after.name)
   expect(after.horizon, '평행에는 지평선이 없다').toBeNull()
   expect(after.vpMarks, '평행에는 ✕가 없다').toBe(0)
-  // 보간 — 누른 **직후**에는 아직 목표가 아니다(즉시 전환이면 여기서 이미 1이다)
-  expect(mid.w, '보간 중이다').toBeLessThan(1)
-  expect(mid.w).toBeGreaterThan(0)
+  // 보간 — 중간 프레임(0<w<1)이 실재했다. 즉시 전환이면 모든 프레임이 0 아니면 1이다.
+  expect(inter.length, '보간의 중간 프레임이 실재한다 — 즉시 전환이 아니다').toBeGreaterThan(0)
 
   // 가운데 — 원근으로 돌아온다. 자세는 안 바뀐다.
   const poseBefore = await page.evaluate(() => JSON.stringify((window as any).__b2.app.pose.q))
@@ -127,10 +144,10 @@ test('42 ① 면을 누르면 평행으로 가고 이름이 뜬다 · 가운데�
 
   ledger['gate1_face_and_center'] = {
     before: { name: before.name, parallel: before.parallel, horizon: before.horizon },
-    mid_w: r6(mid.w),
+    mid_frames: inter.length,
     mid_w_note: (
-      '⚠ 이 값은 **벽시계에 묶여 매 실행 다르다**(300 ms 애니 중 언제 읽혔는가) — '
-      + '재는 것은 크기가 아니라 **「0도 1도 아니다」**이다(2차 리뷰어 [2]).'
+      '⚠ web2-55부터 rAF 추적자다(#93 — 표본 한 번은 느린 프레임에서 끝(1)을 읽는다). '
+      + '재는 것은 크기가 아니라 **「0도 1도 아닌 중간 프레임의 실재」**다(2차 리뷰어 [2]의 그 문면 그대로).'
     ),
     after: { name: after.name, parallel: after.parallel, w: after.w, D: r6(after.D), horizon: after.horizon, vp_marks: after.vpMarks },
     center: {

@@ -1,0 +1,191 @@
+{
+  "what": "web2-55 — 두께: t=0 픽셀 항등(중심) · 일괄/예외 · 왕복 · 테두리 미터 · 성능",
+  "note_92": "판정자는 픽셀(바이트 동일·상자 차)·uv 값·ms다 — 「두께를 달았다」는 이름표라 안 센다",
+  "note_d3": "D-3 셋: ① t=200이 같은 상자를 실제로 바꾼다(항등 팔의 판별력) ② 예외 걷기가 픽셀을 실제로 바꾼다 ③ uv 1.5배가 화면 자국을 실제로 늘린다(미터 자의 반증)",
+  "identity": {
+    "def": "t=0 픽셀 항등: base ↔ (t=200 켰다 다시 0) 다른 바이트 0. ⚠ 이 0은 «측정»이다(렌더 결정론이 깨지면 실패한다 — roundsave ③의 그 성질) · 판별력 = base ↔ t200의 달라진 픽셀(D-3 ①). «착수 전 트리와 같다»는 별도 측정이다 — pre_tree 블록(55 갈래 부모 트리의 서명 대조 · 1차 [2])이 그 값을 든다",
+    "changed_px_at_t200": 5144,
+    "box_px": 230400,
+    "roundtrip_bytes": 0
+  },
+  "batch": {
+    "def": "일괄(1차 [6] 재작성): ① 예외 없는 벽 두 판에 t=200 — n=2 · 두 상자 픽셀 각각 변화(propagate_px) ② 벽B 예외 350 후 일괄 250 — 예외 상자 픽셀 0 · 바닥 상자 0 ③ 반증 = 예외 걷기(제품 상태 경로 setFaceThicknessEx(undefined) — 지시 문면 «분류 t를 다시 밀어 넣으면 예외가 덮인다»의 구현 의미가 이 길이다: 예외를 걷어야 분류가 다스린다 — D-W24 · 화면 손잡이는 DEFERRED)",
+    "n_batch_200": 2,
+    "n_batch_250": 1,
+    "propagate_px": {
+      "wallA": 1398,
+      "wallB": 2562
+    },
+    "ex_hold_px": 0,
+    "floor_px": 0,
+    "wallA": {
+      "cls": "wall",
+      "t": 250,
+      "ex": false
+    },
+    "wallB": {
+      "cls": "wall",
+      "t": 350,
+      "ex": true
+    },
+    "floor": {
+      "cls": "slab",
+      "t": 0,
+      "ex": false
+    },
+    "falsify_clear_ex_px": 1749
+  },
+  "paint_roundtrip": {
+    "def": "칠(마커) 후 t 0→200→0: 복귀 바이트 차 0(칠이 같은 자리 — uv 불변의 픽셀판) · 중간(t=200)은 실제로 달랐다(이동의 실재)",
+    "mid_changed_px": 23870,
+    "roundtrip_bytes": 0
+  },
+  "border_meter": {
+    "def": "띠 칠(e=1 · uv 세계 단위). ⚠ 판정자 가름(1차 [1]): 위험 축(u=두께 방향)의 정규화 반증은 픽셀 자가 못 본다(u 사영 ~6px) — 그 축의 정본은 단위 ⑤(세계 단위 · 문 1e-9/1e-6)다. 이 팔이 재는 것: s축 길이(sExt)와 대각이 t 200→300에 안 늘고(비 ≤ C.THICK55_RATIO_MAX), s축 1.5배 반증을 같은 자가 잡는다(≥ C.THICK55_FALSIFY_MIN). px_t300 > px_t200(+6~20%)은 자국 성장이 아니라 «띠 절단의 완화»다 — t가 커져 띠가 넓어지면 붓 폭(w)이 덜 잘린다(uExt = u축 픽셀 폭 — 붓 폭 상한으로 수렴)",
+    "diag_t200": 129.1,
+    "diag_t300": 130.1,
+    "ratio": 1.008,
+    "px_t200": 644,
+    "px_t300": 771,
+    "s_ext_t200": 129,
+    "s_ext_t300": 130,
+    "u_ext_t200": 5,
+    "u_ext_t300": 5,
+    "mass_t200": 56585,
+    "mass_t300": 61552,
+    "mass_ratio": 1.088,
+    "mass_t400": 72915,
+    "mass_t500": 73109,
+    "mass_ratio_500_400": 1.003,
+    "falsify_s15_ratio": 1.453
+  },
+  "perf": {
+    "def": "두께 장면(면 셋 · 벽 200mm/바닥 150mm — 메시 3배)의 syncStrokes lastMs. 정본은 이 원장 필드 — 절대 ms는 기계 몫이라 회귀 비교는 같은 원장의 전값과 한다(#47)",
+    "sync_ms": {
+      "median": 0.2,
+      "min": 0.1,
+      "max": 0.3
+    }
+  },
+  "ui34_thick": {
+    "def": "#96/#97/34-6 — 손통 두께 줄: 툴팁 두 상태(막힘 = 잡는 법 안내) · rect(화면 안) · elementFromPoint 눌림 · 손통 넘침 sh==ch(실측 — 1차 [12]) · 재누름 모드 전환 값(값 넣는 길은 단위 ⑦이 판정)",
+    "blocked_tip": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+    "ok_tip": "두께 — 숫자를 쓰면 이 분류 전부의 두께(mm)가 된다 · 다시 누르면 이 면만(예외)",
+    "rect": {
+      "x": 1073.5,
+      "y": 413.5,
+      "w": 71.5,
+      "h": 32.5
+    },
+    "viewport": {
+      "w": 1200,
+      "h": 800
+    },
+    "clickable": true,
+    "overflow": {
+      "sw": 72,
+      "cw": 72,
+      "sh": 334,
+      "ch": 334
+    },
+    "mode_seq": [
+      "batch(thick=1,ex=null)",
+      "ex(thick=1,ex=1)"
+    ]
+  },
+  "conditions": {
+    "workers": 1,
+    "project": "dpr2",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/thick55.spec.ts (워커 1 · 스펙 하나씩 강제 — #99)"
+  },
+  "defaults": {
+    "def": "분류 정의 초판값(지시 — «값은 세션이 정하되 근거를 원장에»). t 전부 0 = 무변화 기본(이 게이트의 전제) · off 전부 c(가운데 — 지시의 결정) · pri(extw4>intw·wall3>slab·slope2)는 조사 문면 방향의 임의 초판(사람 변경 전제 — 56이 쓴다) · core 전부 1(분류당 층 하나 = 전부 구조체) · mat는 46의 것(분류가 재료를 가리킨다)",
+    "values": {
+      "slab": {
+        "t": 0,
+        "off": "c",
+        "pri": 2,
+        "core": 1,
+        "mat": "conc"
+      },
+      "wall": {
+        "t": 0,
+        "off": "c",
+        "pri": 3,
+        "core": 1,
+        "mat": "conc"
+      },
+      "extw": {
+        "t": 0,
+        "off": "c",
+        "pri": 4,
+        "core": 1,
+        "mat": "brick"
+      },
+      "intw": {
+        "t": 0,
+        "off": "c",
+        "pri": 3,
+        "core": 1,
+        "mat": "conc"
+      },
+      "slope": {
+        "t": 0,
+        "off": "c",
+        "pri": 2,
+        "core": 1,
+        "mat": "roof"
+      }
+    }
+  },
+  "stair": {
+    "def": "코너 계단의 크기(슬롯 유도 구성값 — 접합에 손을 안 대섰다는 값의 기록이자 56의 입력): 벽⊥바닥 모서리에서 buried = 바닥 앞면 오프셋(mm) · step = 벽 앞면 오프셋(mm). 56이 병합 걸음으로 이 계단을 ㄴ자로 만든다",
+    "buried_mm": 75,
+    "step_mm": 100
+  },
+  "perf20": {
+    "def": "면 19개(분할 벽 · 전부 단색 칠 — 2차 [N8] 세어 적음) 장면 — t=0 대비 벽 일괄 t=200의 프레임(median/p90 ms)·syncStrokes·메시 수·GL 자원 차. 절대값은 기계 못(#47 · SW GL) — 추세 측정이라 문턱 없음(#82). ⚠ dpr1 frame은 vsync 상한(16.7ms)에 붙어 판별력 없음(#46) — 판별은 dpr2가 한다(2차 [N1]: dpr2 frame_delta_median +18.3ms 실측). ⚠ gl.geometries는 읽는 시점에 흔들리는 수 — 회귀 자 아님(2차 [N7] · dpr간 1↔47). ⚠ heap_mb는 양자화로 판별력 제한(2차 [N9])",
+    "faces": 19,
+    "batch_n": 19,
+    "off": {
+      "frame": {
+        "median": 27.3,
+        "p90": 29.5
+      },
+      "sync": 0.3,
+      "r3d": {
+        "faceMeshes": 19,
+        "paintMeshes": 0,
+        "lines": 27,
+        "gl": {
+          "geometries": 47,
+          "textures": 0
+        }
+      }
+    },
+    "on": {
+      "frame": {
+        "median": 45.1,
+        "p90": 49.1
+      },
+      "sync": 0.6,
+      "r3d": {
+        "faceMeshes": 57,
+        "paintMeshes": 0,
+        "lines": 27,
+        "gl": {
+          "geometries": 85,
+          "textures": 0
+        }
+      }
+    },
+    "frame_delta_median_ms": 17.8,
+    "heap_mb": 18.4
+  },
+  "pre_tree": {
+    "def": "지시 중심 게이트 문면 그대로의 측정(1차 [2] · 2차 [N6]가 dpr2 확장) — «t=0이면 지금(착수 전)과 픽셀이 같다»: 같은 장면(room3s+벽A 칠 · 상자 380,350,320,180)의 #gl sha256을 55 갈래 부모 트리(f483f0e · 워크트리)와 현행 트리(t=0)에서 각각 떠 대조. 일회 측정(세션 수행 · 스펙 비상주 — 56 착수 표가 재측정을 옮겨 적는다: 접합이 기하를 건드린 뒤 이 항등이 t=0에서 유지되는가)",
+    "sha_pre_f483f0e": "ac57f5f4269df382a47ef117c92ae6c904a317bd6771d6a49c05aa9199aa8806",
+    "sha_now_t0": "ac57f5f4269df382a47ef117c92ae6c904a317bd6771d6a49c05aa9199aa8806",
+    "equal": true
+  }
+}

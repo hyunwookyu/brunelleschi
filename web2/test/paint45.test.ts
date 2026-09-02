@@ -151,17 +151,23 @@ describe('45-2 분류 — 법선만 · 경계 스윕 · 사람의 정정', () =>
     expect(faceClassNow(s.app, wallId)).toBe('wall')
   })
 
-  it('③ 사람의 정정이 이긴다 — 돌리기 네 칸 · 실행취소', () => {
+  it('③ 사람의 정정이 이긴다 — 돌리기 여섯 칸(55: 외벽·내벽이 늘었다) · 실행취소', () => {
     const { s, wallId } = roomSession()
     expect(faceClassNow(s.app, wallId)).toBe('wall')
     const r1 = cycleFaceClass(s.app, wallId)!          // 자동 → slab
     expect(r1.cls).toBe('slab'); expect(r1.auto).toBe(false)
     expect(faceClassNow(s.app, wallId)).toBe('slab')   // 정정이 계산을 이긴다
     cycleFaceClass(s.app, wallId)                      // slab → wall
-    cycleFaceClass(s.app, wallId)                      // wall → slope
-    const r4 = cycleFaceClass(s.app, wallId)!          // slope → 자동
-    expect(r4.auto).toBe(true)
-    expect(r4.cls).toBe('wall')
+    // web2-55 — 어휘 확장: 자동은 여전히 wall까지고(법선은 외/내를 모른다), 사람 정정만이
+    // extw·intw를 가른다. 순환이 두 칸 늘었다(45 갈아엎기 아님 — 어휘 넓히기).
+    const rx = cycleFaceClass(s.app, wallId)!          // wall → extw
+    expect(rx.cls).toBe('extw'); expect(rx.auto).toBe(false)
+    const ri = cycleFaceClass(s.app, wallId)!          // extw → intw
+    expect(ri.cls).toBe('intw')
+    cycleFaceClass(s.app, wallId)                      // intw → slope
+    const r6 = cycleFaceClass(s.app, wallId)!          // slope → 자동
+    expect(r6.auto).toBe(true)
+    expect(r6.cls).toBe('wall')
     undo(s.app)                                        // 자동 → slope로 되돌아간다
     expect(faceClassNow(s.app, wallId)).toBe('slope')
     redo(s.app)
