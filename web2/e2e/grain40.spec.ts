@@ -190,7 +190,7 @@ type Variant = 'now' | 'pre40' | 'legacy' | number
 async function periods(browser: Browser, dpr: number, variant: Variant) {
   const ctx = await browser.newContext({ viewport: { width: 1200, height: 800 }, deviceScaleFactor: dpr })
   const page = await ctx.newPage()
-  await page.goto('http://localhost:5301/')
+  await page.goto(`http://localhost:${process.env.PW_PORT ?? 5301}/`)
   await page.waitForFunction(() => (window as any).__b2)
   if (variant === 'pre40') await page.evaluate(() => (window as any).__b2.diag.grainPre40ForTest(true))
   if (variant === 'legacy') await page.evaluate(() => (window as any).__b2.diag.fiberLegacyForTest(true))
@@ -221,7 +221,7 @@ async function periods(browser: Browser, dpr: number, variant: Variant) {
 async function screenGain(browser: Browser, pre40: boolean) {
   const ctx = await browser.newContext({ viewport: { width: 1200, height: 800 }, deviceScaleFactor: 1 })
   const page = await ctx.newPage()
-  await page.goto('http://localhost:5301/')
+  await page.goto(`http://localhost:${process.env.PW_PORT ?? 5301}/`)
   await page.waitForFunction(() => (window as any).__b2)
   // 겹의 결만 본다 — 바탕 결은 끈다(grain26과 같은 근거·같은 손잡이)
   await page.evaluate(() => (window as any).__b2.diag.paperFiberForTest(false))

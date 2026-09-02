@@ -96,7 +96,7 @@ async function patch(page: Page, x = 300, y = 200, w = 60, h = 60) {
 async function measure(browser: Browser, dpr: number, legacy: boolean) {
   const ctx = await browser.newContext({ viewport: { width: 1200, height: 800 }, deviceScaleFactor: dpr })
   const page = await ctx.newPage()
-  await page.goto('http://localhost:5301/')
+  await page.goto(`http://localhost:${process.env.PW_PORT ?? 5301}/`)
   await page.waitForFunction(() => (window as any).__b2)
   // ⚠⚠ **web2-30 9번이 바탕 종이에도 결을 줬다** — 이 팔이 재는 것은 «겹의 결»이므로
   //    바탕 결을 **끄고** 잰다(평평한 종이 위). 안 끄면 바닥(`bare`)에도 결이 실려
@@ -139,7 +139,7 @@ test('①②③ — 결이 지각 대역에 있고 dpr에 안 묶인다 (+반증
   const h = await (async () => {
     const ctx = await browser.newContext({ viewport: { width: 1200, height: 800 }, deviceScaleFactor: 2 })
     const p2 = await ctx.newPage()
-    await p2.goto('http://localhost:5301/')
+    await p2.goto(`http://localhost:${process.env.PW_PORT ?? 5301}/`)
     await p2.waitForFunction(() => (window as any).__b2)
     const out = await p2.evaluate(() => {
       const d = (window as any).__b2.diag
@@ -236,7 +236,7 @@ test('①-훑기 — K에 따라 dpr3/dpr1 결 비가 어디서 문(1.15)에 닿
   const at = async (dpr: number, k: number | null) => {
     const ctx = await browser.newContext({ viewport: { width: 1200, height: 800 }, deviceScaleFactor: dpr })
     const page = await ctx.newPage()
-    await page.goto('http://localhost:5301/')
+    await page.goto(`http://localhost:${process.env.PW_PORT ?? 5301}/`)
     await page.waitForFunction(() => (window as any).__b2)
     await page.evaluate(() => (window as any).__b2.diag.paperFiberForTest(false))
     if (k !== null) await page.evaluate(kk => (window as any).__b2.diag.grainLenKForTest(kk), k)

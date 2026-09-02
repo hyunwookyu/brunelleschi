@@ -241,7 +241,7 @@ test('② — 동작이 끝난 화면이 «동작 없이 얹은» 화면과 픽�
   const run = async (mode: 'natural' | 'forced') => {
     const ctx = await browser.newContext({ viewport: { width: 1200, height: 800 }, deviceScaleFactor: 1 })
     const page = await ctx.newPage()
-    await page.goto('http://localhost:5301/')
+    await page.goto(`http://localhost:${process.env.PW_PORT ?? 5301}/`)
     await page.waitForFunction(() => (window as any).__b2)
     await fixture(page)
     const bare = await shot(page)                  // 얹기 **전** — 비교자의 분해능(#71 ㉢)

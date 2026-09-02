@@ -330,13 +330,11 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
   // ⚠ 부동소수 경계(web2-55 마감 · n55 실측): 측정값이 문과 1e-13 차로 정확히
   // 경계에 았다(21.267…327 vs …32 — 균일 알파 타일 경로의 구성값). 문 값은 무변 —
   // 비교만 포함(1e-9 안 동등)으로 바꿨다(경계의 값은 개념상 «충분히 청색»이다).
-  expect(before.shift).toBeGreaterThanOrEqual(scale * WAIT_HUE.WAIT_MIN - 1e-9)   // 대기였다"
+  expect(before.shift).toBeGreaterThanOrEqual(scale * WAIT_HUE.WAIT_MIN - 1e-9)   // 대기였다
 
-  expect(trace.ids).toContain(id)                                    // 전이가 실제로 걸렸다(창 안 프레임에서)
-  expect(trace.frames).toBeGreaterThan(0)                            // 추적자가 창 안을 실제로 봤다(반증: 창이 안 열리면 0)
-  expect(trace.maxShift).toBeGreaterThan(after.shift)                // 전이 중이 더 청색이다
-  expect(after.painted).toBeGreaterThan(10)                          // 획이 사라지지 않는다
-  if (Math.abs(after.shift) >= scale * WAIT_HUE.CONF_MAX) {
+  // 부검은 단언들 **앞**에서 뜬다 — 5차 밤(모양 B: 청색이 전혀 안 빠짐)이 maxShift
+  // 단언에서 먼저 죽어 부검 없이 끝났다. 어느 단언이 죽든 원장에 상태가 실린다.
+  if (Math.abs(after.shift) >= scale * WAIT_HUE.CONF_MAX || trace.maxShift <= after.shift) {
     // 부검(4차 밤까지 회전 재발 — 다음 빨강이 자기 설명을 싣게) — 상태·색·목록
     const autopsy = await page.evaluate((sid) => {
       const w2 = (window as any).__b2
@@ -346,8 +344,12 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
         strokes: w2.app.doc.strokes.length,
       }
     }, id)
-    console.log(`[부검 37-2③] after=${after.shift.toFixed(2)} rgb=${JSON.stringify((after as any).rgb)} ` + JSON.stringify(autopsy))
-    ledger['settle_autopsy'] = { after_shift: +after.shift.toFixed(2), ...autopsy }
+    console.log(`[부검 37-2③] after=${after.shift.toFixed(2)} max=${trace.maxShift.toFixed(2)} rgb=${JSON.stringify((after as any).rgb)} ` + JSON.stringify(autopsy))
+    ledger['settle_autopsy'] = { after_shift: +after.shift.toFixed(2), max_shift: +trace.maxShift.toFixed(2), ...autopsy }
   }
+  expect(trace.ids).toContain(id)                                    // 전이가 실제로 걸렸다(창 안 프레임에서)
+  expect(trace.frames).toBeGreaterThan(0)                            // 추적자가 창 안을 실제로 봤다(반증: 창이 안 열리면 0)
+  expect(trace.maxShift).toBeGreaterThan(after.shift)                // 전이 중이 더 청색이다
+  expect(after.painted).toBeGreaterThan(10)                          // 획이 사라지지 않는다
   expect(Math.abs(after.shift)).toBeLessThan(scale * WAIT_HUE.CONF_MAX)  // 청색이 남지 않았다
 })
