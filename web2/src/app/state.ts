@@ -349,6 +349,10 @@ export interface App {
    *  `C.WRITE_HOLD_MS`이고 사람이 `WRITE_HOLD_MS_MIN`~`MAX`에서 고친다.
    *  `holdMs`와 같은 갈래다 — **기기 설정**(localStorage)이지 문서가 아니다. */
   writeHoldMs: number
+  /** e2e 전용(#93 · web2-55 마감) — 멈춤 문(C.WRITE_IDLE_MS)의 시험 덤씩기.
+   *  소비자가 둘(입력측 writeIdleNow · main 타이머)이라 상태에 둔다(#54 — 초판이
+   *  main에만 두어 입력측 판정이 샐다). 제품 경로는 안 건드린다(null = C 그대로). */
+  writeIdleMsForTest: number | null
   // ── 재기(web2-32 6번) — **두 결과 중 기본은 «패널에 표시만»이다** ────────────
   // 도면에 아무것도 안 남는다. 남기려면 `measureKeep`을 켠다(그때도 숫자는 저장 ⛔).
   /** 첫 점을 짚었다 — 둘째 점을 기다린다. 런타임(저장 ⛔). */
@@ -456,6 +460,7 @@ export function createApp(W: number, H: number): App {
     dimEdit: null,
     write: null,
     writeHoldMs: C.WRITE_HOLD_MS,
+    writeIdleMsForTest: null,
     measureFrom: null,
     measurePair: null,
     measureKeep: false,
@@ -1008,7 +1013,7 @@ export function writeFarPts(app: App, pts: Pt[]): boolean {
 export function writeIdleNow(app: App, now: number): boolean {
   const w = app.write
   if (!w || w.ids.length === 0) return false
-  return writeIdle(w.last, now, C.WRITE_IDLE_MS)
+  return writeIdle(w.last, now, app.writeIdleMsForTest ?? C.WRITE_IDLE_MS)
 }
 
 /** 방금 확정된 획을 글씨 뭉치에 싣는다 — `commitStroke`가 부른다(배선 하나). */

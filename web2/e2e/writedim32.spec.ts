@@ -127,6 +127,11 @@ test('㉡ 승인 단계가 없다 — 제안 줄이 화면에 없다 (진입은 
   expect(mid.dims[0].dim, '두 획이 «25»로 자란다(«5»가 아니다)').toBe(25)
   expect(mid.text.length, '잉크는 아직 남아 있다').toBe(2)
   await page.evaluate(() => { const w2 = (window as any).__b2; w2.diag.writeIdleForTest(null); if (w2.app.write) w2.app.write.last = performance.now() - 10000 })  // 문 복원 + 멈춤 강제
+  // 스윙 타이머는 8s로 장전됐다(덤 쓴 값) — 그 발화를 유한 대기한다(#95 · 상한 12s)
+  await page.waitForFunction(() => {
+    const w2 = (window as any).__b2
+    return !w2.app.write
+  }, undefined, { timeout: 12000 })
   await page.waitForTimeout(1400)         // 손이 멈춘다 — 여기서 잉크가 걷힌다
   const st = await state(page)
   console.log(`[32-2 화면 ㉡ 멈춘 뒤] 글씨 ${JSON.stringify(st.text)} · 치수 ${JSON.stringify(st.dims)}`)

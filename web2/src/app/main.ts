@@ -1279,7 +1279,7 @@ async function maybeWriteDim() {
 let writeIdleTimer: number | undefined
 // e2e 전용(#93 — web2-55 마감): 부하에서 손-멈춤 판정이 글씨 도중에 끼어들어
 // 。25】가 。5】로 잘리는 것을 막는다 — 시험은 승인-없음을 재지 손의 속도를 재지 않는다.
-let writeIdleMsOverride: number | null = null
+
 function clearWriteIdle() {
   if (writeIdleTimer !== undefined) { clearTimeout(writeIdleTimer); writeIdleTimer = undefined }
 }
@@ -1292,7 +1292,7 @@ function armWriteIdle() {
     endWriting(app, 'idle')
     clearNotice()
     invalidate()
-  }, (writeIdleMsOverride ?? C.WRITE_IDLE_MS) + 16)
+  }, (app.writeIdleMsForTest ?? C.WRITE_IDLE_MS) + 16)
 }
 
 // ── 손글씨 치수(web2-29 1단계) — 인식과 «확정 전 보여주기» ────────────────────
@@ -2947,7 +2947,7 @@ const diag = {
   clearThickExForTest: (fid: number) => { setFaceThicknessEx(app, fid, undefined); invalidate() },
   /** 분류 정의 기본값(초판) — 원장 defaults 블록의 출처(1차 [5] — 근거를 원장에) */
   clsDefaults: () => DEFAULT_CLS,
-  writeIdleForTest: (ms: number | null) => { writeIdleMsOverride = ms },
+  writeIdleForTest: (ms: number | null) => { app.writeIdleMsForTest = ms },
   /** 렌더 자원 요약(1차 [3] — 20면 성능의 메모리 자) — three renderer.info + 그룹 수 */
   r3dInfo: () => ({
     faceMeshes: r3d.faceGroup.children.length,
