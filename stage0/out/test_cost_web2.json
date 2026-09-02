@@ -1,6 +1,6 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "2026-09-02 (web2-51 3차 대응 — 마감 전)",
+  "measured_at": "2026-09-02 (web2-51 마감)",
   "unit": {
     "files": 125,
     "tests": 1020,
@@ -17,7 +17,8 @@
     "web2_51": {
       "cells_added": 18,
       "note": "brush51 9팔×2dpr − dpr2 skip 1 = 17통과+1skip. 전량 벽시계는 마감 전량 실행에서 갱신한다(3차 [12] — «마감에서 채운다»를 여기 적는다)"
-    }
+    },
+    "full_wall": "641통과+1skip · 1.0h (--workers=1 · dpr1+dpr2 · web2-51 마감 전량 — LEDGER 꺼짐 #89/#94)"
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",
