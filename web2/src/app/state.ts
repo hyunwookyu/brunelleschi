@@ -869,6 +869,15 @@ export interface WriteMode {
   manip?: 1
   /** 조작 값이 실렸다 — 상태가 끝날 때 잉크를 걷는다(치수의 규약 준용) */
   manipDone?: 1
+  /** **두께 쓰기 상태**(web2-55) — 손통 「두께」로 들어왔다. 읽힌 숫자는 치수/조작이 아니라
+   *  분류의 t(mm)로 간다(setClsThickness). 재누름은 예외 모드(thickEx — 이 면만)를 켠다. */
+  thick?: 1
+  thickEx?: 1
+  /** 두께 값이 실렸다 — 상태가 끝날 때 잉크를 걷는다(조작 값의 규약 준용) */
+  thickDone?: 1
+  /** 이 상태가 쌓은 두께 op — 값이 획마다 다시 실릴 때(«2»→«25»→«250») 이 하나를
+   *  갱신한다(32-2 「실행취소 한 번」의 규약 — op가 자리마다 쌓이면 깨진다). */
+  thickOp?: Op
 }
 
 export const writeActive = (app: App): boolean => app.write !== null
@@ -947,7 +956,7 @@ export function endWriting(app: App, _why: WriteEnd) {
   // 조작 값의 손글씨(web2-44) — 값은 이미 실렸다(applyManipValue). 잉크만 걷는다.
   // op는 «걷힌 획»으로 남아 실행취소가 잉크를 되살린다(조작 자체의 칸은 따로 있다 —
   // finishManip이 쌓은 moved op. 잉크 한 번 · 기하 한 번, 두 칸이다).
-  if (w.manipDone === 1 && w.op) {
+  if ((w.manipDone === 1 || w.thickDone === 1) && w.op) {
     const removed: Op['removed'] = []
     for (let i = app.doc.strokes.length - 1; i >= 0; i--) {
       if (w.ids.includes(app.doc.strokes[i]!.id)) removed.push({ stroke: app.doc.strokes[i]!, index: i })
@@ -1065,6 +1074,25 @@ export function applyRecognized(app: App, text: string): DimResult | 'unread' {
     if (!Number.isFinite(v) || v < 0) return 'unread'
     if (!applyManipValue(app, v)) return 'unread'
     w.manipDone = 1
+    return 'applied'
+  }
+  // 두께(web2-55) — 치수 문법 그대로 읽어(단위 접미 허용 — parseDim) 분류의 t 또는 면
+  // 예외로 싣는다. 대상 면은 잡은 면(grip.faceId — 두께 줄이 그 문맥에서만 열린다).
+  if (w.thick === 1) {
+    const mm = parseDim(text, app.doc.unit)
+    if (mm === null || mm < 0) return 'unread'
+    const fid = app.grip?.faceId ?? lastSelFace(app)
+    if (fid === null) return 'unread'
+    if (w.thickEx === 1) {
+      const op = setFaceThicknessEx(app, fid, mm, w.thickOp)
+      if (op === null) return 'unread'
+      w.thickOp = op
+    } else {
+      const r = setClsThickness(app, fid, mm, w.thickOp)
+      if (r === null) return 'unread'
+      w.thickOp = r.op
+    }
+    w.thickDone = 1
     return 'applied'
   }
   const mm = parseDim(text, app.doc.unit)
@@ -1970,40 +1998,71 @@ export function faceClassNow(app: App, faceId: number): FaceClass | null {
 
 /** **분류 두께(일괄)** — 이 면의 «지금» 분류에 t(mm)를 싣는다. 그 분류를 가리키는 면
  *  전부가 따라 바뀐다(예외 준 면만 안 바뀐다 — 지시 게이트). 반환 n = 따라 바뀌는 면 수. */
-export function setClsThickness(app: App, faceId: number, tMm: number): { cls: FaceClass; n: number } | null {
+export function setClsThickness(app: App, faceId: number, tMm: number, reuse?: Op): { cls: FaceClass; n: number; op: Op } | null {
   const face = app.doc.faces.find(f => f.id === faceId)
   const rf = app.faces.find(f => f.id === faceId)
   if (!rf || !Number.isFinite(tMm) || tMm < 0) return null
   const cls = classOf(face, rf, C.FACE_CLASS_DEG)
-  const before = app.doc.clsDefs?.[cls] ? { ...app.doc.clsDefs![cls] } : undefined
-  const after = { ...(before ?? {}), t: tMm }
+  const cur = app.doc.clsDefs?.[cls] ? { ...app.doc.clsDefs![cls] } : undefined
   if (!app.doc.clsDefs) app.doc.clsDefs = {}
-  app.doc.clsDefs[cls] = { ...after }
-  app.undoStack.push({ removed: [], added: [], clsDefChanged: [{ cls, before, after: { ...after } }] })
-  app.redoStack = []
+  let op: Op
+  const prev = reuse?.clsDefChanged?.[0]
+  if (reuse && prev && prev.cls === cls) {
+    // 같은 글씨 뭉치의 재적용(«2»→«25») — before는 그대로 두고 after만 갱신한다
+    const after = { ...(prev.before ?? {}), t: tMm }
+    app.doc.clsDefs[cls] = { ...after }
+    prev.after = { ...after }
+    op = reuse
+  } else {
+    const after = { ...(cur ?? {}), t: tMm }
+    app.doc.clsDefs[cls] = { ...after }
+    op = { removed: [], added: [], clsDefChanged: [{ cls, before: cur, after: { ...after } }] }
+    app.undoStack.push(op)
+    app.redoStack = []
+  }
   recompute(app)
   let n = 0
   for (const f2 of app.faces) {
     const df = app.doc.faces.find(x => x.id === f2.id)
     if (classOf(df, f2, C.FACE_CLASS_DEG) === cls && df?.ex?.t === undefined) n++
   }
-  return { cls, n }
+  return { cls, n, op }
 }
 
 /** **면 예외** — 이 면만 t(mm)를 다르게. undefined면 예외를 걷는다(분류 값으로 복귀 —
  *  D-3 반증의 그 길: 예외가 걷히면 분류의 t가 다시 이 면을 다스린다). */
-export function setFaceThicknessEx(app: App, faceId: number, tMm: number | undefined): boolean {
+export function setFaceThicknessEx(app: App, faceId: number, tMm: number | undefined, reuse?: Op): Op | null {
   const face = app.doc.faces.find(f => f.id === faceId)
-  if (!face) return false
-  if (tMm !== undefined && (!Number.isFinite(tMm) || tMm < 0)) return false
-  const before = face.ex ? { ...face.ex } : undefined
-  if (tMm === undefined) delete face.ex
-  else face.ex = { t: tMm }
-  const after = face.ex ? { ...face.ex } : undefined
-  app.undoStack.push({ removed: [], added: [], exChanged: [{ id: faceId, before, after }] })
-  app.redoStack = []
+  if (!face) return null
+  if (tMm !== undefined && (!Number.isFinite(tMm) || tMm < 0)) return null
+  const prev = reuse?.exChanged?.[0]
+  let op: Op
+  if (reuse && prev && prev.id === faceId) {
+    if (tMm === undefined) delete face.ex
+    else face.ex = { t: tMm }
+    prev.after = face.ex ? { ...face.ex } : undefined
+    op = reuse
+  } else {
+    const before = face.ex ? { ...face.ex } : undefined
+    if (tMm === undefined) delete face.ex
+    else face.ex = { t: tMm }
+    const after = face.ex ? { ...face.ex } : undefined
+    op = { removed: [], added: [], exChanged: [{ id: faceId, before, after }] }
+    app.undoStack.push(op)
+    app.redoStack = []
+  }
   recompute(app)
-  return true
+  return op
+}
+
+/** 이 면의 유효 두께 «지금 값»(표시용) — {분류, t(mm), 예외인가}. */
+export function faceThicknessNow(app: App, faceId: number): { cls: FaceClass; t: number; ex: boolean } | null {
+  const face = app.doc.faces.find(f => f.id === faceId)
+  const rf = app.faces.find(f => f.id === faceId)
+  if (!rf) return null
+  const cls = classOf(face, rf, C.FACE_CLASS_DEG)
+  const th = faceThickness(app.doc, face, cls)
+  return { cls, t: th.t, ex: th.ex }
 }
 
 /** 이 면의 **세 슬롯 기하**(세계 단위) — 두께 0이거나 축척 미정이면 null(오늘의 화면

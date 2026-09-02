@@ -5,7 +5,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   handwritingGroup, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
-  frontFlyTarget, liveFaceSel, lastSelFace,
+  frontFlyTarget, liveFaceSel, lastSelFace, faceThicknessNow, setClsThickness, setFaceThicknessEx, faceSlotsOf,
   commitPaint, injectPaintAt, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen,
   placePersonAt, gripFaceArea, floorAreaNow, volumeNow, flashFaces, screenToDoc, roomsNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
@@ -35,6 +35,8 @@ import { initDimPanel } from './dimpanel'
 import { registerBox, closeOtherBoxes, openBoxIds, setBoxAwayModeForTest } from './boxes'
 import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
+import { add3, mul3 } from '../core/vec'
+import { borderQuads } from '../core/border'
 import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS, WRITE_HOLD_MS_MIN, WRITE_HOLD_MS_MAX } from '../core/constants'
 import { WAIT_INK, setWaitInkMode, waitInkMode, type WaitInkMode } from '../core/waitfade'
 import {
@@ -1906,7 +1908,9 @@ const GRIP_ROWS = [
   { key: 'front', name: '정면', tip: '정면 — 잡은 면을 정면으로 보는 평행 투영으로 간다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg>' },
   // web2-45 — 면을 잡았을 때의 손잡이 둘(45-2 분류 정정 · 45-4 채움). 그림 정본은
   // docs/instrument-icons.md 「붓(칠 도구)」 절의 줄 둘.
-  { key: 'cls', name: '분류', tip: '분류 — 잡은 면의 분류를 돌린다(자동·슬라브·벽·경사)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 24 L26 24"/><path d="M16 24 V8 M16 8 l-4 5 M16 8 l4 5" stroke-width="1.2"/></svg>' },
+  { key: 'cls', name: '분류', tip: '분류 — 잡은 면의 분류를 돌린다(자동·슬라브·벽·외벽·내벽·경사)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 24 L26 24"/><path d="M16 24 V8 M16 8 l-4 5 M16 8 l4 5" stroke-width="1.2"/></svg>' },
+  // web2-55 — 두께: 분류가 든다(일괄) · 재누름 = 이 면만(예외). 값은 손글씨 mm(치수 문법).
+  { key: 'thick', name: '두께', tip: '두께 — 숫자를 쓰면 이 분류 전부의 두께(mm)가 된다 · 다시 누르면 이 면만(예외)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6 V26 M24 6 V26" /><path d="M8 16 H24 M8 16 l3 -2 M8 16 l3 2 M24 16 l-3 -2 M24 16 l-3 2" stroke-width="1.1"/></svg>' },
   { key: 'fill', name: '채움', tip: '채움 — 잡은 면의 채움을 돌린다(없음·해칭·단색)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M9 24 L23 8 M6 19 L17 8 M15 24 L26 13" stroke-width="1.1"/></svg>' },
   // web2-46 — 면 재료(벽돌 쌓기 그림). 채움 해칭의 무늬·색이 이 값에서 나온다.
   { key: 'fmat', name: '재료', tip: '재료 — 잡은 면의 재료를 돌린다(채움의 무늬·색을 정한다)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="22" height="14"/><path d="M5 16 H27 M13 9 V16 M20 16 V23" stroke-width="1.1"/></svg>' },
@@ -1948,8 +1952,8 @@ function gripRowGate(key: string): string | null {
   // 아무 일이 안 났다. 「손통이 없다」로 읽힌 것의 절반이 이것이다(48-4의 답).
   if (!g || g.ids.length === 0) return '연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)'
   if (key === 'join' && g.ids.length !== 2) return '맺기는 **두 선**을 잡아야 한다'
-  if ((key === 'front' || key === 'cls' || key === 'fill' || key === 'fmat' || key === 'rep' || key === 'farea') && g.faceId === null) {
-    return `${key === 'front' ? '정면' : key === 'cls' ? '분류' : key === 'fill' ? '채움' : key === 'fmat' ? '재료' : key === 'rep' ? '표현' : '면적'}은 **면**을 잡아야 한다 — 연필을 든 채로 면 안쪽(경계에서 떨어진 자리)을 꾹 누른다`
+  if ((key === 'front' || key === 'cls' || key === 'thick' || key === 'fill' || key === 'fmat' || key === 'rep' || key === 'farea') && g.faceId === null) {
+    return `${key === 'front' ? '정면' : key === 'cls' ? '분류' : key === 'thick' ? '두께' : key === 'fill' ? '채움' : key === 'fmat' ? '재료' : key === 'rep' ? '표현' : '면적'}은 **면**을 잡아야 한다 — 연필을 든 채로 면 안쪽(경계에서 떨어진 자리)을 꾹 누른다`
   }
   return null
 }
@@ -1991,11 +1995,31 @@ function doGripAction(key: string) {
     autolevel.glide(r.to)   // 42와 같은 길로 보간한다(즉시 튀면 어디로 갔는지 잃는다)
     status(r.back ? '직전 시점으로 돌아간다' : '정면 — 다시 누르면 직전 시점으로 돌아온다')
     syncPainttray()
+  } else if (key === 'thick') {
+    // web2-55 — 두께: 글씨 상태에 «두께 모드»를 켠다(값 배선은 applyRecognized의 thick
+    // 갈래 — 조작 값(manip)의 문법 그대로 #54). 재누름이 일괄 ↔ 예외(이 면만)를 오간다.
+    const w = app.write
+    if (!w) { notify('두께는 면을 잡은 채로 쓴다 — 연필로 면 안쪽을 꾹 누른 뒤'); return }
+    const fid = app.grip!.faceId!
+    const info = faceThicknessNow(app, fid)
+    const clsName = info === null ? '' : info.cls === 'slab' ? '슬라브' : info.cls === 'wall' ? '벽'
+      : info.cls === 'extw' ? '외벽' : info.cls === 'intw' ? '내벽' : '경사'
+    if (w.thick === 1) {
+      w.thickEx = w.thickEx === 1 ? undefined : 1
+    } else {
+      w.thick = 1
+      w.thickEx = undefined
+    }
+    w.thickOp = undefined      // 모드가 바뀌면 새 op다(일괄과 예외는 다른 대상)
+    const cur = info === null ? '' : ` · 지금 ${info.t}mm${info.ex ? '(예외)' : ''}`
+    status(w.thickEx === 1
+      ? `두께(예외) — 숫자를 쓰면 **이 면만** 그 두께가 된다${cur} · 다시 누르면 일괄로`
+      : `두께 — 숫자를 쓰면 ${clsName} 분류 **전부**의 두께(mm)가 된다${cur} · 다시 누르면 이 면만`)
   } else if (key === 'cls') {
     // 분류 정정(45-2) — 자동은 틀리므로 사람이 돌린다: 자동 → 슬라브 → 벽 → 경사 → 자동
     const r = cycleFaceClass(app, app.grip!.faceId!)
     if (r) {
-      const name = r.cls === 'slab' ? '슬라브' : r.cls === 'wall' ? '벽' : '경사'
+      const name = r.cls === 'slab' ? '슬라브' : r.cls === 'wall' ? '벽' : r.cls === 'extw' ? '외벽' : r.cls === 'intw' ? '내벽' : '경사'
       status(`분류 — ${name}${r.auto ? ' (자동)' : ''} · 다시 누르면 돌린다`)
     }
   } else if (key === 'fill') {
@@ -2905,6 +2929,37 @@ const diag = {
    *  손으로 못 만든다. 「값을 넣는 길」과 「보이는 자리」를 갈라 재려면 이 둘이 필요하다.
    *  앱 흐름은 그대로 `setDimension`·`stageDim` 하나를 지난다(#54 — 새 경로 ⛔). */
   setDimForTest: (id: number, mm: number) => { setDimension(app, id, mm); invalidate() },
+  /** 두께(web2-55)의 화면 팔 손잡이 — 값 «넣는 길»(손글씨 인식)은 확률적이라 단위 팔이
+   *  지키고(thick55.test의 applyRecognized 갈래), e2e는 이 손잡이로 값을 넣어 «보이는
+   *  자리»(기하·픽셀)를 잰다. 앱 흐름은 그대로 setClsThickness/setFaceThicknessEx 하나다(#54). */
+  setThickForTest: (fid: number, mm: number, ex?: boolean) => {
+    if (ex) setFaceThicknessEx(app, fid, mm); else setClsThickness(app, fid, mm)
+    invalidate()
+  },
+  clearThickExForTest: (fid: number) => { setFaceThicknessEx(app, fid, undefined); invalidate() },
+  /** 두께 진단 — 슬롯(세계 단위)과 띠 사각의 «화면» 꼭짓점(팔이 띠를 누를 자리를 이걸로 찾는다) */
+  thick55: (fid: number) => {
+    const rf = app.faces.find(f => f.id === fid)
+    if (!rf) return null
+    const info = faceThicknessNow(app, fid)
+    const slots = faceSlotsOf(app, rf)
+    let band: { s0: number; len: number; scr: ({ x: number; y: number } | null)[] }[] = []
+    if (slots) {
+      const { quads, n } = borderQuads(rf)
+      const sp = (P: { x: number; y: number; z: number }) => {
+        const q = project(app.lift.an, app.pose, P)
+        return q ? docToScreen(app, q) : null
+      }
+      band = quads.map(q => ({
+        s0: q.s0, len: q.len,
+        scr: [
+          sp(add3(q.a, mul3(n, slots.frontW))), sp(add3(q.b, mul3(n, slots.frontW))),
+          sp(add3(q.b, mul3(n, slots.backW))), sp(add3(q.a, mul3(n, slots.backW))),
+        ],
+      }))
+    }
+    return { info, slots, band }
+  },
   stageDimForTest: (text: string, mm: number | null) => { stageDim(app, text, mm); invalidate() },
   /** 사후 수정(web2-32 2번)의 **화면 팔 손잡이** — 치수 숫자가 «어디에» 그려졌는지.
    *  그리는 자리와 누르는 자리가 같은 함수라(#54) 팔은 그 자리를 눌러 본다. */
