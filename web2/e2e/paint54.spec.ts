@@ -215,16 +215,20 @@ test('③ 고름 하나 — 획이 그 면 밖으로 나가면 밖은 0', async 
   expect(await page.evaluate(() => (window as any).__b2.app.faceSel.length), '고름 1').toBe(1)
   await page.click('#btn-paint')                              // 도구를 바꿔도 고름이 산다
   expect(await page.evaluate(() => (window as any).__b2.app.faceSel.length), '칠로 바꿔도 그대로').toBe(1)
+  const before = { floor: await glDark(page, ...BOX.floor), wallB: await glDark(page, ...BOX.wallB) }
   const n0 = await strokeCount(page)
   await strokeAcross(page)                                    // 바닥 시작 — 고른 면은 벽 왼판
   const by = await paintByFaceSince(page, n0)
+  const after = { floor: await glDark(page, ...BOX.floor), wallB: await glDark(page, ...BOX.wallB) }
   OUT.sel_one = {
-    def: '고름 하나(벽 왼판): 세 면을 가로지르는 붓이 그 판에만 남는다 — 시작한 면(바닥)도 밖이다(고름이 주인 규칙을 이긴다)',
-    by_face: by, ids,
+    def: '고름 하나(벽 왼판): 세 면을 가로지르는 붓이 그 판에만 남는다 — 시작한 면(바닥)도 밖이다(고름이 주인 규칙을 이긴다). px_delta = 밖 두 면 상자의 어두운 픽셀 증가분(«한 픽셀도 안 남는다»의 값 — 리뷰어 [12])',
+    by_face: by, ids, px_delta: { floor: after.floor - before.floor, wallB: after.wallB - before.wallB },
   }
   expect(by[ids.wallA] ?? 0, '고른 면(벽 왼판)에 남았다').toBeGreaterThan(0)
   expect(by[ids.floor] ?? 0, '바닥(고름 밖) 0').toBe(0)
   expect(by[ids.wallB] ?? 0, '벽 오른판(고름 밖) 0').toBe(0)
+  expect(after.floor - before.floor, '바닥 픽셀 증가 0(한 픽셀도)').toBe(0)
+  expect(after.wallB - before.wallB, '벽 오른판 픽셀 증가 0(한 픽셀도)').toBe(0)
 })
 
 test('④ 고름 둘 — 두 면에 걸친 획이 둘 다에 남고 셋째는 0 (연속해서 칠하기)', async ({ page }) => {
@@ -235,16 +239,19 @@ test('④ 고름 둘 — 두 면에 걸친 획이 둘 다에 남고 셋째는 0 
   await holdAt(page, 578, 435)                                // + 벽 오른판 (잡은 채 또 잡으면 더해진다)
   expect(await page.evaluate(() => (window as any).__b2.app.faceSel.length), '고름 2').toBe(2)
   await page.click('#btn-paint')
+  const before = { floor: await glDark(page, ...BOX.floor) }
   const n0 = await strokeCount(page)
   await strokeAcross(page)
   const by = await paintByFaceSince(page, n0)
+  const after = { floor: await glDark(page, ...BOX.floor) }
   OUT.sel_two = {
     def: '고름 둘(벽 두 판): 이음매를 넘는 붓이 둘 다에 남고 바닥(셋째)은 0 — «연속해서 칠하기»의 실측(사용자 문면의 그 장면)',
-    by_face: by, ids,
+    by_face: by, ids, px_delta: { floor: after.floor - before.floor },
   }
   expect(by[ids.wallA] ?? 0, '벽 왼판에 남았다').toBeGreaterThan(0)
   expect(by[ids.wallB] ?? 0, '벽 오른판에 남았다').toBeGreaterThan(0)
   expect(by[ids.floor] ?? 0, '바닥 0').toBe(0)
+  expect(after.floor - before.floor, '바닥 픽셀 증가 0(한 픽셀도)').toBe(0)
 })
 
 /** 포즈가 멈출 때까지(보간 종료) — 상한 3s(#95: 상한 + 걸리면 마지막 포즈를 본다) */
@@ -280,13 +287,19 @@ test('⑤ 정면 — 법선이 카메라 축과 평행(값) · 다시 누르면 
       return [v[0]! + 2 * (w * ux + uux), v[1]! + 2 * (w * uy + uuy), v[2]! + 2 * (w * uz + uuz)]
     }
     const fwd = rot([0, 0, -1])
-    const n = f.normal
-    const nl = Math.hypot(n.x, n.y, n.z), fl = Math.hypot(fwd[0]!, fwd[1]!, fwd[2]!)
-    const dot = Math.abs((n.x * fwd[0]! + n.y * fwd[1]! + n.z * fwd[2]!) / (nl * fl))
-    return { dot, proj: app.pose.proj ? 'parallel' : 'persp' }
+    const cosTo = (n: any) => {
+      const nl = Math.hypot(n.x, n.y, n.z), fl = Math.hypot(fwd[0]!, fwd[1]!, fwd[2]!)
+      return Math.abs((n.x * fwd[0]! + n.y * fwd[1]! + n.z * fwd[2]!) / (nl * fl))
+    }
+    // 반증 값(D-3 · 리뷰어 [13]) — «다른» 면의 법선과의 |cos|.
+    // 배선이 그 면으로 틀렸다면 dot이 이 값이 됐다 — 1과 갈라야 판별력이 선다.
+    const other = app.faces.find((x: any) => x.id !== fid)
+    return { dot: cosTo(f.normal), otherDot: other ? cosTo(other.normal) : null,
+      proj: app.pose.proj ? 'parallel' : 'persp' }
   })
-  OUT.front = { def: '정면 뒤 |cos(법선, 카메라 앞축)| — 1이면 평행. 복귀는 직전 포즈와의 p·q 최대 성분 차', dot: +m.dot.toFixed(6), proj: m.proj }
+  OUT.front = { def: '정면 뒤 |cos(법선, 카메라 앞축)| — 1이면 평행. 복귀는 직전 포즈와의 p·q 최대 성분 차. ⚠ 정확한 1.0·0.0은 구성상 보장이다(faceFrontPose가 법선 정면을 «정확히» 낳고 glide가 목표에 «정확히» 끝난다 — 자기참조 유형 3): 이 팔이 재는 것은 측정 오차가 아니라 **배선**(어느 면·어느 발판으로 갔는가)이고, 배선이 틀리면 값이 크게 갈린다. other_dot(다른 면 법선과의 |cos|)이 그 반증 값이다 — 리뷰어 [13]', dot: +m.dot.toFixed(6), other_dot: m.otherDot === null ? null : +m.otherDot.toFixed(6), proj: m.proj }
   expect(m.dot, '법선이 카메라 축과 평행하다').toBeGreaterThan(0.9999)
+  expect(m.otherDot ?? 0, '반증 — 다른 면의 법선과는 평행이 아니다(배선 판별력)').toBeLessThan(0.9999)
   await page.click('#btn-paint-front')                        // 다시 누르면 직전 시점으로
   await waitPoseSettled(page)
   const back = await page.evaluate(() => JSON.parse(JSON.stringify((window as any).__b2.app.pose)))
@@ -318,16 +331,29 @@ test('⑥ 34-0 몫(#96) — 정면 줄의 툴팁·막힘 사유·고름 수 표�
     const b = document.getElementById('btn-paint-front')!
     const lbl = document.getElementById('paint-front-lbl')!
     const r = b.getBoundingClientRect()
+    const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
+    const tray = document.getElementById('painttray')!
     return {
       title: b.title, disabled: b.classList.contains('disabled'), label: lbl.textContent,
+      rect: { x: +r.x.toFixed(1), y: +r.y.toFixed(1), w: +r.width.toFixed(1), h: +r.height.toFixed(1) },
+      viewport: { w: window.innerWidth, h: window.innerHeight },
+      clickable: b === el || b.contains(el),
+      overflow: { sw: tray.scrollWidth, cw: tray.clientWidth, sh: tray.scrollHeight, ch: tray.clientHeight },
       inView: r.left >= 0 && r.top >= 0 && r.right <= window.innerWidth && r.bottom <= window.innerHeight,
     }
   })
-  OUT.ui34 = { def: '#96 — 쓸 수 있는 상태의 툴팁 · 막힌 상태의 사유 · R6 고름 수 · 34-6 화면 안', blocked_title: blocked.title, ok_title: ok.title, label: ok.label }
+  OUT.ui34 = {
+    def: '#96/#97/34-6 — 툴팁 두 상태 · R6 고름 수 · 정면 줄 rect(화면 안 — 값) · elementFromPoint(가로채는 겹 없음 — 행위 #94) · 칠통 넘침(scrollWH==clientWH — mats52 ⑤와 같은 자 · 리뷰어 [10])',
+    blocked_title: blocked.title, ok_title: ok.title, label: ok.label,
+    rect: ok.rect, viewport: ok.viewport, clickable: ok.clickable, overflow: ok.overflow,
+  }
   expect(ok.disabled, '고름이 있으면 쓸 수 있다').toBe(false)
   expect(ok.title, '쓸 수 있는 상태에서도 툴팁이 뜬다(#96)').toContain('정면')
   expect(ok.label, '몇 장이 골라졌는지 화면이 말한다(R6)').toContain('2장')
-  expect(ok.inView, '통이 화면 안이다(34-6)').toBe(true)
+  expect(ok.inView, '정면 줄이 화면 안이다(34-6 — rect 값이 원장에)').toBe(true)
+  expect(ok.clickable, '정면 줄의 중심이 실제로 눌린다(#97 — elementFromPoint)').toBe(true)
+  expect(ok.overflow.sh, '칠통 세로 넘침 0(#97 짝)').toBe(ok.overflow.ch)
+  expect(ok.overflow.sw, '칠통 가로 넘침 0(#97 짝)').toBe(ok.overflow.cw)
 })
 
 test('⑦ 빈 곳 꾹 누름 — 고름이 풀린다(R7의 어법) · 화면 강조도 걷힌다', async ({ page }) => {

@@ -22,16 +22,29 @@ import { dirname, resolve } from 'node:path'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ledger: Record<string, unknown> = {}
+// ⚠ web2-54 — **병합-쓰기로 이식**(#99 근본 수리 · «편집한 파일은 지금 옮긴다»의 발동 —
+// 52가 mats46·rep49에 한 그대로). 전면 쓰기는 이 블록 하나였고 병합으로 **대체**했다
+// (판별 ③ — 쓰는 자리가 둘이 되지 않게 원문을 지웠다). 읽기 실패 방어 포함.
+// 그리고 canonical의 --project가 dpr1로 박혀 있던 오기를 실제 프로젝트로 고쳤다(2차 [17]).
+import { readFileSync } from 'node:fs'
 test.afterAll(async ({ }, testInfo) => {
   if (Object.keys(ledger).length === 0) return
   // 원장은 LEDGER=1 단독 실행에서만 쓴다(관문은 `tools/ledgerguard` — 없으면 조용히 막힌다)
   if (process.env.LEDGER !== '1') return
   const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
+  const f = resolve(HERE, `../../stage0/out/waitink37_web2${suffix}.json`)
+  let prev: Record<string, unknown> = {}
+  let readFailed = false
+  try { prev = JSON.parse(readFileSync(f, 'utf8')) } catch { readFailed = true }
+  if (readFailed) {
+    try { if (readFileSync(f, 'utf8').length > 0) return } catch { /* 진짜 첫 실행 */ }
+  }
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
-  writeFileSync(resolve(HERE, `../../stage0/out/waitink37_web2${suffix}.json`), JSON.stringify({
+  writeFileSync(f, JSON.stringify({
+    ...prev,
     conditions: {
       workers: testInfo.config.workers, project: testInfo.project.name,
-      canonical: 'LEDGER=1 npx playwright test e2e/waitink37.spec.ts --project=dpr1 --workers=1',
+      canonical: `LEDGER=1 npx playwright test e2e/waitink37.spec.ts --project=${testInfo.project.name} --workers=1`,
     },
     what: `web2-37 2번(${testInfo.project.name}) — 화면에 나간 획 몸체의 색상 이동(파랑−빨강) 실측. 대기 ↔ 확정 ↔ 위약 두 판. e2e waitink37.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).`,
     thresholds: WAIT_HUE,

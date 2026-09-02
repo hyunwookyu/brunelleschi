@@ -2,7 +2,7 @@
  "conditions": {
   "workers": 1,
   "project": "dpr2",
-  "canonical": "LEDGER=1 npx playwright test e2e/waitink37.spec.ts --project=dpr1 --workers=1"
+  "canonical": "LEDGER=1 npx playwright test e2e/waitink37.spec.ts --project=dpr2 --workers=1"
  },
  "what": "web2-37 2번(dpr2) — 화면에 나간 획 몸체의 색상 이동(파랑−빨강) 실측. 대기 ↔ 확정 ↔ 위약 두 판. e2e waitink37.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).",
  "thresholds": {
