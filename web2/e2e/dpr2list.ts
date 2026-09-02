@@ -32,6 +32,6 @@ export const DPR2_SPECS = [
   'grain26', 'grain30', 'grain40', 'graphite', 'icons', 'inklayer', 'input',
   'level', 'materials', 'mats46', 'mats52', 'nums47', 'own3d', 'paint45',
   'paint48', 'paint50', 'paint54', 'paper', 'papericon31', 'press26', 'rep49', 'rollpose',
-  'roundsave', 'slide40', 'snapghost', 'turn31', 'ui34r7', 'underlay', 'view42',
+  'roundsave', 'slide40', 'snapghost', 'thick55', 'turn31', 'ui34r7', 'underlay', 'view42',
   'waitfade', 'waitink37', 'yellow', 'yellowfree', 'zones',
 ] as const
