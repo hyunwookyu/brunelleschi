@@ -244,7 +244,9 @@ export function initInput(
     cancelHoldPress()
     // **잡히는 것이 없으면 시계를 안 켠다**(빈 곳 경로 ⛔ — 39-1 문면). 판정을 여기서
     // 미리 한 번 하는 이유는 그리기 도중에 아무 일도 안 일어나게 하기 위해서다.
-    if (!holdTargetAt(app, p)) return
+    // ⚠ web2-54 54-2의 한 뼘: **면 고름이 있으면 빈 곳 꾹 누름이 «풀기»다**(R7의 어법) —
+    // 그때만 빈 곳에도 시계를 켠다. 판정·해제는 beginHold의 sel-clear 갈래 하나가 든다(#54).
+    if (!holdTargetAt(app, p) && app.faceSel.length === 0) return
     holdPress = { p, sp }
     holdTimerId = window.setTimeout(() => {
       holdTimerId = undefined

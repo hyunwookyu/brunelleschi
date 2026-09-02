@@ -24,6 +24,7 @@ import { overshootEnds } from '../core/overshoot'
 import { waitFadeFactor, atOwnPose, bodyHex } from '../core/waitfade'
 import type { OsnapHit } from '../core/osnap'
 import { dist2, type Pt, type V3 } from '../core/vec'
+import { faceScreen } from '../core/face'
 import { filmSplit } from './filmlayer'
 import { formatMm, formatUnits, dimSkew, skewOff } from '../core/dim'
 import { measurePoint3, measureMm, measureUnits } from '../core/measure'
@@ -955,10 +956,36 @@ function drawWriteTarget(ctx: CanvasRenderingContext2D, app: App, is: number) {
   ctx.restore()
 }
 
+// ── 면 고름(web2-54 54-2) — 고른 면의 테두리 강조. 잡기(grip)가 죽어도 산다(도구를
+// 바꿔도 고름이 사는 것과 짝 — 화면이 말하지 않으면 「어디에 칠해지는가」를 잃는다).
+// ⛔ 새 색 ⛔ 새 굵기 — 잡힘과 같은 채널(COL.snap · WRITE_TARGET_*)이다: 같은 뜻(지금
+// 짚어 둔 것)이라 같은 채널이 맞다(44의 drawGrip 머리주석 그대로).
+function drawFaceSel(ctx: CanvasRenderingContext2D, app: App, is: number) {
+  if (app.faceSel.length === 0) return
+  ctx.save()
+  ctx.strokeStyle = COL.snap
+  ctx.lineWidth = C.WRITE_TARGET_PX * is
+  ctx.lineJoin = 'round'
+  ctx.globalAlpha = C.WRITE_TARGET_ALPHA
+  for (const id of app.faceSel) {
+    const f = app.faces.find(x => x.id === id)
+    if (!f) continue
+    const poly = faceScreen(app.lift, app.pose, f.outer)
+    if (!poly || poly.length < 3) continue
+    ctx.beginPath()
+    ctx.moveTo(poly[0]!.x, poly[0]!.y)
+    for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i]!.x, poly[i]!.y)
+    ctx.closePath()
+    ctx.stroke()
+  }
+  ctx.restore()
+}
+
 // ── 잡기(web2-44) — 잡힌 것의 강조 + 조작 값 표찰 ────────────────────────────
 // ⛔ 새 색을 안 짓는다 — 잡힘도 「지금 짚은 것」이라 `COL.snap` 그대로다(write 대상·
 // dimEdit과 같은 뜻·같은 채널). write 대상 강조와 겹치면 같은 색이 두 번 — 무해하다.
 function drawGrip(ctx: CanvasRenderingContext2D, app: App, is: number) {
+  drawFaceSel(ctx, app, is)
   const g = app.grip
   if (!g) return
   ctx.save()
