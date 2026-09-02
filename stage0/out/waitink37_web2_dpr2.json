@@ -1,10 +1,10 @@
 {
  "conditions": {
   "workers": 1,
-  "project": "dpr1",
+  "project": "dpr2",
   "canonical": "LEDGER=1 npx playwright test e2e/waitink37.spec.ts --project=dpr1 --workers=1"
  },
- "what": "web2-37 2번(dpr1) — 화면에 나간 획 몸체의 색상 이동(파랑−빨강) 실측. 대기 ↔ 확정 ↔ 위약 두 판. e2e waitink37.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).",
+ "what": "web2-37 2번(dpr2) — 화면에 나간 획 몸체의 색상 이동(파랑−빨강) 실측. 대기 ↔ 확정 ↔ 위약 두 판. e2e waitink37.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).",
  "thresholds": {
   "WAIT_MIN": 0.15,
   "CONF_MAX": 0.05
@@ -12,21 +12,21 @@
  "on": {
   "ink_hue_scale": 73,
   "waiting": {
-   "shift": 24.64,
-   "painted": 100,
+   "shift": 23.39,
+   "painted": 165,
    "rgb": [
-    213.7,
-    233.8,
-    238.3
+    222,
+    241.2,
+    245.4
    ]
   },
   "confirmed": {
-   "shift": -0.11,
-   "painted": 732,
+   "shift": -0.06,
+   "painted": 1169,
    "rgb": [
-    194.7,
-    194.9,
-    194.5
+    208.3,
+    208.7,
+    208.3
    ]
   },
   "note": "성한 판(mode on). shift = 알파 가중 평균(파랑−빨강). 문은 자(WAIT_INK의 색상 이동)의 비다."
@@ -36,29 +36,29 @@
   "on": {
    "wait_is_blue": true,
    "conf_is_graphite": true,
-   "waiting": 24.64,
-   "confirmed": -0.11
+   "waiting": 23.39,
+   "confirmed": -0.06
   },
   "off": {
    "wait_is_blue": false,
    "conf_is_graphite": true,
-   "waiting": -0.96,
-   "confirmed": -1.02
+   "waiting": -0.95,
+   "confirmed": -0.99
   },
   "all": {
    "wait_is_blue": true,
    "conf_is_graphite": false,
-   "waiting": 24.64,
-   "confirmed": 26.07
+   "waiting": 23.39,
+   "confirmed": 24.73
   },
   "note": "off = 청색을 끈 판(37-2 이전) → wait_is_blue가 거짓이어야 한다. all = 확정에도 칠한 판 → conf_is_graphite가 거짓이어야 한다. 둘 다 참이면 이 팔은 아무것도 안 잰다."
  },
  "settle": {
   "settle_ms": 300,
-  "waiting_shift": 32.17,
-  "during_shift": 35.92,
-  "after_shift": -0.8,
-  "after_painted": 296,
+  "waiting_shift": 21.81,
+  "during_shift": 21.7,
+  "after_shift": 0.79,
+  "after_painted": 707,
   "note": "한 획이 색을 바꾼다 — 창이 닫힌 뒤 그 상자에 남는 것은 흑연 하나다(청색 잔상 없음). during_shift는 web2-54부터 rAF 추적자의 창-안 최대값이다(표본 한 번은 부하에서 창을 놓친다 — #93)"
  }
 }

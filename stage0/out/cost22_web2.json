@@ -19,155 +19,155 @@
   "phase": "after",
   "slope": {
    "raw_0pct": {
-    "full_redraw": 3.88,
-    "sync_strokes": 4.5,
-    "orbit_frame": 2.43,
-    "osnap_total": 15.95,
-    "osnap_intersect": 40.1,
-    "osnap_ends_merge": 4.16
+    "full_redraw": 7.07,
+    "sync_strokes": 7,
+    "orbit_frame": 2.57,
+    "osnap_total": 41.76,
+    "osnap_intersect": 56.49,
+    "osnap_ends_merge": 5.96
    },
    "raw_50pct": {
-    "full_redraw": 8.5,
-    "sync_strokes": 10,
-    "orbit_frame": 3.4,
-    "osnap_total": 22.42,
-    "osnap_intersect": 36.43,
-    "osnap_ends_merge": 8
+    "full_redraw": 6.78,
+    "sync_strokes": 17,
+    "orbit_frame": 3,
+    "osnap_total": 57.6,
+    "osnap_intersect": 92.95,
+    "osnap_ends_merge": 2
    },
    "raw_100pct": {
-    "full_redraw": 8.47,
-    "sync_strokes": 5,
-    "orbit_frame": 2.5,
-    "osnap_total": 20.13,
-    "osnap_intersect": 34,
-    "osnap_ends_merge": 3.92
+    "full_redraw": 10.15,
+    "sync_strokes": 14,
+    "orbit_frame": 3.6,
+    "osnap_total": 56.79,
+    "osnap_intersect": 98.05,
+    "osnap_ends_merge": 10.33
    }
   },
   "slope_span": "50→400(8배) — cost22의 200→800(4배)과 다른 구간: 지수로 환산해 비교한다"
  },
  "scene_at_800": {
   "strokes": 800,
-  "lifted": 201,
-  "waiting": 200,
-  "yellow": 399,
+  "lifted": 238,
+  "waiting": 105,
+  "yellow": 457,
   "yellow_lifted": 0,
-  "withRawIn": 408
+  "withRawIn": 171
  },
  "grid": {
   "200": {
    "scene": {
     "strokes": 200,
-    "lifted": 51,
-    "waiting": 50,
+    "lifted": 47,
+    "waiting": 54,
     "yellow": 99,
     "yellow_lifted": 0,
-    "withRawIn": 91
+    "withRawIn": 44
    },
    "full_redraw_ms": {
-    "min": 87.8,
-    "median": 107.3,
-    "max": 143.8
+    "min": 97,
+    "median": 123.7,
+    "max": 137.6
    },
    "sync_strokes_ms": {
-    "min": 0.3,
+    "min": 0.2,
     "median": 0.3,
-    "max": 0.7
+    "max": 0.8
    },
    "orbit_frame_ms": {
     "n": 32,
-    "r3": 0.5,
-    "bs": 0.39999961853027344,
-    "d2": 0.20000028610229492,
-    "total": 1.1000003814697266,
-    "totalMax": 104.2000002861023
+    "r3": 0.30000000074505806,
+    "bs": 0.2999999988824129,
+    "d2": 0.2000000011175871,
+    "total": 0.8000000007450581,
+    "totalMax": 50.30000000074506
    },
    "osnap": {
     "calls": 40,
-    "per_call_ms": 0.515,
-    "intersect_ms": 0.2225,
-    "ends_merge_ms": 0.03,
-    "rest_ms": 0.2625
+    "per_call_ms": 0.4575,
+    "intersect_ms": 0.1925,
+    "ends_merge_ms": 0.0725,
+    "rest_ms": 0.1925
    }
   },
   "400": {
    "scene": {
     "strokes": 400,
-    "lifted": 101,
-    "waiting": 100,
-    "yellow": 199,
+    "lifted": 112,
+    "waiting": 62,
+    "yellow": 226,
     "yellow_lifted": 0,
-    "withRawIn": 203
+    "withRawIn": 90
    },
    "full_redraw_ms": {
-    "min": 177.9,
-    "median": 240.9,
-    "max": 249.9
+    "min": 171.5,
+    "median": 210.4,
+    "max": 236.9
    },
    "sync_strokes_ms": {
     "min": 0.5,
-    "median": 0.5,
+    "median": 0.6,
     "max": 1.2
    },
    "orbit_frame_ms": {
     "n": 32,
-    "r3": 0.40000009536743164,
-    "bs": 0.40000009536743164,
-    "d2": 0.09999990463256836,
+    "r3": 0.5,
+    "bs": 0.30000000074505806,
+    "d2": 0.19999999925494194,
     "total": 1,
-    "totalMax": 175
+    "totalMax": 92.09999999962747
    },
    "osnap": {
     "calls": 40,
-    "per_call_ms": 1.1525,
-    "intersect_ms": 0.5575,
-    "ends_merge_ms": 0.08,
-    "rest_ms": 0.515
+    "per_call_ms": 1.4225,
+    "intersect_ms": 0.7075,
+    "ends_merge_ms": 0.075,
+    "rest_ms": 0.64
    }
   },
   "800": {
    "scene": {
     "strokes": 800,
-    "lifted": 201,
-    "waiting": 200,
-    "yellow": 399,
+    "lifted": 238,
+    "waiting": 105,
+    "yellow": 457,
     "yellow_lifted": 0,
-    "withRawIn": 408
+    "withRawIn": 171
    },
    "full_redraw_ms": {
-    "min": 358,
-    "median": 409.4,
-    "max": 443
+    "min": 375.1,
+    "median": 468,
+    "max": 581.6
    },
    "sync_strokes_ms": {
-    "min": 0.8,
-    "median": 0.9,
-    "max": 1.9
+    "min": 1.1,
+    "median": 1.2,
+    "max": 2.4
    },
    "orbit_frame_ms": {
     "n": 32,
-    "r3": 0.7000002861022949,
-    "bs": 0.6999998092651367,
-    "d2": 0.2999997138977051,
-    "total": 1.700000286102295,
-    "totalMax": 316.40000009536743
+    "r3": 0.7000000011175871,
+    "bs": 0.5,
+    "d2": 0.40000000037252903,
+    "total": 1.599999999627471,
+    "totalMax": 202.09999999962747
    },
    "osnap": {
     "calls": 40,
-    "per_call_ms": 3.7775,
-    "intersect_ms": 2.2225,
-    "ends_merge_ms": 0.09,
-    "rest_ms": 1.465
+    "per_call_ms": 5.7,
+    "intersect_ms": 3.085,
+    "ends_merge_ms": 0.1075,
+    "rest_ms": 2.5075
    }
   }
  },
  "slope": {
-  "full_redraw": 3.82,
-  "sync_strokes": 3,
-  "orbit_frame": 1.55,
-  "osnap_total": 7.33,
-  "osnap_intersect": 9.99,
-  "osnap_ends_merge": 3,
-  "osnap_rest": 5.58
+  "full_redraw": 3.78,
+  "sync_strokes": 4,
+  "orbit_frame": 2,
+  "osnap_total": 12.46,
+  "osnap_intersect": 16.03,
+  "osnap_ends_merge": 1.48,
+  "osnap_rest": 13.03
  },
  "resolution": {
   "note": "#71 ㉢ — 이 표의 축(획 수)이 값을 실제로 가르는가를 하네스가 단언한다(800 full > 200 full). slope의 한 칸 소수점은 실행 변동 안이다 — 대역으로만 읽는다. 전/후 대조의 정본 채널은 **구조 값**(scene의 waiting·yellow_lifted — 결정론)이고 절대 ms·slope는 참고다(#47 — 값을 이 산문에 박지 않는다: 값은 grid가 정본).",

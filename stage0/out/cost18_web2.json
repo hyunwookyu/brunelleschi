@@ -23,12 +23,12 @@
  },
  "scene_at_400": {
   "strokes": 400,
-  "lifted": 191,
-  "waiting": 209,
-  "withRawIn": 397,
+  "lifted": 292,
+  "waiting": 108,
+  "withRawIn": 398,
   "added": {
-   "promoted": 95,
-   "waited": 105
+   "promoted": 155,
+   "waited": 110
   }
  },
  "grid": {
@@ -36,21 +36,21 @@
    "50": {
     "scene": {
      "strokes": 50,
-     "lifted": 20,
-     "waiting": 30,
+     "lifted": 26,
+     "waiting": 24,
      "withRawIn": 0,
      "added": {
-      "promoted": 18,
-      "waited": 29
+      "promoted": 22,
+      "waited": 25
      }
     },
     "full_redraw_ms": {
-     "min": 21.6,
-     "median": 45.2,
-     "max": 54.6
+     "min": 18.5,
+     "median": 24.5,
+     "max": 35
     },
-    "last_full_app_ms": 39.3,
-    "last_full_drawn": 49,
+    "last_full_app_ms": 9.5,
+    "last_full_drawn": 23,
     "last_full_clipped": 0,
     "sync_strokes_ms": {
      "min": 0.1,
@@ -59,138 +59,138 @@
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.3000001907348633,
-     "bs": 0.19999980926513672,
-     "d2": 0.19999980926513672,
-     "total": 0.6999998092651367,
-     "totalMax": 67.80000019073486
+     "r3": 0.30000000074505806,
+     "bs": 0.19999999925494194,
+     "d2": 0.19999999925494194,
+     "total": 0.6999999992549419,
+     "totalMax": 34.90000000037253
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.215,
-     "intersect_ms": 0.05,
-     "ends_merge_ms": 0.0475,
-     "rest_ms": 0.1175
+     "per_call_ms": 0.255,
+     "intersect_ms": 0.0925,
+     "ends_merge_ms": 0.0575,
+     "rest_ms": 0.105
     }
    },
    "100": {
     "scene": {
      "strokes": 100,
-     "lifted": 49,
-     "waiting": 51,
+     "lifted": 64,
+     "waiting": 36,
      "withRawIn": 0,
      "added": {
-      "promoted": 23,
-      "waited": 27
+      "promoted": 37,
+      "waited": 37
      }
     },
     "full_redraw_ms": {
-     "min": 45.1,
-     "median": 64.5,
-     "max": 85.9
+     "min": 39.2,
+     "median": 43.8,
+     "max": 50.7
     },
-    "last_full_app_ms": 40.3,
-    "last_full_drawn": 95,
+    "last_full_app_ms": 20,
+    "last_full_drawn": 54,
     "last_full_clipped": 0,
     "sync_strokes_ms": {
      "min": 0.2,
      "median": 0.3,
-     "max": 0.6
+     "max": 1
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.3000001907348633,
-     "bs": 0.20000028610229492,
-     "d2": 0.09999990463256836,
-     "total": 0.6000003814697266,
-     "totalMax": 96.40000009536743
+     "r3": 0.3999999985098839,
+     "bs": 0.19999999925494194,
+     "d2": 0.19999999925494194,
+     "total": 0.7000000011175871,
+     "totalMax": 56.70000000111759
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.37,
-     "intersect_ms": 0.165,
-     "ends_merge_ms": 0.0475,
-     "rest_ms": 0.1575
+     "per_call_ms": 0.56,
+     "intersect_ms": 0.2375,
+     "ends_merge_ms": 0.1275,
+     "rest_ms": 0.195
     }
    },
    "200": {
     "scene": {
      "strokes": 200,
-     "lifted": 97,
-     "waiting": 103,
+     "lifted": 133,
+     "waiting": 67,
      "withRawIn": 0,
      "added": {
-      "promoted": 45,
-      "waited": 55
+      "promoted": 68,
+      "waited": 68
      }
     },
     "full_redraw_ms": {
-     "min": 125.6,
-     "median": 212.7,
-     "max": 241.4
+     "min": 77.3,
+     "median": 84.8,
+     "max": 116.3
     },
-    "last_full_app_ms": 91.2,
-    "last_full_drawn": 189,
+    "last_full_app_ms": 35.9,
+    "last_full_drawn": 106,
     "last_full_clipped": 0,
     "sync_strokes_ms": {
      "min": 0.5,
-     "median": 0.6,
-     "max": 1.5
+     "median": 0.7,
+     "max": 1.3
     },
     "orbit_frame_ms": {
      "n": 32,
      "r3": 0.5,
-     "bs": 0.5,
-     "d2": 0.19999980926513672,
-     "total": 1.1000003814697266,
-     "totalMax": 204.09999990463257
+     "bs": 0.2999999988824129,
+     "d2": 0.19999999925494194,
+     "total": 0.900000000372529,
+     "totalMax": 92
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 1.1,
-     "intersect_ms": 0.5425,
-     "ends_merge_ms": 0.0975,
-     "rest_ms": 0.46
+     "per_call_ms": 1.9,
+     "intersect_ms": 0.9375,
+     "ends_merge_ms": 0.1475,
+     "rest_ms": 0.815
     }
    },
    "400": {
     "scene": {
      "strokes": 400,
-     "lifted": 195,
-     "waiting": 205,
+     "lifted": 288,
+     "waiting": 112,
      "withRawIn": 0,
      "added": {
-      "promoted": 96,
-      "waited": 104
+      "promoted": 148,
+      "waited": 119
      }
     },
     "full_redraw_ms": {
-     "min": 145.8,
-     "median": 175.4,
-     "max": 205.5
+     "min": 151.4,
+     "median": 173.3,
+     "max": 186.6
     },
-    "last_full_app_ms": 135.6,
-    "last_full_drawn": 369,
+    "last_full_app_ms": 86.2,
+    "last_full_drawn": 244,
     "last_full_clipped": 0,
     "sync_strokes_ms": {
-     "min": 0.8,
-     "median": 0.9,
-     "max": 1.7
+     "min": 1.3,
+     "median": 1.4,
+     "max": 2.9
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.7000002861022949,
-     "bs": 0.6999998092651367,
-     "d2": 0.20000028610229492,
-     "total": 1.6999998092651367,
-     "totalMax": 312.09999990463257
+     "r3": 0.900000000372529,
+     "bs": 0.599999999627471,
+     "d2": 0.30000000074505806,
+     "total": 1.799999998882413,
+     "totalMax": 250.89999999850988
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 3.43,
-     "intersect_ms": 2.005,
-     "ends_merge_ms": 0.1975,
-     "rest_ms": 1.2275
+     "per_call_ms": 10.65,
+     "intersect_ms": 5.225,
+     "ends_merge_ms": 0.3425,
+     "rest_ms": 5.0825
     }
    }
   },
@@ -198,161 +198,161 @@
    "50": {
     "scene": {
      "strokes": 50,
-     "lifted": 21,
-     "waiting": 29,
+     "lifted": 25,
+     "waiting": 25,
      "withRawIn": 21,
      "added": {
-      "promoted": 17,
-      "waited": 30
+      "promoted": 21,
+      "waited": 26
      }
     },
     "full_redraw_ms": {
-     "min": 23,
-     "median": 24.5,
-     "max": 29.8
+     "min": 20.5,
+     "median": 27.8,
+     "max": 34
     },
-    "last_full_app_ms": 20.5,
-    "last_full_drawn": 47,
+    "last_full_app_ms": 12,
+    "last_full_drawn": 22,
     "last_full_clipped": 0,
     "sync_strokes_ms": {
      "min": 0.1,
      "median": 0.1,
-     "max": 0.4
+     "max": 0.5
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.19999980926513672,
-     "bs": 0.19999980926513672,
-     "d2": 0.09999990463256836,
+     "r3": 0.2999999988824129,
+     "bs": 0.09999999962747097,
+     "d2": 0.19999999925494194,
      "total": 0.5,
-     "totalMax": 56.19999980926514
+     "totalMax": 47.29999999888241
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.15,
-     "intersect_ms": 0.0525,
+     "per_call_ms": 0.17,
+     "intersect_ms": 0.055,
      "ends_merge_ms": 0.02,
-     "rest_ms": 0.0775
+     "rest_ms": 0.095
     }
    },
    "100": {
     "scene": {
      "strokes": 100,
-     "lifted": 50,
-     "waiting": 50,
-     "withRawIn": 47,
+     "lifted": 64,
+     "waiting": 36,
+     "withRawIn": 52,
      "added": {
-      "promoted": 20,
-      "waited": 30
+      "promoted": 38,
+      "waited": 37
      }
     },
     "full_redraw_ms": {
-     "min": 39.3,
-     "median": 46.6,
-     "max": 111.9
+     "min": 46.6,
+     "median": 55,
+     "max": 70.6
     },
-    "last_full_app_ms": 38.5,
-    "last_full_drawn": 94,
+    "last_full_app_ms": 25.6,
+    "last_full_drawn": 57,
     "last_full_clipped": 0,
     "sync_strokes_ms": {
-     "min": 0.2,
-     "median": 0.3,
-     "max": 0.6
+     "min": 0.3,
+     "median": 0.4,
+     "max": 0.8
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.2999997138977051,
-     "bs": 0.2999997138977051,
-     "d2": 0.09999990463256836,
-     "total": 0.6999998092651367,
-     "totalMax": 88.90000009536743
+     "r3": 0.30000000074505806,
+     "bs": 0.2000000011175871,
+     "d2": 0.19999999925494194,
+     "total": 0.7000000011175871,
+     "totalMax": 67.69999999925494
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.3025,
-     "intersect_ms": 0.155,
-     "ends_merge_ms": 0.025,
-     "rest_ms": 0.1225
+     "per_call_ms": 0.48,
+     "intersect_ms": 0.2325,
+     "ends_merge_ms": 0.045,
+     "rest_ms": 0.2025
     }
    },
    "200": {
     "scene": {
      "strokes": 200,
-     "lifted": 98,
-     "waiting": 102,
-     "withRawIn": 98,
+     "lifted": 134,
+     "waiting": 66,
+     "withRawIn": 100,
      "added": {
-      "promoted": 45,
-      "waited": 55
+      "promoted": 68,
+      "waited": 68
      }
     },
     "full_redraw_ms": {
-     "min": 80.9,
-     "median": 91.3,
-     "max": 129.4
+     "min": 96.1,
+     "median": 111.9,
+     "max": 123.9
     },
-    "last_full_app_ms": 76.4,
-    "last_full_drawn": 186,
+    "last_full_app_ms": 48.7,
+    "last_full_drawn": 118,
     "last_full_clipped": 0,
     "sync_strokes_ms": {
-     "min": 0.4,
-     "median": 0.5,
-     "max": 1
+     "min": 0.6,
+     "median": 0.7,
+     "max": 1.2
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.40000009536743164,
-     "bs": 0.40000009536743164,
-     "d2": 0.19999980926513672,
+     "r3": 0.5,
+     "bs": 0.30000000074505806,
+     "d2": 0.19999999925494194,
      "total": 1,
-     "totalMax": 165
+     "totalMax": 112.80000000074506
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.885,
-     "intersect_ms": 0.4575,
-     "ends_merge_ms": 0.06,
-     "rest_ms": 0.3675
+     "per_call_ms": 1.815,
+     "intersect_ms": 0.9375,
+     "ends_merge_ms": 0.12,
+     "rest_ms": 0.7575
     }
    },
    "400": {
     "scene": {
      "strokes": 400,
-     "lifted": 199,
-     "waiting": 201,
-     "withRawIn": 185,
+     "lifted": 285,
+     "waiting": 115,
+     "withRawIn": 184,
      "added": {
-      "promoted": 96,
-      "waited": 104
+      "promoted": 148,
+      "waited": 118
      }
     },
     "full_redraw_ms": {
-     "min": 165.1,
-     "median": 208.2,
-     "max": 239.7
+     "min": 165.9,
+     "median": 188.6,
+     "max": 205.3
     },
-    "last_full_app_ms": 154.1,
-    "last_full_drawn": 372,
+    "last_full_app_ms": 102.7,
+    "last_full_drawn": 244,
     "last_full_clipped": 0,
     "sync_strokes_ms": {
-     "min": 1,
-     "median": 1,
-     "max": 2.6
+     "min": 1.3,
+     "median": 1.7,
+     "max": 2.7
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.6999998092651367,
-     "bs": 0.7000002861022949,
-     "d2": 0.2999997138977051,
-     "total": 1.700000286102295,
-     "totalMax": 331.5
+     "r3": 0.6999999992549419,
+     "bs": 0.5,
+     "d2": 0.30000000074505806,
+     "total": 1.5,
+     "totalMax": 204.80000000074506
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 3.3625,
-     "intersect_ms": 1.9125,
-     "ends_merge_ms": 0.16,
-     "rest_ms": 1.29
+     "per_call_ms": 9.7925,
+     "intersect_ms": 5.1125,
+     "ends_merge_ms": 0.04,
+     "rest_ms": 4.64
     }
    }
   },
@@ -369,180 +369,180 @@
      }
     },
     "full_redraw_ms": {
-     "min": 21.6,
-     "median": 25.7,
-     "max": 65.9
+     "min": 21.4,
+     "median": 22,
+     "max": 26.9
     },
-    "last_full_app_ms": 19.5,
-    "last_full_drawn": 45,
+    "last_full_app_ms": 10.3,
+    "last_full_drawn": 20,
     "last_full_clipped": 0,
     "sync_strokes_ms": {
      "min": 0.1,
-     "median": 0.2,
+     "median": 0.1,
      "max": 0.4
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.20000028610229492,
-     "bs": 0.19999980926513672,
-     "d2": 0.09999990463256836,
-     "total": 0.5999999046325684,
-     "totalMax": 56
+     "r3": 0.2999999988824129,
+     "bs": 0.10000000149011612,
+     "d2": 0.19999999925494194,
+     "total": 0.5,
+     "totalMax": 33.90000000037253
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.17,
-     "intersect_ms": 0.06,
-     "ends_merge_ms": 0.0325,
-     "rest_ms": 0.0775
+     "per_call_ms": 0.1825,
+     "intersect_ms": 0.0525,
+     "ends_merge_ms": 0.03,
+     "rest_ms": 0.1
     }
    },
    "100": {
     "scene": {
      "strokes": 100,
-     "lifted": 46,
-     "waiting": 54,
-     "withRawIn": 97,
+     "lifted": 63,
+     "waiting": 37,
+     "withRawIn": 98,
      "added": {
-      "promoted": 18,
-      "waited": 32
+      "promoted": 36,
+      "waited": 39
      }
     },
     "full_redraw_ms": {
-     "min": 36,
-     "median": 57.3,
-     "max": 93.4
+     "min": 37.6,
+     "median": 41.3,
+     "max": 43.7
     },
-    "last_full_app_ms": 33.8,
-    "last_full_drawn": 85,
+    "last_full_app_ms": 22.8,
+    "last_full_drawn": 51,
     "last_full_clipped": 0,
     "sync_strokes_ms": {
      "min": 0.2,
-     "median": 0.2,
-     "max": 0.5
+     "median": 0.4,
+     "max": 0.7
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.3000001907348633,
-     "bs": 0.20000028610229492,
-     "d2": 0.09999990463256836,
-     "total": 0.5999999046325684,
-     "totalMax": 84.80000019073486
+     "r3": 0.30000000074505806,
+     "bs": 0.2000000011175871,
+     "d2": 0.19999999925494194,
+     "total": 0.6999999992549419,
+     "totalMax": 71.30000000074506
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.2975,
-     "intersect_ms": 0.135,
-     "ends_merge_ms": 0.0675,
-     "rest_ms": 0.095
+     "per_call_ms": 0.495,
+     "intersect_ms": 0.2425,
+     "ends_merge_ms": 0.0525,
+     "rest_ms": 0.2
     }
    },
    "200": {
     "scene": {
      "strokes": 200,
-     "lifted": 94,
-     "waiting": 106,
-     "withRawIn": 197,
+     "lifted": 135,
+     "waiting": 65,
+     "withRawIn": 198,
      "added": {
-      "promoted": 43,
-      "waited": 57
+      "promoted": 71,
+      "waited": 66
      }
     },
     "full_redraw_ms": {
-     "min": 79,
-     "median": 95.2,
-     "max": 126
+     "min": 96.9,
+     "median": 108.7,
+     "max": 125.4
     },
-    "last_full_app_ms": 68.2,
-    "last_full_drawn": 169,
+    "last_full_app_ms": 49.6,
+    "last_full_drawn": 111,
     "last_full_clipped": 0,
     "sync_strokes_ms": {
-     "min": 0.4,
+     "min": 0.5,
      "median": 0.6,
-     "max": 1
+     "max": 1.2
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.40000009536743164,
-     "bs": 0.39999961853027344,
-     "d2": 0.09999990463256836,
-     "total": 0.8999996185302734,
-     "totalMax": 158
+     "r3": 0.5,
+     "bs": 0.2999999988824129,
+     "d2": 0.19999999925494194,
+     "total": 0.900000000372529,
+     "totalMax": 137.30000000074506
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.82,
-     "intersect_ms": 0.4475,
-     "ends_merge_ms": 0.045,
-     "rest_ms": 0.3275
+     "per_call_ms": 1.82,
+     "intersect_ms": 0.905,
+     "ends_merge_ms": 0.1325,
+     "rest_ms": 0.7825
     }
    },
    "400": {
     "scene": {
      "strokes": 400,
-     "lifted": 191,
-     "waiting": 209,
-     "withRawIn": 397,
+     "lifted": 292,
+     "waiting": 108,
+     "withRawIn": 398,
      "added": {
-      "promoted": 95,
-      "waited": 105
+      "promoted": 155,
+      "waited": 110
      }
     },
     "full_redraw_ms": {
-     "min": 133,
-     "median": 217.6,
-     "max": 230
+     "min": 196.1,
+     "median": 223.4,
+     "max": 252.5
     },
-    "last_full_app_ms": 140.7,
-    "last_full_drawn": 338,
-    "last_full_clipped": 0,
+    "last_full_app_ms": 116.7,
+    "last_full_drawn": 249,
+    "last_full_clipped": 1,
     "sync_strokes_ms": {
-     "min": 0.8,
-     "median": 1,
-     "max": 2
+     "min": 1.4,
+     "median": 1.4,
+     "max": 2.7
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.6000003814697266,
-     "bs": 0.5999999046325684,
-     "d2": 0.20000028610229492,
-     "total": 1.5,
-     "totalMax": 311.09999990463257
+     "r3": 0.900000000372529,
+     "bs": 0.599999999627471,
+     "d2": 0.3999999985098839,
+     "total": 1.800000000745058,
+     "totalMax": 295.7999999988824
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 3.4225,
-     "intersect_ms": 2.04,
-     "ends_merge_ms": 0.1275,
-     "rest_ms": 1.255
+     "per_call_ms": 10.365,
+     "intersect_ms": 5.1475,
+     "ends_merge_ms": 0.31,
+     "rest_ms": 4.9075
     }
    }
   }
  },
  "slope": {
   "raw_0pct": {
-   "full_redraw": 3.88,
-   "sync_strokes": 4.5,
-   "orbit_frame": 2.43,
-   "osnap_total": 15.95,
-   "osnap_intersect": 40.1,
-   "osnap_ends_merge": 4.16
+   "full_redraw": 7.07,
+   "sync_strokes": 7,
+   "orbit_frame": 2.57,
+   "osnap_total": 41.76,
+   "osnap_intersect": 56.49,
+   "osnap_ends_merge": 5.96
   },
   "raw_50pct": {
-   "full_redraw": 8.5,
-   "sync_strokes": 10,
-   "orbit_frame": 3.4,
-   "osnap_total": 22.42,
-   "osnap_intersect": 36.43,
-   "osnap_ends_merge": 8
+   "full_redraw": 6.78,
+   "sync_strokes": 17,
+   "orbit_frame": 3,
+   "osnap_total": 57.6,
+   "osnap_intersect": 92.95,
+   "osnap_ends_merge": 2
   },
   "raw_100pct": {
-   "full_redraw": 8.47,
-   "sync_strokes": 5,
-   "orbit_frame": 2.5,
-   "osnap_total": 20.13,
-   "osnap_intersect": 34,
-   "osnap_ends_merge": 3.92
+   "full_redraw": 10.15,
+   "sync_strokes": 14,
+   "orbit_frame": 3.6,
+   "osnap_total": 56.79,
+   "osnap_intersect": 98.05,
+   "osnap_ends_merge": 10.33
   }
  },
  "falsification": "격자가 안 갈리면 표가 아무것도 안 잰 것이다 — 팔이 강제한다: 400의 획 수 ≥400 · 승격>0 · 대기>0 · rawIn 100% 칸은 >0이고 0% 칸은 정확히 0 · 400의 전량 재그리기 median >0(#69 ㉣) 이고 50보다 크다 · osnap 호출 수 >0. 이 중 하나라도 무너지면 그 표는 못 읽는다."

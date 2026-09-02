@@ -93,7 +93,7 @@
       "3,5,8,10"
     ],
     "extra_sigs_cap": 8,
-    "allLoops_ms": 0.5,
+    "allLoops_ms": 0.4,
     "note_46": "#46 — 이 수는 «지면 한 평면·완전 교차 격자»의 값이다. 과잉 후보의 구성은 extra_sigs가 든다(깊이선·격자 자투리가 만드는 추가 순환 — 원칙상 그것들도 닫힌 영역이라 «찾지 말아야 할 것»인지는 판단 유보: 사용자가 지정으로 거른다는 것이 이 앱의 규약이다)",
     "note_collinear": "⚠ 격자 0행·0열을 깊이선 «위»에 두면(공선 겹침) 조각 그래프가 다중변으로 퇴화해 셀이 3/9로 죽는다(실측 — 스침 병합의 형제). 사용자 위험 행이 DEFERRED에 있다"
   },
@@ -101,7 +101,7 @@
     "strokes_drawn": 39,
     "lifted": 38,
     "candidates": 2,
-    "allLoops_ms": 1,
+    "allLoops_ms": 1.2,
     "candidate_sigs": [
       "2,3,9,23",
       "2,9,23"
@@ -158,7 +158,7 @@
     "orbited_pose": {
       "points": 9,
       "placed": 1,
-      "max_err_px": 0
+      "max_err_px": 1.1368683772161603e-13
     },
     "split_arm": {
       "runs_wall_floor": "paint45.test ①이 앱 경로로 잠근다 — 여기의 수는 아래 split 필드"
@@ -168,9 +168,9 @@
   },
   "split": {
     "brush_points": 26,
-    "runs_placed": 2,
+    "runs_placed": 1,
     "off_face_points": 8,
-    "faces_hit": 2
+    "faces_hit": 1
   },
   "hatch_flag_check": {
     "face_pose_invariant": true,
