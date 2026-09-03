@@ -346,7 +346,7 @@
         "paint": 2
       }
     },
-    "guarantee": "self p95_ratio 1 = canvas stroke() 한 번의 구성(AS-C175 · #5) — 판정자는 two(46 계약)와의 갈림"
+    "guarantee": "self p95_ratio 1 = canvas stroke() 한 번의 구성(AS-C175 · #5) — 판정자는 two(46 계약)와의 갈림 · two.cross/two.body의 bare_share 0·edge_sd 0 = 구성(마커 띠 안쪽 창은 빈 픽셀 0 — 60 2차 [20] · 판정자 아님)"
   },
   "four_differ": {
     "def": "같은 압력(0.5 펜)·같은 속도(14걸음 등간격)·굵기 20의 넷 — 24px 창의 mean(농도) · p95 · bare_share(빈 픽셀 몫 · 바탕 뺀 잉크 p95의 35% 상대 문 — 초판 절대 문 25는 cp↔연필을 .10으로 겨우 갈랐다) · edge_sd(상단 경계 행의 표준편차 — 가장자리 거칠기). 짝 여섯의 최대 상대 차 > 0.1(mark58 ② pairs와 같은 술어 · 자 넷은 60 지시의 셋 + p95)",
