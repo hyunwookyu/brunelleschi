@@ -66,11 +66,11 @@
     }
   },
   "perf": {
-    "def": "접합 장면(벽 둘 t=200 + 바닥 t=150)의 syncStrokes ms와 접합 수·기각 수·1링 통계. 접합은 메시 수를 안 늘린다(정점 이동뿐) — recompute 몫(computeJoints)의 지시 대역(30벽·48접합) 실측은 단위 원장 join56_unit_web2.json이 든다. 절대 ms는 기계 몫(#47)",
+    "def": "접합 장면(벽 둘 t=200 + 바닥 t=150)의 syncStrokes ms · 접합 켬/끔 프레임(median/p90 — #46: dpr1은 vsync 상한이라 판별은 dpr2)·faceMeshes 수 대조(접합은 메시 수 불변 — 정점 이동뿐) · 접합 수·기각 수·1링 통계. 지시 대역(벽 30·접합 40)의 recompute 몫(computeJoints ms)은 단위 원장 join56_unit_web2.json이 든다(30벽 장면을 손으로 그리는 비용 대신 같은 계산을 그 규모로 — 프레임 몫은 이 대조가 «메시 수 불변»으로 값을 댄다). 절대 ms는 기계 몫(#47) — 문턱 없음(#82)",
     "sync_ms": {
       "median": 0.2,
-      "min": 0.1,
-      "max": 0.5
+      "min": 0.2,
+      "max": 0.4
     },
     "joins": 1,
     "rejects": 2,
@@ -82,6 +82,16 @@
         10,
         13
       ]
-    }
+    },
+    "frame_join_on": {
+      "median": 17,
+      "p90": 18.1
+    },
+    "frame_join_off": {
+      "median": 16.9,
+      "p90": 18.1
+    },
+    "face_meshes_on": 9,
+    "face_meshes_off": 9
   }
 }

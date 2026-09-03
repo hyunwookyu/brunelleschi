@@ -439,11 +439,35 @@ test('⑤ 성능 — 접합 장면의 syncStrokes·접합 통계 (원장 값 · 
     return { median: +runs[5]!.toFixed(3), min: +runs[0]!.toFixed(3), max: +runs[9]!.toFixed(3) }
   })
   const j = await page.evaluate(() => (window as any).__b2.diag.joint56())
+  // 프레임(지시 게이트의 축) — 접합 켬 ↔ 끔의 프레임·메시 수 대조: 접합은 메시 «수»를
+  // 안 늘린다(정점 이동뿐)는 주장을 값으로 (perf20의 frame 문법 · #46: dpr1은 vsync 상한).
+  const frame = () => page.evaluate(async () => {
+    const w = window as any
+    const dts: number[] = []
+    let prev = performance.now()
+    for (let i = 0; i < 40; i++) {
+      await new Promise<void>(res => requestAnimationFrame(() => res()))
+      w.__b2.diag.invalidate?.()
+      const now = performance.now()
+      dts.push(now - prev); prev = now
+    }
+    dts.sort((a, b) => a - b)
+    return { median: +dts[Math.floor(dts.length / 2)]!.toFixed(2), p90: +dts[Math.floor(dts.length * 0.9)]!.toFixed(2) }
+  })
+  const meshes = () => page.evaluate(() => (window as any).__b2.diag.r3dInfo().faceMeshes as number)
+  const onF = { frame: await frame(), meshes: await meshes() }
+  await page.evaluate(() => (window as any).__b2.diag.joint56OffForTest(true))
+  await settle(page); await settle(page)
+  const offF = { frame: await frame(), meshes: await meshes() }
+  await page.evaluate(() => (window as any).__b2.diag.joint56OffForTest(false))
+  await settle(page)
   OUT.perf = {
-    def: '접합 장면(벽 둘 t=200 + 바닥 t=150)의 syncStrokes ms와 접합 수·기각 수·1링 통계. 접합은 메시 수를 안 늘린다(정점 이동뿐) — recompute 몫(computeJoints)의 지시 대역(30벽·48접합) 실측은 단위 원장 join56_unit_web2.json이 든다. 절대 ms는 기계 몫(#47)',
+    def: '접합 장면(벽 둘 t=200 + 바닥 t=150)의 syncStrokes ms · 접합 켬/끔 프레임(median/p90 — #46: dpr1은 vsync 상한이라 판별은 dpr2)·faceMeshes 수 대조(접합은 메시 수 불변 — 정점 이동뿐) · 접합 수·기각 수·1링 통계. 지시 대역(벽 30·접합 40)의 recompute 몫(computeJoints ms)은 단위 원장 join56_unit_web2.json이 든다(30벽 장면을 손으로 그리는 비용 대신 같은 계산을 그 규모로 — 프레임 몫은 이 대조가 «메시 수 불변»으로 값을 댄다). 절대 ms는 기계 몫(#47) — 문턱 없음(#82)',
     sync_ms: ms, joins: (j.joins as unknown[]).length, rejects: (j.rejects as unknown[]).length,
     stats: j.stats,
+    frame_join_on: onF.frame, frame_join_off: offF.frame,
+    face_meshes_on: onF.meshes, face_meshes_off: offF.meshes,
   }
   expect((j.joins as unknown[]).length, '접합이 실재한다').toBeGreaterThan(0)
-  expect(true).toBe(true)
+  expect(onF.meshes, '접합이 메시 수를 안 늘린다(정점 이동뿐)').toBe(offF.meshes)
 })
