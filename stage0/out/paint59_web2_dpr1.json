@@ -1047,39 +1047,53 @@
         "end": 1.0022
       }
     },
+    "normalized_by_marker_grain": {
+      "def": "같은 자 · 결 켬(출하 구성 — 2차 [5]): 결 켠 원값(rows)이 ±10% 밖이어도 마커로 나누면 문 안이다(값)",
+      "cp": {
+        "start": 1.0488,
+        "end": 1.0899
+      },
+      "pencil": {
+        "start": 1.0392,
+        "end": 1.214
+      }
+    },
     "falsification_speed": {
-      "def": "연필 속도→농도 −1(60-4 축 — 느린 구간이 진해진다) · 같은 획 재굽기 · 결 있음: 시작 정규화 비가 문을 넘는다",
+      "def": "연필 속도→농도 −1(60-4 축 — 느린 구간이 진해진다) · 넷을 다시 긋고 결 끔 · 게이트와 같은 프레임(연필 비 ÷ 마커 비): 시작 정규화 비가 문을 넘는다",
       "rows": {
         "brush": {
-          "start": 35237.64705882219,
-          "mid": 35237.64705882219,
-          "end": 35237.64705882219,
-          "start_over_mid": 1,
-          "end_over_mid": 1
+          "start": 92527.66666666699,
+          "mid": 105421.00000000012,
+          "end": 80278.66666666669,
+          "start_over_mid": 0.8777,
+          "end_over_mid": 0.7615
         },
         "marker": {
-          "start": 35237.64705882219,
-          "mid": 35237.64705882219,
-          "end": 35237.64705882219,
-          "start_over_mid": 1,
-          "end_over_mid": 1
+          "start": 176668.3333333336,
+          "mid": 163208.66666666567,
+          "end": 149567.99999999773,
+          "start_over_mid": 1.0825,
+          "end_over_mid": 0.9164
         },
         "cp": {
-          "start": 35237.64705882219,
-          "mid": 35237.64705882219,
-          "end": 35237.64705882219,
-          "start_over_mid": 1,
-          "end_over_mid": 1
+          "start": 150845.99999999968,
+          "mid": 139886.99999999977,
+          "end": 128800.66666666677,
+          "start_over_mid": 1.0783,
+          "end_over_mid": 0.9207
         },
         "pencil": {
-          "start": 48140.91764705762,
-          "mid": 35237.64705882219,
-          "end": 35237.64705882219,
-          "start_over_mid": 1.3662,
-          "end_over_mid": 1
+          "start": 154605.33333333393,
+          "mid": 27040,
+          "end": 118091.00000000089,
+          "start_over_mid": 5.7177,
+          "end_over_mid": 4.3673
         }
       },
-      "pencil_start_norm": 1.3662
+      "scene": {
+        "paint": 4
+      },
+      "pencil_start_norm": 5.2819
     },
     "grain_phase_spread": {
       "def": "연필 · 결 켬 · 시작 x 오프셋 0·2·4·6·8px(결 칸 9px 안) 다섯 획의 대역 비 평균·표준편차 — 결 켠 값의 잡음 눈금(1차 [3])",
@@ -1137,6 +1151,7 @@
       "paint_at_end": 0,
       "note": "#103 — 획마다 undo(같은 자리 세 획이 겹치지 않는다) · 끝에 0"
     },
+    "guarantee": "corr_same 1 = 결정론(같은 입력 → 같은 픽셀 · #5) · corr_phase 1 = 면 고정 마스크 + 안쪽 행(도장 위상이 결에 안 실린다 — 구성에 가깝다). 판정자는 반증(획별 시드 .019)·옛 엔진(.666)과의 «갈림»이지 1 그 자체가 아니다(2차 [7])",
     "corr_same": {
       "n": 2400,
       "corr": 1
@@ -1282,37 +1297,41 @@
       512
     ],
     "idle_ms": {
-      "median": 31.4,
-      "p90": 34.4
+      "median": 34.8,
+      "p90": 36.5
     },
     "idle2_ms": {
-      "median": 31.3,
-      "p90": 34.8
+      "median": 34,
+      "p90": 38
     },
-    "noise_floor_ms": 0.1,
+    "noise_floor_ms": 0.8,
     "drafting_ms": {
-      "median": 33.9,
-      "p90": 38.5,
-      "max": 90.8,
-      "first": 30.9,
+      "median": 35.5,
+      "p90": 38.3,
+      "max": 41.2,
+      "first": 33.2,
       "frame_cost": {
         "n": 43,
         "r3": 1.599999999627471,
         "bs": 0,
         "d2": 0.2999999988824129,
-        "total": 1.800000000745058,
-        "totalMax": 79.69999999925494
+        "total": 1.900000000372529,
+        "totalMax": 76.90000000037253
       },
       "draft_base_bytes_max": 96256,
       "draft_with_base_max": 1
     },
-    "draft_extra_ms": 2.6,
+    "draft_extra_ms": 1.5,
     "draft_memory": {
       "def": "그리는 중 사본(base) 바이트의 최대와 사본 든 텍스처 수의 최대(1차 [8] — 획은 주인 면 하나(54-1)라 1 · 고름이 있으면 그 수까지) · 커버리지 지도는 bbox×4바이트(획마다 해제)",
       "base_bytes_max": 96256,
       "with_base_max": 1
     },
-    "draft_max_extra_ms": 59.5,
-    "threshold_extra_ms": 12
+    "draft_max_extra_ms": 7.2,
+    "threshold_extra_ms": 12,
+    "gate_condition": {
+      "workers": 1,
+      "asserted": true
+    }
   }
 }
