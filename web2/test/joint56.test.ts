@@ -388,10 +388,14 @@ async function writeUnitLedger(patch: Record<string, unknown>) {
   let prev: Record<string, unknown> = {}
   try { prev = JSON.parse(readFileSync(f, 'utf8')) } catch { /* 첫 실행 */ }
   mkdirSync(resolve(here, '../../stage0/out'), { recursive: true })
+  // 블록 열쇠만 이월한다(2차 [13] — 초판의 최상위 낱값이 병합에 살아남아 같은 양이 두
+  // 값으로 남았다: 옛 열쇠는 걷는다)
+  const keep: Record<string, unknown> = {}
+  for (const k of ['gates', 'perf']) if (prev[k] !== undefined) keep[k] = prev[k]
   writeFileSync(f, JSON.stringify({
-    what: 'web2-56 — 접합의 단위 원장: 게이트 값(T·코어 반증·치유 경계·결정론·1링 — 리뷰어 1차 [2][3][12]: 원장 밖 측정은 안 걸린다 §5.1)과 지시 대역 성능(벽 30 · 접합 48)',
+    what: 'web2-56 — 접합의 단위 원장: 게이트 값(T·코어 반증·치유 경계·결정론·1링·비직각 마이터 — 리뷰어 1차 [2][3][12]·2차 [4][10]: 원장 밖 측정은 안 걸린다 §5.1)과 지시 대역 성능(벽 30 · 접합 48)',
     conditions: { canonical: 'LEDGER=1 npx vitest run test/joint56.test.ts' },
-    ...prev, ...patch,
+    ...keep, ...patch,
   }, null, 2))
 }
 
@@ -428,21 +432,69 @@ describe('56 ⑫ 원장 — 게이트 다섯의 값 (리뷰어 1차 [2][3][12] �
     const s1 = computeJoints(mv(4), OPT, cache).stats
     const s2 = computeJoints(mv(4), OPT, cache).stats
     const s3 = computeJoints(mv(4.02), OPT, cache).stats
+    // 비직각 마이터의 원장 값(2차 [10] — «모양의 정본»이 원장 밖이었다): 60° · off 's' ·
+    // 두께 다름 — ext가 t/2 항등이 아닌 비자명 값이 되고, 두 캡의 최대 간격이 «일치»의 값이다.
+    const A60 = mkWall(1, 0, 0, 4, 0, { front: 0, back: -0.2 })
+    const B60 = mkWall(2, 0, 0, Math.cos(Math.PI / 3) * 4, Math.sin(Math.PI / 3) * 4, { t: 0.35 })
+    const r60 = computeJoints([A60, B60], OPT)
+    const sA60 = shifted(r60, A60)!, sB60 = shifted(r60, B60)!
+    let capGap = 0
+    for (const y of [0, 2.5]) {
+      const a = sA60.find(s => Math.abs(s.v.y - y) < 1e-9)!
+      const b = sB60.find(s => Math.abs(s.v.y - y) < 1e-9)!
+      capGap = Math.max(capGap,
+        Math.min(len3(sub3(a.front, b.front)), len3(sub3(a.front, b.back))),
+        Math.min(len3(sub3(a.back, b.back)), len3(sub3(a.back, b.front))))
+    }
+    // 지시 대역의 1링(2차 [4] — 3면 분모로는 «전체»와 2:3으로만 갈린다): 30벽 격자에서
+    // 줄기 하나를 옮긴다 → 그 벽이 든 쌍(29)만 재계산.
+    const cache30: JointCache = new Map()
+    const grid = (dx: number): JointFaceIn[] => {
+      const out: JointFaceIn[] = []
+      let id = 1
+      for (const bx of [0, 20]) {
+        for (const z of [0, 3, 6]) out.push(mkWall(id++, bx, z, bx + 13, z, { pri: 4 }))
+        for (const rr of [0, 3]) {
+          for (let k = 0; k < 6; k++) {
+            const x = bx + 1 + k * 2 + (id === 10 ? dx : 0)   // 열째 벽(줄기 하나)만 민다
+            out.push(mkWall(id++, x, rr + 0.001, x, rr + 3 - 0.001, { pri: 3 }))
+          }
+        }
+      }
+      return out
+    }
+    computeJoints(grid(0), OPT, cache30)
+    const g30 = computeJoints(grid(0.02), OPT, cache30).stats
     await writeUnitLedger({
       gates: {
-        def: '게이트 다섯의 값(전부 세계 단위 · OPT = cleanup 0.05 / maxExt 0.6 / dot 0.9994). T: 줄기 두 표면의 정지 평면 잔차(가까운 면 z=+0.1) · 코어 반증: 막대 core=0에서 줄기가 이겨 먼 면(z=−0.1)까지 — 잔차와 승자. 치유: 간격 = cleanup×0.98/×1.02의 접합 수(붙음 1/안 붙음 0 — #71 경계 양쪽). 결정론: 이동 전체 소화값(정렬 행 수:해시)이 차례 역순·id 교체에 동일. 1링: 두꺼운 면 3·쌍 3에서 벽 하나 이동 — computed/cached와 재계산 면(분모 포함 · recomputedFaces는 «접합이 평가된» 면이다 — 기각 전 단계)',
+        def: '게이트의 값. ⚠ 단위·임계의 가름(2차 [8]): OPT(cleanup 0.05 / maxExt 0.6 / dot 0.9994)는 **기제 매개변수**(임의 세계 단위)이지 제품 임계(JOIN56_CLEANUP_MM 100 · MAXEXT 600mm)가 아니다 — 여기 경계 값(#71)이 지키는 것은 «반경 기제»이고, 제품 mm→세계 환산은 buildJoints 한 줄(C/mmPerUnit — 세션 팔 ⑩이 그 경로로 접합이 서는 것을 확인)이다: 제품 임계 100mm «자체»의 경계 실사용 실측은 없다(AS-C172). ⚠ 잔차의 가름(2차 [9] — 자기참조 유형 3): resid_max는 이동식이 그 평면 방정식을 «푸는» 구성이라 0이 보장이다(부동소수 확인일 뿐 — 임계로 안 읽는다). 정보를 나르는 것은 target_z의 **부호**(가까운/먼 면의 «선택» — 코어 반증에서 실제로 뒤집힌다)와 winner다. T: 정지 평면 z=+0.1(가까운 면) · 코어 반증: 막대 core=0 → 줄기 승·z=−0.1(먼 면). 치유: 간격 cleanup×0.98/×1.02의 접합 수(1/0). 결정론: 이동 전체 소화값(정렬 행 수:해시)이 차례 역순·id 교체에 동일. 1링: recomputedFaces = «재계산된 쌍 중 접합(rec)을 낸 쌍»의 면(2차 [3] — 평행·무접합 쌍(예: 3면 픽스처의 (B,C))은 재계산돼도 안 들고, 충돌 기각(한 모서리 한 접합) «전» 단계라 방 코너 e2e에선 기각 쌍의 면이 든다 — 두 원장이 같은 코드 같은 정의다). miter60: 60°·off s·두께 다름의 이동량(비자명 — t/2 항등 아님)과 캡 최대 간격(일치의 값). onering_30: 지시 대역(2차 [4]) — 벽 30·쌍 435에서 줄기 하나 이동',
         t_near: { target_z: 0.1, resid_max: residNear },
         t_core_flip: { target_z: -0.1, resid_max: residFar, winner_is_stem: rC.joins[0]!.winner === 1 },
         heal: { in_dist: +(OPT.cleanupW * 0.98).toFixed(4), joins_in: heal(0.98), out_dist: +(OPT.cleanupW * 1.02).toFixed(4), joins_out: heal(1.02), cleanup_w: OPT.cleanupW },
         determinism: { digest_base: dA, digest_reversed: dB, digest_new_ids: dC, all_equal: dA === dB && dB === dC },
+        miter60: {
+          tie: r60.joins[0]!.tie,
+          ext_a: { front: +r60.joins[0]!.extA.front.toFixed(6), back: +r60.joins[0]!.extA.back.toFixed(6) },
+          ext_b: r60.joins[0]!.extB && { front: +r60.joins[0]!.extB.front.toFixed(6), back: +r60.joins[0]!.extB.back.toFixed(6) },
+          cap_gap_max_world: capGap,
+        },
         onering: {
           thick_faces: 3, pairs: 3, joins: 2,
           first: { computed: s1.computed, cached: s1.cached },
           unchanged: { computed: s2.computed, cached: s2.cached },
           moved_one: { computed: s3.computed, cached: s3.cached, recomputedFaces: s3.recomputedFaces },
         },
+        onering_30: {
+          walls: 30, pairs: 435,
+          moved_one: { computed: g30.computed, cached: g30.cached, recomputed_faces_n: g30.recomputedFaces.length },
+        },
       },
     })
+    expect(r60.joins[0]!.tie).toBe(true)
+    expect(capGap, '비직각 캡 일치 — 두 캡이 같은 자리(계단·이음선 0의 기하)').toBeLessThan(C.JOIN56_PLANE_EPS)
+    expect(g30.computed, '지시 대역 1링 — 옮긴 벽이 든 쌍(29)만 재계산').toBe(29)
+    expect(g30.cached).toBe(435 - 29)
+    expect(g30.recomputedFaces.length, '재계산 면이 전체(30)가 아니다 — 1링').toBeLessThan(5)
     expect(residNear).toBeLessThan(C.JOIN56_PLANE_EPS)
     expect(residFar).toBeLessThan(C.JOIN56_PLANE_EPS)
     expect(dA === dB && dB === dC).toBe(true)

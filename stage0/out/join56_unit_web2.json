@@ -1,16 +1,10 @@
 {
-  "what": "web2-56 — 접합 계산(computeJoints)의 지시 대역 성능(벽 30 · 접합 48). 프레임 몫이 아니라 recompute 몫이다 — 접합은 메시 수를 안 늘린다(정점 이동뿐). 절대 ms는 기계 몫(#47) — 회귀 비교는 같은 원장의 전값과",
+  "what": "web2-56 — 접합의 단위 원장: 게이트 값(T·코어 반증·치유 경계·결정론·1링·비직각 마이터 — 리뷰어 1차 [2][3][12]·2차 [4][10]: 원장 밖 측정은 안 걸린다 §5.1)과 지시 대역 성능(벽 30 · 접합 48)",
   "conditions": {
-    "canonical": "LEDGER=1 npx vitest run test/joint56.test.ts",
-    "walls": 30,
-    "joins": 48
+    "canonical": "LEDGER=1 npx vitest run test/joint56.test.ts"
   },
-  "fresh_ms_median": 3.338,
-  "fresh_ms_max": 4.628,
-  "cached_ms_median": 2.935,
-  "note_82": "문턱 없음 — 추세 측정. 값의 자리(#42(e)): 접합 수는 위 팔이 48로 세어 지킨다",
   "gates": {
-    "def": "게이트 다섯의 값(전부 세계 단위 · OPT = cleanup 0.05 / maxExt 0.6 / dot 0.9994). T: 줄기 두 표면의 정지 평면 잔차(가까운 면 z=+0.1) · 코어 반증: 막대 core=0에서 줄기가 이겨 먼 면(z=−0.1)까지 — 잔차와 승자. 치유: 간격 = cleanup×0.98/×1.02의 접합 수(붙음 1/안 붙음 0 — #71 경계 양쪽). 결정론: 이동 전체 소화값(정렬 행 수:해시)이 차례 역순·id 교체에 동일. 1링: 두꺼운 면 3·쌍 3에서 벽 하나 이동 — computed/cached와 재계산 면(분모 포함 · recomputedFaces는 «접합이 평가된» 면이다 — 기각 전 단계)",
+    "def": "게이트의 값. ⚠ 단위·임계의 가름(2차 [8]): OPT(cleanup 0.05 / maxExt 0.6 / dot 0.9994)는 **기제 매개변수**(임의 세계 단위)이지 제품 임계(JOIN56_CLEANUP_MM 100 · MAXEXT 600mm)가 아니다 — 여기 경계 값(#71)이 지키는 것은 «반경 기제»이고, 제품 mm→세계 환산은 buildJoints 한 줄(C/mmPerUnit — 세션 팔 ⑩이 그 경로로 접합이 서는 것을 확인)이다: 제품 임계 100mm «자체»의 경계 실사용 실측은 없다(AS-C172). ⚠ 잔차의 가름(2차 [9] — 자기참조 유형 3): resid_max는 이동식이 그 평면 방정식을 «푸는» 구성이라 0이 보장이다(부동소수 확인일 뿐 — 임계로 안 읽는다). 정보를 나르는 것은 target_z의 **부호**(가까운/먼 면의 «선택» — 코어 반증에서 실제로 뒤집힌다)와 winner다. T: 정지 평면 z=+0.1(가까운 면) · 코어 반증: 막대 core=0 → 줄기 승·z=−0.1(먼 면). 치유: 간격 cleanup×0.98/×1.02의 접합 수(1/0). 결정론: 이동 전체 소화값(정렬 행 수:해시)이 차례 역순·id 교체에 동일. 1링: recomputedFaces = «재계산된 쌍 중 접합(rec)을 낸 쌍»의 면(2차 [3] — 평행·무접합 쌍(예: 3면 픽스처의 (B,C))은 재계산돼도 안 들고, 충돌 기각(한 모서리 한 접합) «전» 단계라 방 코너 e2e에선 기각 쌍의 면이 든다 — 두 원장이 같은 코드 같은 정의다). miter60: 60°·off s·두께 다름의 이동량(비자명 — t/2 항등 아님)과 캡 최대 간격(일치의 값). onering_30: 지시 대역(2차 [4]) — 벽 30·쌍 435에서 줄기 하나 이동",
     "t_near": {
       "target_z": 0.1,
       "resid_max": 0
@@ -33,6 +27,18 @@
       "digest_new_ids": "8:1ade29a5",
       "all_equal": true
     },
+    "miter60": {
+      "tie": true,
+      "ext_a": {
+        "front": 0.331976,
+        "back": -0.101036
+      },
+      "ext_b": {
+        "front": -0.202073,
+        "back": 0.317543
+      },
+      "cap_gap_max_world": 0
+    },
     "onering": {
       "thick_faces": 3,
       "pairs": 3,
@@ -53,6 +59,15 @@
           3
         ]
       }
+    },
+    "onering_30": {
+      "walls": 30,
+      "pairs": 435,
+      "moved_one": {
+        "computed": 29,
+        "cached": 406,
+        "recomputed_faces_n": 3
+      }
     }
   },
   "perf": {
@@ -60,9 +75,9 @@
     "walls": 30,
     "joins": 48,
     "pairs": 435,
-    "fresh_ms_median": 3.317,
-    "fresh_ms_max": 4.23,
-    "cached_ms_median": 2.786,
+    "fresh_ms_median": 3.388,
+    "fresh_ms_max": 4.253,
+    "cached_ms_median": 2.717,
     "cached_run_stats": {
       "computed": 0,
       "cached": 435

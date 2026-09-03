@@ -213,6 +213,13 @@ test('① 중심 게이트 — 같은 분류 L의 계단 픽셀 0 (+D-2/D-3: 걸
     .filter(q => q.every(p => p !== null)) as { x: number; y: number }[][]
   expect(qP.length).toBeGreaterThan(0)
   const on200 = await stairPx(page, qP[0]!)
+  // 같은 동작점의 «끔»(2차 [7] — #12의 다른 반쪽): 표본이 작아 자 눈금(THICK55_PRESENCE_PX)
+  // 아래지만, 전부 계단(uncovered == total)이라는 값 자체는 선다.
+  await page.evaluate(() => (window as any).__b2.diag.joint56OffForTest(true))
+  await settle(page); await settle(page)
+  const off200 = await stairPx(page, qP[0]!)
+  await page.evaluate(() => (window as any).__b2.diag.joint56OffForTest(false))
+  await settle(page); await settle(page)
   // 측정 대역: t=400(계단 200×200mm) + 코너 4배 확대 — 끔 계단이 수백 px가 되는 눈금
   await thicken(page, ids.wallA, 400)
   await settle(page); await settle(page)
@@ -277,13 +284,17 @@ test('① 중심 게이트 — 같은 분류 L의 계단 픽셀 0 (+D-2/D-3: 걸
       stair_px_no_join: off.uncovered, probe_total_px: off.total,
     }, null, 2))
   OUT.stair = {
-    def: '중심 게이트: 평면 뷰 **벽-벽** 코너(⚠ 55 stair 구성값(buried 75·step 100mm)은 벽⊥바닥 코너의 «크기 눈금»이지 이 사각의 자리가 아니다 — 벽⊥바닥 접합은 둘만 두꺼울 때 서고 방 구석에선 복합 구석 기각 · 리뷰어 1차 [1] · DEFERRED) 표본 사각(15% 축소) 안의 «안 덮인» 픽셀(#gl 알파<128). ⚠ 픽셀 0의 뜻은 «코너가 덮였다»다 — 과잉 연장도 0을 낸다: 모양(정확한 마이터)의 정본은 단위(joint56.test) ①이다(자기 평면 잔차<1e-9 = 과잉이면 깨진다 · 캡 일치 · ext 크기 = 정확히 t/2 — 이 원장 ext_front/back ±0.1536이 그 값 · 리뷰어 1차 [5]). 동작점 둘(#12): 제품 대역 t=200·무확대(켬 0)와 측정 대역 t=400·4배 확대(켬 0 / 끔 실측 — 끔의 판별은 이 대역이 한다: t=200 무확대의 끔은 8px로 자 아래 · D-5). 끔 = D-3 ①(그 값이 pre 원장의 짝) · nj = 접합 끊기의 픽셀 값(끔과 같은 계단으로 복귀 = 끝이 평평)',
-    px_join_on_t200_nozoom: on200.uncovered, probe_total_t200: on200.total,
+    def: '중심 게이트: 평면 뷰 **벽-벽** 코너(⚠ 55 stair 구성값(buried 75·step 100mm)은 벽⊥바닥 코너의 «크기 눈금»이지 이 사각의 자리가 아니다 — 벽⊥바닥 접합은 둘만 두꺼울 때 서고 방 구석에선 복합 구석 기각 · 리뷰어 1차 [1] · DEFERRED) 표본 사각(15% 축소) 안의 «안 덮인» 픽셀(#gl 알파<128). ⚠ 픽셀 0의 뜻은 «코너가 덮였다»다 — 과잉 연장도 0을 낸다: 모양(정확한 마이터)의 정본은 단위(joint56.test) ①이다(자기 평면 잔차<1e-9 = 과잉이면 깨진다 · 캡 일치 · ext 크기 = 정확히 t/2 — 이 원장 ext_front/back ±0.1536이 그 값 · 리뷰어 1차 [5]). 동작점 둘(#12 · 2차 [7]): 제품 대역 t=200·무확대(켬 0 / 끔 = uncovered==total 전부 계단 — 표본이 자 눈금(THICK55_PRESENCE_PX) 아래라 판별은 증폭 대역이 한다 · D-5)와 측정 대역 t=400·4배 확대(켬 0 / 끔 실측). 끔 = D-3 ①(그 값이 pre 원장의 짝) · nj = 접합 끊기의 픽셀 값 — ⚠ 단일 접합 장면이라 nj와 전역 끔의 기하가 같은 것이 «정답»이고(2차 [16]) nj가 전역 스위치와 «다른 경로»(이동표가 아니라 모서리 자격)로 같은 결과에 닿는 것의 상태판은 e2e ④(wallJoin null)다',
+    px_join_on_t200_nozoom: on200.uncovered, px_join_off_t200_nozoom: off200.uncovered,
+    probe_total_t200: on200.total,
     px_join_on: on.uncovered, px_join_off: off.uncovered, px_join_on_again: on2.uncovered,
     px_nj_broken: nj.uncovered,
     probe_total_px: on.total, tie: j0.tie, ext_front: j1.extA.front, ext_back: j1.extA.back,
   }
   expect(on200.uncovered, '제품 대역(t=200·무확대) — 켬 0').toBeLessThanOrEqual(C.JOIN56_STAIR_PX_MAX)
+  // ⚠ «전부(== total)» 단언은 안 건다 — dpr2에서 33/34(AA 경계 한 픽셀)가 실측됐다:
+  // 표본이 작아 축소 여유(15%)가 AA를 다 못 벗어난다. 이 동작점의 값은 «켬 0 ↔ 끔 양성»이다.
+  expect(off200.uncovered, '제품 대역 끔 — 계단이 실재한다(값은 uncovered/total로 원장에)').toBeGreaterThan(0)
   expect(off.uncovered, 'D-3/D-2 — 걸음을 끄면 계단이 실제로 돌아온다').toBeGreaterThan(C.THICK55_PRESENCE_PX)
   expect(on.uncovered, '중심 게이트 — 계단 픽셀 0').toBeLessThanOrEqual(C.JOIN56_STAIR_PX_MAX)
   expect(on2.uncovered, '다시 켬 — 0으로 복귀').toBeLessThanOrEqual(C.JOIN56_STAIR_PX_MAX)
@@ -309,21 +320,23 @@ test('② 다른 분류 L — 버트·이긴 쪽 관통 (+반증: 우선순위 �
   await settle(page)
   const j2 = await wallJoin(page, ids.wallA, ids.wallB)
   expect(j2.winner, '뒤집힌 우선순위 — 벽이 관통한다').toBe(ids.wallA)
+  // ⚠ 값은 «벽 기준»으로 적는다(2차 [2] — 역할(win/lose) 키는 주인이 바뀌어도 값이 구성상
+  // 불변이라 이름표가 된다): 같은 벽(wall 분류 · wallA)의 이동량 부호가 −(버트 후퇴) →
+  // +(관통 연장)로 실제로 넘어가는 것이 반증의 값이다.
   const extOf = (rec: { a: number; extA: { front: number; back: number }; extB: { front: number; back: number } | null }, fid: number) =>
     rec.a === fid ? rec.extA : rec.extB!
-  const winB = extOf(j, j.winner), loseB = extOf(j, j.winner === ids.wallA ? ids.wallB : ids.wallA)
-  const winA = extOf(j2, j2.winner), loseA = extOf(j2, j2.winner === ids.wallA ? ids.wallB : ids.wallA)
-  // 관통 = 두 표면 다 늘어난다(+) · 버트 = 두 표면 다 물러난다(−) — 뒤집기 전·후 둘 다
-  expect(Math.min(winB.front, winB.back), '이긴 쪽(전) — 두 표면 연장(+)').toBeGreaterThan(0)
-  expect(Math.max(loseB.front, loseB.back), '진 쪽(전) — 두 표면 후퇴(−)').toBeLessThan(0)
-  expect(Math.min(winA.front, winA.back), '이긴 쪽(후 · 뒤집힘) — 벽이 연장(+)').toBeGreaterThan(0)
-  expect(Math.max(loseA.front, loseA.back), '진 쪽(후) — 외벽이 후퇴(−)').toBeLessThan(0)
+  const wallBefore = extOf(j, ids.wallA), extwBefore = extOf(j, ids.wallB)
+  const wallAfter = extOf(j2, ids.wallA), extwAfter = extOf(j2, ids.wallB)
+  expect(Math.max(wallBefore.front, wallBefore.back), '벽(전 · 진다) — 두 표면 후퇴(−)').toBeLessThan(0)
+  expect(Math.min(extwBefore.front, extwBefore.back), '외벽(전 · 이긴다) — 두 표면 연장(+)').toBeGreaterThan(0)
+  expect(Math.min(wallAfter.front, wallAfter.back), '벽(후 · 뒤집혀 이긴다) — 부호가 −에서 +로 넘어갔다').toBeGreaterThan(0)
+  expect(Math.max(extwAfter.front, extwAfter.back), '외벽(후 · 진다) — +에서 −로').toBeLessThan(0)
   OUT.butt = {
-    def: '다른 분류 L(벽3 ↔ 외벽4): tie=false · winner=외벽(관통 — 진 쪽 바깥 평면까지, 이동량은 세계 단위 extA/extB — 관통은 두 표면 +, 버트는 두 표면 −) · 반증 = pri 뒤집기(wall.pri 9)로 winner와 **이동량의 주인·부호가 실제로 넘어간다**(1차 [6] — 이름표 아님 #92: ext_*_after_flip이 그 값). T 접합·코어 반증(D-3 ③)의 판정자는 단위(joint56.test) ④·원장 gates 블록이다',
+    def: '다른 분류 L(벽3 ↔ 외벽4): tie=false · winner=외벽(관통 — 진 쪽 바깥 평면까지 · 관통은 두 표면 +, 버트는 두 표면 − · 세계 단위) · 반증 = pri 뒤집기(wall.pri 9). ⚠ 값은 벽 기준이다(2차 [2] — 역할 키는 주인이 바뀌어도 값이 구성상 같아 이름표가 된다 #92): ext_wall이 {−,−} → {+,+}로, ext_extw가 {+,+} → {−,−}로 **부호가 실제로 넘어간다**. T 접합·코어 반증(D-3 ③)의 판정자는 단위(joint56.test) ④·원장 gates 블록이다',
     winner_before: j.winner === ids.wallB ? 'extw' : 'wall',
     winner_after_flip: j2.winner === ids.wallA ? 'wall' : 'extw',
-    ext_win: winB, ext_lose: loseB,
-    ext_win_after_flip: winA, ext_lose_after_flip: loseA,
+    ext_wall_before: wallBefore, ext_extw_before: extwBefore,
+    ext_wall_after_flip: wallAfter, ext_extw_after_flip: extwAfter,
   }
 })
 
@@ -408,15 +421,17 @@ test('③ 55의 칠이 살아 있다 — 접합 켬/끔에 uv 불변 · 자국�
   await settle(page); await settle(page)
   const uvOn = await uvOf(), nOn = await blueN()
   OUT.paint_alive = {
-    def: '칠 생존 게이트. ⚠ 가름(1차 [9] — 자기참조 유형 3): uv 불변은 **구성 보장**이다(칠의 정본은 중심면의 자라 접합 코드가 그 필드에 닿지 않는다) — 여기서 재는 것은 측정이 아니라 «배선»이고(배선이 틀리면 값이 크게 갈린다 — paint54 front의 그 규약), **측정의 몫은 픽셀 실재**다: 앞면 칠 + 띠(e=1) 칠이 접합 켬/끔/켬 세 상태 전부 화면에 있다. px가 항등이 아닌 것(켬↔끔 ~6% 차)은 접합이 칠 텍스처 «메시» 정점을 면 메시와 같이 옮기기 때문이다(코너 근처 삼각의 UV 신축 — 없으면 칠막이 몸 밖에 뜬다). ⚠ 캡 «끝단»(이동으로 늘어난 영역)의 칠 적중은 자 밖 — DEFERRED 그 행이 경계다',
+    def: '칠 생존 게이트. ⚠ 가름(1차 [9] — 자기참조 유형 3): uv 불변은 **구성 보장**이다(칠의 정본은 중심면의 자라 접합 코드가 그 필드에 닿지 않는다) — 여기서 재는 것은 측정이 아니라 «배선»이고, **측정의 몫은 픽셀 실재**다. 값의 자리(2차 [6] — 두 자가 섞여 있었다): px_wall_on = 벽 앞면 칠«만»(띠 칠을 얹기 전 · 켬) · px_all_* = 벽+띠 칠(켬/끔/다시 켬). px_all_on == px_all_on2(바이트급 동일 — 같은 상태 같은 수: 되돌림의 값)이고 켬↔끔의 차(대역 20~40%)는 결함이 아니라 기하가 실제로 다른 것이다(마이터 캡 ↔ 버트 캡 — 띠 칠이 걸친 사각의 자리·텍스처 신축이 갈린다). 판별력은 «세 상태 전부 실재 + 같은 상태 복귀 동일»이 든다. ⚠ 캡 «끝단»(이동으로 늘어난 영역)의 칠 적중은 자 밖 — DEFERRED 그 행이 경계다',
     uv_face_unchanged: uv0 === uvOff && uv0 === uvOn,
     uv_band_unchanged: bandStroke!.uv === bandOff,
-    px_base: nBase, px_on: n0, px_off: nOff, px_on2: nOn,
+    px_wall_on: n0, px_all_on: nBase, px_all_off: nOff, px_all_on2: nOn,
+    all_on_returns_equal: nBase === nOn,
   }
   expect(uv0 === uvOff && uv0 === uvOn, '앞면 uv 불변 — 배선 확인').toBe(true)
   expect(bandStroke!.uv === bandOff, '띠 (s,u) 불변 — 배선 확인').toBe(true)
   expect(nOff, '끔에서도 자국(앞면+띠)이 있다').toBeGreaterThan(10)
   expect(nOn, '켬에서도 자국이 있다').toBeGreaterThan(10)
+  expect(nBase, '같은 상태(켬) 복귀 — 자국 수가 그대로다(렌더 결정론)').toBe(nOn)
 })
 
 test('④ 손통 「접합」 줄 — 34-0 몫(#96·#97) · 끊기의 값(접합이 실제로 빠진다)', async ({ page }) => {
