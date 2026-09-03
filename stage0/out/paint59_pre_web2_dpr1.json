@@ -1,0 +1,394 @@
+{
+  "conditions": {
+    "workers": 1,
+    "project": "dpr1",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/paint59.spec.ts (워커 1 — #99) · 원장 paint59_pre"
+  },
+  "what": "web2-59 — 칠 엔진의 뼈대: 수리 «전» 실측(D-2). ① 미리보기↔확정 픽셀 차(줌 셋 × 면 둘) ② 자기 교차 누적 ③ 끝점 대역 잉크 ④ 결 위상 상관 ⑤ coalesced 곡선 이탈 ⑥ 성능(그리는 중 프레임)",
+  "note_pitfalls": "#101(web2 러너) · #99(병합-쓰기 · 열쇠 수) · #102(한 test 안 ?reset 재호출 없음 — 장면 하나에 undo로 지운다) · #11(대역 분모 = 몸통 창 · def) · #12·#13(창 크기·문턱을 값으로 · 훑기는 게이트 판) · #92(판정자는 픽셀·수) · #5(자기참조: ①은 같은 캔버스에 같은 함수로 그리면 구성상 0에 가깝다 — 그래서 diff의 «0 아님»은 uv·굵기·압력 경로의 갈림을 잰다. 반증은 벡터 미리보기 되돌림)",
+  "self_cross": {
+    "def": "굵기 20의 한 획이 (680,y)에서 자기 자신과 ~38°로 교차한다. 창은 굵기 폭(20×20 css) — 교차 창 잉크 ÷ 몸통 창 둘(600·760 · 사선에서 12px 넘게 떨어짐)의 평균. 획 «안» 누적이 있으면 > 1(도장 알파의 1−(1−a)^n). 마커는 canvas stroke() 한 번이라 구성상 1 대역이 예상(D-4: 46 「겹치면 진해진다」는 획 «사이»의 계약 — 값이 가른다)",
+    "rows": {
+      "brush": {
+        "cross": 24699.66666666669,
+        "body_l": 17507.999999999978,
+        "body_r": 18651.99999999999,
+        "cross_over_body": 1.3661
+      },
+      "marker": {
+        "cross": 33919.333333333176,
+        "body_l": 33037.33333333321,
+        "body_r": 29293.999999999935,
+        "cross_over_body": 1.0884
+      },
+      "cp": {
+        "cross": 46749.66666666656,
+        "body_l": 29264.666666666682,
+        "body_r": 25623.666666666664,
+        "cross_over_body": 1.7034
+      },
+      "pencil": {
+        "cross": 50103.33333333333,
+        "body_l": 41576.33333333329,
+        "body_r": 33657.333333333314,
+        "cross_over_body": 1.3319
+      }
+    }
+  },
+  "ends": {
+    "def": "감속 몸짓(처음·끝 15% 잘게) 획의 안쪽 대역(3~28% · 37.5~62.5% · 72~97% — 같은 폭 25%)의 어둡기 합. 분모 mid(#11). mark58 게이트 ①의 자 그대로(#54) — 이 라운드는 그 위에 «획 안 누적 제거»가 대역 값을 어떻게 움직이는지 본다",
+    "rows": {
+      "brush": {
+        "start": 87572.66666666679,
+        "mid": 97894.66666666743,
+        "end": 66944.33333333286,
+        "start_over_mid": 0.8946,
+        "end_over_mid": 0.6838
+      },
+      "marker": {
+        "start": 176668.3333333336,
+        "mid": 163208.66666666567,
+        "end": 149567.99999999773,
+        "start_over_mid": 1.0825,
+        "end_over_mid": 0.9164
+      },
+      "cp": {
+        "start": 187220.9999999995,
+        "mid": 162937.00000000035,
+        "end": 161577.33333333343,
+        "start_over_mid": 1.149,
+        "end_over_mid": 0.9917
+      },
+      "pencil": {
+        "start": 206560.99999999974,
+        "mid": 196852.66666666578,
+        "end": 184684.33333333302,
+        "start_over_mid": 1.0493,
+        "end_over_mid": 0.9382
+      }
+    }
+  },
+  "grain_phase": {
+    "def": "연필(굵기 20 · 간격 0.25w = 5px) 수평 획 두 개 — 같은 자리(A·A2 — 결정론 대조: 1이어야 한다 #5)와 시작 x가 2.5px(반 간격) 어긋난 B. 가운데 200×28 css 창의 어둡기 지도 피어슨 상관. 결이 도장마다면 위상 이동이 도장의 결 칸을 바꿔 상관이 떨어지고, 결이 면 고정 마스크면 도장 위상은 결에 안 실려 상관이 높다. 판별 값은 corr_phase — 수리 전/후 비교",
+    "corr_same": {
+      "n": 5600,
+      "corr": 1
+    },
+    "corr_phase": {
+      "n": 5600,
+      "corr": 0.9848
+    }
+  },
+  "coalesced": {
+    "def": "참 호(부풂 60px)를 8걸음 현으로 전달하고, 묶음 패치가 이벤트당 호 위 3점을 더 준다(input.spec 1-a의 프로토타입 패치 #54 — 헤드리스는 묶음이 안 생기는 대역이라 패치가 가르는 수다). n = 커밋된 점 수 · worst/mean = 참 호에서 확정 점렬(uv → 3D → 화면)까지의 최대/평균 이탈 px. on(3점 추가) vs off(패치 무효 — 전달 이벤트만)",
+    "on": {
+      "n": 33,
+      "uv_pts": 33,
+      "worst": 0.072,
+      "mean": 0.027,
+      "cap": {
+        "stroke": {
+          "pointerType": "mouse",
+          "events": 9,
+          "points": 33,
+          "extra": 24
+        },
+        "tally": {
+          "mouse": {
+            "events": 100,
+            "extra": 24,
+            "bundled": 86,
+            "empty": 14,
+            "noApi": 0
+          }
+        },
+        "lastRaw": {
+          "type": "mouse",
+          "button": -1,
+          "buttons": 1,
+          "pressure": 0.5,
+          "tiltX": 0,
+          "tiltY": 0,
+          "twist": 0,
+          "eraserBit": false
+        },
+        "eraserBitSeen": false,
+        "pressureLevels": {
+          "type": "mouse",
+          "raw": 1,
+          "quantized": 1
+        },
+        "brnlBytes": 4344
+      }
+    },
+    "off": {
+      "n": 9,
+      "uv_pts": 9,
+      "worst": 1.111,
+      "mean": 0.436,
+      "cap": {
+        "stroke": {
+          "pointerType": "mouse",
+          "events": 9,
+          "points": 9,
+          "extra": 0
+        },
+        "tally": {
+          "mouse": {
+            "events": 112,
+            "extra": 27,
+            "bundled": 96,
+            "empty": 16,
+            "noApi": 0
+          }
+        },
+        "lastRaw": {
+          "type": "mouse",
+          "button": -1,
+          "buttons": 1,
+          "pressure": 0.5,
+          "tiltX": 0,
+          "tiltY": 0,
+          "twist": 0,
+          "eraserBit": false
+        },
+        "eraserBitSeen": false,
+        "pressureLevels": {
+          "type": "mouse",
+          "raw": 1,
+          "quantized": 1
+        },
+        "brnlBytes": 4009
+      }
+    },
+    "samples_ratio": 3.667
+  },
+  "perf": {
+    "def": "면 faceN(paint50 픽스처 그대로 — 스무 면 목표에 셋 모자란다 · note_89 준용) · 칠 40붓(연필 12px) 장면. idle = invalidate 40프레임의 rAF 간격(중앙·p90 · 두 번 — 잡음 바닥) · drafting = 합성 pointermove 40회(각각 다음 rAF까지 ms — «그리는 중» 한 프레임의 벽시계)와 그동안의 frameCost(r3 = render3d · d2 = draw2d 중앙값). placed_after = 합성 획이 실제로 커밋됐는가(입력 경로 무변의 증거)",
+    "faces": 17,
+    "paint_strokes": 30,
+    "placed_after": 1,
+    "textures": 17,
+    "bytes_total": 3776512,
+    "levels": [
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512
+    ],
+    "idle_ms": {
+      "median": 33.4,
+      "p90": 36.8
+    },
+    "idle2_ms": {
+      "median": 32.5,
+      "p90": 34.9
+    },
+    "noise_floor_ms": 0.9,
+    "drafting_ms": {
+      "median": 33.7,
+      "p90": 36.9,
+      "max": 79,
+      "frame_cost": {
+        "n": 43,
+        "r3": 1.1000000000931323,
+        "bs": 0,
+        "d2": 0.30000000004656613,
+        "total": 1.4000000001396984,
+        "totalMax": 59.699999999953434
+      }
+    }
+  },
+  "preview_vs_commit": {
+    "def": "같은 획을 긋는 동안(마지막 이동 후 150ms · 뗌 전)과 뗀 뒤(400ms · 커밋·재굽기 후)의 «합성 화면»(종이 + gl + brushc + ink) 상자(획 bbox ± 40) 픽셀 차. diff_frac = 밝기 차 > 8(AA 요동 위)인 픽셀 비율 · mean_abs = 평균 절대차 · ink_a/ink_b = 각 스냅의 잉크 픽셀 수(종이보다 12 어두움). 줌은 휠(커서 중심 — 앱 경로)로 목표 0.5·1·4에 ±8% 안(뷰는 조합마다 {s 1, ox 0, oy 0}으로 초기화 후 그 면 중심 커서로 줌). 면 둘 = 벽(400×280급 · 정면) · 바닥(모로 보임 — 원근 단축). primed = 상자 밖 점 하나로 면을 먼저 «칠한 면» 상태로 둔다(면 재질 전환(48-9)이 상자 전체를 갈리게 하는 것을 뺀다 — 엔진의 차만 남긴다)",
+    "rows": [
+      {
+        "face": "wall",
+        "face_id": 9,
+        "zoom_target": 0.5,
+        "zoom": 0.487,
+        "center": [
+          735,
+          489
+        ],
+        "box": [
+          635,
+          449,
+          200,
+          80
+        ],
+        "primed": 1,
+        "placed": 1,
+        "tex_level": [
+          256
+        ],
+        "tex_clamped": [
+          false
+        ],
+        "px": 16000,
+        "diff_frac": 0.164,
+        "mean_abs": 6.708,
+        "ink_a": 2922,
+        "ink_b": 3028
+      },
+      {
+        "face": "floor",
+        "face_id": 10,
+        "zoom_target": 0.5,
+        "zoom": 0.487,
+        "center": [
+          502,
+          641
+        ],
+        "box": [
+          422,
+          601,
+          160,
+          80
+        ],
+        "primed": 1,
+        "placed": 1,
+        "tex_level": [
+          512
+        ],
+        "tex_clamped": [
+          false
+        ],
+        "px": 12800,
+        "diff_frac": 0.2551,
+        "mean_abs": 18.701,
+        "ink_a": 6869,
+        "ink_b": 7424
+      },
+      {
+        "face": "wall",
+        "face_id": 9,
+        "zoom_target": 1,
+        "zoom": 1,
+        "center": [
+          735,
+          489
+        ],
+        "box": [
+          575,
+          449,
+          320,
+          80
+        ],
+        "primed": 1,
+        "placed": 1,
+        "tex_level": [
+          512
+        ],
+        "tex_clamped": [
+          false
+        ],
+        "px": 25600,
+        "diff_frac": 0.1982,
+        "mean_abs": 10.271,
+        "ink_a": 4992,
+        "ink_b": 4927
+      },
+      {
+        "face": "floor",
+        "face_id": 10,
+        "zoom_target": 1,
+        "zoom": 1,
+        "center": [
+          502,
+          641
+        ],
+        "box": [
+          382,
+          601,
+          240,
+          80
+        ],
+        "primed": 1,
+        "placed": 1,
+        "tex_level": [
+          1024
+        ],
+        "tex_clamped": [
+          false
+        ],
+        "px": 19200,
+        "diff_frac": 0.2755,
+        "mean_abs": 16.634,
+        "ink_a": 12523,
+        "ink_b": 13982
+      },
+      {
+        "face": "wall",
+        "face_id": 9,
+        "zoom_target": 4,
+        "zoom": 3.743,
+        "center": [
+          736,
+          487
+        ],
+        "box": [
+          546,
+          447,
+          380,
+          80
+        ],
+        "primed": 1,
+        "placed": 1,
+        "tex_level": [
+          1024
+        ],
+        "tex_clamped": [
+          true
+        ],
+        "px": 30400,
+        "diff_frac": 0.2069,
+        "mean_abs": 9.933,
+        "ink_a": 6229,
+        "ink_b": 6144
+      },
+      {
+        "face": "floor",
+        "face_id": 10,
+        "zoom_target": 4,
+        "zoom": 3.743,
+        "center": [
+          502,
+          643
+        ],
+        "box": [
+          312,
+          603,
+          380,
+          80
+        ],
+        "primed": 1,
+        "placed": 1,
+        "tex_level": [
+          1024
+        ],
+        "tex_clamped": [
+          true
+        ],
+        "px": 30400,
+        "diff_frac": 0.3087,
+        "mean_abs": 22.912,
+        "ink_a": 19723,
+        "ink_b": 22070
+      }
+    ]
+  }
+}
