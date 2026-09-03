@@ -1,0 +1,306 @@
+{
+  "conditions": {
+    "workers": 1,
+    "project": "dpr1",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/mark58.spec.ts (워커 1 — #99) · 사전 동결: mark58_pre_web2_dpr*.json"
+  },
+  "what": "web2-58 — 자국 게이트: 끝점(도장 균일·끝 창 강조 없음) · 브러시 통계 갈림 · 엔진 하나·데이터 격리 · 실험실. 첫 블록(stamps·ink)은 mark58_pre와 같은 자의 «현행» 값",
+  "note_d4": "D-4 — 지시 가설(「간격이 시간 기반」)의 판정 자료. stampsOf는 코드상 등호장 재표집(거리 기반)이라 도장 수는 균일이 예상이고, 강조의 실제 후보는 마커 팁(PAINT51_MARKER_TIP_*)·붓 갈라짐(PAINT51_BRUSH_SPLIT_*)이다 — 값이 가른다",
+  "stamps": {
+    "def": "텍스처 px에서 획 진행축(x) 대역별 도장 수 — 대역 폭 15%씩이라 수 자체가 밀도 비교다. 지시 가설(시간 기반)이면 start·end ≫ mid",
+    "rows": {
+      "brush": {
+        "start": 32,
+        "mid": 28,
+        "end": 32,
+        "n": 204,
+        "len_px": 397.66412663047333
+      },
+      "marker": {
+        "n": 0,
+        "note": "이 도구는 도장 경로가 아니다(마커 = 띠+팁)"
+      },
+      "cp": {
+        "start": 8,
+        "mid": 8,
+        "end": 8,
+        "n": 52,
+        "len_px": 404.9145600903832
+      },
+      "pencil": {
+        "start": 10,
+        "mid": 10,
+        "end": 10,
+        "n": 62,
+        "len_px": 404.9145600903832
+      }
+    }
+  },
+  "ink": {
+    "def": "화면 창(대역 15% × 높이 26px)의 어둡기 합 — 대역 폭 동일이라 비가 곧 «단위 길이당 잉크». tip.*는 굵기 폭(20px) 좁은 창 — 끝점 «원형 강조»의 정조준 자(몸통 창도 같은 폭 · 둥근 끝은 창의 절반이 획 밖이라 1.0 아래가 기저다)",
+    "rows": {
+      "brush": {
+        "start": 53367.99999999974,
+        "mid": 59751.999999999556,
+        "end": 30095.333333333376,
+        "start_over_mid": 0.893158388003751,
+        "end_over_mid": 0.5036707278975364,
+        "tip": {
+          "start": 17970.999999999978,
+          "end": 7759.666666666668,
+          "body": 24887.000000000084,
+          "start_over_body": 0.7221039096717129,
+          "end_over_body": 0.31179598451668106
+        }
+      },
+      "marker": {
+        "start": 107708.33333333253,
+        "mid": 97961.3333333328,
+        "end": 87870.66666666664,
+        "start_over_mid": 1.0994984415619746,
+        "end_over_mid": 0.8969933715343514,
+        "tip": {
+          "start": 43566.99999999994,
+          "end": 30394.33333333325,
+          "body": 40876.33333333329,
+          "start_over_body": 1.0658245602589922,
+          "end_over_body": 0.7435679977819263
+        }
+      },
+      "cp": {
+        "start": 111312.66666666673,
+        "mid": 95972.33333333324,
+        "end": 82552.33333333342,
+        "start_over_mid": 1.1598412042359447,
+        "end_over_mid": 0.860168034537733,
+        "tip": {
+          "start": 42756.99999999999,
+          "end": 22486.99999999999,
+          "body": 43259.66666666665,
+          "start_over_body": 0.9883802464189124,
+          "end_over_body": 0.519814453802233
+        }
+      },
+      "pencil": {
+        "start": 129193.00000000015,
+        "mid": 122826.0000000001,
+        "end": 111803.00000000017,
+        "start_over_mid": 1.0518375588230509,
+        "end_over_mid": 0.9102551577027672,
+        "tip": {
+          "start": 52722.666666666635,
+          "end": 36850,
+          "body": 54346.66666666658,
+          "start_over_body": 0.970117762512268,
+          "end_over_body": 0.6780544651619246
+        }
+      }
+    }
+  },
+  "gate_endpoint": {
+    "def": "안쪽 대역(폭 15% — 포함 끝점 양자화 밖) 도장 밀도 ±C.PAINT58_STAMP_BAND_TOL · 끝 창(굵기 폭)/몸통 창 ≤ 1.1(도구 넷 전수). 반증 = 팁 되켬(setBrushTuneForTest)에서 같은 술어가 죽는다",
+    "tol": 0.1,
+    "inner": {
+      "brush": {
+        "start": 29,
+        "mid": 28,
+        "end": 28
+      },
+      "cp": {
+        "start": 8,
+        "mid": 8,
+        "end": 8
+      },
+      "pencil": {
+        "start": 9,
+        "mid": 10,
+        "end": 9
+      }
+    },
+    "tips": {
+      "brush": {
+        "start_over_body": 0.7221039096717129,
+        "end_over_body": 0.31179598451668106
+      },
+      "marker": {
+        "start_over_body": 1.0658245602589922,
+        "end_over_body": 0.7435679977819263
+      },
+      "cp": {
+        "start_over_body": 0.9883802464189124,
+        "end_over_body": 0.519814453802233
+      },
+      "pencil": {
+        "start_over_body": 0.970117762512268,
+        "end_over_body": 0.6780544651619246
+      }
+    },
+    "tip_on_start_over_body": 1.3742915623547485
+  },
+  "gate_stats": {
+    "def": "몸통 창(양끝 60px 제외 · 높이 24px) — coverage(dk>12) · deep_coverage(dk>60 — 구멍·결 골이 빠지는 눈금: dk>12 하나는 포화했다, 실측 전부 1) · mean_dark · transitions(중앙 행 깊음↔아님 / 100css px). 술어 넷(마커>색연필 깊은 덮임 · 색연필>마커 전이 · 연필>마커 농도 · 붓<마커 농도) + 짝별 갈림(pairs — 여섯 짝 전부 최대 상대 차 > 0.1. ⚠ 연필 중앙 행 전이는 이 굵기에서 0 — 겹침이 골을 메운다: 결 판정자는 brush51 ③)",
+    "rows": {
+      "brush": {
+        "coverage": 1,
+        "deep_coverage": 0.103125,
+        "mean_dark": 44.69034722222127,
+        "transitions": 0
+      },
+      "marker": {
+        "coverage": 1,
+        "deep_coverage": 0.8227083333333334,
+        "mean_dark": 83.84284722221994,
+        "transitions": 0
+      },
+      "cp": {
+        "coverage": 1,
+        "deep_coverage": 0.6079166666666667,
+        "mean_dark": 86.29236111111118,
+        "transitions": 3
+      },
+      "pencil": {
+        "coverage": 1,
+        "deep_coverage": 0.7389583333333334,
+        "mean_dark": 98.70930555555589,
+        "transitions": 0
+      }
+    },
+    "pairs": {
+      "brush_vs_marker": 0.8746518105849582,
+      "brush_vs_cp": 1,
+      "brush_vs_pencil": 0.8604454468564984,
+      "marker_vs_cp": 1,
+      "marker_vs_pencil": 0.15060847859950502,
+      "cp_vs_pencil": 1
+    }
+  },
+  "gate_engine": {
+    "def": "엔진 하나 = 같은 열쇠(spacingK 0.3→1.2)가 도장 브러시 셋의 도장 수를 전부 줄인다(<0.6배 — 한 코드 경로가 한 필드를 소비). 격리(D-3) = 연필만 되돌리면 연필만 복귀(±2%) · 색연필은 그대로",
+    "base": {
+      "brush": 204,
+      "cp": 52,
+      "pencil": 62
+    },
+    "wide": {
+      "brush": 52,
+      "cp": 14,
+      "pencil": 14
+    },
+    "mixed": {
+      "brush": 52,
+      "cp": 14,
+      "pencil": 62
+    }
+  },
+  "gate_lab": {
+    "def": "손잡이 23(값 13 + 곡선 10) × 도구 4 — 각 손잡이를 끝값으로 밀어 시험 판 해시가 바뀌는 도구 목록. 술어 = 죽은 손잡이 0(모든 손잡이가 적어도 한 도구에서 자국을 바꾼다 — 모드별 유효 축은 matrix가 값)",
+    "matrix": {
+      "tunelab-k-spacingK": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-k-alpha": [
+        "pencil",
+        "marker",
+        "cp",
+        "brush"
+      ],
+      "tunelab-k-hardness": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-k-scatter": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-k-grainK": [
+        "pencil",
+        "cp"
+      ],
+      "tunelab-k-grainFloor": [
+        "pencil",
+        "cp"
+      ],
+      "tunelab-k-cpSkipTh": [
+        "pencil",
+        "cp"
+      ],
+      "tunelab-c-density-0": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-c-density-1": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-c-density-2": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-c-density-3": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-c-density-4": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-c-width-0": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-c-width-1": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-c-width-2": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-c-width-3": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-c-width-4": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-k-tipAlpha": [
+        "marker"
+      ],
+      "tunelab-k-tipLenK": [
+        "marker"
+      ],
+      "tunelab-k-cpSkipAlpha": [
+        "cp"
+      ],
+      "tunelab-k-bristles": [
+        "brush"
+      ],
+      "tunelab-k-splitT": [
+        "brush"
+      ],
+      "tunelab-k-splitK": [
+        "brush"
+      ]
+    },
+    "dead": []
+  },
+  "gate_bake": {
+    "stored_key": "b2.brushTune.v1",
+    "revived_tipAlpha": 0.27
+  }
+}

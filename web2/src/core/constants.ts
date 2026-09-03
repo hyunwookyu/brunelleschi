@@ -783,6 +783,15 @@ export const C = {
   /** 곱 게이트 ④(선이 산다)의 문 — 위 모서리 상자의 선 잉크(#brushc) 최소 픽셀(2차 [3]). */
   PAINT50_LINE_INK_MIN_PX: 20,
 
+  // ── 자국(web2-58) — 크기 슬라이더의 도구별 최대(화면 px · **사람이 준 값** — 58-1 문면
+  //    「마카는 100, 붓은 500, 색연필은 50, 연필은 50」. 51의 «최대 40» 상한과 트레이
+  //    이산화(R1 오적용)를 철회한 자리 — DECISIONS 참조) ─────────────────────────────
+  PAINT58_MAX_W: { brush: 500, marker: 100, cp: 50, pencil: 50 } as { readonly brush: number; readonly marker: number; readonly cp: number; readonly pencil: number },
+  /** 슬라이더 최소(px) — 0은 자국이 없다. 0.5는 렌더 하한(facetex의 wPx 하한)과 같은 급. */
+  PAINT58_MIN_W: 1,
+  /** 끝점 뭉침 게이트(58-4) — 시작·중간·끝 «단위 길이당 도장 수»의 허용 편차(지시 ±10%). */
+  PAINT58_STAMP_BAND_TOL: 0.10,
+
   // ── 자국의 질(web2-51) — 브러시 넷의 성질 상수. 전부 «절차 생성»의 손잡이다 ──────
   /** 압력 → **농도** 직선 프로필의 기울기·바닥: density = min(1, 바닥 + 기울기 × press).
    *  지시 문면(26-6 재인용) «농도의 기울기가 굵기보다 가파르다»가 두 SLOPE의 부등식이고,

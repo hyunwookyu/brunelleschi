@@ -108,14 +108,21 @@ const shotStats = async (page: Page, x: number, y: number, w: number, h: number)
 }
 
 /** 칠통에서 도구·색·굵기를 고른다 — 화면 경로 그대로(#88) */
-async function pickPaint(page: Page, opt: { swatch?: string; sizeId?: string; instr?: string } = {}) {
+async function pickPaint(page: Page, opt: { swatch?: string; sizePx?: number; instr?: string } = {}) {
   // ⚠ 재누름은 **토글**이다(46의 문법): 이미 칠 도구를 든 상태면 한 번에 열리고 두 번이면
   //   다시 접힌다. 두 번을 늘 누르던 초판은 두 번째 호출에서 통을 **닫아 놓고** 줄을 찾다가
   //   시간 초과했다 — 「열려 있는가」를 값으로 보고 필요한 만큼만 누른다(#88).
   await page.click('#btn-paint')                     // 도구(이미 들었으면 이 한 번이 통을 연다)
   if (await page.locator('#painttray.open').count() === 0) await page.click('#btn-paint')
   if (opt.swatch) await page.click(`#${opt.swatch}`)
-  if (opt.sizeId) await page.click(`#${opt.sizeId}`)
+  if (opt.sizePx !== undefined) {
+    // 58-1 — 크기는 슬라이더다(제품 핸들러 그대로 input 이벤트로 넣는다)
+    await page.evaluate((v) => {
+      const el = document.getElementById('paint-size-range') as HTMLInputElement
+      el.value = String(v)
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+    }, opt.sizePx)
+  }
   if (opt.instr) await page.click(`#btn-paint-${opt.instr}`)
   await page.mouse.click(150, 700)                   // 통 밖 — 접는다(빈 종이 구석)
   await page.waitForTimeout(60)
@@ -224,11 +231,11 @@ test('③ 48-2 크기 트레이 — 고른 칸의 굵기가 화면의 자국 폭
   // ⚠ web2-50 — 자가 #gl의 **따뜻한 띠**다(벽돌 톤 — 채움·무늬(무채색)와 갈린다). 굵기의
   // 저장 단위는 세계로 바뀌었지만(원근을 받는다) 그은 그 자리의 화면 폭은 여전히 트레이
   // px 대역이다 — 이 팔이 재는 «칸이 폭으로 갈린다»는 그대로 선다.
-  await pickPaint(page, { swatch: 'swatch-brick-0', sizeId: 'btn-paint-w-2_5', instr: 'marker' })
+  await pickPaint(page, { swatch: 'swatch-brick-0', instr: 'marker', sizePx: 2.5 })
   await drawLine(page, 520, 418, 580, 418)
   await page.waitForTimeout(150)
   const thin = await inkRows(page, 510, 409, 80, 18)
-  await pickPaint(page, { sizeId: 'btn-paint-w-20' })
+  await pickPaint(page, { sizePx: 20 })
   await drawLine(page, 520, 452, 580, 452)
   await page.waitForTimeout(200)
   const thick = await inkRows(page, 510, 434, 80, 36)
@@ -399,7 +406,9 @@ test('⑦ 48-10 툴팁 — 44~47이 더한 손잡이 전수에 설명이 있다'
     'btn-floor-area', 'btn-person', 'btn-stencil', 'stencil-save', 'stencil-clear', 'stencil-close',
     'btn-grip-farea',
     // web2-48이 더한 것 — 세운 규칙은 «그 라운드 안에서 판다»(48-10)
-    'paint-wheel-cv', 'btn-paint-w-2_5', 'btn-paint-w-5', 'btn-paint-w-10', 'btn-paint-w-20', 'btn-paint-w-40',
+    'paint-wheel-cv',
+    // web2-58 — 크기 슬라이더(다섯 칸 트레이 대체 · D-W26)
+    'paint-size-range',
   ]
   const rows = await page.evaluate((list) => list.map(id => {
     const el = document.getElementById(id)
