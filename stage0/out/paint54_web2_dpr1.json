@@ -27,7 +27,7 @@
       "wallB": 12
     },
     "px_delta": {
-      "floor": 25,
+      "floor": 18,
       "wallA": 0,
       "wallB": 0
     }
@@ -43,7 +43,7 @@
       "wallB": 12
     },
     "px_delta": {
-      "wallA": 9,
+      "wallA": 27,
       "floor": 0,
       "wallB": 0
     }
@@ -60,8 +60,8 @@
       "wallB": 12
     },
     "px_delta": {
-      "wallA": 9,
-      "wallB": 22,
+      "wallA": 27,
+      "wallB": 23,
       "floor": 0
     }
   },
@@ -79,9 +79,9 @@
     "ok_title": "정면 — 마지막에 고른 면을 정면으로 본다(평행)",
     "label": "정면 · 면 2장 고름",
     "rect": {
-      "x": 999.4,
-      "y": 153,
-      "w": 145.6,
+      "x": 998.8,
+      "y": 289,
+      "w": 146.2,
       "h": 32.5
     },
     "viewport": {
@@ -92,8 +92,8 @@
     "overflow": {
       "sw": 150,
       "cw": 150,
-      "sh": 775,
-      "ch": 775
+      "sh": 639,
+      "ch": 639
     }
   }
 }

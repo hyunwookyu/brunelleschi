@@ -33,6 +33,11 @@ import { measurePoint3, measureMm, measureUnits } from '../core/measure'
 let FORCE_CONSTRUCTING = false
 export const setForceConstructing = (v: boolean) => { FORCE_CONSTRUCTING = v }
 
+/** 반증 손잡이(web2-59 D-3 · #30) — 칠의 옛 벡터 미리보기를 되살린다. 제품 경로는 안 켠다. */
+let paintPreviewVector = false
+export function setPaintPreviewVectorForTest(v: boolean): void { paintPreviewVector = v }
+export const paintPreviewVectorForTest = (): boolean => paintPreviewVector
+
 export interface Draft {
   start: Pt
   end: Pt
@@ -497,7 +502,11 @@ export function draw2d(
     // 몸체(web2-12 2번) — brush 겹이 이 draft를 그리고 있으면 여기서 몸체를 **긋지 않는다**
     // (`draftBrushed` — 겹 순서 역전을 막는다, state.ts 그 술어의 머리주석이 정본).
     // 그 밖(classic·INK)은 종전 벡터 미리보기 그대로다.
-    if (forced || !draftBrushed(app)) {
+    // web2-59 59-1 — 칠의 미리보기는 **여기서 안 그린다**: 면 텍스처가 확정과 같은 함수로
+    // 덧그린다(render3d applyPaintDraft — 원칙 d). 옛 벡터 미리보기(색·폭만 — 45~58)는
+    // 반증 손잡이(paintPreviewVector — D-3: 켜면 paint59 ①의 차가 되오른다)로만 남는다.
+    const paintVec = app.tool === 'paint' && !paintPreviewVector
+    if ((forced || !draftBrushed(app)) && !paintVec) {
       // 재료 칠 미리보기(web2-46) — 마커·색연필이면 톤 색·도구 굵기로 긋는다(원칙 d:
       // 확정될 모습에 가깝게. 질감 미리보기는 45의 DEFERRED 그대로 미룬다 — 색·폭만).
       // web2-48: 색은 휠이 정한 hex 하나고(48-7) 폭은 크기 트레이가 정한 값이다(48-2) —

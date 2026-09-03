@@ -20,7 +20,7 @@ import { paintSideAt } from '../core/paint'
 import { borderQuads } from '../core/border'
 import { vkey } from '../core/joint'
 import { norm3, add3, mul3, type V3 } from '../core/vec'
-import { uvBoxOf, texLevel, bakeFaceTex, type UvBox, type RepBake } from '../core/facetex'
+import { uvBoxOf, texLevel, bakeFaceTex, drawDraftOnTex, type UvBox, type RepBake } from '../core/facetex'
 import { faceHatchSpacingWorld } from '../core/hatch'
 import type { Grade, Stroke, Face } from '../core/types'
 
@@ -462,6 +462,10 @@ interface PaintTexEntry {
    *  뒤에서 봐도 같은 세계 자리다 — 옛 LineSegments와 같은 거동) */
   side: 1 | -1 | 0 | 'e'
   level: number
+  /** web2-59 — 미리보기 «전»의 굽힌 판(사본). 미리보기 획이 이 텍스처에 얹히는 동안만
+   *  산다: 이동마다 base → canvas로 되돌리고 그 위에 draft를 덧그린다(누적 ⛔). 재굽기
+   *  (단계·계열)가 canvas를 새로 쓰면 함께 버린다(#100 — 기준 상태는 하나). */
+  base: HTMLCanvasElement | null
   /** web2-52 — 마지막 굽기의 무늬 계열 보임(major<<1|minor). 줌이 단계 경계를 안 넘어도
    *  밀도 하한(REP_MIN_PX)이 계열을 갈랐으면 다시 굽는다(49 gateRep의 매 프레임 판정을
    *  굽기 세계로 옮긴 것). */
@@ -484,8 +488,27 @@ function borderStrokesOf(app: App, faceId: number): Stroke[] {
     s.paint.uv !== undefined && s.paint.uv.length >= 4)
 }
 
+/** web2-59 — 미리보기 획이 «확정 획이 하나도 없는 (면,쪽)»에 얹히면 그 텍스처가 서야 한다.
+ *  열쇠에는 **그런 자리만** 넣는다(확정 획이 있는 자리는 열쇠가 안 바뀌어 메시가 안 흔들린다). */
+function draftOnlyTargets(app: App): string {
+  const d = app.paintDraft
+  if (!d || d.length === 0) return ''
+  const have = new Set<string>()
+  for (const s of app.doc.strokes) {
+    if (s.paint?.uv === undefined || s.paint.uv.length < 4) continue
+    have.add(s.paint.e === 1 ? `${s.paint.f}:e` : `${s.paint.f}:${s.paint.s}`)
+  }
+  const out: string[] = []
+  for (const s of d) {
+    if (s.paint?.uv === undefined || s.paint.uv.length < 4) continue
+    const k = s.paint.e === 1 ? `${s.paint.f}:e` : `${s.paint.f}:${s.paint.s}`
+    if (!have.has(k)) out.push(k)
+  }
+  return out.sort().join(',')
+}
+
 function syncPaintTex(r: R3D, app: App) {
-  const key = `${app.docVersion}|${getHatchMode()}`
+  const key = `${app.docVersion}|${getHatchMode()}|${draftOnlyTargets(app)}`
   if (key === paintKey) return
   paintKey = key
   for (const e of paintTexes.values()) {
@@ -499,7 +522,7 @@ function syncPaintTex(r: R3D, app: App) {
   // hatchMode 'face')은 칠이 있으면 그 쪽 텍스처들에 깔리고, 칠이 없으면 쪽 0 하나.
   const hatchFaceMode = getHatchMode() === 'face'
   const wants = new Map<string, { faceId: number; side: 1 | -1 | 0 | 'e' }>()
-  for (const s of app.doc.strokes) {
+  for (const s of [...app.doc.strokes, ...(app.paintDraft ?? [])]) {
     if (s.paint?.uv === undefined || s.paint.uv.length < 4) continue
     if (s.paint.s !== 1 && s.paint.s !== -1) continue
     wants.set(`${s.paint.f}:${s.paint.s}`, { faceId: s.paint.f, side: s.paint.s })
@@ -520,7 +543,7 @@ function syncPaintTex(r: R3D, app: App) {
     wants.set(`${f.id}:${f.rep.s}`, { faceId: f.id, side: f.rep.s })
   }
   // web2-55 — 테두리 슬롯: 띠에 칠 획이 있으면 그 면의 e 텍스처가 선다(두께가 있어야 몸이 있다)
-  for (const st of app.doc.strokes) {
+  for (const st of [...app.doc.strokes, ...(app.paintDraft ?? [])]) {
     if (st.paint?.e !== 1 || st.paint.uv === undefined || st.paint.uv.length < 4) continue
     wants.set(`${st.paint.f}:e`, { faceId: st.paint.f, side: 'e' })
   }
@@ -578,7 +601,7 @@ function syncPaintTex(r: R3D, app: App) {
       mesh.userData.centroid = { x: cx / k, y: cy / k, z: cz / k }
       r.paintGroup.add(mesh)
       paintTexes.set(`${w.faceId}:e`, {
-        canvas, tex, mesh, box, faceId: w.faceId, side: 'e', level: 0, famBits: -1,
+        canvas, tex, mesh, box, faceId: w.faceId, side: 'e', level: 0, base: null, famBits: -1,
       })
       continue
     }
@@ -620,7 +643,7 @@ function syncPaintTex(r: R3D, app: App) {
     mesh.userData.centroid = { x: cx / rf.tris.length, y: cy / rf.tris.length, z: cz / rf.tris.length }
     r.paintGroup.add(mesh)
     paintTexes.set(`${w.faceId}:${w.side}`, {
-      canvas, tex, mesh, box, faceId: w.faceId, side: w.side, level: 0, famBits: -1,
+      canvas, tex, mesh, box, faceId: w.faceId, side: w.side, level: 0, base: null, famBits: -1,
     })
   }
 }
@@ -682,12 +705,68 @@ function gatePaintTex(r: R3D, app: App) {
       e.tex.needsUpdate = true
       e.level = lv
       e.famBits = famBits
+      e.base = null                                  // 기준 상태가 새로 섰다(59 — 미리보기 사본 폐기)
     }
     e.mesh.visible = sideOk
     // screenPx(양자화 «전» 값)와 포화 여부를 기록한다(2차 [8] — 상한 포화와 «비슷한
     // 크기»를 팔이 가르는 재료. 같은 계산의 기록이지 두 벌 계산이 아니다 #54).
     e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
   }
+}
+
+/** **미리보기 획을 텍스처에**(web2-59 59-1 — 원칙 d). 매 프레임 gatePaintTex 뒤:
+ *  · draft가 얹히는 항목마다 — base가 없으면 지금 canvas(확정 굽기)를 사본으로 뜨고,
+ *    canvas ← base, 그 위에 draft 획을 **같은 함수·같은 해상도**로 덧그린다.
+ *  · draft가 떠난 항목(뗌·다른 면) — canvas ← base, base 폐기.
+ *  비용은 이동마다 «사본 복사 + 획 하나 + 텍스처 업로드»다(paint59 ⑥이 값으로 든다).
+ *  ⚠ 상한 포화(gate.clamped)는 여기서 읽는다 — «조용히 뭉개지 마라»의 알림은 main이 낸다. */
+let draftClampedNow = false
+let draftAppliedNow = 0
+function applyPaintDraft(r: R3D, app: App) {
+  const d = app.paintDraft
+  draftClampedNow = false
+  draftAppliedNow = 0
+  for (const e of paintTexes.values()) {
+    const mine = d ? d.filter(s => s.paint !== undefined && s.paint.f === e.faceId &&
+      (e.side === 'e' ? s.paint.e === 1 : s.paint.e === undefined && s.paint.s === e.side)) : []
+    if (mine.length === 0) {
+      if (e.base) {
+        const g = e.canvas.getContext('2d')!
+        g.setTransform(1, 0, 0, 1, 0, 0)
+        g.globalCompositeOperation = 'source-over'
+        g.globalAlpha = 1
+        g.drawImage(e.base, 0, 0)
+        e.base = null
+        e.tex.needsUpdate = true
+      }
+      continue
+    }
+    const rf = app.faces.find(x => x.id === e.faceId)
+    if (!rf || e.level === 0) continue
+    if (!e.base) {
+      const b = document.createElement('canvas')
+      b.width = e.canvas.width; b.height = e.canvas.height
+      b.getContext('2d')!.drawImage(e.canvas, 0, 0)
+      e.base = b
+    }
+    const g = e.canvas.getContext('2d')!
+    g.setTransform(1, 0, 0, 1, 0, 0)
+    g.globalCompositeOperation = 'source-over'
+    g.globalAlpha = 1
+    g.drawImage(e.base, 0, 0)
+    draftAppliedNow += drawDraftOnTex(e.canvas, rf, e.box, e.level, mine, e.side === 0 ? 1 : e.side)
+    e.tex.needsUpdate = true
+    const gate = e.mesh.userData.gate as { clamped?: boolean } | undefined
+    if (gate?.clamped) draftClampedNow = true
+  }
+}
+/** 지금 프레임의 미리보기가 상한 포화 텍스처에 얹혔는가 — 알림(main)의 판정자 */
+export const paintDraftClamped = (): boolean => draftClampedNow
+/** 진단·팔 — 미리보기 상태(사본을 든 항목 수 · 이번 프레임에 덧그린 획 수 · 포화) */
+export function paintDraftStats(): { withBase: number; applied: number; clamped: boolean; baseBytes: number } {
+  let withBase = 0, baseBytes = 0
+  for (const e of paintTexes.values()) if (e.base) { withBase++; baseBytes += e.base.width * e.base.height * 4 }
+  return { withBase, applied: draftAppliedNow, clamped: draftClampedNow, baseBytes }
 }
 
 /** **반증 스위치**(D-3 · #30) — 곱 합성을 보통(over) 합성으로 되돌린다. 켜면 흰 바탕
@@ -831,6 +910,7 @@ export function render3d(r: R3D, app: App) {
   syncHatch(r, app)
   syncPaintTex(r, app) // 면 텍스처(50) — 문서가 바뀌었을 때만 메시를 다시 세운다
   gatePaintTex(r, app) // 시점의 몫 — 쪽 · 해상도 단계(단계가 바뀔 때만 굽는다)
+  applyPaintDraft(r, app) // 미리보기 획(59-1) — 굽힌 판 위에 같은 함수로 덧그린다
   revealFaces(r, app)
   sortFaces(r, app)
   r.renderer.render(r.scene, r.camera)

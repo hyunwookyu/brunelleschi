@@ -400,6 +400,13 @@ export interface App {
   /** **칠 획의 3D 점렬**(web2-45 45-3) — **파생 캐시**다(원칙 b: 저장 ⛔ · 문서와 면에서만
    *  나온다). recompute가 매번 다시 짓는다 — 면이 못 풀리면 그 획의 항이 없다(안 보인다). */
   paintGeo: Map<number, V3[]>
+  /** **칠 미리보기 획**(web2-59 59-1 — 원칙 d 「미리보기가 확정본이다」의 코드 자리):
+   *  그리는 중의 점렬을 **커밋과 같은 함수**(buildPaintStrokes — 같은 면 배정·같은 uv·
+   *  같은 굵기·같은 id)로 획으로 만들어 두면, 면 텍스처가 그것을 확정 획과 **같은 캔버스·
+   *  같은 해상도·같은 paintMark**로 덧그린다(render3d applyPaintDraft). 뗄 때 commitPaint가
+   *  만드는 획과 픽셀이 같을 수밖에 없는 구조다 — 갈릴 수 있는 것은 이 목록을 만드는 입력
+   *  (raw·press·nid)뿐이고 그것을 paint59 ①이 잰다. 런타임(저장 ⛔ · 문서 밖). */
+  paintDraft: Stroke[] | null
   /** **접합**(web2-56) — 두꺼운 면들 사이의 접합(정점 이동표·기록·1링 통계). doc에서만
    *  나오는 파생이다(recompute가 매번 세운다) — 저장 ⛔. null = 두꺼운 면이 둘 미만이거나
    *  축척 미정이거나 반증 손잡이로 껐다(그때 렌더는 55의 버트-중심선 그대로다). */
@@ -485,6 +492,7 @@ export function createApp(W: number, H: number): App {
     faceCandidates: null,
     grip: null,
     paintGeo: new Map(),
+    paintDraft: null,
     rectHover: null,
     cubeLayout: cubeLayoutFor(W), // 우측 상단 — 자리 계산은 viewcube.ts 하나다(#54 · web2-31 1번)
     listeners: [],
@@ -1822,6 +1830,27 @@ export const paintActive = (app: Pick<App, 'tool'>): boolean => app.tool === 'pa
 /** 한 붓을 확정한다 — 지나간 면마다 나뉘어 얹힌다(지시 문면 · 사용자는 의식하지 않는다).
  *  면 밖 점은 센다(조용히 버리지 않는다 — 진단이 읽는다). */
 export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: number; offFace: number; offOwn: number } {
+  const b = buildPaintStrokes(app, pts, press, app.nextId)
+  if (b.strokes.length === 0) {
+    for (const l of app.listeners) l()
+    return { placed: 0, offFace: b.offFace, offOwn: b.offOwn }
+  }
+  app.nextId += b.strokes.length
+  for (const s of b.strokes) app.doc.strokes.push(s)
+  app.undoStack.push({ removed: [], added: b.strokes })
+  app.redoStack = []
+  recompute(app)
+  return { placed: b.strokes.length, offFace: b.offFace, offOwn: b.offOwn }
+}
+
+/** **한 붓 → 획 목록**(web2-59 — commitPaint에서 뽑아낸 순수 몫). 문서를 안 건드린다:
+ *  id는 `idBase`부터 차례로(commitPaint는 app.nextId를 주고 그만큼 올린다 · 미리보기는
+ *  draft.nid를 준다 — 그리는 동안 다른 확정이 없으므로 같은 값이다: 시드가 같다).
+ *  면 배정·uv·굵기·압력 전부 여기 한 자리다(#54 — 미리보기와 확정이 다른 식을 못 갖는다). */
+export function buildPaintStrokes(
+  app: App, pts: Pt[], press: number[] | undefined, idBase: number,
+): { strokes: Stroke[]; offFace: number; offOwn: number } {
+  let nextId = idBase
   // ── **테두리 슬롯**(web2-55) — 첫 점이 어느 면의 «띠»를 짚으면 그 한 붓은 통째로
   // 그 띠의 칠이다(주인 면 규칙(54-1)의 띠판 — 붓 하나는 한 슬롯이다). 띠 밖으로 나간
   // 점은 세고 버린다(splitByFace의 offFace 규약 그대로). 면 판정보다 먼저 보는 이유:
@@ -1845,12 +1874,9 @@ export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: nu
         const h = borderHitAt(app.lift.an, app.pose, rf, bSlots.frontW, bSlots.backW, p)
         if (h) { uv.push(h.s, h.u) } else off++
       }
-      if (uv.length < 4) {
-        for (const l of app.listeners) l()
-        return { placed: 0, offFace: off, offOwn: 0 }
-      }
+      if (uv.length < 4) return { strokes: [], offFace: off, offOwn: 0 }
       const s: Stroke = {
-        id: app.nextId++,
+        id: nextId++,
         a: { ...pts[0]! }, b: { ...pts[pts.length - 1]! },
         paint: { f: bFace, e: 1, uv },
         mat: { grade: activeGrade(app) },
@@ -1874,11 +1900,7 @@ export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: nu
         } else s.paint!.w = C.PAINT_W_FALLBACK_UNITS
       }
       if (!isDrawPose(app.pose)) s.view = clonePose(app.pose)
-      app.doc.strokes.push(s)
-      app.undoStack.push({ removed: [], added: [s] })
-      app.redoStack = []
-      recompute(app)
-      return { placed: 1, offFace: off, offOwn: 0 }
+      return { strokes: [s], offFace: off, offOwn: 0 }
     }
   }
   const { runs: allRuns, offFace } = splitByFace(app.lift, app.pose, app.faces, pts)
@@ -1914,7 +1936,7 @@ export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: nu
     const uv = uvFromScreen(app.lift.an, app.pose, rf, r.pts, shift)
     if (!uv) continue
     const s: Stroke = {
-      id: app.nextId++,
+      id: nextId++,
       a: { ...r.pts[0]! }, b: { ...r.pts[r.pts.length - 1]! },
       paint: { f: r.f, s: side, uv },
       mat: { grade: activeGrade(app) },
@@ -1939,17 +1961,9 @@ export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: nu
     s.paint!.w = wpp ? app.paintSel.w * wpp
       : ppu ? app.paintSel.w / ppu : C.PAINT_W_FALLBACK_UNITS
     if (!isDrawPose(app.pose)) s.view = clonePose(app.pose)
-    app.doc.strokes.push(s)
     added.push(s)
   }
-  if (added.length > 0) {
-    app.undoStack.push({ removed: [], added })
-    app.redoStack = []
-    recompute(app)
-  } else {
-    for (const l of app.listeners) l()
-  }
-  return { placed: added.length, offFace, offOwn }
+  return { strokes: added, offFace, offOwn }
 }
 
 /** **Injector**(web2-51) — 칠 도구의 탭이 짚은 칠 획의 속성 전부(도구·색·굵기)를 지금

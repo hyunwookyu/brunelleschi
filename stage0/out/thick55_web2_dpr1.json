@@ -4,7 +4,7 @@
   "note_d3": "D-3 셋: ① t=200이 같은 상자를 실제로 바꾼다(항등 팔의 판별력) ② 예외 걷기가 픽셀을 실제로 바꾼다 ③ uv 1.5배가 화면 자국을 실제로 늘린다(미터 자의 반증)",
   "identity": {
     "def": "t=0 픽셀 항등: base ↔ (t=200 켰다 다시 0) 다른 바이트 0. ⚠ 이 0은 «측정»이다(렌더 결정론이 깨지면 실패한다 — roundsave ③의 그 성질) · 판별력 = base ↔ t200의 달라진 픽셀(D-3 ①). «착수 전 트리와 같다»는 별도 측정이다 — pre_tree 블록(55 갈래 부모 트리의 서명 대조 · 1차 [2])이 그 값을 든다",
-    "changed_px_at_t200": 1398,
+    "changed_px_at_t200": 1322,
     "box_px": 57600,
     "roundtrip_bytes": 0
   },
@@ -13,8 +13,8 @@
     "n_batch_200": 2,
     "n_batch_250": 1,
     "propagate_px": {
-      "wallA": 478,
-      "wallB": 778
+      "wallA": 402,
+      "wallB": 727
     },
     "ex_hold_px": 0,
     "floor_px": 0,
@@ -33,38 +33,38 @@
       "t": 0,
       "ex": false
     },
-    "falsify_clear_ex_px": 617
+    "falsify_clear_ex_px": 556
   },
   "paint_roundtrip": {
     "def": "칠(마커) 후 t 0→200→0: 복귀 바이트 차 0(칠이 같은 자리 — uv 불변의 픽셀판) · 중간(t=200)은 실제로 달랐다(이동의 실재)",
-    "mid_changed_px": 6242,
+    "mid_changed_px": 6104,
     "roundtrip_bytes": 0
   },
   "border_meter": {
     "def": "띠 칠(e=1 · uv 세계 단위). ⚠ 판정자 가름(1차 [1]): 위험 축(u=두께 방향)의 정규화 반증은 픽셀 자가 못 본다(u 사영 ~6px) — 그 축의 정본은 단위 ⑤(세계 단위 · 문 1e-9/1e-6)다. 이 팔이 재는 것: s축 길이(sExt)와 대각이 t 200→300에 안 늘고(비 ≤ C.THICK55_RATIO_MAX), s축 1.5배 반증을 같은 자가 잡는다(≥ C.THICK55_FALSIFY_MIN). px_t300 > px_t200(+6~20%)은 자국 성장이 아니라 «띠 절단의 완화»다 — t가 커져 띠가 넓어지면 붓 폭(w)이 덜 잘린다(uExt = u축 픽셀 폭 — 붓 폭 상한으로 수렴)",
-    "diag_t200": 62.1,
-    "diag_t300": 64.1,
-    "ratio": 1.032,
-    "px_t200": 179,
-    "px_t300": 190,
-    "s_ext_t200": 62,
-    "s_ext_t300": 64,
+    "diag_t200": 61.1,
+    "diag_t300": 62,
+    "ratio": 1.016,
+    "px_t200": 169,
+    "px_t300": 174,
+    "s_ext_t200": 61,
+    "s_ext_t300": 62,
     "u_ext_t200": 3,
-    "u_ext_t300": 3,
-    "mass_t200": 12694,
-    "mass_t300": 16268,
-    "mass_ratio": 1.282,
-    "mass_t400": 17545,
-    "mass_t500": 18691,
-    "mass_ratio_500_400": 1.065,
-    "falsify_s15_ratio": 1.452
+    "u_ext_t300": 2,
+    "mass_t200": 12211,
+    "mass_t300": 15635,
+    "mass_ratio": 1.28,
+    "mass_t400": 16886,
+    "mass_t500": 17973,
+    "mass_ratio_500_400": 1.064,
+    "falsify_s15_ratio": 1.5
   },
   "perf": {
     "def": "두께 장면(면 셋 · 벽 200mm/바닥 150mm — 메시 3배)의 syncStrokes lastMs. 정본은 이 원장 필드 — 절대 ms는 기계 몫이라 회귀 비교는 같은 원장의 전값과 한다(#47)",
     "sync_ms": {
-      "median": 0.2,
-      "min": 0.1,
-      "max": 0.4
+      "median": 0.3,
+      "min": 0.2,
+      "max": 0.6
     }
   },
   "ui34_thick": {
@@ -73,7 +73,7 @@
     "ok_tip": "두께 — 숫자를 쓰면 이 분류 전부의 두께(mm)가 된다 · 다시 누르면 이 면만(예외)",
     "rect": {
       "x": 1073.5,
-      "y": 413.5,
+      "y": 447,
       "w": 71.5,
       "h": 32.5
     },
@@ -85,8 +85,8 @@
     "overflow": {
       "sw": 72,
       "cw": 72,
-      "sh": 334,
-      "ch": 334
+      "sh": 368,
+      "ch": 368
     },
     "mode_seq": [
       "batch(thick=1,ex=null)",
@@ -145,7 +145,7 @@
     }
   },
   "stair": {
-    "def": "코너 계단의 크기(슬롯 유도 구성값 — 접합에 손을 안 대섰다는 값의 기록이자 56의 입력): 벽⊥바닥 모서리에서 buried = 바닥 앞면 오프셋(mm) · step = 벽 앞면 오프셋(mm). 56이 병합 걸음으로 이 계단을 ㄴ자로 만든다",
+    "def": "코너 계단의 크기(슬롯 유도 구성값 — 접합에 손을 안 대섰다는 값의 기록이자 56의 입력): 벽⊥바닥 모서리에서 buried = 바닥 앞면 오프셋(mm) · step = 벽 앞면 오프셋(mm). ⚠ 56 결과(사후 정정 — 56 리뷰어 1차 [1]): 벽⊥바닥 접합은 «둘만 두꺼울 때» ㄴ자가 되고(joint56 단위 ⑩), 방 구석(벽-벽 접합과 정점을 나누는 자리)에서는 복합 구석으로 기각된다(DEFERRED web2-56). 56의 픽셀 중심 게이트는 벽-벽 코너다",
     "buried_mm": 75,
     "step_mm": 100
   },
@@ -155,26 +155,26 @@
     "batch_n": 19,
     "off": {
       "frame": {
-        "median": 16.9,
-        "p90": 18.4
+        "median": 17.6,
+        "p90": 20.6
       },
-      "sync": 0.3,
+      "sync": 0.4,
       "r3d": {
         "faceMeshes": 19,
         "paintMeshes": 0,
         "lines": 27,
         "gl": {
-          "geometries": 1,
+          "geometries": 47,
           "textures": 0
         }
       }
     },
     "on": {
       "frame": {
-        "median": 16.7,
-        "p90": 18.2
+        "median": 34.5,
+        "p90": 37.3
       },
-      "sync": 0.6,
+      "sync": 0.9,
       "r3d": {
         "faceMeshes": 57,
         "paintMeshes": 0,
@@ -185,7 +185,7 @@
         }
       }
     },
-    "frame_delta_median_ms": -0.2,
-    "heap_mb": 19.6
+    "frame_delta_median_ms": 16.9,
+    "heap_mb": 23.7
   }
 }

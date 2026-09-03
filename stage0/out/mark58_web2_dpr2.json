@@ -40,17 +40,17 @@
     "def": "화면 창(대역 15% × 높이 26px)의 어둡기 합 — 대역 폭 동일이라 비가 곧 «단위 길이당 잉크». tip.*는 굵기 폭(20px) 좁은 창 — 끝점 «원형 강조»의 정조준 자(몸통 창도 같은 폭 · 둥근 끝은 창의 절반이 획 밖이라 1.0 아래가 기저다)",
     "rows": {
       "brush": {
-        "start": 53650.16666666535,
-        "mid": 60205.1666666646,
-        "end": 29954.250000000124,
-        "start_over_mid": 0.8911223012421502,
-        "end_over_mid": 0.49753620259614184,
+        "start": 52637.166666666206,
+        "mid": 58884.91666666455,
+        "end": 29955.16666666686,
+        "start_over_mid": 0.8938989752610915,
+        "end_over_mid": 0.5087069552333228,
         "tip": {
-          "start": 17987.58333333316,
-          "end": 7711.750000000003,
-          "body": 25095.91666666693,
-          "start_over_body": 0.7167533894956207,
-          "end_over_body": 0.3072910267606585
+          "start": 17828.416666666715,
+          "end": 7740.083333333335,
+          "body": 24574.41666666691,
+          "start_over_body": 0.7254868715093219,
+          "end_over_body": 0.31496508903229
         }
       },
       "marker": {
@@ -68,31 +68,31 @@
         }
       },
       "cp": {
-        "start": 116541.16666666711,
-        "mid": 97657.25000000047,
-        "end": 86935.75000000074,
-        "start_over_mid": 1.1933693265647616,
-        "end_over_mid": 0.8902129642192498,
+        "start": 79922.41666666631,
+        "mid": 66139.58333333288,
+        "end": 55728.33333333565,
+        "start_over_mid": 1.2083900841024378,
+        "end_over_mid": 0.8425867011056571,
         "tip": {
-          "start": 45809.91666666629,
-          "end": 24985.91666666678,
-          "body": 45257.666666666344,
-          "start_over_body": 1.0122023524559365,
-          "end_over_body": 0.552081415303491
+          "start": 35629.24999999988,
+          "end": 19565.083333333383,
+          "body": 31114.16666666675,
+          "start_over_body": 1.1451134263599043,
+          "end_over_body": 0.6288159198650132
         }
       },
       "pencil": {
-        "start": 129316.16666666642,
-        "mid": 122867.08333333344,
-        "end": 112124.75000000009,
-        "start_over_mid": 1.052488291887233,
-        "end_over_mid": 0.9125694771789297,
+        "start": 73754.33333333414,
+        "mid": 66899.50000000079,
+        "end": 71198.91666666581,
+        "start_over_mid": 1.1024646422369866,
+        "end_over_mid": 1.0642667982072358,
         "tip": {
-          "start": 52826.58333333335,
-          "end": 37059.416666666766,
-          "body": 54356.74999999991,
-          "start_over_body": 0.9718495556362997,
-          "end_over_body": 0.6817813181742254
+          "start": 31866.08333333298,
+          "end": 25419.91666666678,
+          "body": 30368.66666666661,
+          "start_over_body": 1.0493079489824941,
+          "end_over_body": 0.8370442122363015
         }
       }
     }
@@ -133,20 +133,38 @@
     },
     "tips": {
       "brush": {
-        "start_over_body": 0.7167533894956207,
-        "end_over_body": 0.3072910267606585
+        "start_over_body": 0.7254868715093219,
+        "end_over_body": 0.31496508903229
       },
       "marker": {
         "start_over_body": 1.0755621520729015,
         "end_over_body": 0.7459189159904814
       },
       "cp": {
-        "start_over_body": 1.0122023524559365,
-        "end_over_body": 0.552081415303491
+        "start_over_body": 1.0710932148167942,
+        "end_over_body": 0.7438066436412325
       },
       "pencil": {
-        "start_over_body": 0.9718495556362997,
-        "end_over_body": 0.6817813181742254
+        "start_over_body": 1.0687781143483386,
+        "end_over_body": 0.731569398673308
+      }
+    },
+    "tips_grain": {
+      "brush": {
+        "start_over_body": 0.7254868715093219,
+        "end_over_body": 0.31496508903229
+      },
+      "marker": {
+        "start_over_body": 1.0755621520729015,
+        "end_over_body": 0.7459189159904814
+      },
+      "cp": {
+        "start_over_body": 1.1451134263599043,
+        "end_over_body": 0.6288159198650132
+      },
+      "pencil": {
+        "start_over_body": 1.0493079489824941,
+        "end_over_body": 0.8370442122363015
       }
     },
     "tip_on_start_over_body": 1.385949418068617
@@ -156,10 +174,10 @@
     "rows": {
       "brush": {
         "coverage": 1,
-        "deep40_coverage": 0.6317708333333333,
-        "deep_coverage": 0.13364583333333332,
+        "deep40_coverage": 0.6411458333333333,
+        "deep_coverage": 0.09385416666666667,
         "deep80_coverage": 0,
-        "mean_dark": 45.034444444440545,
+        "mean_dark": 44.33480902777432,
         "transitions": 2
       },
       "marker": {
@@ -172,28 +190,33 @@
       },
       "cp": {
         "coverage": 1,
-        "deep40_coverage": 0.7239583333333334,
-        "deep_coverage": 0.6065625,
-        "deep80_coverage": 0.575,
-        "mean_dark": 87.30611111111183,
+        "deep40_coverage": 0.62125,
+        "deep_coverage": 0.5981770833333333,
+        "deep80_coverage": 0.21005208333333333,
+        "mean_dark": 56.047725694443834,
         "transitions": 3
       },
       "pencil": {
         "coverage": 1,
-        "deep40_coverage": 0.7671354166666666,
-        "deep_coverage": 0.7405208333333333,
-        "deep80_coverage": 0.7073958333333333,
-        "mean_dark": 98.72107638889011,
-        "transitions": 0
+        "deep40_coverage": 0.7219270833333333,
+        "deep_coverage": 0.43536458333333333,
+        "deep80_coverage": 0.200625,
+        "mean_dark": 56.27625000000116,
+        "transitions": 6
       }
     },
     "pairs": {
       "brush_vs_marker": 1,
-      "brush_vs_cp": 0.7796668383994504,
-      "brush_vs_pencil": 1,
+      "brush_vs_cp": 0.84309969525468,
+      "brush_vs_pencil": 0.7844239741595884,
       "marker_vs_cp": 1,
-      "marker_vs_pencil": 0.15045317422450188,
-      "cp_vs_pencil": 1
+      "marker_vs_pencil": 1,
+      "cp_vs_pencil": 0.5
+    },
+    "pencil_vs_marker_dark": {
+      "pencil": 56.27625000000116,
+      "marker": 83.86817708332207,
+      "note": "web2-59부터 방향 술어 없음 — 옛 누적의 산물"
     }
   },
   "gate_engine": {
@@ -215,7 +238,7 @@
     }
   },
   "gate_lab": {
-    "def": "손잡이 23(값 13 + 곡선 10) × 도구 4 — 각 손잡이를 끝값으로 밀어 시험 판 해시가 바뀌는 도구 목록. 술어 = 죽은 배선 0(모든 손잡이가 적어도 한 도구에서 자국을 바꾼다). ⚠ tipLenK 행은 전제(tipAlpha 0.5 켬 — 끝 크기는 끝 강조 0에서 보일 수 없다: 구성) 아래의 값이다(2차 [6] — 행마다 조건 명시 #11). 사람이 겪는 축은 disabled_per_instr가 값(무효 축 비활성 — 마커 20/23). overlay = #97 반증(닫힘: 안 덮음 · 열림: 맨 위). rules = 34-0의 수(#96 — 툴팁·값 표찰)",
+    "def": "손잡이 28(값 18 + 곡선 10 — web2-60이 다섯을 더했다) × 도구 4 — 각 손잡이를 끝값으로 밀어 시험 판 해시가 바뀌는 도구 목록. 술어 = 죽은 배선 0(모든 손잡이가 적어도 한 도구에서 자국을 바꾼다). ⚠ tipLenK 행은 전제(tipAlpha 0.5 켬 — 끝 크기는 끝 강조 0에서 보일 수 없다: 구성) 아래의 값이다(2차 [6] — 행마다 조건 명시 #11). 사람이 겪는 축은 disabled_per_instr가 값(무효 축 비활성 — 마커 25/28). overlay = #97 반증(닫힘: 안 덮음 · 열림: 맨 위). rules = 34-0의 수(#96 — 툴팁·값 표찰)",
     "matrix": {
       "tunelab-k-spacingK": [
         "pencil",
@@ -253,6 +276,30 @@
       "tunelab-k-cpSkipAlpha": [
         "pencil",
         "cp"
+      ],
+      "tunelab-k-cpBurnish": [
+        "pencil",
+        "cp"
+      ],
+      "tunelab-k-speedAlphaK": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-k-speedWidthK": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-k-dirK": [
+        "pencil",
+        "cp",
+        "brush"
+      ],
+      "tunelab-k-dirAngle": [
+        "pencil",
+        "cp",
+        "brush"
       ],
       "tunelab-c-density-0": [
         "pencil",
@@ -323,9 +370,9 @@
     "dead": [],
     "disabled_per_instr": {
       "pencil": 5,
-      "marker": 20,
+      "marker": 25,
       "cp": 5,
-      "brush": 6
+      "brush": 7
     },
     "overlay": {
       "closed": [
@@ -350,10 +397,10 @@
       }
     },
     "rules": {
-      "handles": 33,
-      "buttons": 9,
-      "tooltip_ok": 33,
-      "knob_value_labels": 13,
+      "handles": 40,
+      "buttons": 11,
+      "tooltip_ok": 40,
+      "knob_value_labels": 18,
       "curve_value_rows": 2,
       "slider_value_label": true
     }
@@ -387,18 +434,18 @@
       "base_tint": "~13(실측 — 칠한 면 바탕)"
     },
     "marker100": 107.5,
-    "cp50": 49,
+    "cp50": 46.5,
     "cp_ruler_sweep": {
       "th20": 49,
-      "th25": 49,
-      "th30": 45
+      "th25": 46.5,
+      "th30": 46
     },
     "cp_expected": 46.25,
-    "brush60": 98,
+    "brush60": 98.5,
     "brush90": 144,
     "brush120": 182,
-    "brush_fit_k": 1.5833333333333333,
-    "brush_ratio": 1.8571428571428572,
+    "brush_fit_k": 1.586111111111111,
+    "brush_ratio": 1.8477157360406091,
     "slider_roundtrip": {
       "w250": 250,
       "w500": 500

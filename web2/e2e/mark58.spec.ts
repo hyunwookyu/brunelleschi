@@ -263,16 +263,28 @@ test('게이트 ① 끝점 — 도장 균일(안쪽 대역 ±C.PAINT58_STAMP_BAN
   // (사전 실측: 마커 1.374가 이 술어에 걸렸다 — 그 팁이 기본 0이 된 것이 수리다)
   const W = 20, h = 26
   const tips: Record<string, unknown> = {}
-  for (const ins of INSTRS) {
+  const tipsGrain: Record<string, unknown> = {}
+  const tipOf = async (ins: string) => {
     const y = Y[ins]!
     const tipStart = await inkMass(page, X0 - W / 2, y - h / 2, X0 + W / 2, y + h / 2)
     const tipEnd = await inkMass(page, X1 - W / 2, y - h / 2, X1 + W / 2, y + h / 2)
     const body = await inkMass(page, (X0 + X1) / 2 - W / 2, y - h / 2, (X0 + X1) / 2 + W / 2, y + h / 2)
-    const so = tipStart / Math.max(1, body), eo = tipEnd / Math.max(1, body)
-    tips[ins] = { start_over_body: so, end_over_body: eo }
-    expect(so, ins + ' — 시작 원형 강조 없음(사전: 마커 1.374)').toBeLessThanOrEqual(1.1)
-    expect(eo, ins + ' — 끝 원형 강조 없음').toBeLessThanOrEqual(1.1)
+    return { start_over_body: tipStart / Math.max(1, body), end_over_body: tipEnd / Math.max(1, body) }
   }
+  for (const ins of INSTRS) tipsGrain[ins] = await tipOf(ins)
+  // web2-59 — 결이 픽셀 마스크(면 고정 칸)가 되면서 20px 창 하나가 결 칸(9px) 두어 개의 몫으로
+  // ±15% 흔들린다(59 실측: cp 시작 1.145). 팁 강조의 자는 결 없이(같은 획 재굽기) 잰다 —
+  // 팁은 결과 무관한 기제다. 결 있는 값은 tips_grain에 기록(#103: 재굽기라 장면은 그대로).
+  await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(true))
+  await page.waitForTimeout(250)
+  for (const ins of INSTRS) {
+    const t = await tipOf(ins)
+    tips[ins] = t
+    expect(t.start_over_body, ins + ' — 시작 원형 강조 없음(사전: 마커 1.374 · 결 끔)').toBeLessThanOrEqual(1.1)
+    expect(t.end_over_body, ins + ' — 끝 원형 강조 없음(결 끔)').toBeLessThanOrEqual(1.1)
+  }
+  await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(false))
+  await page.waitForTimeout(250)
   // **사전 대비 개선**(2차 [3] — «끝»의 술어: 절대 1.1은 마커 «시작»에서만 구속력이
   // 있었다(끝 칸은 수리 전에도 전부 1.1 아래 — 사전 원장). 동결된 사전 원장을 그 자리에서
   // 읽어 마커의 시작·끝 둘 다 «수리 전보다 좋아졌다»를 값으로 건다.
@@ -304,7 +316,7 @@ test('게이트 ① 끝점 — 도장 균일(안쪽 대역 ±C.PAINT58_STAMP_BAN
   await page.waitForTimeout(150)
   OUT.gate_endpoint = {
     def: '안쪽 대역(폭 20% — 포함 끝점 양자화 밖 · **분모 = mid** · 한 자리 계수 눈금(±8%)이 임계(10%) 안) 도장 밀도 ±C.PAINT58_STAMP_BAND_TOL · 끝 창(굵기 폭)/몸통 창 ≤ 1.1(도구 넷 전수 — 시작의 술어) + 사전 대비 개선(gate_endpoint_pre_vs — 끝의 술어). end_stamps = 양 끝 1.5px 안 도장 수(사전 32/28/32의 «끝당 +» 해명: 붓은 빗살 배수). decel = 표본 간격 대역별(감속 실재 — 이 값이 없으면 시간 기반 가설을 못 가른다). 반증 = 팁 되켬에서 같은 술어가 죽는다',
-    tol, inner, end_stamps: endStamps, decel, tips, tip_on_start_over_body: soOn,
+    tol, inner, end_stamps: endStamps, decel, tips, tips_grain: tipsGrain, tip_on_start_over_body: soOn,
   }
 })
 
@@ -388,7 +400,10 @@ test('게이트 ② 브러시가 실제로 다르다 — 같은 압력·같은 �
   // 메운다(실측). 결 자체의 판정자는 brush51 ③(상관 길이 — 줌 배 추적)이 따로 진다.
   // 여기의 연필 술어는 농도(결이 있어도 겹으로 제일 짙다)로 갈린다.
   expect(rows.cp!.transitions, '색연필 > 마커 — 불연속(구멍)').toBeGreaterThan(rows.marker!.transitions)
-  expect(rows.pencil!.mean_dark, '연필 > 마커 — 겹침 농도').toBeGreaterThan(rows.marker!.mean_dark * 1.05)
+  // web2-59 — «연필 > 마커 농도(겹침 농도)»는 옛 엔진의 획 안 누적이 만든 값이었다(D-W27 2 ⚠).
+  // 도장이 안 쌓이는 계약에서 연필 몸통은 «단일 도장 알파 × 불투명도»라 마커보다 옅다(실측
+  // 56 ↔ 88). 방향은 60이 사람과 정하는 값이다 — 술어는 «갈린다»(pairs)만 남기고 방향은 기록.
+  ;(OUT.gate_stats as Record<string, unknown>).pencil_vs_marker_dark = { pencil: rows.pencil!.mean_dark, marker: rows.marker!.mean_dark, note: 'web2-59부터 방향 술어 없음 — 옛 누적의 산물' }
   expect(rows.brush!.mean_dark, '붓 < 마커 — 흑연톤이 옅다').toBeLessThan(rows.marker!.mean_dark * 0.8)
   for (const [k, v] of Object.entries(pairs)) {
     expect(v, '짝 ' + k + ' — 통계가 갈린다(최대 상대 차 > 0.1)').toBeGreaterThan(0.1)
@@ -486,7 +501,8 @@ test('게이트 ④ 실험실 — 손잡이 전수가 자국을 바꾼다(도구
   })
   const knobIds: string[] = await page.evaluate(() =>
     [...document.querySelectorAll('#tunelab-knobs input, #tunelab-curves input')].map(e => e.id))
-  expect(knobIds.length, '손잡이 전수(값 13 + 곡선 2×5)').toBe(23)
+  // web2-60 — 값 손잡이 +5(문턱↔압력 · 속도→농도 · 속도→굵기 · 납작한 촉 · 촉 각도): 13 → 18
+  expect(knobIds.length, '손잡이 전수(값 18 + 곡선 2×5 — 60이 다섯을 더했다)').toBe(28)
   // 도구별로: 각 손잡이를 끝값으로 밀었을 때 시험 판이 바뀌는가 — «죽은 손잡이 없음»의
   // 술어는 「모든 손잡이가 **적어도 한 도구**에서 자국을 바꾼다」다(모드마다 유효 축이
   // 다른 것은 데이터 모델의 사실 — 매트릭스를 원장으로 낸다).
@@ -499,9 +515,12 @@ test('게이트 ④ 실험실 — 손잡이 전수가 자국을 바꾼다(도구
       // 죽은 배선인지 재려면 전제를 켜고 잰다(잰 뒤 걷는다).
       // 전제 축 둘(2차 [3]이 잡은 대조 어긋남의 자리): 끝 «크기»는 끝 «강조»가, 구멍
       // «잔량»은 구멍 «문턱»이 0이면 보일 수 없다(구성) — 전제를 켜고 재고 걷는다.
+      // web2-60 — 전제 축 둘 더: 문턱↔압력은 구멍 문턱이, 촉 각도는 납작한 촉이 0이면 보일 수 없다
       const pre: [string, string] | null =
         id === 'tunelab-k-tipLenK' ? ['tunelab-k-tipAlpha', '0.5']
-          : id === 'tunelab-k-cpSkipAlpha' ? ['tunelab-k-cpSkipTh', '0.5'] : null
+          : id === 'tunelab-k-cpSkipAlpha' ? ['tunelab-k-cpSkipTh', '0.5']
+          : id === 'tunelab-k-cpBurnish' ? ['tunelab-k-cpSkipTh', '0.5']
+          : id === 'tunelab-k-dirAngle' ? ['tunelab-k-dirK', '0.6'] : null
       let preRestore: string | null = null
       if (pre) {
         preRestore = await page.evaluate(([pid, pv]) => {
@@ -575,7 +594,7 @@ test('게이트 ④ 실험실 — 손잡이 전수가 자국을 바꾼다(도구
     return { handles: all.length, buttons: labBtns.length, tooltip_ok: tipOk, knob_value_labels: knobVals, curve_value_rows: curveVals, slider_value_label: sliderVal }
   })
   expect(rules.tooltip_ok, '툴팁 — 손잡이·단추 전수(값)').toBe(rules.handles)
-  expect(rules.knob_value_labels, '값 표찰 — 작업대 값 손잡이 13').toBe(13)
+  expect(rules.knob_value_labels, '값 표찰 — 작업대 값 손잡이 18(60이 다섯을 더했다)').toBe(18)
   expect(rules.curve_value_rows, '값 표찰 — 곡선 두 줄(다섯 값 한 줄씩)').toBe(2)
   expect(rules.slider_value_label, '값 표찰 — 크기 슬라이더').toBe(true)
   // RELEVANT ↔ matrix 대조(2차 [3] — 두 블록이 각자 값을 쓰고 아무도 안 맞춰 봤다):
@@ -586,7 +605,7 @@ test('게이트 ④ 실험실 — 손잡이 전수가 자국을 바꾼다(도구
     expect(responding + disabledOf[ins]!, ins + ' — 반응 + 비활성 == 전체(대조)').toBe(knobIds.length)
   }
   OUT.gate_lab = {
-    def: '손잡이 23(값 13 + 곡선 10) × 도구 4 — 각 손잡이를 끝값으로 밀어 시험 판 해시가 바뀌는 도구 목록. 술어 = 죽은 배선 0(모든 손잡이가 적어도 한 도구에서 자국을 바꾼다). ⚠ tipLenK 행은 전제(tipAlpha 0.5 켬 — 끝 크기는 끝 강조 0에서 보일 수 없다: 구성) 아래의 값이다(2차 [6] — 행마다 조건 명시 #11). 사람이 겪는 축은 disabled_per_instr가 값(무효 축 비활성 — 마커 20/23). overlay = #97 반증(닫힘: 안 덮음 · 열림: 맨 위). rules = 34-0의 수(#96 — 툴팁·값 표찰)',
+    def: '손잡이 28(값 18 + 곡선 10 — web2-60이 다섯을 더했다) × 도구 4 — 각 손잡이를 끝값으로 밀어 시험 판 해시가 바뀌는 도구 목록. 술어 = 죽은 배선 0(모든 손잡이가 적어도 한 도구에서 자국을 바꾼다). ⚠ tipLenK 행은 전제(tipAlpha 0.5 켬 — 끝 크기는 끝 강조 0에서 보일 수 없다: 구성) 아래의 값이다(2차 [6] — 행마다 조건 명시 #11). 사람이 겪는 축은 disabled_per_instr가 값(무효 축 비활성 — 마커 25/28). overlay = #97 반증(닫힘: 안 덮음 · 열림: 맨 위). rules = 34-0의 수(#96 — 툴팁·값 표찰)',
     matrix: changedBy, dead, disabled_per_instr: disabledOf,
     overlay: { closed: overlayClosed, open: overlayOpen }, rules,
   }

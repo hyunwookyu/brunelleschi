@@ -25,13 +25,13 @@ export const DPR2_NEED_RE = /screenshot\(|getImageData|readPixels|toDataURL/
  *  (#99와 같은 뿌리). 초록 실행에서 빠지고 밤(e2e:night)·원장(e2e:ledger)에만 돈다. */
 export const MEASURE_SPECS = ['cost18', 'cost20', 'cost22', 'brushperf'] as const
 
-/** 조건이 낸 목록(2026-09-03 · web2-58에서 mark58이 늘어 52) — 갱신은 조건을 다시 돌려서만 한다. */
+/** 조건이 낸 목록(2026-09-03 · web2-58에서 mark58이 늘어 52 · web2-59에서 paint59가, web2-60에서 quality60이 늘어 54) — 갱신은 조건을 다시 돌려서만 한다. */
 export const DPR2_SPECS = [
   'axisproj', 'brush', 'brush51', 'dimwrite29', 'draftgate', 'drafting', 'draw',
   'entry17', 'extacq', 'eyelayer27', 'face', 'files43', 'flow', 'gesture',
   'grain26', 'grain30', 'grain40', 'graphite', 'icons', 'inklayer', 'input', 'mark58',
   'join56', 'level', 'materials', 'mats46', 'mats52', 'nums47', 'own3d', 'paint45',
-  'paint48', 'paint50', 'paint54', 'paper', 'papericon31', 'press26', 'rep49', 'rollpose',
+  'paint48', 'paint50', 'paint54', 'paint59', 'quality60', 'paper', 'papericon31', 'press26', 'rep49', 'rollpose',
   'roundsave', 'slide40', 'snapghost', 'span57', 'thick55', 'turn31', 'ui34r7', 'underlay', 'view42',
   'waitfade', 'waitink37', 'yellow', 'yellowfree', 'zones',
 ] as const

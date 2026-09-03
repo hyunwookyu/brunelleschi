@@ -74,6 +74,18 @@ export interface BrushDef {
   /** 색연필 구멍(결 칸 걷어내기) — 문턱과 잔량 */
   cpSkipTh: number
   cpSkipAlpha: number
+  /** **압력이 문턱을 움직인다**(web2-60 60-2): 구멍 문턱 = cpSkipTh + cpBurnish × (0.5 − 압력).
+   *  약한 압력 → 문턱↑(봉우리만) · 강한 압력 → 문턱↓(골이 메워진다 — 버니싱). 0 = 문턱 고정(옛
+   *  거동 · D-3 반증). 압력 0.5(마우스)에서는 값과 무관하게 종전과 같다. */
+  cpBurnish: number
+  /** **속도 축**(web2-60 60-4 — 58이 물어 둔 축 다섯 중 첫째): 표본 간격(굵기 배수)으로 잰 속도
+   *  0..1이 알파·굵기를 ±k만큼 움직인다(0 = 없음). 시작이 느리고 중간이 빠른 획이 그대로 자국에. */
+  speedAlphaK: number
+  speedWidthK: number
+  /** **방향 축**(둘째): 납작한 촉 — 진행 방향이 촉 축(dirAngle°)과 나란하면 가늘고 수직이면
+   *  굵다. dirK 0 = 원형 촉(없음). */
+  dirK: number
+  dirAngle: number
 }
 
 /** 51의 상수를 그대로 옮긴 기본값 넷 — 마커 tipAlpha 0만 예외(머리주석) */
@@ -86,6 +98,7 @@ const DEFAULTS: Record<Instr58, BrushDef> = {
     grainK: 0, grainFloor: 1, tipAlpha: 0, tipLenK: 0,
     bristles: C.PAINT51_BRUSH_BRISTLES, splitT: C.PAINT51_BRUSH_SPLIT_T, splitK: C.PAINT51_BRUSH_SPLIT_K,
     scatter: 0, hardness: 1, cpSkipTh: 0, cpSkipAlpha: 0,
+    cpBurnish: 0, speedAlphaK: 0, speedWidthK: 0, dirK: 0, dirAngle: 0,
   },
   marker: {
     mode: 'band', maxW: C.PAINT58_MAX_W.marker,
@@ -96,6 +109,7 @@ const DEFAULTS: Record<Instr58, BrushDef> = {
     tipAlpha: 0 /* 51: C.PAINT51_MARKER_TIP_ALPHA — 58 사람 판정으로 기본 꺼짐 */,
     tipLenK: C.PAINT51_MARKER_TIP_LEN_K,
     bristles: 1, splitT: 1, splitK: 0, scatter: 0, hardness: 1, cpSkipTh: 0, cpSkipAlpha: 0,
+    cpBurnish: 0, speedAlphaK: 0, speedWidthK: 0, dirK: 0, dirAngle: 0,
   },
   cp: {
     mode: 'stamps', maxW: C.PAINT58_MAX_W.cp,
@@ -105,6 +119,8 @@ const DEFAULTS: Record<Instr58, BrushDef> = {
     grainK: C.PAINT51_CP_GRAIN_K, grainFloor: 0.7, tipAlpha: 0, tipLenK: 0,
     bristles: 1, splitT: 1, splitK: 0, scatter: 0, hardness: 1,
     cpSkipTh: C.PAINT51_CP_SKIP_TH, cpSkipAlpha: C.PAINT51_CP_SKIP_ALPHA,
+    // 60-2 출발점(구조가 요구하는 유일한 기본값 변경 — 압력 0.5에서는 종전과 같다 · D-W28)
+    cpBurnish: C.PAINT60_CP_BURNISH, speedAlphaK: 0, speedWidthK: 0, dirK: 0, dirAngle: 0,
   },
   pencil: {
     mode: 'stamps', maxW: C.PAINT58_MAX_W.pencil,
@@ -114,7 +130,23 @@ const DEFAULTS: Record<Instr58, BrushDef> = {
     grainK: C.PAINT51_PENCIL_GRAIN_K, grainFloor: C.PAINT51_PENCIL_GRAIN_FLOOR,
     tipAlpha: 0, tipLenK: 0, bristles: 1, splitT: 1, splitK: 0, scatter: 0, hardness: 1,
     cpSkipTh: 0, cpSkipAlpha: 0,
+    cpBurnish: 0, speedAlphaK: 0, speedWidthK: 0, dirK: 0, dirAngle: 0,
   },
+}
+
+/** **출발점**(web2-60 60-1 · 58-5 「mypaint 출발점」의 도구별 판) — 사람이 한 번 얹어 비교하는
+ *  값이지 세션의 최종값이 아니다(굳히기 전에는 세션뿐). 출처는 값으로 적는다:
+ *  · 연필·붓·마커: mypaint-brushes(CC0) classic/pencil.myb — dabs_per_actual_radius 4.0(간격 w/8) ·
+ *    hardness 0.1 · opaque 0.7 · offset_by_random 0.5 · 압력→불투명 0→1(NOTES 58 대조표).
+ *  · 색연필: 60-2 조사 결론(중요도 순 ①구멍 ②문턱↔압력 ③한 번은 옅게 ④납작·천천히 ⑤기울기) —
+ *    ③ 알파 0.35(도장 알파 0.1 «훨씬 아래»의 뜻은 압력 0에서 농도 곡선 0이 든다) · ② cpBurnish
+ *    0.7 · ①문턱 0.5 · 경도 0.6 · 간격 w/6 · ④ 방향 축 dirK 0.35(고정 각 −30°). ⑤ 기울기는 없다(DEFERRED). */
+export const START_POINTS: Record<Instr58, Partial<BrushDef>> = {
+  pencil: { spacingK: 0.125, hardness: 0.1, alpha: 0.7, scatter: 0.5, density: [0, 0.25, 0.5, 0.75, 1] },
+  brush: { spacingK: 0.125, hardness: 0.1, alpha: 0.7, scatter: 0.5, density: [0, 0.25, 0.5, 0.75, 1] },
+  marker: { alpha: 0.7 },
+  cp: { spacingK: 0.17, hardness: 0.6, alpha: 0.35, scatter: 0.25, cpSkipTh: 0.5, cpBurnish: 0.7,
+    density: [0, 0.35, 0.6, 0.8, 1], dirK: 0.35, dirAngle: -30 },
 }
 
 /** 사람이 실험실에서 «굳힌» 조정 — 기기의 것(main이 저장소와 잇는다). */
