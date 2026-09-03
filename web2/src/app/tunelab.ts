@@ -14,7 +14,7 @@
 
 import { paintMark, type MarkOpts } from '../core/facetex'
 import {
-  brushDef, brushDefault, setBrushTune, brushTuneJson, loadBrushTune, tunedInstrs,
+  brushDef, brushDefault, setBrushTune, brushTuneJson, loadBrushTune, tunedInstrs, START_POINTS,
   INSTRS58, type Instr58, type BrushDef, type Curve5,
 } from '../core/brush58'
 import { MAT } from '../core/material'
@@ -40,6 +40,12 @@ const KNOBS: { key: keyof BrushDef; name: string; min: number; max: number; step
   { key: 'splitK', name: '갈라짐 폭', min: 0, max: 2, step: 0.01, tip: '끝 갈라짐의 발산 폭 — 굵기의 배수' },
   { key: 'cpSkipTh', name: '구멍 문턱', min: 0, max: 1, step: 0.01, tip: '색연필 빈 알갱이 — 결이 문 아래인 칸이 뚫린다' },
   { key: 'cpSkipAlpha', name: '구멍 잔량', min: 0, max: 0.7, step: 0.01, tip: '뚫린 칸에 남는 안료' },
+  // web2-60 — 압력이 문턱을 움직인다(60-2) · 속도·방향 축(60-4 — 58이 물어 둔 다섯 중 둘)
+  { key: 'cpBurnish', name: '문턱↔압력', min: 0, max: 1, step: 0.01, tip: '세게 누르면 구멍이 메워진다 — 문턱 = 구멍 문턱 + 이 값 × (0.5 − 압력). 0이면 문턱 고정' },
+  { key: 'speedAlphaK', name: '속도→농도', min: -1, max: 1, step: 0.01, tip: '빠른 구간이 옅어진다(+) / 진해진다(−). 속도 = 표본 간격 ÷ 굵기' },
+  { key: 'speedWidthK', name: '속도→굵기', min: -1, max: 1, step: 0.01, tip: '빠른 구간이 굵어진다(+) / 가늘어진다(−)' },
+  { key: 'dirK', name: '납작한 촉', min: 0, max: 1, step: 0.01, tip: '촉 축과 나란한 획이 가늘어진다 — 0이면 원형 촉' },
+  { key: 'dirAngle', name: '촉 각도', min: -90, max: 90, step: 1, tip: '납작한 촉의 축(도 · 화면 기준 · 손을 따라간다 — 획을 따라가지 않는다)' },
 ]
 
 /** 모드별 유효 축(2차 [6]) — 무효 손잡이는 비활성으로 **보인다**(사람이 헛되이 밀지 않게).
@@ -47,13 +53,24 @@ const KNOBS: { key: keyof BrushDef; name: string; min: number; max: number; step
  *  당길 수 있는 것이 데이터 모델의 사실 · gate_lab matrix가 값). */
 const RELEVANT: Record<BrushDef['mode'], readonly string[]> = {
   band: ['alpha', 'tipAlpha', 'tipLenK'],
-  stamps: ['spacingK', 'alpha', 'hardness', 'scatter', 'grainK', 'grainFloor', 'cpSkipTh', 'cpSkipAlpha'],
-  bristles: ['spacingK', 'alpha', 'hardness', 'scatter', 'bristles', 'splitT', 'splitK'],
+  stamps: ['spacingK', 'alpha', 'hardness', 'scatter', 'grainK', 'grainFloor', 'cpSkipTh', 'cpSkipAlpha',
+    'cpBurnish', 'speedAlphaK', 'speedWidthK', 'dirK', 'dirAngle'],
+  bristles: ['spacingK', 'alpha', 'hardness', 'scatter', 'bristles', 'splitT', 'splitK',
+    'speedAlphaK', 'speedWidthK', 'dirK', 'dirAngle'],
+}
+/** 전제가 있는 축(2차 [6]의 tipLenK 규약과 같다): 문턱↔압력은 구멍 문턱 > 0일 때만 뜻이 있고,
+ *  촉 각도는 납작한 촉 > 0일 때만 뜻이 있다 — 그 전제가 꺼져 있으면 비활성으로 «보인다». */
+const PREREQ: Record<string, (d: BrushDef) => boolean> = {
+  cpBurnish: d => d.cpSkipTh > 0,
+  dirAngle: d => d.dirK > 0,
+  tipLenK: d => d.tipAlpha > 0,
 }
 const curvesRelevant = (mode: BrushDef['mode']): boolean => mode !== 'band'
 
 export interface TuneLab {
   root: HTMLElement
+  /** 진단·팔 — 조정 전부(JSON · 「값 꺼내기」와 같은 함수) */
+  tuneJson(): string
   isOpen(): boolean
   setOpen(v: boolean): void
 }
@@ -131,8 +148,11 @@ export function initTuneLab(opts: {
   const cv = document.createElement('canvas')
   cv.id = 'tunelab-cv'
   cv.width = CV_W * 2; cv.height = CV_H * 2                  // 또렷하게(고정 2배 — dpr 무관 결정)
+  // **값 «옆»에 낙서판**(web2-60 60-4 · REFERENCE §3 Feather Stable Stroke): 패널이 스크롤돼도
+  // 시험 판이 위에 붙어 있어 손잡이를 당기는 그 자리에서 자국을 본다(따로 떨어진 판이 아니다).
+  // position:sticky — #97의 전역 canvas 규칙(absolute · inset:0)을 명시로 덮는 것은 종전과 같다.
   cv.style.cssText = [
-    'position:static', 'inset:auto',                          // #97 — 전역 canvas 규칙을 명시로 되돌린다
+    'position:sticky', 'top:0', 'inset:auto', 'z-index:1',    // #97 — 전역 canvas 규칙을 명시로 되돌린다(sticky)
     `width:${CV_W}px`, `height:${CV_H}px`, 'background:#fffdf8',
     'border:1px solid #d8d2c4', 'border-radius:4px', 'touch-action:none', 'flex-shrink:0',
   ].join(';')
@@ -239,6 +259,7 @@ export function initTuneLab(opts: {
       val.textContent = range.value
       redrawScratch()
       syncTunedMark()
+      if (k.key === 'cpSkipTh' || k.key === 'dirK' || k.key === 'tipAlpha') syncEnabled()   // 전제 축이 움직였다
     })
     range.addEventListener('change', () => opts.rebake())     // 놓을 때 제품(면 텍스처)도 따라온다
     lab.append(name, range, val)
@@ -321,22 +342,71 @@ export function initTuneLab(opts: {
   mypaintBtn.id = 'tunelab-mypaint'
   mypaintBtn.dataset.act = 'state'
   mypaintBtn.textContent = 'mypaint 출발점'
-  mypaintBtn.title = 'mypaint 연필 값(CC0 — 값만)을 지금 도구에 얹어 본다 — 간격 w/8 · 경도 0.1 · 불투명 0.7 · 산포 0.5 · 압력→농도 0→1. 마음에 들면 「굳힌다」'
+  mypaintBtn.textContent = '출발점'
+  mypaintBtn.title = '출발점 값을 지금 도구에 얹어 본다(세션뿐 — 마음에 들면 「굳힌다」). 연필·붓·마커: mypaint 연필(CC0 — 값만: 간격 w/8 · 경도 0.1 · 불투명 0.7 · 산포 0.5 · 압력→농도 0→1) · 색연필: 60-2 조사 값(알파 0.35 · 문턱 0.5 · 문턱↔압력 0.7 · 경도 0.6 · 납작한 촉 0.35)'
   mypaintBtn.addEventListener('click', () => {
-    setBrushTune(instr, {
-      spacingK: 0.125, hardness: 0.1, alpha: 0.7, scatter: 0.5,
-      density: [0, 0.25, 0.5, 0.75, 1] as Curve5,
-    })
+    setBrushTune(instr, { ...START_POINTS[instr] })           // 도구별 출발점(brush58.START_POINTS — 출처는 그 표)
     syncAll()
     opts.rebake()
   })
   foot.append(resetBtn, mypaintBtn, bakeBtn)
 
-  root.append(head, pickRow, cv, cvRow, knobWrap, curveWrap, foot)
+  // ── 값을 밖으로(web2-60 60-4 — 「굳힌 값이 기기에만 있으면 다음 세션이 못 읽는다」) ──────
+  // 조정 전부(브러시 넷)를 JSON 한 덩이로 보이고(선택해 복사 · 클립보드 단추), 붙여 넣어
+  // 가져온다(loadBrushTune — 깨진 항은 키 단위로 떨군다 · 그 뒤 재굽기). 사람이 채팅에 붙이면
+  // 다음 세션이 같은 값을 읽는다 — 값을 «말로» 옮기지 않는다(58-5의 그 원칙의 밖으로 판).
+  const ioRow = row()
+  const ioBox = document.createElement('textarea')
+  ioBox.id = 'tunelab-json'
+  ioBox.rows = 3
+  ioBox.spellcheck = false
+  ioBox.style.cssText = 'flex:1;min-width:120px;font:11px/1.3 ui-monospace,monospace;resize:vertical'
+  ioBox.title = '조정 값 전부(JSON) — 복사해 채팅에 붙이면 다음 세션이 읽는다. 붙여 넣고 「가져온다」'
+  const exportBtn = document.createElement('button')
+  exportBtn.id = 'tunelab-export'
+  exportBtn.dataset.act = 'state'
+  exportBtn.textContent = '값 꺼내기'
+  exportBtn.title = '지금 조정 전부를 JSON으로 아래 칸에 쓰고 클립보드에 복사한다'
+  exportBtn.addEventListener('click', () => {
+    ioBox.value = brushTuneJson()
+    ioBox.select()
+    try { void navigator.clipboard?.writeText(ioBox.value) } catch { /* 클립보드 없음 — 칸에서 복사 */ }
+    opts.notify('조정 값을 아래 칸에 썼다(클립보드에도) — 채팅에 붙이면 다음 세션이 읽는다')
+  })
+  const importBtn = document.createElement('button')
+  importBtn.id = 'tunelab-import'
+  importBtn.dataset.act = 'state'
+  importBtn.textContent = '가져온다'
+  importBtn.title = '아래 칸의 JSON을 조정으로 얹는다(세션뿐 — 남기려면 「굳힌다」)'
+  importBtn.addEventListener('click', () => {
+    loadBrushTune(ioBox.value)
+    syncAll()
+    opts.rebake()
+    opts.notify(`가져왔다 — 조정: ${tunedInstrs().map(k => INSTR_NAME[k]).join('·') || '없음'}(굳히려면 「굳힌다」)`)
+  })
+  const ioBtns = document.createElement('div')
+  ioBtns.style.cssText = 'display:flex;flex-direction:column;gap:3px;flex-shrink:0'
+  ioBtns.append(exportBtn, importBtn)
+  ioRow.append(ioBox, ioBtns)
+
+  root.append(head, pickRow, cv, cvRow, knobWrap, curveWrap, foot, ioRow)
 
   const syncTunedMark = () => {
     const t = tunedInstrs()
     tunedMark.textContent = t.length > 0 ? `조정: ${t.map(k => INSTR_NAME[k]).join('·')}` : ''
+  }
+  /** 손잡이의 활성/비활성만 다시 — 전제 축(구멍 문턱·납작한 촉·끝 강조)이 움직인 뒤 */
+  const syncEnabled = () => {
+    const def = brushDef(instr)
+    const rel = RELEVANT[def.mode]
+    for (const k of KNOBS) {
+      const el = knobEls.get(String(k.key))!
+      const pre = PREREQ[String(k.key)]
+      const on = rel.includes(String(k.key)) && (!pre || pre(def))
+      el.range.disabled = !on
+      const rowEl = el.range.closest('label')?.parentElement as HTMLElement | null
+      if (rowEl) rowEl.style.opacity = on ? '1' : '0.35'
+    }
   }
   const syncAll = () => {
     for (const [k, b] of pickBtns) b.classList.toggle('on', k === instr)
@@ -347,7 +417,8 @@ export function initTuneLab(opts: {
       el.range.value = String(def[k.key])
       el.val.textContent = String(def[k.key])
       // 무효 축은 비활성(2차 [6] — «적어도 한 도구»가 아니라 «지금 이 도구»를 보인다)
-      const on = rel.includes(String(k.key))
+      const pre = PREREQ[String(k.key)]
+      const on = rel.includes(String(k.key)) && (!pre || pre(def))
       el.range.disabled = !on
       const rowEl = el.range.closest('label')?.parentElement as HTMLElement | null
       if (rowEl) rowEl.style.opacity = on ? '1' : '0.35'
@@ -369,6 +440,7 @@ export function initTuneLab(opts: {
 
   const api: TuneLab = {
     root,
+    tuneJson: () => brushTuneJson(),
     isOpen: () => open,
     setOpen(v: boolean) {
       open = v

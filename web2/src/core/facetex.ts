@@ -221,7 +221,7 @@ export function stampLogForTest(): { x: number; y: number; i: number }[] { retur
  *  **거리 기반이다**(58-4 D-2가 확인 — 등호장 재표집: 손이 느려져도 표집이 몰리지 않는다). */
 export function stampsOf(
   pts: Pt[], press: number[] | undefined, spacingPx: number,
-): { x: number; y: number; t: number; press: number }[] {
+): { x: number; y: number; t: number; press: number; gap: number; ang: number }[] {
   const segLen: number[] = []
   let L = 0
   for (let i = 0; i + 1 < pts.length; i++) {
@@ -234,17 +234,39 @@ export function stampsOf(
     const i = Math.min(press.length - 1, Math.round(t * (press.length - 1)))
     return Math.min(1, Math.max(0, press[i]! / C.PRESS_Q))
   }
-  const out: { x: number; y: number; t: number; press: number }[] = []
+  // web2-60 — 도장마다 **원본 표본 간격**(gap · 그 도장이 놓인 원본 선분의 길이 = 속도의 대리:
+  // 이벤트 간격이 대략 고정이라 표본 간격 ∝ 속도)과 **진행 각**(ang · 그 선분의 방향)을 싣는다.
+  // 값 축(속도·방향)의 입력이다 — 손잡이가 0이면 소비되지 않는다(픽셀 무변).
+  const out: { x: number; y: number; t: number; press: number; gap: number; ang: number }[] = []
   const n = Math.max(2, Math.ceil(L / spacingPx))
   for (let k = 0; k <= n; k++) {
     const target = (k / n) * L
     let acc = 0, i = 0
     while (i < segLen.length && acc + segLen[i]! < target) { acc += segLen[i]!; i++ }
-    const segT = segLen[i]! > 1e-9 ? (target - acc) / segLen[i]! : 0
-    const a = pts[Math.min(i, pts.length - 1)]!, b = pts[Math.min(i + 1, pts.length - 1)]!
-    out.push({ x: a.x + (b.x - a.x) * segT, y: a.y + (b.y - a.y) * segT, t: k / n, press: prAt(k / n) })
+    const ii = Math.min(i, segLen.length - 1)
+    const segT = segLen[ii]! > 1e-9 ? (target - acc) / segLen[ii]! : 0
+    const a = pts[Math.min(ii, pts.length - 1)]!, b = pts[Math.min(ii + 1, pts.length - 1)]!
+    out.push({ x: a.x + (b.x - a.x) * segT, y: a.y + (b.y - a.y) * segT, t: k / n, press: prAt(k / n),
+      gap: segLen[ii]!, ang: Math.atan2(b.y - a.y, b.x - a.x) })
   }
   return out
+}
+
+/** **속도·방향 축**(web2-60 60-4) — 도장의 알파·반지름 배수. 속도 = 원본 표본 간격 ÷ 굵기를
+ *  0..1로(2w에서 1) · 방향 = 진행 각과 촉 축(dirAngle)의 나란함. 손잡이 0 → 배수 1(무변). */
+function axisMul(def: BrushDef, wPx: number, gap: number, ang: number): { a: number; r: number } {
+  let a = 1, r = 1
+  if (def.speedAlphaK !== 0 || def.speedWidthK !== 0) {
+    const sp = Math.min(1, gap / Math.max(1e-9, 2 * wPx))          // 0(정지) .. 1(간격 ≥ 2w)
+    const u = (sp - 0.5) * 2                                          // −1 .. 1
+    a *= Math.max(0, 1 + def.speedAlphaK * u)
+    r *= Math.max(0.05, 1 + def.speedWidthK * u)
+  }
+  if (def.dirK !== 0) {
+    const nib = def.dirAngle * Math.PI / 180
+    r *= Math.max(0.05, 1 - Math.min(1, Math.max(0, def.dirK)) * Math.abs(Math.cos(ang - nib)))
+  }
+  return { a, r }
 }
 
 /** 도장 하나(원) — 알파·반지름은 부른 쪽이 정한다. 경도 < 1이면 가장자리가 방사형으로
@@ -347,10 +369,13 @@ function markBuffered(
   const scatRng = def.scatter > 0 ? rng32(o.seed ^ 0x5bd1) : null
   const scatOf = (): number => (scatRng ? (scatRng() - 0.5) * 2 * def.scatter * (wPx / 2) : 0)
   // ── 도장 목록(위치·반지름·알파) — 51의 표집·압력·빗살 값 그대로 ─────────────────────
-  const dabs: { x: number; y: number; r: number; a: number }[] = []
+  const dabs: { x: number; y: number; r: number; a: number; press: number }[] = []
   const st = stampsOf(pts, o.press, spacingPx)
   if (def.mode === 'stamps') {
-    for (const q of st) dabs.push({ x: q.x, y: q.y + scatOf(), r: (wPx / 2) * widthFactorOf(def, q.press), a: densityOf(def, q.press) })
+    for (const q of st) {
+      const m = axisMul(def, wPx, q.gap, q.ang)
+      dabs.push({ x: q.x, y: q.y + scatOf(), r: (wPx / 2) * widthFactorOf(def, q.press) * m.r, a: densityOf(def, q.press) * m.a, press: q.press })
+    }
   } else {
     const rng = rng32(o.seed)
     const nodes: number[] = []
@@ -374,11 +399,12 @@ function markBuffered(
       const split = q.t > def.splitT
         ? ((q.t - def.splitT) / Math.max(1e-9, 1 - def.splitT)) * def.splitK
         : 0
+      const m = axisMul(def, wPx, q.gap, q.ang)
       for (const b of offs) {
         const off = (b.o * (1 + split * 2)) * wPx + scatOf()
         dabs.push({ x: q.x + nx * off, y: q.y + ny * off,
-          r: (wPx / 2) * b.w * widthFactorOf(def, q.press) * (split > 0 ? 0.7 : 1),
-          a: o.baseAlpha * b.a * flow(q.t) * densityOf(def, q.press) })
+          r: (wPx / 2) * b.w * widthFactorOf(def, q.press) * (split > 0 ? 0.7 : 1) * m.r,
+          a: o.baseAlpha * b.a * flow(q.t) * densityOf(def, q.press) * m.a, press: q.press })
       }
     }
   }
@@ -453,9 +479,26 @@ function markBuffered(
     const cellPx = Math.max(1.5, o.grainWpx * def.grainK)
     const keep = Math.min(1, def.cpSkipAlpha / Math.max(1e-9, def.alpha))   // 구멍의 잔량(살짝 남는다)
     const hr = cellPx * 0.38
-    for (let qy = Math.floor(by / cellPx); qy <= Math.floor((by + bh) / cellPx); qy++) {
-      for (let qx = Math.floor(bx / cellPx); qx <= Math.floor((bx + bw) / cellPx); qx++) {
-        if (grain01(qx, qy) >= def.cpSkipTh) continue
+    const qx0 = Math.floor(bx / cellPx), qy0 = Math.floor(by / cellPx)
+    const qw = Math.floor((bx + bw) / cellPx) - qx0 + 1, qh = Math.floor((by + bh) / cellPx) - qy0 + 1
+    // **압력이 문턱을 움직인다**(60-2): 칸마다 그 칸을 덮는 도장의 최대 압력을 들고, 문턱 =
+    // cpSkipTh + cpBurnish × (0.5 − 압력). 세게 누른 자리는 문턱이 내려가 골이 메워진다(버니싱).
+    const cellPress = new Float32Array(qw * qh)
+    if (def.cpBurnish !== 0) {
+      for (const d of dabs) {
+        const cx0 = Math.max(qx0, Math.floor((d.x - d.r) / cellPx)), cx1 = Math.min(qx0 + qw - 1, Math.floor((d.x + d.r) / cellPx))
+        const cy0 = Math.max(qy0, Math.floor((d.y - d.r) / cellPx)), cy1 = Math.min(qy0 + qh - 1, Math.floor((d.y + d.r) / cellPx))
+        for (let cy = cy0; cy <= cy1; cy++) for (let cx = cx0; cx <= cx1; cx++) {
+          const i = (cy - qy0) * qw + (cx - qx0)
+          if (d.press > cellPress[i]!) cellPress[i] = d.press
+        }
+      }
+    }
+    for (let qy = qy0; qy < qy0 + qh; qy++) {
+      for (let qx = qx0; qx < qx0 + qw; qx++) {
+        const pr = def.cpBurnish !== 0 ? cellPress[(qy - qy0) * qw + (qx - qx0)]! : 0.5
+        const th = Math.min(1, Math.max(0, def.cpSkipTh + def.cpBurnish * (0.5 - pr)))
+        if (grain01(qx, qy) >= th) continue
         const cx = (qx + 0.5) * cellPx - bx, cy = (qy + 0.5) * cellPx - by
         const py0 = Math.max(0, Math.floor(cy - hr - 1)), py1 = Math.min(bh - 1, Math.ceil(cy + hr + 1))
         const px0 = Math.max(0, Math.floor(cx - hr - 1)), px1 = Math.min(bw - 1, Math.ceil(cx + hr + 1))

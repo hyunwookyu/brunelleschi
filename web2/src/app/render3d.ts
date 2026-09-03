@@ -763,10 +763,10 @@ function applyPaintDraft(r: R3D, app: App) {
 /** 지금 프레임의 미리보기가 상한 포화 텍스처에 얹혔는가 — 알림(main)의 판정자 */
 export const paintDraftClamped = (): boolean => draftClampedNow
 /** 진단·팔 — 미리보기 상태(사본을 든 항목 수 · 이번 프레임에 덧그린 획 수 · 포화) */
-export function paintDraftStats(): { withBase: number; applied: number; clamped: boolean } {
-  let withBase = 0
-  for (const e of paintTexes.values()) if (e.base) withBase++
-  return { withBase, applied: draftAppliedNow, clamped: draftClampedNow }
+export function paintDraftStats(): { withBase: number; applied: number; clamped: boolean; baseBytes: number } {
+  let withBase = 0, baseBytes = 0
+  for (const e of paintTexes.values()) if (e.base) { withBase++; baseBytes += e.base.width * e.base.height * 4 }
+  return { withBase, applied: draftAppliedNow, clamped: draftClampedNow, baseBytes }
 }
 
 /** **반증 스위치**(D-3 · #30) — 곱 합성을 보통(over) 합성으로 되돌린다. 켜면 흰 바탕

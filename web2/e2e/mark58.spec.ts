@@ -501,7 +501,8 @@ test('게이트 ④ 실험실 — 손잡이 전수가 자국을 바꾼다(도구
   })
   const knobIds: string[] = await page.evaluate(() =>
     [...document.querySelectorAll('#tunelab-knobs input, #tunelab-curves input')].map(e => e.id))
-  expect(knobIds.length, '손잡이 전수(값 13 + 곡선 2×5)').toBe(23)
+  // web2-60 — 값 손잡이 +5(문턱↔압력 · 속도→농도 · 속도→굵기 · 납작한 촉 · 촉 각도): 13 → 18
+  expect(knobIds.length, '손잡이 전수(값 18 + 곡선 2×5 — 60이 다섯을 더했다)').toBe(28)
   // 도구별로: 각 손잡이를 끝값으로 밀었을 때 시험 판이 바뀌는가 — «죽은 손잡이 없음»의
   // 술어는 「모든 손잡이가 **적어도 한 도구**에서 자국을 바꾼다」다(모드마다 유효 축이
   // 다른 것은 데이터 모델의 사실 — 매트릭스를 원장으로 낸다).
@@ -514,9 +515,12 @@ test('게이트 ④ 실험실 — 손잡이 전수가 자국을 바꾼다(도구
       // 죽은 배선인지 재려면 전제를 켜고 잰다(잰 뒤 걷는다).
       // 전제 축 둘(2차 [3]이 잡은 대조 어긋남의 자리): 끝 «크기»는 끝 «강조»가, 구멍
       // «잔량»은 구멍 «문턱»이 0이면 보일 수 없다(구성) — 전제를 켜고 재고 걷는다.
+      // web2-60 — 전제 축 둘 더: 문턱↔압력은 구멍 문턱이, 촉 각도는 납작한 촉이 0이면 보일 수 없다
       const pre: [string, string] | null =
         id === 'tunelab-k-tipLenK' ? ['tunelab-k-tipAlpha', '0.5']
-          : id === 'tunelab-k-cpSkipAlpha' ? ['tunelab-k-cpSkipTh', '0.5'] : null
+          : id === 'tunelab-k-cpSkipAlpha' ? ['tunelab-k-cpSkipTh', '0.5']
+          : id === 'tunelab-k-cpBurnish' ? ['tunelab-k-cpSkipTh', '0.5']
+          : id === 'tunelab-k-dirAngle' ? ['tunelab-k-dirK', '0.6'] : null
       let preRestore: string | null = null
       if (pre) {
         preRestore = await page.evaluate(([pid, pv]) => {
@@ -590,7 +594,7 @@ test('게이트 ④ 실험실 — 손잡이 전수가 자국을 바꾼다(도구
     return { handles: all.length, buttons: labBtns.length, tooltip_ok: tipOk, knob_value_labels: knobVals, curve_value_rows: curveVals, slider_value_label: sliderVal }
   })
   expect(rules.tooltip_ok, '툴팁 — 손잡이·단추 전수(값)').toBe(rules.handles)
-  expect(rules.knob_value_labels, '값 표찰 — 작업대 값 손잡이 13').toBe(13)
+  expect(rules.knob_value_labels, '값 표찰 — 작업대 값 손잡이 18(60이 다섯을 더했다)').toBe(18)
   expect(rules.curve_value_rows, '값 표찰 — 곡선 두 줄(다섯 값 한 줄씩)').toBe(2)
   expect(rules.slider_value_label, '값 표찰 — 크기 슬라이더').toBe(true)
   // RELEVANT ↔ matrix 대조(2차 [3] — 두 블록이 각자 값을 쓰고 아무도 안 맞춰 봤다):
