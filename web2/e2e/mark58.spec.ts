@@ -263,16 +263,28 @@ test('게이트 ① 끝점 — 도장 균일(안쪽 대역 ±C.PAINT58_STAMP_BAN
   // (사전 실측: 마커 1.374가 이 술어에 걸렸다 — 그 팁이 기본 0이 된 것이 수리다)
   const W = 20, h = 26
   const tips: Record<string, unknown> = {}
-  for (const ins of INSTRS) {
+  const tipsGrain: Record<string, unknown> = {}
+  const tipOf = async (ins: string) => {
     const y = Y[ins]!
     const tipStart = await inkMass(page, X0 - W / 2, y - h / 2, X0 + W / 2, y + h / 2)
     const tipEnd = await inkMass(page, X1 - W / 2, y - h / 2, X1 + W / 2, y + h / 2)
     const body = await inkMass(page, (X0 + X1) / 2 - W / 2, y - h / 2, (X0 + X1) / 2 + W / 2, y + h / 2)
-    const so = tipStart / Math.max(1, body), eo = tipEnd / Math.max(1, body)
-    tips[ins] = { start_over_body: so, end_over_body: eo }
-    expect(so, ins + ' — 시작 원형 강조 없음(사전: 마커 1.374)').toBeLessThanOrEqual(1.1)
-    expect(eo, ins + ' — 끝 원형 강조 없음').toBeLessThanOrEqual(1.1)
+    return { start_over_body: tipStart / Math.max(1, body), end_over_body: tipEnd / Math.max(1, body) }
   }
+  for (const ins of INSTRS) tipsGrain[ins] = await tipOf(ins)
+  // web2-59 — 결이 픽셀 마스크(면 고정 칸)가 되면서 20px 창 하나가 결 칸(9px) 두어 개의 몫으로
+  // ±15% 흔들린다(59 실측: cp 시작 1.145). 팁 강조의 자는 결 없이(같은 획 재굽기) 잰다 —
+  // 팁은 결과 무관한 기제다. 결 있는 값은 tips_grain에 기록(#103: 재굽기라 장면은 그대로).
+  await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(true))
+  await page.waitForTimeout(250)
+  for (const ins of INSTRS) {
+    const t = await tipOf(ins)
+    tips[ins] = t
+    expect(t.start_over_body, ins + ' — 시작 원형 강조 없음(사전: 마커 1.374 · 결 끔)').toBeLessThanOrEqual(1.1)
+    expect(t.end_over_body, ins + ' — 끝 원형 강조 없음(결 끔)').toBeLessThanOrEqual(1.1)
+  }
+  await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(false))
+  await page.waitForTimeout(250)
   // **사전 대비 개선**(2차 [3] — «끝»의 술어: 절대 1.1은 마커 «시작»에서만 구속력이
   // 있었다(끝 칸은 수리 전에도 전부 1.1 아래 — 사전 원장). 동결된 사전 원장을 그 자리에서
   // 읽어 마커의 시작·끝 둘 다 «수리 전보다 좋아졌다»를 값으로 건다.
@@ -304,7 +316,7 @@ test('게이트 ① 끝점 — 도장 균일(안쪽 대역 ±C.PAINT58_STAMP_BAN
   await page.waitForTimeout(150)
   OUT.gate_endpoint = {
     def: '안쪽 대역(폭 20% — 포함 끝점 양자화 밖 · **분모 = mid** · 한 자리 계수 눈금(±8%)이 임계(10%) 안) 도장 밀도 ±C.PAINT58_STAMP_BAND_TOL · 끝 창(굵기 폭)/몸통 창 ≤ 1.1(도구 넷 전수 — 시작의 술어) + 사전 대비 개선(gate_endpoint_pre_vs — 끝의 술어). end_stamps = 양 끝 1.5px 안 도장 수(사전 32/28/32의 «끝당 +» 해명: 붓은 빗살 배수). decel = 표본 간격 대역별(감속 실재 — 이 값이 없으면 시간 기반 가설을 못 가른다). 반증 = 팁 되켬에서 같은 술어가 죽는다',
-    tol, inner, end_stamps: endStamps, decel, tips, tip_on_start_over_body: soOn,
+    tol, inner, end_stamps: endStamps, decel, tips, tips_grain: tipsGrain, tip_on_start_over_body: soOn,
   }
 })
 
@@ -388,7 +400,10 @@ test('게이트 ② 브러시가 실제로 다르다 — 같은 압력·같은 �
   // 메운다(실측). 결 자체의 판정자는 brush51 ③(상관 길이 — 줌 배 추적)이 따로 진다.
   // 여기의 연필 술어는 농도(결이 있어도 겹으로 제일 짙다)로 갈린다.
   expect(rows.cp!.transitions, '색연필 > 마커 — 불연속(구멍)').toBeGreaterThan(rows.marker!.transitions)
-  expect(rows.pencil!.mean_dark, '연필 > 마커 — 겹침 농도').toBeGreaterThan(rows.marker!.mean_dark * 1.05)
+  // web2-59 — «연필 > 마커 농도(겹침 농도)»는 옛 엔진의 획 안 누적이 만든 값이었다(D-W27 2 ⚠).
+  // 도장이 안 쌓이는 계약에서 연필 몸통은 «단일 도장 알파 × 불투명도»라 마커보다 옅다(실측
+  // 56 ↔ 88). 방향은 60이 사람과 정하는 값이다 — 술어는 «갈린다»(pairs)만 남기고 방향은 기록.
+  ;(OUT.gate_stats as Record<string, unknown>).pencil_vs_marker_dark = { pencil: rows.pencil!.mean_dark, marker: rows.marker!.mean_dark, note: 'web2-59부터 방향 술어 없음 — 옛 누적의 산물' }
   expect(rows.brush!.mean_dark, '붓 < 마커 — 흑연톤이 옅다').toBeLessThan(rows.marker!.mean_dark * 0.8)
   for (const [k, v] of Object.entries(pairs)) {
     expect(v, '짝 ' + k + ' — 통계가 갈린다(최대 상대 차 > 0.1)').toBeGreaterThan(0.1)

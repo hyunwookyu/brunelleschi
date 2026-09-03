@@ -148,6 +148,50 @@ export function setPressFlatForTest(v: boolean): void { pressFlatOverride = v }
 let grainOffOverride = false
 export function setGrainOffForTest(v: boolean): void { grainOffOverride = v }
 
+// ── 스트로크 버퍼(web2-59 59-2) · 결은 획에 한 번(59-3) ──────────────────────────
+// 계약: **한 획 안에서 커버리지는 그 획의 불투명도(def.alpha)를 넘지 못하고, 도장이 겹쳐도
+// 안 쌓인다** — 도장은 획 전용 커버리지 지도에 **최대값**으로 모이고, 그 지도를 **한 번**
+// 불투명도로 얹는다. 획과 획 «사이»는 종전대로 쌓인다(그것이 겹치면 진해지는 것의 자리다).
+// GIMP CONSTANT · Photoshop Opacity(대 Flow) · google/ink SelfOverlap::kDiscard — 드로잉
+// 엔진의 표준이지 발명이 아니다(A-3). ⚠ 마커(band)는 예외다 — 46의 «겹치면 진해진다»
+// (multiply) 계약 그대로(59 지시 문면).
+// 결(59-3): 도장마다 읽던 결(도장 중심의 칸 하나가 도장 전체를 물들였다)을 **모인 커버리지에
+// 한 번 곱한다** — 마스크의 칸은 **면 고정**(텍스처 px ÷ cellPx · cellPx = 굵기(세계)×grainK×
+// px/unit이라 단계가 바뀌어도 같은 칸)이다. 그래서 같은 자리를 두 번 칠하면 같은 봉우리다.
+// 반증 손잡이 둘(D-3 · #30 — 제품 경로는 안 부른다):
+//   strokeBufferOff  — 옛 엔진(도장마다 source-over · 결 도장마다)으로 되돌린다. 게이트 ②
+//                      (교차 누적)이 되살아나야 한다.
+//   grainPerStroke   — 마스크의 결 좌표에 획 시드를 섞는다(면 고정이 깨진다). 게이트 ④
+//                      (두 획의 결 상관)이 죽어야 한다.
+let strokeBufferOff = false
+export function setStrokeBufferOffForTest(v: boolean): void { strokeBufferOff = v }
+export const strokeBufferOffForTest = (): boolean => strokeBufferOff
+let grainPerStrokeOverride = false
+export function setGrainPerStrokeForTest(v: boolean): void { grainPerStrokeOverride = v }
+
+/** 획 전용 버퍼 — bbox 크기의 캔버스를 **재사용**한다(미리보기가 이동마다 부르므로 할당을
+ *  매번 하면 GC가 프레임을 문다). 크기별 몇 장만 든다. */
+const scratchPool = new Map<string, HTMLCanvasElement>()
+function scratchOf(w: number, h: number, tag: string): CanvasRenderingContext2D {
+  const key = `${tag}:${w}x${h}`
+  let c = scratchPool.get(key)
+  if (!c) {
+    c = document.createElement('canvas')
+    c.width = w; c.height = h
+    if (scratchPool.size >= 8) {
+      const oldest = scratchPool.keys().next().value
+      if (oldest !== undefined) scratchPool.delete(oldest)
+    }
+    scratchPool.set(key, c)
+  }
+  const sg = c.getContext('2d')!
+  sg.setTransform(1, 0, 0, 1, 0, 0)
+  sg.globalCompositeOperation = 'source-over'
+  sg.globalAlpha = 1
+  sg.clearRect(0, 0, w, h)
+  return sg
+}
+
 /** 압력(0..1) → 농도 배수 — 지시 «농도의 기울기가 굵기보다 가파르다»(26-6)의 왼쪽. */
 export const paintDensity = (press: number): number =>
   pressFlatOverride ? 0.7
@@ -258,6 +302,203 @@ export function paintMark(
   g: CanvasRenderingContext2D, pts: Pt[], wPx: number, def: BrushDef, o: MarkOpts,
 ): void {
   if (pts.length < 2) return
+  if (def.mode !== 'band' && !strokeBufferOff) { markBuffered(g, pts, wPx, def, o); return }
+  paintMarkLegacy(g, pts, wPx, def, o)
+}
+
+/** 색 → rgb(0..255) — hex(#rgb·#rrggbb)는 직접, 그 밖은 캔버스가 정규화한 값(1×1 · 캐시). */
+const rgbCache = new Map<string, [number, number, number]>()
+function rgbOf(color: string): [number, number, number] {
+  const hit = rgbCache.get(color)
+  if (hit) return hit
+  let out: [number, number, number]
+  const m6 = /^#([0-9a-f]{6})/i.exec(color)
+  const m3 = /^#([0-9a-f]{3})$/i.exec(color)
+  if (m6) out = [parseInt(m6[1]!.slice(0, 2), 16), parseInt(m6[1]!.slice(2, 4), 16), parseInt(m6[1]!.slice(4, 6), 16)]
+  else if (m3) out = [parseInt(m3[1]![0]! + m3[1]![0]!, 16), parseInt(m3[1]![1]! + m3[1]![1]!, 16), parseInt(m3[1]![2]! + m3[1]![2]!, 16)]
+  else {
+    const c = document.createElement('canvas'); c.width = 1; c.height = 1
+    const g = c.getContext('2d')!
+    g.fillStyle = color; g.fillRect(0, 0, 1, 1)
+    const d = g.getImageData(0, 0, 1, 1).data
+    out = [d[0]!, d[1]!, d[2]!]
+  }
+  rgbCache.set(color, out)
+  return out
+}
+
+/** **버퍼 경로**(59-2·59-3) — 도장 모드 둘(stamps·bristles)의 현행 엔진.
+ *  도장 → 획 커버리지 지도(마른 매체 stamps는 **최대값 합집합** — 도장이 겹쳐도 안 쌓인다:
+ *  GIMP CONSTANT · google/ink SelfOverlap::kDiscard의 그 뜻 · 젖은 매체 bristles는 빗살이
+ *  쌓이되 캡이 상한) → 결 마스크 한 번(면 고정 칸 · stamps) → 색연필 구멍(stamps) →
+ *  불투명도 한 번으로 얹기. 지도는 소프트웨어(Float32 · bbox 크기)다 — 캔버스 2D에는 «알파의
+ *  최대값» 합성이 없고(lighten은 알파를 합집합으로 더한다) ctx.filter(luminanceToAlpha)는
+ *  사파리(iPad)가 없다. 비용은 bbox 면적 × 도장 겹침 수 — paint59 ⑥이 값으로 든다.
+ *  ⚠ 「흐름(flow)을 쌓고 캡만 두는 판」(Krita Wash · PS Flow<100%)은 검토 후 기각했다:
+ *  저압 교차에서 교차 p95가 몸통보다 1.23배(실측 — NOTES 59 구현 절) — 사람이 보는 «꺾이는
+ *  곳의 뭉침»이 절반 남는다. 도장 알파(압력 농도)가 곧 획의 «불투명도 곡선»이 되는 이 판이
+ *  mypaint(opaque × pressure→opacity)와 같은 꼴이다. */
+function markBuffered(
+  g: CanvasRenderingContext2D, pts: Pt[], wPx: number, def: BrushDef, o: MarkOpts,
+): void {
+  const W = (g.canvas as HTMLCanvasElement).width, H = (g.canvas as HTMLCanvasElement).height
+  if (W <= 0 || H <= 0) return
+  const spacingPx = Math.max(def.minSpacingPx, wPx * def.spacingK)
+  const scatRng = def.scatter > 0 ? rng32(o.seed ^ 0x5bd1) : null
+  const scatOf = (): number => (scatRng ? (scatRng() - 0.5) * 2 * def.scatter * (wPx / 2) : 0)
+  // ── 도장 목록(위치·반지름·알파) — 51의 표집·압력·빗살 값 그대로 ─────────────────────
+  const dabs: { x: number; y: number; r: number; a: number }[] = []
+  const st = stampsOf(pts, o.press, spacingPx)
+  if (def.mode === 'stamps') {
+    for (const q of st) dabs.push({ x: q.x, y: q.y + scatOf(), r: (wPx / 2) * widthFactorOf(def, q.press), a: densityOf(def, q.press) })
+  } else {
+    const rng = rng32(o.seed)
+    const nodes: number[] = []
+    for (let k = 0; k < C.PAINT51_BRUSH_FLOW_NODES; k++) nodes.push(0.5 + 0.5 * rng())
+    const flow = (t: number): number => {
+      const x = t * (nodes.length - 1)
+      const i = Math.min(nodes.length - 2, Math.floor(x))
+      const f = x - i
+      return nodes[i]! * (1 - f) + nodes[i + 1]! * f
+    }
+    const bristles = Math.max(2, Math.round(def.bristles))
+    const offs: { o: number; a: number; w: number }[] = []
+    for (let b = 0; b < bristles; b++) {
+      offs.push({ o: (b / (bristles - 1) - 0.5) * 0.8 + (rng() - 0.5) * 0.2, a: 0.5 + 0.5 * rng(), w: 0.3 + 0.35 * rng() })
+    }
+    for (let i = 0; i + 1 < st.length; i++) {
+      const q = st[i]!, q2 = st[i + 1]!
+      const dx = q2.x - q.x, dy = q2.y - q.y
+      const dl = Math.hypot(dx, dy) || 1
+      const nx = -dy / dl, ny = dx / dl
+      const split = q.t > def.splitT
+        ? ((q.t - def.splitT) / Math.max(1e-9, 1 - def.splitT)) * def.splitK
+        : 0
+      for (const b of offs) {
+        const off = (b.o * (1 + split * 2)) * wPx + scatOf()
+        dabs.push({ x: q.x + nx * off, y: q.y + ny * off,
+          r: (wPx / 2) * b.w * widthFactorOf(def, q.press) * (split > 0 ? 0.7 : 1),
+          a: o.baseAlpha * b.a * flow(q.t) * densityOf(def, q.press) })
+      }
+    }
+  }
+  if (dabs.length === 0) return
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
+  for (const d of dabs) {
+    if (d.r <= 0 || d.a <= 0) continue
+    if (d.x - d.r < x0) x0 = d.x - d.r
+    if (d.y - d.r < y0) y0 = d.y - d.r
+    if (d.x + d.r > x1) x1 = d.x + d.r
+    if (d.y + d.r > y1) y1 = d.y + d.r
+  }
+  if (!(x0 <= x1)) return
+  const bx = Math.max(0, Math.floor(x0) - 1), by = Math.max(0, Math.floor(y0) - 1)
+  const bw = Math.min(W, Math.ceil(x1) + 2) - bx, bh = Math.min(H, Math.ceil(y1) + 2) - by
+  if (bw <= 0 || bh <= 0) return
+  // ── 커버리지 지도 — 도장의 최대값(겹쳐도 안 쌓인다) · 가장자리 AA(반 px) · 경도 풀림 ──
+  const cov = new Float32Array(bw * bh)
+  const hard = Math.min(1, Math.max(0, def.hardness))
+  const wet = def.mode === 'bristles'
+  for (const d of dabs) {
+    if (d.r <= 0 || d.a <= 0) continue
+    if (stampLog) stampLog.push({ x: d.x, y: d.y, i: stampLogInstr })
+    const cx = d.x - bx, cy = d.y - by, r = d.r
+    const inner = r * hard
+    const py0 = Math.max(0, Math.floor(cy - r - 1)), py1 = Math.min(bh - 1, Math.ceil(cy + r + 1))
+    const px0 = Math.max(0, Math.floor(cx - r - 1)), px1 = Math.min(bw - 1, Math.ceil(cx + r + 1))
+    for (let py = py0; py <= py1; py++) {
+      const dy = py + 0.5 - cy
+      const row = py * bw
+      for (let px = px0; px <= px1; px++) {
+        const dx = px + 0.5 - cx
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist > r + 0.5) continue
+        let v = d.a
+        if (dist > inner) v *= hard < 1 ? Math.max(0, (r - dist) / Math.max(1e-9, r - inner)) : Math.min(1, r + 0.5 - dist)
+        // 마른 매체(stamps — 연필·색연필): 최대값 — 도장이 겹쳐도 안 쌓인다.
+        // 젖은 매체(bristles — 붓): 빗살이 겹치며 쌓인다(흐름) — 캡(불투명도)이 상한이다.
+        //   붓까지 최대값으로 두면 빗살 넷의 낮은 알파(51 값)가 몸통을 못 만든다(paint45 ①
+        //   픽셀 451 → 69 실측 — 값 무변의 계약이 깨진다). 젖은 붓은 빗살이 겹쳐 진해지는
+        //   것이 물리이기도 하다. 교차의 상한은 캡이 든다(paint59 ② cap_ratio).
+        if (wet) cov[row + px] = cov[row + px]! + v - cov[row + px]! * v
+        else if (v > cov[row + px]!) cov[row + px] = v
+      }
+    }
+  }
+  // ── 결 — 획의 «모인 커버리지»에 한 번(59-3). 칸은 면 고정(텍스처 px ÷ cellPx) ────────
+  // 결·구멍은 stamps 모드의 축이다(51 그대로 · 실험실 RELEVANT 표와 같은 경계 — bristles에
+  // 먹게 두면 «비활성 손잡이가 반응»해 mark58 ④가 잡는다: 실측 25/23).
+  if (def.mode === 'stamps' && def.grainK > 0 && !grainOffOverride) {
+    const cellPx = Math.max(1, o.grainWpx * def.grainK)
+    const seedOff = grainPerStrokeOverride ? (o.seed * 7919) | 0 : 0
+    let rowQy = NaN
+    const rowTooth = new Float32Array(bw)
+    for (let py = 0; py < bh; py++) {
+      const qy = Math.floor((by + py) / cellPx)
+      if (qy !== rowQy) {
+        rowQy = qy
+        let curQx = NaN, curT = 1
+        for (let px = 0; px < bw; px++) {
+          const qx = Math.floor((bx + px) / cellPx)
+          if (qx !== curQx) { curQx = qx; curT = toothOf(def, grain01(qx + seedOff, qy)) }
+          rowTooth[px] = curT
+        }
+      }
+      const row = py * bw
+      for (let px = 0; px < bw; px++) cov[row + px] = cov[row + px]! * rowTooth[px]!
+    }
+  }
+  // ── 색연필 구멍(51 그대로 — 결 칸을 걷어낸다 · 잔량 cpSkipAlpha) ─────────────────────
+  if (def.mode === 'stamps' && def.cpSkipTh > 0) {
+    const cellPx = Math.max(1.5, o.grainWpx * def.grainK)
+    const keep = Math.min(1, def.cpSkipAlpha / Math.max(1e-9, def.alpha))   // 구멍의 잔량(살짝 남는다)
+    const hr = cellPx * 0.38
+    for (let qy = Math.floor(by / cellPx); qy <= Math.floor((by + bh) / cellPx); qy++) {
+      for (let qx = Math.floor(bx / cellPx); qx <= Math.floor((bx + bw) / cellPx); qx++) {
+        if (grain01(qx, qy) >= def.cpSkipTh) continue
+        const cx = (qx + 0.5) * cellPx - bx, cy = (qy + 0.5) * cellPx - by
+        const py0 = Math.max(0, Math.floor(cy - hr - 1)), py1 = Math.min(bh - 1, Math.ceil(cy + hr + 1))
+        const px0 = Math.max(0, Math.floor(cx - hr - 1)), px1 = Math.min(bw - 1, Math.ceil(cx + hr + 1))
+        for (let py = py0; py <= py1; py++) {
+          const dy = py + 0.5 - cy
+          for (let px = px0; px <= px1; px++) {
+            const dx = px + 0.5 - cx
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            if (dist > hr + 0.5) continue
+            const edge = Math.min(1, hr + 0.5 - dist)             // 구멍 가장자리 AA
+            const f = 1 - edge * (1 - keep)
+            const i = py * bw + px
+            cov[i] = cov[i]! * f
+          }
+        }
+      }
+    }
+  }
+  // ── 지도 → 픽셀(색 + 알파) → 한 번 얹는다(불투명도가 상한이다) ──────────────────────
+  const [cr, cg, cb] = rgbOf(o.color)
+  const img = new ImageData(bw, bh)
+  const px8 = img.data
+  for (let i = 0; i < cov.length; i++) {
+    const a = cov[i]!
+    if (a <= 0) continue
+    const k = i * 4
+    px8[k] = cr; px8[k + 1] = cg; px8[k + 2] = cb; px8[k + 3] = Math.round(Math.min(1, a) * 255)
+  }
+  const sg = scratchOf(bw, bh, 'buf')
+  sg.putImageData(img, 0, 0)
+  g.save()
+  g.globalCompositeOperation = def.composite
+  g.globalAlpha = Math.min(1, def.alpha)
+  g.drawImage(sg.canvas, 0, 0, bw, bh, bx, by, bw, bh)
+  g.restore()
+}
+
+/** **옛 엔진**(51~58 · 도장마다 source-over · 결 도장마다) — 반증 손잡이(strokeBufferOff)
+ *  전용으로 남긴다(A-4: 게이트를 통과시킨 뒤에도 되돌릴 수 있어야 한다). 마커(band)는
+ *  이 경로가 현행이다(예외 — 머리주석). */
+function paintMarkLegacy(
+  g: CanvasRenderingContext2D, pts: Pt[], wPx: number, def: BrushDef, o: MarkOpts,
+): void {
   const spacingPx = Math.max(def.minSpacingPx, wPx * def.spacingK)
   const scatRng = def.scatter > 0 ? rng32(o.seed ^ 0x5bd1) : null
   const scatOf = (): number => (scatRng ? (scatRng() - 0.5) * 2 * def.scatter * (wPx / 2) : 0)
@@ -407,13 +648,41 @@ function drawStrokeTex(
   // hex가 없는 band·stamps 획은 종전처럼 흑연 규약(bristles 경로)으로 떨어진다.
   const useHex = def.mode !== 'bristles' && p.c
   const effDef = useHex ? def : brushDef('brush')
+  // 결 칸의 자(59-3 · 면 고정): 획의 세계 굵기를 **2^(1/4) 사다리**로 양자화한 값이다.
+  // 굵기 그대로 쓰면 같은 자리의 두 획이 원근(worldPerPxPerp — 화면 자리마다 다른 환산)
+  // 으로 0.5%쯤 다른 굵기를 얻고, 그 차가 1024px 텍스처를 가로질러 결 칸 경계를 몇 px씩
+  // 밀어 «같은 봉우리»가 안 된다(paint59 ④ 실측: 안쪽 행 상관 .949). 사다리 안(±9%)의
+  // 굵기는 정확히 같은 격자를 본다 — 결 크기 = 굵기 배수(grainK)의 뜻은 눈금 오차로 산다.
+  const wGrain = Math.pow(2, Math.round(Math.log2(Math.max(1e-9, wWorld)) * 4) / 4)
   paintMark(g, pts, wPx, effDef, {
     color: useHex ? p.c! : MAT[grade].color,
     baseAlpha: MAT[grade].alpha,
     seed: s.id,
-    grainWpx: wWorld * dims.pxPerUnit,
+    grainWpx: wGrain * dims.pxPerUnit,
     press: p.press,
   })
+}
+
+/** **미리보기 획을 덧그린다**(web2-59 59-1) — 굽힌 텍스처(확정 획 전부) 위에 그리는 중의
+ *  획을 **같은 함수(drawStrokeTex → paintMark)·같은 해상도**로 얹는다. 굽기와 갈릴 길이
+ *  없다: 다른 것은 «어느 캔버스 위에»뿐이고 그것은 render3d가 base 사본으로 되돌린다. */
+export function drawDraftOnTex(
+  canvas: HTMLCanvasElement, rf: ResolvedFace, box: UvBox, level: number,
+  strokes: Stroke[], side: 1 | -1 | 'e',
+): number {
+  const dims = texDims(box, level)
+  if (canvas.width !== dims.w || canvas.height !== dims.h) return 0
+  const g = canvas.getContext('2d')!
+  g.setTransform(1, 0, 0, 1, 0, 0)
+  g.globalCompositeOperation = 'source-over'
+  g.globalAlpha = 1
+  let n = 0
+  for (const s of strokes) {
+    if (!inTex(s, rf.id, side)) continue
+    drawStrokeTex(g, s, box, dims)
+    n++
+  }
+  return n
 }
 
 /** **굽는다** — 흰 바탕 + (이 면·이 쪽의) 획 전부, 획 id 차례(그린 차례 = 쌓인 차례).

@@ -7,7 +7,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
   frontFlyTarget, liveFaceSel, lastSelFace, faceThicknessNow, setClsThickness, setFaceThicknessEx, faceSlotsOf,
   njGrip, setStrokeNj, setJoint56OffForTest,
-  commitPaint, injectPaintAt, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen,
+  commitPaint, buildPaintStrokes, injectPaintAt, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen,
   placePersonAt, gripFaceArea, floorAreaNow, volumeNow, flashFaces, screenToDoc, roomsNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
@@ -15,9 +15,9 @@ import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layer
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
-import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, type Draft } from './render2d'
+import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, setPaintBlendForTest } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, setPaintBlendForTest, paintDraftClamped, paintDraftStats } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -401,6 +401,11 @@ const voice = createVoice((t) => dimPanel.stage(t))
 inputApi = initInput(ink, app, {
   onDraftChange(d) {
     draft = d
+    // 칠 미리보기(web2-59 59-1) — 커밋과 **같은 함수**로 획을 만들어 둔다(면 텍스처가 덧그린다).
+    // press의 조건은 endDraft가 onPaint에 넘기는 것과 같은 식(길이 일치) — 갈리면 원칙 d가 깨진다.
+    app.paintDraft = d && paintActive(app) && d.raw.length >= 2
+      ? buildPaintStrokes(app, d.raw, d.press && d.press.length === d.raw.length ? d.press : undefined, d.nid).strokes
+      : null
     if (d) {
       if (!wasDrafting) {                        // 새 획 — 이전 치수 창이 닫힌다
         dimTarget = null
@@ -2721,6 +2726,7 @@ function frameCostQ() {
   return { n: frameCosts.length, r3: q('r3'), bs: q('bs'), d2: q('d2'), total: q('total'), totalMax: Math.max(...totals) }
 }
 
+let clampNoticed = false
 function frame() {
   autolevel.tick()   // 접힐 때가 됐으면 여기서 포즈가 움직인다(setPose가 다시 그리게 한다)
   // 정착 전이(web2-37 2번) — 색이 시간의 함수인 «그 창 동안만» 계속 그린다. 창이 닫히면
@@ -2750,6 +2756,14 @@ function frame() {
           w: widthOfMat({ grade: g, w: app.tool === 'pen' && app.nib !== C.NIB_PX ? app.nib : undefined }) }
       : null)
     render3d(r3d, app)
+    // 상한 포화 알림(web2-59 59-1 — 「상한에 걸리면 그 사실이 보여야 한다 · 조용히 뭉개지
+    // 마라」 43-1의 자리): 그리는 중 미리보기가 포화 텍스처에 얹히면 한 붓에 한 번 한 줄.
+    if (app.paintDraft && paintDraftClamped()) {
+      if (!clampNoticed) {
+        clampNoticed = true
+        notify(`칠 해상도 상한(${C.FACETEX_MAX_PX}px)에 걸렸다 — 이 면의 칠은 화면보다 거칠게 굽힌다. 미리보기가 그 거칠기 그대로다`)
+      }
+    } else if (!app.paintDraft) clampNoticed = false
     const fc1 = performance.now()
     // 캐시 키(문서·포즈·뷰·렌더러)가 갈렸을 때만 전량을 그린다. draft가 있으면(web2-12 2번)
     // draft 전용 모드 — 확정 획은 스냅샷 겹이 들고 #brushc는 진행 중인 획 하나만 그린다.
@@ -2781,7 +2795,7 @@ requestAnimationFrame(() => {
 
 // e2e 진단 통로 — 앱과 같은 함수·같은 상태를 본다(측정 경로와 앱 경로를 가르지 않는다)
 import { project, screenAxes, vpMarks, frameAxes, isParallel, projW, horizonScreenY } from '../core/camera'
-import { setMarkerFlatForTest, setPressFlatForTest, setGrainOffForTest, setPaintOpaqueForTest, paintDensity, paintWidthFactor, setStampLogForTest, stampLogForTest } from '../core/facetex'
+import { setMarkerFlatForTest, setPressFlatForTest, setGrainOffForTest, setPaintOpaqueForTest, paintDensity, paintWidthFactor, setStampLogForTest, stampLogForTest, setStrokeBufferOffForTest, setGrainPerStrokeForTest } from '../core/facetex'
 import { brushDef, setBrushTune, type Instr58, type BrushDef } from '../core/brush58'
 import { initTuneLab } from './tunelab'
 
@@ -2806,6 +2820,12 @@ const diag = {
   openBoxes: () => openBoxIds(),
   /** R7의 **반증 손잡이**(D-3) — 'off'(안 듣는다) · 'swallow'(삼킨다) · 'on'(제자리) */
   boxAwayModeForTest: (m: 'on' | 'off' | 'swallow') => setBoxAwayModeForTest(m),
+  /** **web2-59 반증·표식 셋**(D-3 · #30): 벡터 미리보기 되돌림 · 스트로크 버퍼 끔(옛 엔진) ·
+   *  결 시드 획별(면 고정 깨기). 전부 재굽기 동반. paintDraft는 미리보기 상태(사본·덧그림·포화). */
+  setPaintPreviewVectorForTest: (v: boolean) => { setPaintPreviewVectorForTest(v); invalidate() },
+  setStrokeBufferOffForTest: (v: boolean) => { setStrokeBufferOffForTest(v); rebakePaintTexForTest(); invalidate() },
+  setGrainPerStrokeForTest: (v: boolean) => { setGrainPerStrokeForTest(v); rebakePaintTexForTest(); invalidate() },
+  paintDraft: () => ({ ...paintDraftStats(), strokes: app.paintDraft?.length ?? 0 }),
   /** **도장 기록**(web2-58 D-1 표식) — 굽기 도장 자리의 수동 기록(끝점 뭉침 D-2의 자) */
   setStampLogForTest: (on: boolean) => setStampLogForTest(on),
   stampLogForTest: () => stampLogForTest(),
@@ -3356,7 +3376,10 @@ const diag = {
     PAINT51_MARKER_TIP_ALPHA: C.PAINT51_MARKER_TIP_ALPHA, PAINT51_MARKER_TIP_LEN_K: C.PAINT51_MARKER_TIP_LEN_K,
     PAINT51_BRUSH_BRISTLES: C.PAINT51_BRUSH_BRISTLES, PAINT51_BRUSH_SPLIT_T: C.PAINT51_BRUSH_SPLIT_T,
     PAINT51_BRUSH_SPLIT_K: C.PAINT51_BRUSH_SPLIT_K, PAINT51_BRUSH_FLOW_NODES: C.PAINT51_BRUSH_FLOW_NODES,
-    MATS52_SCALE_TOL: C.MATS52_SCALE_TOL, MATS52_TWO_LAYER_MIN: C.MATS52_TWO_LAYER_MIN, REP_MIN_PX: C.REP_MIN_PX }),
+    MATS52_SCALE_TOL: C.MATS52_SCALE_TOL, MATS52_TWO_LAYER_MIN: C.MATS52_TWO_LAYER_MIN, REP_MIN_PX: C.REP_MIN_PX,
+    PAINT58_STAMP_BAND_TOL: C.PAINT58_STAMP_BAND_TOL,
+    PAINT59_PREVIEW_DIFF_MAX: C.PAINT59_PREVIEW_DIFF_MAX, PAINT59_CROSS_TOL: C.PAINT59_CROSS_TOL,
+    PAINT59_GRAIN_CORR_MIN: C.PAINT59_GRAIN_CORR_MIN, PAINT59_DRAFT_FRAME_EXTRA_MS: C.PAINT59_DRAFT_FRAME_EXTRA_MS }),
   /** 저장물 원문(파일 저장과 같은 함수 — #54) — paint50 팔이 «텍스처가 파일에 없다»를 잰다 */
   serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
   corruptPaintTex: () => { const n = corruptPaintTexForTest(); invalidate(); return n },

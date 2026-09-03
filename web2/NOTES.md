@@ -26342,3 +26342,40 @@ deep 3점이 판정자 · 스냅샷 부재 = 종전 유보) · `scan_pitfalls_ta
    → 수리 «전»의 그리는 중 프레임은 유휴와 같다(벡터 미리보기는 공짜) — 수리 뒤 «텍스처에
      그리는 미리보기»의 비용은 이 값과의 차로 읽는다.
 ```
+
+## 구현 — 구조 셋 + 보고 하나 (정본: DECISIONS D-W27)
+
+- **59-1 미리보기가 확정본이다** — `state.buildPaintStrokes`(commitPaint에서 뽑은 순수 몫:
+  면 배정·uv·굵기·압력·id 한 자리 · 단위 `paint59.test` 2건이 «커밋 획과 같다»를 잰다) →
+  `app.paintDraft`(main.onDraftChange가 draft.raw/press/nid로 채운다 — press 조건은 endDraft가
+  onPaint에 넘기는 식 그대로) → `render3d.applyPaintDraft`(굽힌 텍스처의 **사본(base)** 위에
+  `drawDraftOnTex → drawStrokeTex → paintMark`로 덧그림 · 이동마다 base 복원 · 재굽기가
+  base를 버린다 — #100의 «기준 상태 하나»). 확정 획이 없는 (면,쪽)에 처음 긋는 경우만
+  메시 열쇠(draftOnlyTargets)가 바뀌어 한 번 다시 선다. render2d의 벡터 미리보기는 칠 도구에서
+  **안 그린다**(반증 손잡이 `setPaintPreviewVectorForTest`로만). **상한 포화 알림**: 그리는 중
+  `paintDraftClamped()`가 참이면 한 붓에 한 줄(main.frame — «미리보기가 그 거칠기 그대로다»).
+- **59-2 스트로크 버퍼** — `facetex.markBuffered`(도장 모드 둘). 도장 목록(51의 표집·압력·
+  빗살 값 그대로) → Float32 **커버리지 지도**(bbox)에 **최대값**으로 · 가장자리 반 px AA ·
+  경도 풀림(방사형 그라디언트와 같은 선형 낙차) → 결 마스크 곱 → 색연필 구멍(잔량 cpSkipAlpha/
+  alpha — 51 식 그대로 · 가장자리 AA) → ImageData(색 + 알파) → 재사용 캔버스(scratchOf)로
+  **한 번**(`def.composite` · `globalAlpha = def.alpha`). 도장 기록(stampLog)은 그대로 쌓인다.
+  옛 엔진은 `paintMarkLegacy`로 통째로 남았다(반증 `setStrokeBufferOffForTest` — A-4 되돌림).
+  **마른/젖은 갈래**(무회귀 실측): 최대값은 stamps(연필·색연필)에만 — 붓(bristles)은 빗살이
+  쌓이되 캡이 상한(paint45 ① 픽셀 451 → 69 무너짐이 그 사유 · D-W27 2). 결·구멍도 stamps에만
+  (mark58 ④가 «비활성 손잡이 반응» 25/23으로 잡았다 — 내 회귀, 수리).
+  ⚠ **첫 판(흐름 누적 + 캡)을 실측으로 기각했다**: 저압(0.25) 교차에서 연필 교차 p95/몸통 p95
+  **1.23**(결 있음 · 옛 엔진 1.40) — 캡은 지켰지만 «꺾이는 곳의 뭉침»이 절반 남았다. 최대값
+  판은 결 끔에서 연필·색연필 **1.000**. 이 기각이 D-W27 2의 ⚠다.
+- **59-3 결은 획에 한 번** — 마스크의 칸은 텍스처 px ÷ cellPx(면 고정). ⚠ **굵기 그대로는
+  면 고정이 아니었다**(④ 실측 .949 — 원근 환산의 0.2% 굵기 차가 칸 경계를 민다) → 굵기를
+  2^(1/4) 사다리로 양자화(`drawStrokeTex` wGrain · AS-C176). 반증 `setGrainPerStrokeForTest`
+  (마스크 좌표에 획 시드) — 상관 .019.
+- **59-4 입력 경로 — 재서 보고** — 코드 확인: ① coalesced **있음**(web2-11 1-a `bundleOf` ·
+  반증 `app.coalesce`) ② 완만화 **없음** ③ Catmull-Rom **없음**(raw 폴리라인 그대로 → uv) ④ 호길이
+  재표집 **있음**(stampsOf 전체 재표집 — 이월 무관). 값: 호 픽스처(8걸음 현 + 묶음 3점)에서
+  원본/합친 **3.67**(33/9 점) · 참 호 이탈 **1.11 → 0.07px**(paint59 ⑤). ②③은 DEFERRED(확정
+  기하를 바꾸는 값의 성질 — 60 실험실 뒤). §5 ②③④는 지시 ⚠대로 안 넣었다.
+- **새 임계 넷** `C.PAINT59_*`(constants — D-C4): PREVIEW_DIFF_MAX .01 · CROSS_TOL .08 ·
+  GRAIN_CORR_MIN .99 · DRAFT_FRAME_EXTRA_MS 12 — 전부 `diag.paint50Constants()`로 팔이 읽는다.
+- **손잡이 추가 없음**(34-0 재대조 #96): 이 라운드가 화면에 더한 것은 알림 한 줄(상한 포화 —
+  R8 «잠깐 얹힌다» ○ · 평소 없음)뿐이다. 슬라이더·단추·트레이 0 — 표를 다시 돌릴 대상이 없다.

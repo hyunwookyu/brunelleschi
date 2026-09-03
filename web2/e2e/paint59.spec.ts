@@ -11,8 +11,9 @@
 //   ⑥ 성능 — 면 17(paint50의 그 픽스처 — 스무 면 목표에 셋 모자란다 · note_89) · 칠 40획
 //      장면의 «그리는 중» 프레임과 유휴 프레임, 텍스처 바이트.
 //
-// 원장: stage0/out/paint59_pre_web2_dpr{1,2}.json — **수리 전 동결**(57 2차 [2] · 58 선례).
-// 수리 뒤의 같은 자는 paint59_web2_dpr*.json(이 파일의 LEDGER_NAME이 그때 바뀐다).
+// 원장: stage0/out/paint59_web2_dpr{1,2}.json(현행 · LEDGER=1 · 병합-쓰기 #99).
+// ⚠ **사전(수리 전) 원장은 동결이다**: `stage0/out/paint59_pre_web2_dpr{1,2}.json` — 그 파일은
+// 이제 어느 하네스도 안 쓴다(D-2의 «수리 전» 증거가 재실행에 안 덮이게 — 57 2차 [2] · 58 선례).
 
 import { test, expect, type Page } from '@playwright/test'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
@@ -21,9 +22,9 @@ import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
-const LEDGER_NAME = 'paint59_pre'
+const LEDGER_NAME = 'paint59'
 const OUT: Record<string, unknown> = {
-  what: 'web2-59 — 칠 엔진의 뼈대: 수리 «전» 실측(D-2). ① 미리보기↔확정 픽셀 차(줌 셋 × 면 둘) ② 자기 교차 누적 ③ 끝점 대역 잉크 ④ 결 위상 상관 ⑤ coalesced 곡선 이탈 ⑥ 성능(그리는 중 프레임)',
+  what: 'web2-59 — 칠 엔진의 뼈대: 게이트(사전 paint59_pre와 같은 자). ① 미리보기↔확정 픽셀 차(줌 셋 × 면 둘) ② 자기 교차 누적 ③ 끝점 대역 잉크 ④ 결 위상 상관 ⑤ coalesced 곡선 이탈 ⑥ 성능(그리는 중 프레임)',
   note_pitfalls: '#101(web2 러너) · #99(병합-쓰기 · 열쇠 수) · #102(한 test 안 ?reset 재호출 없음 — 장면 하나에 undo로 지운다) · #11(대역 분모 = 몸통 창 · def) · #12·#13(창 크기·문턱을 값으로 · 훑기는 게이트 판) · #92(판정자는 픽셀·수) · #5(자기참조: ①은 같은 캔버스에 같은 함수로 그리면 구성상 0에 가깝다 — 그래서 diff의 «0 아님»은 uv·굵기·압력 경로의 갈림을 잰다. 반증은 벡터 미리보기 되돌림)',
 }
 const LEDGER_OF = (projectName: string) =>
@@ -248,122 +249,246 @@ async function slowFastSlow(page: Page, x0: number, y: number, x1: number) {
   await page.waitForTimeout(80)
 }
 
-test('① 미리보기 ↔ 확정 — 줌 셋 × 면 둘의 합성 픽셀 차(뗌 전 / 커밋 뒤)', async ({ page }) => {
-  test.setTimeout(180_000)
+/** 합성 펜 획(brush51 drawPen의 그 통로 #54) — 점렬 그대로 · 압력 상수. */
+async function penPath(page: Page, pts: { x: number; y: number }[], press: number) {
+  await page.evaluate(([list, pr]) => {
+    const el = document.getElementById('ink')!
+    const r = el.getBoundingClientRect()
+    const fire = (type: string, x: number, y: number, p: number, buttons: number) =>
+      el.dispatchEvent(new PointerEvent(type, {
+        pointerId: 1, pointerType: 'pen', isPrimary: true, buttons,
+        pressure: p, clientX: r.left + x, clientY: r.top + y, bubbles: true, cancelable: true,
+      }))
+    const L = list as { x: number; y: number }[]
+    fire('pointerdown', L[0]!.x, L[0]!.y, pr as number, 1)
+    for (let i = 1; i < L.length; i++) fire('pointermove', L[i]!.x, L[i]!.y, pr as number, 1)
+    fire('pointerup', L[L.length - 1]!.x, L[L.length - 1]!.y, 0, 0)
+  }, [pts, press] as unknown[])
+  await page.waitForTimeout(150)
+}
+
+/** 창의 어둡기 통계(#gl · 물리 px) — 합(mass) · p95 · 최대. «획 안에서 안 쌓인다»의 판정자는
+ *  p95다: 캡(불투명도)이 픽셀 하나하나를 묶으므로 **가장 진한 픽셀**이 교차 창과 몸통 창에서
+ *  같아야 한다 — 합은 창 안 «덮인 면적»(교차 창은 두 띠의 합집합)에 실려 기하를 섞는다. */
+const inkStats = (page: Page, x0: number, y0: number, w: number, h: number) =>
+  page.evaluate(([x0, y0, ww, hh]) => {
+    const c = document.getElementById('gl') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const t = document.createElement('canvas')
+    t.width = Math.round((ww as number) * dpr); t.height = Math.round((hh as number) * dpr)
+    const g = t.getContext('2d')!
+    g.drawImage(c, Math.round((x0 as number) * dpr), Math.round((y0 as number) * dpr), t.width, t.height, 0, 0, t.width, t.height)
+    const d = g.getImageData(0, 0, t.width, t.height).data
+    const v: number[] = []
+    let m = 0
+    for (let i = 0; i < d.length; i += 4) {
+      const a = d[i + 3]! / 255
+      const dk = a > 0 ? (255 - (d[i]! + d[i + 1]! + d[i + 2]!) / 3) * a : 0
+      v.push(dk); m += dk
+    }
+    v.sort((a, b) => a - b)
+    return { mass: +(m / (dpr * dpr)).toFixed(1), p95: +v[Math.floor(v.length * 0.95)]!.toFixed(1), max: +v[v.length - 1]!.toFixed(1), n: v.length }
+  }, [x0, y0, w, h] as unknown[])
+
+test('① 미리보기 ↔ 확정 — 줌 셋 × 면 둘의 합성 픽셀 차(뗌 전 / 커밋 뒤) · 게이트 ≤ C.PAINT59_PREVIEW_DIFF_MAX · 반증(벡터 미리보기)', async ({ page }) => {
+  test.setTimeout(240_000)
   await bigBox(page, true)
   await pickInstr(page, 'pencil', 20, '#3a6b35')
+  const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const rows: Record<string, unknown>[] = []
-  // 면 둘 = faces[0] 벽 · faces[1] 바닥. 줌은 벽 중심 커서로 걸고, 획 자리는 **면 중심의
-  // 지금 화면 자리**(사영)에서 잰다 — 커서 중심 줌은 «그 커서»에 대해서만 제자리라
-  // 다른 면은 줌마다 옮겨 앉는다(초판이 (400,630) 고정으로 그어 바닥을 놓쳤다 — 실측).
   const faces = [
     { name: 'wall', idx: 0, half: { 0.5: 60, 1: 120, 4: 150 } as Record<number, number> },
     { name: 'floor', idx: 1, half: { 0.5: 40, 1: 80, 4: 150 } as Record<number, number> },
   ]
+  const oneCombo = async (f: typeof faces[number], zt: number, vector: boolean) => {
+    await resetView(page)
+    const c1 = await faceCenterScreen(page, f.idx)
+    const z = await zoomTo(page, Math.round(c1.x), Math.round(c1.y), zt)
+    const c = await faceCenterScreen(page, f.idx)
+    const half = f.half[zt]!
+    const x0 = Math.round(c.x) - half, x1 = Math.round(c.x) + half, y = Math.round(c.y)
+    // 면을 먼저 «칠한 면»으로(48-9·55의 재질 전환이 상자 전체를 갈리게 하는 것을 뺀다 — 재현 절)
+    const px = f.name === 'wall' ? Math.round(c.x) - 12 : x0 - 100
+    const py = f.name === 'wall' ? y - 55 : y
+    await page.mouse.move(px, py); await page.mouse.down(); await page.mouse.move(px + 24, py, { steps: 3 }); await page.mouse.up()
+    await page.waitForTimeout(250)
+    const primed = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)
+    await page.mouse.move(x0, y)
+    await page.mouse.down()
+    for (let k = 1; k <= 12; k++) await page.mouse.move(x0 + (x1 - x0) * (k / 12), y + Math.sin(k / 12 * Math.PI) * 6)
+    await page.waitForTimeout(150)
+    const bx = x0 - 40, by = y - 40, bw = (x1 - x0) + 80, bh = 80
+    await snapComposite(page, 'pre', bx, by, bw, bh)
+    const draftStat = await page.evaluate(() => (window as any).__b2.diag.paintDraft())
+    await page.mouse.up()
+    await page.waitForTimeout(400)
+    await snapComposite(page, 'post', bx, by, bw, bh)
+    const d = await diffComposite(page, 'pre', 'post')
+    const placed = (await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)) - primed
+    const tex = await page.evaluate(() => (window as any).__b2.diag.paintTex())
+    console.log(`[①${vector ? ' 반증' : ''}] ${f.name}@${zt}× z=${z.toFixed(2)} c=(${Math.round(c.x)},${Math.round(c.y)}) primed=${primed} placed=${placed} diff=${d.diff_frac} ink=${d.ink_a}/${d.ink_b} draft=${JSON.stringify(draftStat)}`)
+    await undoPaint(page)
+    return { face: f.name, face_id: c.id, zoom_target: zt, zoom: +z.toFixed(3), center: [Math.round(c.x), Math.round(c.y)], box: [bx, by, bw, bh], primed, placed,
+      draft: draftStat, tex_level: tex.map((t: any) => t.level), tex_clamped: tex.map((t: any) => t.clamped), ...d }
+  }
   for (const zt of [0.5, 1, 4]) {
     for (const f of faces) {
-      // 1×로 되돌린 뒤 **그 면의 중심**을 커서로 줌한다(4×에서 벽 커서 줌은 바닥을 화면 밖으로
-      // 보낸다 — 실측 floor@4× 미배치). 줌 뒤 중심을 다시 읽는다(커서 중심이라 ±몇 px).
-      await resetView(page)
-      const c1 = await faceCenterScreen(page, f.idx)
-      const z = await zoomTo(page, Math.round(c1.x), Math.round(c1.y), zt)
-      const c = await faceCenterScreen(page, f.idx)
-      const half = f.half[zt]!
-      const x0 = Math.round(c.x) - half, x1 = Math.round(c.x) + half, y = Math.round(c.y)
-      // **면을 먼저 «칠한 면»으로 만든다** — 첫 칠에서 면 재질이 «드러난 톤»에서 «칠한 면»으로
-      // 갈아타(48-9·55의 규약) 상자 전체가 갈린다(실측: 뗌 전 잉크 픽셀 25600/25600 = 상자
-      // 전부). 그것은 면의 일이지 엔진의 일이 아니므로, 상자 밖에 점 하나를 먼저 찍어 두
-      // 스냅이 같은 면 상태에서 갈리게 한다(그 점은 상자 밖 — 차에 안 든다).
-      const px = f.name === 'wall' ? Math.round(c.x) - 12 : x0 - 100
-      const py = f.name === 'wall' ? y - 55 : y
-      await page.mouse.move(px, py); await page.mouse.down(); await page.mouse.move(px + 24, py, { steps: 3 }); await page.mouse.up()   // 탭 대역(TAP_MAX_PX) 밖이어야 획이다(4px는 Injector 탭이었다 — 실측 primed 0)
-      await page.waitForTimeout(250)
-      const primed = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)
-      await page.mouse.move(x0, y)
-      await page.mouse.down()
-      for (let k = 1; k <= 12; k++) await page.mouse.move(x0 + (x1 - x0) * (k / 12), y + Math.sin(k / 12 * Math.PI) * 6)
-      await page.waitForTimeout(150)
-      const bx = x0 - 40, by = y - 40, bw = (x1 - x0) + 80, bh = 80
-      await snapComposite(page, 'pre', bx, by, bw, bh)
-      await page.mouse.up()
-      await page.waitForTimeout(400)
-      await snapComposite(page, 'post', bx, by, bw, bh)
-      const d = await diffComposite(page, 'pre', 'post')
-      const placed = (await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)) - primed
-      const tex = await page.evaluate(() => (window as any).__b2.diag.paintTex())
-      console.log(`[①] ${f.name}@${zt}× z=${z.toFixed(2)} c1=(${Math.round(c1.x)},${Math.round(c1.y)}) c=(${Math.round(c.x)},${Math.round(c.y)}) primed=${primed} placed=${placed} diff=${d.diff_frac} ink=${d.ink_a}/${d.ink_b}`)
-      rows.push({ face: f.name, face_id: c.id, zoom_target: zt, zoom: +z.toFixed(3), center: [Math.round(c.x), Math.round(c.y)], box: [bx, by, bw, bh], primed, placed,
-        tex_level: tex.map((t: any) => t.level), tex_clamped: tex.map((t: any) => t.clamped), ...d })
-      expect(placed, `${f.name}@${zt}× — 획이 실제로 섰다`).toBeGreaterThanOrEqual(1)
-      await undoPaint(page)
+      const r = await oneCombo(f, zt, false)
+      rows.push(r)
+      expect(r.placed, `${f.name}@${zt}× — 획이 실제로 섰다`).toBeGreaterThanOrEqual(1)
+      expect((r.draft as { applied: number }).applied, `${f.name}@${zt}× — 미리보기가 텍스처에 실제로 얹혔다`).toBeGreaterThanOrEqual(1)
+      expect(r.diff_frac, `${f.name}@${zt}× — 미리보기 == 확정(밝기 차>8 픽셀 비율 ≤ ${cs.PAINT59_PREVIEW_DIFF_MAX})`).toBeLessThanOrEqual(cs.PAINT59_PREVIEW_DIFF_MAX)
     }
   }
+  // 반증(D-3) — 옛 벡터 미리보기를 되살리면 차가 사전 대역(.16~.31)으로 되오른다
+  await page.evaluate(() => (window as any).__b2.diag.setPaintPreviewVectorForTest(true))
+  const vec = await oneCombo(faces[0]!, 1, true)
+  await page.evaluate(() => (window as any).__b2.diag.setPaintPreviewVectorForTest(false))
   await resetView(page)
+  expect(vec.diff_frac, '반증 — 벡터 미리보기에서 차가 되오른다').toBeGreaterThan(cs.PAINT59_PREVIEW_DIFF_MAX * 5)
   OUT.preview_vs_commit = {
-    def: '같은 획을 긋는 동안(마지막 이동 후 150ms · 뗌 전)과 뗀 뒤(400ms · 커밋·재굽기 후)의 «합성 화면»(종이 + gl + brushc + ink) 상자(획 bbox ± 40) 픽셀 차. diff_frac = 밝기 차 > 8(AA 요동 위)인 픽셀 비율 · mean_abs = 평균 절대차 · ink_a/ink_b = 각 스냅의 잉크 픽셀 수(종이보다 12 어두움). 줌은 휠(커서 중심 — 앱 경로)로 목표 0.5·1·4에 ±8% 안(뷰는 조합마다 {s 1, ox 0, oy 0}으로 초기화 후 그 면 중심 커서로 줌). 면 둘 = 벽(400×280급 · 정면) · 바닥(모로 보임 — 원근 단축). primed = 상자 밖 점 하나로 면을 먼저 «칠한 면» 상태로 둔다(면 재질 전환(48-9)이 상자 전체를 갈리게 하는 것을 뺀다 — 엔진의 차만 남긴다)',
-    rows,
+    def: '같은 획을 긋는 동안(마지막 이동 후 150ms · 뗌 전)과 뗀 뒤(400ms · 커밋·재굽기 후)의 «합성 화면»(종이 + gl + brushc + ink) 상자(획 bbox ± 40) 픽셀 차. diff_frac = 밝기 차 > 8(AA 요동 위)인 픽셀 비율 · mean_abs = 평균 절대차 · ink_a/ink_b = 각 스냅의 잉크 픽셀 수(종이보다 12 어두움). 줌은 휠(커서 중심 — 앱 경로)로 목표 0.5·1·4에 ±8% 안(뷰는 조합마다 {s 1, ox 0, oy 0}으로 초기화 후 그 면 중심 커서로 줌). 면 둘 = 벽(400×280급 · 정면) · 바닥(모로 보임 — 원근 단축). primed = 상자 밖 점 하나로 면을 먼저 «칠한 면» 상태로 둔다(면 재질 전환(48-9)이 상자 전체를 갈리게 하는 것을 뺀다 — 엔진의 차만 남긴다). draft = 뗌 전 프레임의 미리보기 상태(withBase 사본 든 텍스처 수 · applied 덧그린 획 수 · clamped 상한 포화). ⚠ #5: 현행 0은 «같은 캔버스·같은 함수»의 구성이다 — 이 팔이 재는 것은 미리보기 입력(raw·press·nid → buildPaintStrokes)이 커밋과 같은 획을 만드는가이고, 반증(falsification)이 그 자가 살아 있음을 같은 실행에서 낸다',
+    threshold: cs.PAINT59_PREVIEW_DIFF_MAX,
+    rows, falsification: vec,
   }
 })
 
-test('② 자기 교차 — 한 획이 자기 자신과 교차하는 창의 잉크 / 몸통 창(도구 넷)', async ({ page }) => {
+test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하는 창의 p95 / 몸통 창 p95 · 게이트 ≤ 1 + C.PAINT59_CROSS_TOL · 반증(옛 엔진)', async ({ page }) => {
   await bigBox(page, false)
+  const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const Y: Record<Instr, number> = { brush: 370, marker: 430, cp: 490, pencil: 550 }
-  const rows: Record<string, unknown> = {}
-  for (const ins of INSTRS) {
+  const W = 20
+  const cross = async (ins: Instr) => {
     await pickInstr(page, ins, 20)
     const y = Y[ins]
     // A(580,y) → B(780,y) → C(780,y−28) → D(580,y+28): 교차점 (680,y) · 각 ~38°
-    await page.mouse.move(580, y)
-    await page.mouse.down()
-    await page.mouse.move(680, y, { steps: 5 })
-    await page.mouse.move(780, y, { steps: 5 })
-    await page.mouse.move(780, y - 28, { steps: 2 })
-    await page.mouse.move(680, y, { steps: 5 })
-    await page.mouse.move(580, y + 28, { steps: 5 })
-    await page.mouse.up()
-    await page.waitForTimeout(300)
-    const W = 20
-    const cross = await inkMass(page, 680 - W / 2, y - W / 2, 680 + W / 2, y + W / 2)
-    const bodyL = await inkMass(page, 600 - W / 2, y - W / 2, 600 + W / 2, y + W / 2)
-    const bodyR = await inkMass(page, 760 - W / 2, y - W / 2, 760 + W / 2, y + W / 2)
-    const body = (bodyL + bodyR) / 2
-    rows[ins] = { cross, body_l: bodyL, body_r: bodyR, cross_over_body: body > 1e-9 ? +(cross / body).toFixed(4) : null }
-    expect(body, ins + ' — 몸통에 잉크가 있다').toBeGreaterThan(100)
+    const pts: { x: number; y: number }[] = []
+    for (let k = 0; k <= 10; k++) pts.push({ x: 580 + 20 * k, y })
+    pts.push({ x: 780, y: y - 14 }, { x: 780, y: y - 28 })
+    for (let k = 1; k <= 10; k++) pts.push({ x: 780 - 20 * k, y: y - 28 + 5.6 * k })
+    await penPath(page, pts, 0.25)
+    await page.waitForTimeout(200)
+    const c = await inkStats(page, 680 - W / 2, y - W / 2, W, W)
+    const bl = await inkStats(page, 600 - W / 2, y - W / 2, W, W)
+    const br = await inkStats(page, 760 - W / 2, y - W / 2, W, W)
+    const bodyP95 = (bl.p95 + br.p95) / 2
+    return { cross: c, body_l: bl, body_r: br, p95_ratio: bodyP95 > 1e-9 ? +(c.p95 / bodyP95).toFixed(4) : null, mass_ratio: +(c.mass / ((bl.mass + br.mass) / 2)).toFixed(4) }
+  }
+  /** 같은 도구의 **포화 몸통**(압력 1.0 · 직선) — «획의 불투명도»(캡)의 화면 값. 교차 창의
+   *  p95가 이것을 못 넘는 것이 지시 문면 그대로의 술어다. */
+  const saturated = async (ins: Instr) => {
+    await pickInstr(page, ins, 20)
+    const y = Y[ins]
+    const pts: { x: number; y: number }[] = []
+    for (let k = 0; k <= 10; k++) pts.push({ x: 580 + 20 * k, y })
+    await penPath(page, pts, 1.0)
+    await page.waitForTimeout(200)
+    const a = await inkStats(page, 640 - W / 2, y - W / 2, W, W)
+    const b = await inkStats(page, 720 - W / 2, y - W / 2, W, W)
+    return { p95: +((a.p95 + b.p95) / 2).toFixed(1), max: Math.max(a.max, b.max) }
+  }
+  const grainOff = (v: boolean) => page.evaluate((x) => (window as any).__b2.diag.setGrainOffForTest(x), v)
+  const rows: Record<string, unknown> = {}
+  const rowsGrain: Record<string, unknown> = {}
+  for (const ins of INSTRS) {
+    const rg = await cross(ins)                  // 결 있음 — 기록(창마다 다른 결 칸이 p95를 ±15% 흔든다)
+    await undoPaint(page)
+    await grainOff(true); await page.waitForTimeout(100)
+    const r = await cross(ins)                   // 같은 획을 결 끔에서 — 판정
+    await grainOff(false)
+    await undoPaint(page)
+    await grainOff(true); await page.waitForTimeout(100)
+    const sat = await saturated(ins)
+    await grainOff(false)
+    await undoPaint(page)
+    const cap_ratio = sat.p95 > 1e-9 ? +(r.cross.p95 / sat.p95).toFixed(4) : null
+    rows[ins] = { ...r, saturated: sat, cap_ratio }
+    rowsGrain[ins] = rg
+    console.log(`[②] ${ins} (결 끔) cross p95=${r.cross.p95} body p95=${r.body_l.p95}/${r.body_r.p95} ratio=${r.p95_ratio} | (결) ratio=${rg.p95_ratio} | sat p95=${sat.p95} cap_ratio=${cap_ratio}`)
+  }
+  await undoPaint(page)
+  // 반증(D-3) — 옛 엔진(도장마다 source-over)으로 되돌리면 교차가 진해진다(도장 브러시 셋 중
+  // 적어도 색연필·붓 — 저압 도장이 몸통에서 포화하지 않는 도구). 마커는 경로가 같아 무변.
+  await page.evaluate(() => (window as any).__b2.diag.setStrokeBufferOffForTest(true))
+  await grainOff(true)
+  const off: Record<string, unknown> = {}
+  for (const ins of INSTRS) {
+    off[ins] = await cross(ins)
+    const r = off[ins] as { cross: { p95: number }; body_l: { p95: number }; body_r: { p95: number }; p95_ratio: number }
+    console.log(`[② 반증] ${ins} cross p95=${r.cross.p95} body=${r.body_l.p95}/${r.body_r.p95} ratio=${r.p95_ratio}`)
+  }
+  await page.evaluate(() => (window as any).__b2.diag.setStrokeBufferOffForTest(false))
+  await grainOff(false)
+  await undoPaint(page)
+  const rise: number[] = (['pencil', 'cp'] as Instr[]).map(i => (off[i] as { p95_ratio: number }).p95_ratio)
+  // 판정은 전부 잰 뒤에(한 도구의 빨강이 다른 도구의 값을 안 가리게 — 원장에 전부 든다)
+  for (const ins of INSTRS) {
+    const r = rows[ins] as { cross: { p95: number }; p95_ratio: number; cap_ratio: number | null }
+    expect(r.cross.p95, ins + ' — 교차 창에 잉크가 있다').toBeGreaterThan(20)
+    if (ins !== 'marker') {
+      // 지시 문면 그대로 — 교차점의 알파가 획의 불투명도(포화 몸통)를 안 넘는다
+      expect(r.cap_ratio, ins + ' — 교차 p95 ≤ 포화 몸통 p95 × (1+tol)').toBeLessThanOrEqual(1 + cs.PAINT59_CROSS_TOL)
+    }
+    if (ins === 'pencil' || ins === 'cp') {
+      // 같은 압력의 몸통 대비 — 사람이 보는 «교차가 진하다»의 자(붓은 빗살 합집합이 물리라 기록만)
+      expect(r.p95_ratio, ins + ' — 획 안에서 안 쌓인다(교차 p95 ≤ 몸통 p95 × (1+tol))').toBeLessThanOrEqual(1 + cs.PAINT59_CROSS_TOL)
+    }
   }
   OUT.self_cross = {
-    def: '굵기 20의 한 획이 (680,y)에서 자기 자신과 ~38°로 교차한다. 창은 굵기 폭(20×20 css) — 교차 창 잉크 ÷ 몸통 창 둘(600·760 · 사선에서 12px 넘게 떨어짐)의 평균. 획 «안» 누적이 있으면 > 1(도장 알파의 1−(1−a)^n). 마커는 canvas stroke() 한 번이라 구성상 1 대역이 예상(D-4: 46 「겹치면 진해진다」는 획 «사이»의 계약 — 값이 가른다)',
-    rows,
+    def: '저압(0.25 · 합성 펜) 굵기 20의 한 획이 (680,y)에서 자기 자신과 ~38°로 교차한다. 창은 굵기 폭(20×20 css) — 교차 창 p95 어둡기 ÷ 몸통 창 둘(600·760 · 사선에서 12px 넘게 떨어짐)의 p95 평균. p95가 판정자다(캡이 픽셀을 묶는다 — 합(mass_ratio)은 두 띠의 합집합 면적이 섞여 기록만). 사전(마우스 0.5 · 합 비)은 재현 절 — 이 판갈이의 사유: 합 비는 기하(합집합)와 결 칸 표집이 섞여 수리 전후 1.33→1.32로 안 갈렸고, 압력 0.5의 연필은 옛 엔진에서도 몸통이 포화(0.965)해 교차가 안 보였다. 마커는 canvas stroke() 한 번이라 두 판 다 1 대역(D-4 ㉢ — 46 계약은 획 «사이»). 술어 둘: cap_ratio(교차 p95 ÷ 압력 1.0 직선 몸통의 p95 — 지시 문면 「교차점의 알파가 획의 불투명도를 안 넘는다」 그대로 · 도장 셋) · p95_ratio(같은 압력 몸통 대비 — 연필·색연필만: 붓은 빗살 넷의 합집합이 교차에서 더 덮는 것이 물리라 기록만(실측 1.127)). falsification = 옛 엔진(strokeBufferOff)의 같은 자 — p95_ratio(연필·색연필)가 문을 넘는다',
+    threshold: 1 + cs.PAINT59_CROSS_TOL,
+    note_grain: '판정(rows)·반증(falsification)은 **결 끔**에서 잰다 — 결이 있으면 20px 창 안 결 칸(9px) 몇 개의 최댓값이 p95를 정해 창마다 ±15% 흔들린다(실측: 결 있음 연필 1.157 · 결 끔 1.0 대역). 결 있는 값은 rows_grain에 기록',
+    rows, rows_grain: rowsGrain, falsification: off,
   }
+  expect(Math.max(0, ...rise), '반증 — 옛 엔진에서 연필·색연필의 교차 p95 비가 문을 넘는다').toBeGreaterThan(1 + cs.PAINT59_CROSS_TOL)
 })
 
-test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감속 몸짓 · 도구 넷)', async ({ page }) => {
+test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감속 몸짓 · 도구 넷) · 게이트 ±C.PAINT58_STAMP_BAND_TOL(도장 셋 — 붓 제외 · 결 끔)', async ({ page }) => {
   await bigBox(page, false)
+  const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const X0 = 540, X1 = 860
   const Y: Record<Instr, number> = { brush: 380, marker: 440, cp: 500, pencil: 560 }
-  const rows: Record<string, unknown> = {}
+  const measure = async () => {
+    const rows: Record<string, unknown> = {}
+    for (const ins of INSTRS) {
+      const y = Y[ins], h = 26
+      const seg = (a: number, b: number) => [X0 + (X1 - X0) * a, y - h / 2, X0 + (X1 - X0) * b, y + h / 2] as const
+      const start = await inkMass(page, ...seg(0.03, 0.28))
+      const mid = await inkMass(page, ...seg(0.375, 0.625))
+      const end = await inkMass(page, ...seg(0.72, 0.97))
+      rows[ins] = { start, mid, end, start_over_mid: +(start / Math.max(1e-9, mid)).toFixed(4), end_over_mid: +(end / Math.max(1e-9, mid)).toFixed(4) }
+    }
+    return rows
+  }
   for (const ins of INSTRS) {
     await pickInstr(page, ins, 20)
     await slowFastSlow(page, X0, Y[ins], X1)
   }
   await page.waitForTimeout(200)
-  for (const ins of INSTRS) {
-    const y = Y[ins], h = 26
-    const seg = (a: number, b: number) => [X0 + (X1 - X0) * a, y - h / 2, X0 + (X1 - X0) * b, y + h / 2] as const
-    // 안쪽 대역(mark58 게이트 ①의 그 대역 — 포함 끝점 양자화를 밖에 둔다)
-    const start = await inkMass(page, ...seg(0.03, 0.28))
-    const mid = await inkMass(page, ...seg(0.375, 0.625))
-    const end = await inkMass(page, ...seg(0.72, 0.97))
-    rows[ins] = { start, mid, end, start_over_mid: +(start / Math.max(1e-9, mid)).toFixed(4), end_over_mid: +(end / Math.max(1e-9, mid)).toFixed(4) }
-    expect(mid, ins + ' — 몸통에 잉크가 있다').toBeGreaterThan(100)
+  const withGrain = await measure()
+  // 결 끔(같은 획 재굽기) — 결 칸(9px) 표집 잡음(대역당 ~27칸 · ±7%)이 ±10% 문과 같은 눈금이라
+  // 게이트는 결 없이 잰다(누적의 기제는 결과 무관). 결 있는 값은 기록으로 남는다.
+  await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(true))
+  await page.waitForTimeout(300)
+  const noGrain = await measure()
+  await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(false))
+  await page.waitForTimeout(200)
+  for (const ins of ['cp', 'pencil', 'marker'] as const) {
+    const r = noGrain[ins] as { mid: number; start_over_mid: number; end_over_mid: number }
+    expect(r.mid, ins + ' — 몸통에 잉크가 있다').toBeGreaterThan(100)
+    expect(Math.abs(r.start_over_mid - 1), ins + ' — 시작 대역(분모 mid · 결 끔)').toBeLessThanOrEqual(cs.PAINT58_STAMP_BAND_TOL)
+    expect(Math.abs(r.end_over_mid - 1), ins + ' — 끝 대역(분모 mid · 결 끔)').toBeLessThanOrEqual(cs.PAINT58_STAMP_BAND_TOL)
   }
   OUT.ends = {
-    def: '감속 몸짓(처음·끝 15% 잘게) 획의 안쪽 대역(3~28% · 37.5~62.5% · 72~97% — 같은 폭 25%)의 어둡기 합. 분모 mid(#11). mark58 게이트 ①의 자 그대로(#54) — 이 라운드는 그 위에 «획 안 누적 제거»가 대역 값을 어떻게 움직이는지 본다',
-    rows,
+    def: '감속 몸짓(처음·끝 15% 잘게) 획의 안쪽 대역(3~28% · 37.5~62.5% · 72~97% — 같은 폭 25%)의 어둡기 합. 분모 mid(#11). mark58 게이트 ①의 자 그대로(#54). 게이트는 **결 끔**(rows_no_grain) 판이다 — 결 칸 표집 잡음이 문(±10%)과 같은 눈금이어서(사전 재현 절: cp 시작 1.149가 그 잡음+누적). **붓은 술어 밖**: 51의 흐름(brush51 ⑦ «흐름 CV ≥ 0.05» 게이트)·끝 갈라짐 감쇠가 균일 술어와 정면 충돌한다 — 값으로만 남긴다(rows.brush). 반증 팔은 58의 것(마커 팁 되켬 — mark58 ①)이 든다: 이 자의 실패 조건은 끝 창 강조이고 그 팔이 그것을 실제로 낸다',
+    threshold: cs.PAINT58_STAMP_BAND_TOL,
+    rows: withGrain, rows_no_grain: noGrain,
   }
 })
 
-test('④ 결의 위상 — 도장 위상만 반 간격 어긋난 두 획의 픽셀 상관(연필 · 자기 반복 대조)', async ({ page }) => {
+test('④ 결의 위상 — 도장 위상만 반 간격 어긋난 두 획의 픽셀 상관(연필) · 게이트 ≥ C.PAINT59_GRAIN_CORR_MIN · 반증(결 시드 획별)', async ({ page }) => {
   await bigBox(page, false)
+  const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   await pickInstr(page, 'pencil', 20, '#3a6b35')
   const y = 500
   const strokeAt = async (x0: number) => {
@@ -373,24 +498,39 @@ test('④ 결의 위상 — 도장 위상만 반 간격 어긋난 두 획의 픽
     await page.mouse.up()
     await page.waitForTimeout(300)
   }
-  // 창은 가운데 200px(양 끝 40px 밖 — 시작점 어긋남의 끝 효과를 뺀다)
+  const wOf = () => page.evaluate(() => (window as any).__b2.app.doc.strokes.find((s: any) => s.paint !== undefined)?.paint.w ?? null)
+  const pair = async (tag: string) => {
+    await strokeAt(560)
+    const wA = await wOf()
+    await darkMap(page, tag + 'A', 600, y - 6, 200, 12)
+    await undoPaint(page)
+    await strokeAt(562.5)                       // 간격 5px(0.25w)의 반
+    const wB = await wOf()
+    await darkMap(page, tag + 'B', 600, y - 6, 200, 12)
+    await undoPaint(page)
+    const c = await corrMaps(page, tag + 'A', tag + 'B')
+    console.log(`[④ ${tag}] wA=${wA} wB=${wB} corr=${c.corr}`)
+    return { ...c, w_a: wA, w_b: wB }
+  }
   await strokeAt(560)
-  await darkMap(page, 'A', 600, y - 14, 200, 28)
+  await darkMap(page, 'A', 600, y - 6, 200, 12)
   await undoPaint(page)
   await strokeAt(560)
-  await darkMap(page, 'A2', 600, y - 14, 200, 28)
-  await undoPaint(page)
-  // 도장 간격 = 굵기 20 × spacingK 0.25 = 5px → 반 간격 2.5px 어긋남
-  await strokeAt(562.5)
-  await darkMap(page, 'B', 600, y - 14, 200, 28)
+  await darkMap(page, 'A2', 600, y - 6, 200, 12)
   await undoPaint(page)
   const same = await corrMaps(page, 'A', 'A2')
-  const phase = await corrMaps(page, 'A', 'B')
+  const phase = await pair('p')
+  await page.evaluate(() => (window as any).__b2.diag.setGrainPerStrokeForTest(true))
+  const perStroke = await pair('f')
+  await page.evaluate(() => (window as any).__b2.diag.setGrainPerStrokeForTest(false))
   OUT.grain_phase = {
-    def: '연필(굵기 20 · 간격 0.25w = 5px) 수평 획 두 개 — 같은 자리(A·A2 — 결정론 대조: 1이어야 한다 #5)와 시작 x가 2.5px(반 간격) 어긋난 B. 가운데 200×28 css 창의 어둡기 지도 피어슨 상관. 결이 도장마다면 위상 이동이 도장의 결 칸을 바꿔 상관이 떨어지고, 결이 면 고정 마스크면 도장 위상은 결에 안 실려 상관이 높다. 판별 값은 corr_phase — 수리 전/후 비교',
-    corr_same: same, corr_phase: phase,
+    def: '연필(굵기 20 · 간격 0.25w = 5px) 수평 획 두 개 — 같은 자리(A·A2 — 결정론 대조: 1이어야 한다 #5)와 시작 x가 2.5px(반 간격) 어긋난 B. 가운데 200×12 css 창(**안쪽 행** — 가장자리 ±3px는 뺀다: 딱딱한 도장 열의 물결(간격 5px 주기)이 위상 이동에 그대로 실려 결과 무관하게 상관을 깎는다 — 실측 28px 창 .984) 어둡기 지도 피어슨 상관. 결이 도장마다면 위상 이동이 도장의 결 칸을 바꿔 상관이 떨어지고(사전 .976~.985), 결이 면 고정 마스크면 도장 위상은 결에 안 실려 상관이 높다(현행). 문은 사전 값 위(C.PAINT59_GRAIN_CORR_MIN). falsification = 결 시드를 획별로 어긋내면(면 고정이 깨진다) 상관이 떨어진다',
+    threshold: cs.PAINT59_GRAIN_CORR_MIN,
+    corr_same: same, corr_phase: phase, falsification: perStroke,
   }
   expect(same.corr, '같은 획 두 번 = 같은 픽셀(결정론)').toBeGreaterThan(0.99)
+  expect(phase.corr, '결이 면 고정 — 위상 어긋난 두 획의 상관').toBeGreaterThanOrEqual(cs.PAINT59_GRAIN_CORR_MIN)
+  expect(perStroke.corr, '반증 — 시드가 획별이면 상관이 문 아래로').toBeLessThan(cs.PAINT59_GRAIN_CORR_MIN)
 })
 
 test('⑤ coalesced — 곡선 획의 원본 표본 수와 곡선 이탈(켬/끔 · 4점 묶음 프로토타입 패치)', async ({ page }) => {
@@ -465,7 +605,8 @@ test('⑤ coalesced — 곡선 획의 원본 표본 수와 곡선 이탈(켬/끔
     on, off,
     samples_ratio: on.n > 0 && off.n > 0 ? +(on.n / off.n).toFixed(3) : null,
   }
-  expect(on.n, 'coalesced로 점이 실제로 는다').toBeGreaterThan(off.n)
+  expect(on.n, 'coalesced로 점이 실제로 는다(원본 > 합친)').toBeGreaterThan(off.n)
+  expect(on.worst ?? 0, '같은 획의 곡선 이탈이 준다').toBeLessThan(off.worst ?? 0)
 })
 
 test('⑥ 성능 — 면 17 · 칠 40획: 그리는 중 프레임(합성 이동 40회)과 유휴 프레임 · 텍스처 바이트', async ({ page }) => {
@@ -564,4 +705,9 @@ test('⑥ 성능 — 면 17 · 칠 40획: 그리는 중 프레임(합성 이동 
   }
   expect(paintN, '칠이 실제로 여러 획 얹혔다').toBeGreaterThanOrEqual(30)
   expect(paintN2 - paintN, '합성 획이 실제로 커밋됐다(입력 경로 살아 있음)').toBeGreaterThanOrEqual(1)
+  const csP = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
+  const idleMed = Math.min(idle1.median, idle2.median)
+  ;(OUT.perf as Record<string, unknown>).draft_extra_ms = +(draft.median - idleMed).toFixed(2)
+  ;(OUT.perf as Record<string, unknown>).threshold_extra_ms = csP.PAINT59_DRAFT_FRAME_EXTRA_MS
+  expect(draft.median - idleMed, '그리는 중 프레임 중앙값 — 유휴 + 상한(ms) 안').toBeLessThanOrEqual(csP.PAINT59_DRAFT_FRAME_EXTRA_MS)
 })
