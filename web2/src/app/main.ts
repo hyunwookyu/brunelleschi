@@ -6,6 +6,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
   frontFlyTarget, liveFaceSel, lastSelFace, faceThicknessNow, setClsThickness, setFaceThicknessEx, faceSlotsOf,
+  njGrip, setStrokeNj, setJoint56OffForTest,
   commitPaint, injectPaintAt, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen,
   placePersonAt, gripFaceArea, floorAreaNow, volumeNow, flashFaces, screenToDoc, roomsNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
@@ -1908,6 +1909,9 @@ const griptrayEl = document.getElementById('griptray')!
 const GRIP_ROWS = [
   { key: 'dup', name: '복제', tip: '복제 — 잡은 선을 같은 자리에 하나 더 놓는다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="15" height="15"/><rect x="12" y="12" width="15" height="15"/></svg>' },
   { key: 'lock', name: '잠금', tip: '잠금 — 잡은 선을 보호한다(안 잡히고 안 지워진다)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="14" width="18" height="13" rx="1.5"/><path d="M11 14 V10 a5 5 0 0 1 10 0 V14"/></svg>' },
+  // web2-56 — 접합 끊기(끝단마다 — 조사한 모든 툴에 있다: 어떤 알고리즘도 100%를 못
+  // 맞춘다). 벽의 끝단 = 경계 모서리 = 획이라, 잡은 «선»에 거는 토글이다(잠금의 문법).
+  { key: 'njoin', name: '접합', tip: '접합 끊기 — 잡은 선(모서리)에서 벽 두께의 접합을 끊는다(끝이 평평해진다) · 다시 누르면 잇는다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13 H14 M5 19 H14"/><path d="M20 13 H27 M20 19 H27"/><path d="M18 7 l-4 18" stroke-width="1.1"/></svg>' },
   { key: 'join', name: '맺기', tip: '맺기 — 잡은 두 선을 만나게 연장한다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 26 H23 V9"/><path d="M23 26 l3 3 M23 9 l-3 -3" stroke-width="1.1"/></svg>' },
   { key: 'front', name: '정면', tip: '정면 — 잡은 면을 정면으로 보는 평행 투영으로 간다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg>' },
   // web2-45 — 면을 잡았을 때의 손잡이 둘(45-2 분류 정정 · 45-4 채움). 그림 정본은
@@ -1983,6 +1987,12 @@ function doGripAction(key: string) {
   } else if (key === 'lock') {
     const n = lockGrip(app)
     if (n > 0) notify(`${n}개 잠금 — 꾹 누르면 「해제」가 뜬다`)
+  } else if (key === 'njoin') {
+    // web2-56 — 접합 끊기 토글. 값 배선은 state.njGrip 하나(#54 — diag의 setNjForTest도
+    // 같은 문서 필드를 지난다).
+    const r = njGrip(app)
+    if (r.n > 0) notify(r.on ? `${r.n}개 접합 끊음 — 그 모서리의 끝이 평평해진다(다시 누르면 잇는다)` : `${r.n}개 접합 이음`)
+    else status('바뀐 것이 없다')
   } else if (key === 'join') {
     const r = joinGrip(app)
     if (r.ok) {
@@ -2978,6 +2988,34 @@ const diag = {
     }
     return { info, slots, band }
   },
+  /** 접합 진단(web2-56) — 접합 기록(승부·이동량·계단 표본 사각의 화면 사영)·기각 사유
+   *  (D-1 표식)·1링 통계. 값의 출처는 recompute가 세운 app.joints 하나다(#54). */
+  joint56: () => {
+    const j = app.joints
+    const sp = (P: { x: number; y: number; z: number }) => {
+      const q = project(app.lift.an, app.pose, P)
+      return q ? docToScreen(app, q) : null
+    }
+    return {
+      joins: (j?.joins ?? []).map(r => ({ ...r, probeScr: r.probe?.map(quad => quad.map(sp)) ?? null })),
+      rejects: j?.rejects ?? [],
+      stats: j?.stats ?? null,
+    }
+  },
+  /** D-3 반증 ①(지시) — 병합 걸음을 끈다: 계단이 같은 실행에서 실제로 돌아온다 */
+  joint56OffForTest: (v: boolean) => { setJoint56OffForTest(v); bumpDoc(app); invalidate() },
+  /** D-3 반증 ②·③(지시) — 우선순위 뒤집기·코어 표시 지우기. 분류 정의 덮어쓰기를 직접
+   *  갈아 끼운다(제품 손잡이는 아직 pri·core에 없다 — 55의 «들고만 있는다» 그대로). */
+  joint56SetDefForTest: (cls: keyof typeof DEFAULT_CLS, patch: Record<string, unknown> | null) => {
+    const d = (app.doc.clsDefs ??= {})
+    if (patch === null) delete d[cls]
+    else d[cls] = { ...d[cls], ...patch }
+    if (Object.keys(d).length === 0) delete app.doc.clsDefs
+    bumpDoc(app)
+    invalidate()
+  },
+  /** 접합 끊기의 시험 손잡이 — 앱 경로(setStrokeNj — undo 한 칸)를 그대로 지난다(#54) */
+  setNjForTest: (id: number, on: boolean) => { const r = setStrokeNj(app, id, on); invalidate(); return r },
   stageDimForTest: (text: string, mm: number | null) => { stageDim(app, text, mm); invalidate() },
   /** 사후 수정(web2-32 2번)의 **화면 팔 손잡이** — 치수 숫자가 «어디에» 그려졌는지.
    *  그리는 자리와 누르는 자리가 같은 함수라(#54) 팔은 그 자리를 눌러 본다. */

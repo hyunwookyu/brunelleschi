@@ -1,0 +1,87 @@
+{
+  "conditions": {
+    "workers": 1,
+    "project": "dpr1",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/join56.spec.ts (워커 1 · 스펙 하나씩 강제 — #99)"
+  },
+  "what": "web2-56 — 접합: 계단 픽셀 0(중심) · 버트/관통 · 칠 생존 · 손통 「접합」 · 성능",
+  "note_92": "판정자는 픽셀(안 덮인 수)·세계 단위 이동량·uv 값이다 — 「접합했다」는 이름표라 안 센다",
+  "note_d3": "D-3 셋의 자리: ① 병합 걸음 끄기(이 파일 ①) ② 우선순위 뒤집기(이 파일 ②) ③ 코어 지우기(단위 ④ — thick55 문법대로 화면 몫/상태 몫을 가른다)",
+  "stair": {
+    "def": "중심 게이트: 평면 뷰 코너 표본 사각(15% 축소) 안의 «안 덮인» 픽셀(#gl 알파<128). 접합 켬 = 0(계단 없음 · 문 C.JOIN56_STAIR_PX_MAX) · 끔 = 계단이 실제로 돌아온다(D-3 ① — 그 값이 pre 원장의 짝) · 다시 켬 = 0(복귀). 55 stair 구성값(buried 75 · step 100mm)의 그 코너가 이 사각이다",
+    "px_join_on": 0,
+    "px_join_off": 544,
+    "px_join_on_again": 0,
+    "probe_total_px": 544,
+    "tie": true,
+    "ext_front": 0.15359999999999996,
+    "ext_back": -0.15360000000000085
+  },
+  "butt": {
+    "def": "다른 분류 L(벽3 ↔ 외벽4): tie=false · winner=외벽(관통 — 진 쪽 바깥 평면까지, 이동량은 세계 단위 extA/extB) · 반증 = pri 뒤집기(wall.pri 9)로 winner가 실제로 바뀐다. T 접합·코어 반증(D-3 ③)의 판정자는 단위 팔 ④다",
+    "winner_before": "extw",
+    "winner_after_flip": "wall",
+    "ext_win": {
+      "front": 0.07679999999999954,
+      "back": 0.07680000000000042
+    },
+    "ext_lose": {
+      "front": -0.07680000000000042,
+      "back": -0.07680000000000042
+    }
+  },
+  "paint_alive": {
+    "def": "칠 생존 게이트: 접합 켬/끔/켬에 칠의 uv(저장 — 중심면의 자)가 바이트로 불변, 자국 픽셀이 세 상태 전부 실재. 접합은 렌더 정점만 옮기고 칠의 자리는 안 만진다(state의 그 주석이 코드 자리)",
+    "uv_unchanged": true,
+    "px_on": 379,
+    "px_off": 356,
+    "px_on2": 379
+  },
+  "ui34_njoin": {
+    "def": "#96/#97/34-6 — 손통 접합 줄: 툴팁 두 상태 · rect(화면 안) · elementFromPoint 눌림 · 손통 넘침 sh==ch(줄 +1 실측 — 착수 표 (b)) · 재누름 토글 값 · 끊기의 상태값(코너 획 nj → 접합 소멸/복귀)",
+    "blocked_tip": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+    "ok_tip": "접합 끊기 — 잡은 선(모서리)에서 벽 두께의 접합을 끊는다(끝이 평평해진다) · 다시 누르면 잇는다",
+    "rect": {
+      "x": 1073.5,
+      "y": 313,
+      "w": 71.5,
+      "h": 32.5
+    },
+    "viewport": {
+      "w": 1200,
+      "h": 800
+    },
+    "overflow": {
+      "sh": 368,
+      "ch": 368
+    },
+    "toggle_seq": [
+      "nj=1(전부)",
+      "nj 걷힘(전부)"
+    ],
+    "break_effect": {
+      "before": "L join",
+      "after_nj": "no join",
+      "restored": "L join"
+    }
+  },
+  "perf": {
+    "def": "접합 장면(벽 둘 t=200 + 바닥 t=150)의 syncStrokes ms와 접합 수·기각 수·1링 통계. 접합은 메시 수를 안 늘린다(정점 이동뿐) — recompute 몫(computeJoints)의 지시 대역(30벽·48접합) 실측은 단위 원장 join56_unit_web2.json이 든다. 절대 ms는 기계 몫(#47)",
+    "sync_ms": {
+      "median": 0.2,
+      "min": 0.1,
+      "max": 0.5
+    },
+    "joins": 1,
+    "rejects": 2,
+    "stats": {
+      "computed": 2,
+      "cached": 1,
+      "recomputedFaces": [
+        9,
+        10,
+        13
+      ]
+    }
+  }
+}

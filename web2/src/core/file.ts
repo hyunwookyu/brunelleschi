@@ -90,7 +90,8 @@ export const setSaveRoundForTest = (v: boolean): void => { roundDefault = v }
 const KEY_ORDER: string[] = [
   'format', 'version', 'frame', 'W', 'H',
   'strokes', 'id', 'a', 'b', 'x', 'y', 'z', 'raw', 'rawIn',
-  'name', 'pose', 'p', 'q', 'proj', 'view', 'mat', 'dim', 'layer', 'own3', 'axis', 'text', 'lock',
+  // web2-56: nj(접합 끊기 — lock의 규격)
+  'name', 'pose', 'p', 'q', 'proj', 'view', 'mat', 'dim', 'layer', 'own3', 'axis', 'text', 'lock', 'nj',
   // 칠(web2-45 → 46 → **48**): f 면 id · s 면의 쪽(48-5) · c 색 hex(48-7) · i 도구 ·
   // w 자국 굵기(48-2). ⚠ `m`은 **면 재료**(Face.mat)가 아직 쓰고, `s`·`t`·`w`는 아래
   // 면·치수 줄에도 있는 이름이라 여기서 새로 안 적는다(이 배열은 열쇠 «차례»의 전역
@@ -239,6 +240,9 @@ export function parseBrnl(text: string, info?: ParseInfo): BrnlData | null {
     // 잠금(web2-44) — text와 같은 규격(값 1 하나 · 모양이 틀리면 그 필드만 버린다:
     // 잃어도 «안 잠김»일 뿐이라 조용히 틀린 기하가 안 난다).
     if (s.lock === 1) st.lock = 1
+    // 접합 끊기(web2-56) — lock과 같은 규격(값 1 하나 · 모양이 틀리면 그 필드만 버린다:
+    // 잃어도 «접합함»일 뿐이라 조용히 틀린 기하가 안 난다 — 캡이 평평해질 뿐이다).
+    if (s.nj === 1) st.nj = 1
     // 칠 획 — ⚠⚠ **web2-50: 정본이 면 위 좌표(uv)다.** uv(짝수 길이 ≥4 유한수)와
     // 쪽(±1)이 **같이 서야** 받는다(쪽 없는 칠 = 양쪽에 보이는 칠 ⛔ — rep의 규약 그대로).
     // **uv 없는 칠(45~48 형식)은 획째 버리고 센다** — 사용자 확정 「잃어도 상관없다」

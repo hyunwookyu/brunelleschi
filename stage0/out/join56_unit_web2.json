@@ -1,0 +1,12 @@
+{
+  "what": "web2-56 — 접합 계산(computeJoints)의 지시 대역 성능(벽 30 · 접합 48). 프레임 몫이 아니라 recompute 몫이다 — 접합은 메시 수를 안 늘린다(정점 이동뿐). 절대 ms는 기계 몫(#47) — 회귀 비교는 같은 원장의 전값과",
+  "conditions": {
+    "canonical": "LEDGER=1 npx vitest run test/joint56.test.ts",
+    "walls": 30,
+    "joins": 48
+  },
+  "fresh_ms_median": 3.338,
+  "fresh_ms_max": 4.628,
+  "cached_ms_median": 2.935,
+  "note_82": "문턱 없음 — 추세 측정. 값의 자리(#42(e)): 접합 수는 위 팔이 48로 세어 지킨다"
+}
