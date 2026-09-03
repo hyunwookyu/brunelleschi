@@ -50,6 +50,9 @@ export interface InputCallbacks {
   onCommit: (a: Pt, b: Pt, raw: Pt[], press?: number, rawIn?: RawInput) => void
   /** 지우개 커서 위치 (지우개 도구일 때) */
   onEraserMove: (p: Pt | null) => void
+  /** **면이 열렸다**(web2-57) — 지우개가 경계 구간을 끊어 면이 사라졌다(대기).
+   *  조용하면 안 된다 — 알림 한 줄은 main이 낸다(onFaceToggle의 문법 · #54). */
+  onFacesOpened: (ids: number[]) => void
   /** 면 도구의 미리보기 — 지금 탭하면 무엇이 될지(원칙 d) */
   onFacePreview: (f: { poly: Pt[]; mode: 'add' | 'remove' } | null) => void
   /** 면 지정·해제 결과 — 알림 한 줄이 이것을 읽는다 */
@@ -688,7 +691,8 @@ export function initInput(
     if (app.tool === 'measure' && !app.tipErase) { measureDown = toPt(e); return }
     if (erasingNow()) {
       beginErase(app)
-      eraseAt(app, toPt(e), eraseKind())
+      const opened = eraseAt(app, toPt(e), eraseKind())
+      if (opened.length > 0) cb.onFacesOpened(opened)
       cb.onEraserMove(toPt(e))
       return
     }
@@ -742,7 +746,8 @@ export function initInput(
       if (writeEntered) return       // 이 몸짓은 글씨 진입으로 소진됐다
       if (manipDrag) { dragManip(e); return }   // 잡기 끌기(web2-44) — 손이다
       if (erasingNow()) {
-        eraseAt(app, toPt(e), eraseKind())
+        const opened = eraseAt(app, toPt(e), eraseKind())
+        if (opened.length > 0) cb.onFacesOpened(opened)
         cb.onEraserMove(toPt(e))
         return
       }

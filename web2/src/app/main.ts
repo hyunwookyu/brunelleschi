@@ -419,6 +419,13 @@ inputApi = initInput(ink, app, {
   },
   onHover(p) { hover = p; invalidate() },
   onEraserMove(p) { eraserPos = p; invalidate() },
+  // 면이 열렸다(web2-57) — 경계 구간이 지워져 면이 사라졌다(대기 — 실행취소로 돌아온다).
+  // 조용히 사라지면 안 된다(43-1의 규칙) — 무엇이 사라졌는지 한 줄.
+  onFacesOpened(ids) {
+    notify(ids.length === 1
+      ? '면이 열렸다 — 경계가 지워져 면이 사라진다(칠·두께 포함). 실행취소로 돌아온다'
+      : `면 ${ids.length}장이 열렸다 — 경계가 지워져 사라진다(칠·두께 포함). 실행취소로 돌아온다`)
+  },
   onFacePreview(f) { facePrev = f; invalidate() },
   onDimTap(p) {
     // 사후 수정(web2-32 2번) — **치수 숫자를 누르면** 그 치수를 고른 것이다: 값은
