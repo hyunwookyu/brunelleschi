@@ -655,7 +655,7 @@ test('④ 결의 위상 — 도장 위상만 반 간격 어긋난 두 획의 픽
   await page.evaluate(() => (window as any).__b2.diag.setStrokeBufferOffForTest(false))
   const sceneEnd = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)
   OUT.grain_phase = {
-    def: '연필(굵기 20 · 간격 0.25w = 5px) 수평 획 두 개 — 같은 자리(A·A2 — 결정론 대조: 1이어야 한다 #5)와 시작 x가 2.5px(반 간격) 어긋난 B. 가운데 200×12 css 창(**안쪽 행** — 가장자리 ±3px는 뺀다: 딱딱한 도장 열의 물결(간격 5px 주기)이 위상 이동에 그대로 실려 결과 무관하게 상관을 깎는다 — 실측 28px 창 .984) 어둡기 지도 피어슨 상관. 결이 도장마다면 위상 이동이 도장의 결 칸을 바꿔 상관이 떨어지고(사전 .976~.985), 결이 면 고정 마스크면 도장 위상은 결에 안 실려 상관이 높다(현행). 문은 사전 값 위(C.PAINT59_GRAIN_CORR_MIN). falsification = 결 시드를 획별로 어긋내면(면 고정이 깨진다) 상관이 떨어진다',
+    def: '연필(굵기 20 · 간격 0.25w = 5px) 수평 획 두 개 — 같은 자리(A·A2 — 결정론 대조: 1이어야 한다 #5)와 시작 x가 2.5px(반 간격) 어긋난 B. 가운데 200×12 css 창(**안쪽 행** — 가장자리 ±3px는 뺀다: 딱딱한 도장 열의 물결(간격 5px 주기)이 위상 이동에 그대로 실려 결과 무관하게 상관을 깎는다 — 실측 28px 창 — 값은 old_engine.corr_28px · 사전 원장 .985) 어둡기 지도 피어슨 상관. 결이 도장마다면 위상 이동이 도장의 결 칸을 바꿔 상관이 떨어지고(사전 .976~.985), 결이 면 고정 마스크면 도장 위상은 결에 안 실려 상관이 높다(현행). 문은 사전 값 위(C.PAINT59_GRAIN_CORR_MIN). falsification = 결 시드를 획별로 어긋내면(면 고정이 깨진다) 상관이 떨어진다',
     threshold: cs.PAINT59_GRAIN_CORR_MIN,
     window: { gate_css: [600, 'y-6', 200, 12], pre_css: [600, 'y-14', 200, 28] },
     scene: { paint_at_end: sceneEnd, note: '#103 — 획마다 undo(같은 자리 세 획이 겹치지 않는다) · 끝에 0' },
@@ -837,7 +837,7 @@ test('⑥ 성능 — 면 17 · 칠 40획: 그리는 중 프레임(합성 이동 
   await page.waitForTimeout(300)
   const paintN2 = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)
   OUT.perf = {
-    def: '면 faceN(paint50 픽스처 그대로 — 스무 면 목표에 셋 모자란다 · note_89 준용) · 칠 40붓(연필 12px) 장면. idle = invalidate 40프레임의 rAF 간격(중앙·p90 · 두 번 — 잡음 바닥) · drafting = 합성 pointermove 40회(각각 다음 rAF까지 ms — «그리는 중» 한 프레임의 벽시계)와 그동안의 frameCost(r3 = render3d · d2 = draw2d 중앙값). placed_after = 합성 획이 실제로 커밋됐는가(입력 경로 무변의 증거)',
+    def: '면 faceN(paint50 픽스처 그대로 — 스무 면 목표에 셋 모자란다 · note_89 준용) · 칠 40붓 시도(연필 12px — 실배정은 paint_strokes 열쇠 · 면 밖으로 떨어진 획은 빠진다 · 60 2차 [15]) 장면. idle = invalidate 40프레임의 rAF 간격(중앙·p90 · 두 번 — 잡음 바닥) · drafting = 합성 pointermove 40회(각각 다음 rAF까지 ms — «그리는 중» 한 프레임의 벽시계)와 그동안의 frameCost(r3 = render3d · d2 = draw2d 중앙값). placed_after = 합성 획이 실제로 커밋됐는가(입력 경로 무변의 증거)',
     faces: faceN, paint_strokes: paintN, placed_after: paintN2 - paintN,
     textures: texes.length, bytes_total: bytes, levels: texes.map((t: any) => t.level),
     idle_ms: idle1, idle2_ms: idle2, noise_floor_ms: +Math.abs(idle2.median - idle1.median).toFixed(2),

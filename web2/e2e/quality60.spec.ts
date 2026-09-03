@@ -269,7 +269,7 @@ const labRipple = (page: Page, x0: number, yCv: number, len: number, period: num
       rel_half: mean > 1e-9 ? +(amp(per / 2) / mean).toFixed(4) : null, rel_double: mean > 1e-9 ? +(amp(per * 2) / mean).toFixed(4) : null }
   }, [x0, yCv, len, period] as unknown[])
 
-test('① 둥근 도장이 안 보인다 — 시험 판 가장자리 행의 도장 주기 진폭: 기본값(반증) vs mypaint 출발점(≤ C.PAINT60_RIPPLE_MAX) · 결 끔', async ({ page }) => {
+test('① 둥근 도장이 안 보인다 — 시험 판 가장자리 행의 도장 주기 진폭: 옛 엔진(반증 · 문 밖) · 기본값 · mypaint 출발점(둘 다 ≤ C.PAINT60_RIPPLE_MAX) · 결 끔', async ({ page }) => {
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await openLab(page)
@@ -324,7 +324,7 @@ test('① 둥근 도장이 안 보인다 — 시험 판 가장자리 행의 도�
   await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(false))
   const worst = (r: Record<string, unknown>) => Math.max(...Object.entries(r).filter(([k]) => k !== 'scene').map(([, x]) => (x as { rel: number | null }).rel ?? 0))
   OUT.ripple = {
-    def: '실험실 시험 판(굵기 28 · 압력 0.2 펜 — 낱 도장이 보이는 저압 · 결 끔 · 제품과 같은 paintMark #54 — 텍스처 축소 표집의 평활이 없는 자)의 수평 획 행 넷(중심 0 · 안쪽 6 · 가장자리 10·11px — #12)에서 x 480px 어둡기의 «도장 간격 주기» DFT 진폭(2|X|/N) ÷ 행 평균. 기본값(간격 0.25w=7px · 경도 1 · 산포 0)은 그 주기 파형이 서고, mypaint 출발점(간격 w/8=3.5px · 경도 0.1 · 산포 0.5)은 그 주기에서도 기본 주기에서도 문 아래. rel_half·rel_double은 이웃 주기(주기 오판 대비). 반증 = 기본값 행(worst_default > 문). ⚠ 첫 판은 #gl(면 텍스처 → 화면 축소)에서 쟀고 기본값이 .031로 문 아래였다 — 자가 평활을 재고 있었다(재설계의 사유)',
+    def: '실험실 시험 판(굵기 28 · 압력 0.2 펜 — 낱 도장이 보이는 저압 · 결 끔 · 제품과 같은 paintMark #54 — 텍스처 축소 표집의 평활이 없는 자)의 수평 획 행 넷(중심 0 · 안쪽 6 · 가장자리 10·11px — #12)에서 x 480px 어둡기의 «도장 간격 주기» DFT 진폭(2|X|/N) ÷ 행 평균. 기본값(간격 0.25w=7px · 경도 1 · 산포 0)은 그 주기 파형이 서고, mypaint 출발점(간격 w/8=3.5px · 경도 0.1 · 산포 0.5)은 그 주기에서도 기본 주기에서도 문 아래. rel_half·rel_double은 이웃 주기(주기 오판 대비). 반증 = **옛 엔진 행**(worst_old_engine > 문 — 도장 누적의 주기 농도 · 60 2차 [6]: 첫 판 def의 「기본값 행」은 값(worst_default .0065)과 갈렸다 — 기본값은 문 안이다). ⚠ 첫 판은 #gl(면 텍스처 → 화면 축소)에서 쟀고 기본값이 .031로 문 아래였다 — 자가 평활을 재고 있었다(재설계의 사유)',
     threshold: cs.PAINT60_RIPPLE_MAX,
     period_default_px: periodDefault, period_start_px: periodStart,
     default: base, start: start, start_at_default_period: startAtDefaultPeriod,
@@ -418,7 +418,7 @@ test('③ 층이 쌓인다 — 같은 자리 세 번: 둘째·셋째가 첫째�
     def: '색연필(압력 0.35 · 굵기 20) 같은 자리 세 획(둘째는 1.5px 어긋남 — 손의 반복). 안쪽 12px 창의 어둡기 지도: corr(L1,L2)·corr(L1,L3) — «같은 봉우리»(결이 면 고정이라 높다 · 실측 .9985)이되 1 아님(1.5px 어긋남의 도장 위상 — 최대값 합집합이라 안쪽은 거의 같고 가장자리·구멍 경계가 다르다 · 자기 대조 1과 갈린다). corr(L1, L2−L1) = 둘째 획의 증분이 첫째의 봉우리 «위»에 얹히는가(양수). mean이 회마다 는다(획 사이 누적 — 59 계약). corr_self = 같은 획 재굽기의 자기 대조(1 · 결정론 · 판정 아님 #5)',
     threshold: cs.PAINT60_LAYER_CORR_MIN,
     scene: { paint_before: n0, paint_after_three: n3, note: '#103 — 셋 쌓기는 설계(획 사이 누적) · 출발 0에서 셋' },
-    guarantee: 'corr_self 1 = 결정론(#5) — 판정자가 아니라 «같지는 않다»의 대조 기준',
+    guarantee: 'corr_self 1 = 결정론(#5) — 판정자가 아니라 «같지는 않다»의 대조 기준 · pass2/pass3의 bare_share 0·edge_sd 0 = 구성(둘째·셋째 획 뒤 안쪽 12px 창이 잉크로 꽉 차 빈 픽셀이 없다 — 60 2차 [20] · 판정자 아님)',
     pass1: s1, pass2: s2, pass3: s3, corr_12: c12, corr_13: c13, corr_1_inc2: cInc, corr_self: cSelf,
   }
   expect(s2.mean, '둘째 획이 더한다').toBeGreaterThan(s1.mean * 1.05)
@@ -459,7 +459,7 @@ test('④ 잉크 경로 — 마커 자기 교차는 안 진해지고(≤ 1.05) �
     def: '마커(굵기 20 · 압력 0.5) — 자기 교차(한 획 · 59 ② 경로)의 교차 창 p95 ÷ 몸통 p95(구성상 1 — canvas stroke() 한 번의 닫힌 경로 · AS-C175) vs 두 획의 교차(46 «겹치면 진해진다» — multiply). 60-3의 구조(«닫힌 폴리곤 하나 → 겹침 없음»)는 마커에 이미 서 있다 — perfect-freehand 불요(«펜» 칠 도구는 없다)',
     self: { cross: selfCross, body: selfBody, p95_ratio: +(selfCross.p95 / Math.max(1, selfBody.p95)).toFixed(4), scene: { paint: nSelf } },
     two: { cross: twoCross, body: twoBody, p95_ratio: +(twoCross.p95 / Math.max(1, twoBody.p95)).toFixed(4), scene: { paint: nTwo } },
-    guarantee: 'self p95_ratio 1 = canvas stroke() 한 번의 구성(AS-C175 · #5) — 판정자는 two(46 계약)와의 갈림',
+    guarantee: 'self p95_ratio 1 = canvas stroke() 한 번의 구성(AS-C175 · #5) — 판정자는 two(46 계약)와의 갈림 · two.cross/two.body의 bare_share 0·edge_sd 0 = 구성(마커 띠 안쪽 창은 빈 픽셀 0 — 60 2차 [20] · 판정자 아님)',
   }
   expect(selfCross.p95 / Math.max(1, selfBody.p95), '자기 교차 — 안 진해진다').toBeLessThanOrEqual(1.05)
   expect(twoCross.p95 / Math.max(1, twoBody.p95), '두 획의 교차 — 진해진다(46)').toBeGreaterThanOrEqual(1.1)

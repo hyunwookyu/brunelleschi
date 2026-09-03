@@ -1131,7 +1131,7 @@
     }
   },
   "grain_phase": {
-    "def": "연필(굵기 20 · 간격 0.25w = 5px) 수평 획 두 개 — 같은 자리(A·A2 — 결정론 대조: 1이어야 한다 #5)와 시작 x가 2.5px(반 간격) 어긋난 B. 가운데 200×12 css 창(**안쪽 행** — 가장자리 ±3px는 뺀다: 딱딱한 도장 열의 물결(간격 5px 주기)이 위상 이동에 그대로 실려 결과 무관하게 상관을 깎는다 — 실측 28px 창 .984) 어둡기 지도 피어슨 상관. 결이 도장마다면 위상 이동이 도장의 결 칸을 바꿔 상관이 떨어지고(사전 .976~.985), 결이 면 고정 마스크면 도장 위상은 결에 안 실려 상관이 높다(현행). 문은 사전 값 위(C.PAINT59_GRAIN_CORR_MIN). falsification = 결 시드를 획별로 어긋내면(면 고정이 깨진다) 상관이 떨어진다",
+    "def": "연필(굵기 20 · 간격 0.25w = 5px) 수평 획 두 개 — 같은 자리(A·A2 — 결정론 대조: 1이어야 한다 #5)와 시작 x가 2.5px(반 간격) 어긋난 B. 가운데 200×12 css 창(**안쪽 행** — 가장자리 ±3px는 뺀다: 딱딱한 도장 열의 물결(간격 5px 주기)이 위상 이동에 그대로 실려 결과 무관하게 상관을 깎는다 — 실측 28px 창 — 값은 old_engine.corr_28px · 사전 원장 .985) 어둡기 지도 피어슨 상관. 결이 도장마다면 위상 이동이 도장의 결 칸을 바꿔 상관이 떨어지고(사전 .976~.985), 결이 면 고정 마스크면 도장 위상은 결에 안 실려 상관이 높다(현행). 문은 사전 값 위(C.PAINT59_GRAIN_CORR_MIN). falsification = 결 시드를 획별로 어긋내면(면 고정이 깨진다) 상관이 떨어진다",
     "threshold": 0.99,
     "window": {
       "gate_css": [
@@ -1271,7 +1271,7 @@
     "samples_ratio": 3.667
   },
   "perf": {
-    "def": "면 faceN(paint50 픽스처 그대로 — 스무 면 목표에 셋 모자란다 · note_89 준용) · 칠 40붓(연필 12px) 장면. idle = invalidate 40프레임의 rAF 간격(중앙·p90 · 두 번 — 잡음 바닥) · drafting = 합성 pointermove 40회(각각 다음 rAF까지 ms — «그리는 중» 한 프레임의 벽시계)와 그동안의 frameCost(r3 = render3d · d2 = draw2d 중앙값). placed_after = 합성 획이 실제로 커밋됐는가(입력 경로 무변의 증거)",
+    "def": "면 faceN(paint50 픽스처 그대로 — 스무 면 목표에 셋 모자란다 · note_89 준용) · 칠 40붓 시도(연필 12px — 실배정은 paint_strokes 열쇠 · 면 밖으로 떨어진 획은 빠진다 · 60 2차 [15]) 장면. idle = invalidate 40프레임의 rAF 간격(중앙·p90 · 두 번 — 잡음 바닥) · drafting = 합성 pointermove 40회(각각 다음 rAF까지 ms — «그리는 중» 한 프레임의 벽시계)와 그동안의 frameCost(r3 = render3d · d2 = draw2d 중앙값). placed_after = 합성 획이 실제로 커밋됐는가(입력 경로 무변의 증거)",
     "faces": 17,
     "paint_strokes": 30,
     "placed_after": 1,
@@ -1297,37 +1297,37 @@
       512
     ],
     "idle_ms": {
-      "median": 34.8,
-      "p90": 36.5
+      "median": 31.4,
+      "p90": 34.1
     },
     "idle2_ms": {
-      "median": 34,
-      "p90": 38
+      "median": 31.3,
+      "p90": 33.1
     },
-    "noise_floor_ms": 0.8,
+    "noise_floor_ms": 0.1,
     "drafting_ms": {
-      "median": 35.5,
-      "p90": 38.3,
-      "max": 41.2,
-      "first": 33.2,
+      "median": 32.9,
+      "p90": 35.3,
+      "max": 47.4,
+      "first": 30.4,
       "frame_cost": {
         "n": 43,
-        "r3": 1.599999999627471,
+        "r3": 1.5,
         "bs": 0,
-        "d2": 0.2999999988824129,
-        "total": 1.900000000372529,
-        "totalMax": 76.90000000037253
+        "d2": 0.30000000074505806,
+        "total": 1.800000000745058,
+        "totalMax": 71
       },
       "draft_base_bytes_max": 96256,
       "draft_with_base_max": 1
     },
-    "draft_extra_ms": 1.5,
+    "draft_extra_ms": 1.6,
     "draft_memory": {
       "def": "그리는 중 사본(base) 바이트의 최대와 사본 든 텍스처 수의 최대(1차 [8] — 획은 주인 면 하나(54-1)라 1 · 고름이 있으면 그 수까지) · 커버리지 지도는 bbox×4바이트(획마다 해제)",
       "base_bytes_max": 96256,
       "with_base_max": 1
     },
-    "draft_max_extra_ms": 7.2,
+    "draft_max_extra_ms": 16.1,
     "threshold_extra_ms": 12,
     "gate_condition": {
       "workers": 1,
