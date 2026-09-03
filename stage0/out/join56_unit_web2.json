@@ -8,5 +8,65 @@
   "fresh_ms_median": 3.338,
   "fresh_ms_max": 4.628,
   "cached_ms_median": 2.935,
-  "note_82": "문턱 없음 — 추세 측정. 값의 자리(#42(e)): 접합 수는 위 팔이 48로 세어 지킨다"
+  "note_82": "문턱 없음 — 추세 측정. 값의 자리(#42(e)): 접합 수는 위 팔이 48로 세어 지킨다",
+  "gates": {
+    "def": "게이트 다섯의 값(전부 세계 단위 · OPT = cleanup 0.05 / maxExt 0.6 / dot 0.9994). T: 줄기 두 표면의 정지 평면 잔차(가까운 면 z=+0.1) · 코어 반증: 막대 core=0에서 줄기가 이겨 먼 면(z=−0.1)까지 — 잔차와 승자. 치유: 간격 = cleanup×0.98/×1.02의 접합 수(붙음 1/안 붙음 0 — #71 경계 양쪽). 결정론: 이동 전체 소화값(정렬 행 수:해시)이 차례 역순·id 교체에 동일. 1링: 두꺼운 면 3·쌍 3에서 벽 하나 이동 — computed/cached와 재계산 면(분모 포함 · recomputedFaces는 «접합이 평가된» 면이다 — 기각 전 단계)",
+    "t_near": {
+      "target_z": 0.1,
+      "resid_max": 0
+    },
+    "t_core_flip": {
+      "target_z": -0.1,
+      "resid_max": 0,
+      "winner_is_stem": true
+    },
+    "heal": {
+      "in_dist": 0.049,
+      "joins_in": 1,
+      "out_dist": 0.051,
+      "joins_out": 0,
+      "cleanup_w": 0.05
+    },
+    "determinism": {
+      "digest_base": "8:1ade29a5",
+      "digest_reversed": "8:1ade29a5",
+      "digest_new_ids": "8:1ade29a5",
+      "all_equal": true
+    },
+    "onering": {
+      "thick_faces": 3,
+      "pairs": 3,
+      "joins": 2,
+      "first": {
+        "computed": 3,
+        "cached": 0
+      },
+      "unchanged": {
+        "computed": 0,
+        "cached": 3
+      },
+      "moved_one": {
+        "computed": 2,
+        "cached": 1,
+        "recomputedFaces": [
+          1,
+          3
+        ]
+      }
+    }
+  },
+  "perf": {
+    "def": "접합 계산(computeJoints)의 지시 대역 성능(벽 30 · 접합 48 — 세어 지킨 값). 이것은 recompute 몫이다(문서가 바뀔 때만 돈다 — 궤도 프레임에는 없다). ⚠ 캐시 이득(fresh→cached)은 걸음 몫뿐이다 — 비용의 주인은 쌍 탐색(전 쌍 검출)이라, 1링 캐시의 뜻은 속도가 아니라 «어느 접합이 다시 걸어졌는가»의 판정(무효화 단위 — 지시 6)이다. ⚠ 벽 30 «장면의 프레임» 실측은 없다(그 규모 장면을 그리는 비용 — e2e ⑤의 켬/끔 프레임·메시 수 대조와 이 값이 각각의 절대값으로 선다 · 두 하네스를 비로 안 묶는다 #27). 절대 ms는 기계 몫(#47) — 회귀 비교는 같은 원장의 전값과",
+    "walls": 30,
+    "joins": 48,
+    "pairs": 435,
+    "fresh_ms_median": 3.317,
+    "fresh_ms_max": 4.23,
+    "cached_ms_median": 2.786,
+    "cached_run_stats": {
+      "computed": 0,
+      "cached": 435
+    },
+    "note_82": "문턱 없음 — 추세 측정"
+  }
 }

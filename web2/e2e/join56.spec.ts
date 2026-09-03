@@ -197,9 +197,7 @@ const stairPx = (page: Page, quad: { x: number; y: number }[]) =>
 
 test('① 중심 게이트 — 같은 분류 L의 계단 픽셀 0 (+D-2/D-3: 걸음을 끄면 계단이 돌아온다)', async ({ page }, info) => {
   const ids = await cornerScene(page)
-  // t=400 — 계단(200×200mm)이 평면 뷰 확대에서 수백 픽셀이 되는 값(초판 t=200·무확대는
-  // 표본이 ~수십 px라 off 계단이 8px — 자가 신호 아래였다: D-5의 그 자리를 실측으로 고쳤다)
-  const r = await thicken(page, ids.wallA, 400)
+  const r = await thicken(page, ids.wallA, 200)
   expect((r as { n: number } | null)?.n, '일괄 — 같은 분류 벽 둘').toBe(2)
   await settle(page); await settle(page)
   const j0 = await wallJoin(page, ids.wallA, ids.wallB)
@@ -207,6 +205,16 @@ test('① 중심 게이트 — 같은 분류 L의 계단 픽셀 0 (+D-2/D-3: 걸
   expect(j0.kind).toBe('L')
   expect(j0.tie, '같은 분류 — 무승부(마이터는 그 결과다)').toBe(true)
   await flyPlan(page, ids.floor)
+  await settle(page); await settle(page)
+  // 제품 대역 동작점(t=200 · 무확대 — #12 · 2차 대응 [11]): 켬 = 0이 이 눈금에서도 선다.
+  // (끔의 판별은 아래 증폭 대역이 한다 — 이 눈금의 끔은 8px로 자 아래였다: D-5 실측)
+  const jP = await wallJoin(page, ids.wallA, ids.wallB)
+  const qP = (jP.probeScr as ({ x: number; y: number } | null)[][])
+    .filter(q => q.every(p => p !== null)) as { x: number; y: number }[][]
+  expect(qP.length).toBeGreaterThan(0)
+  const on200 = await stairPx(page, qP[0]!)
+  // 측정 대역: t=400(계단 200×200mm) + 코너 4배 확대 — 끔 계단이 수백 px가 되는 눈금
+  await thicken(page, ids.wallA, 400)
   await settle(page); await settle(page)
   // 코너를 확대한다 — 표본 사각의 무게중심을 화면 가운데로, 4배(모든 화면 좌표는
   // docToScreen이 view를 타므로 probeScr도 같이 확대된다 — #54의 그 한 자리).
@@ -253,21 +261,33 @@ test('① 중심 게이트 — 같은 분류 L의 계단 픽셀 0 (+D-2/D-3: 걸
   await page.evaluate(() => (window as any).__b2.diag.joint56OffForTest(false))
   await settle(page); await settle(page)
   const on2 = await stairPx(page, probe)
+  // 접합 끊기의 픽셀 값(2차 대응 [7] — «끝이 평평해지고 이음선이 보인다»의 자):
+  // 코너 획에 nj를 걸면 같은 표본 사각이 끔 값으로 돌아온다(= 55의 버트 = 계단).
+  await page.evaluate((sid) => (window as any).__b2.diag.setNjForTest(sid, true), ids.cornerStroke)
+  await settle(page); await settle(page)
+  const nj = await stairPx(page, probe)
+  await page.evaluate((sid) => (window as any).__b2.diag.setNjForTest(sid, false), ids.cornerStroke)
+  await settle(page); await settle(page)
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
   writeFileSync(resolve(HERE, `../../stage0/out/join56_web2_pre_dpr${info.project.name === 'dpr2' ? 2 : 1}.json`),
     JSON.stringify({
-      what: 'web2-56 — 수리 «전»(병합 걸음 없음 = 55의 세그먼트 판)의 계단 실측(D-2 · #42(d)). 같은 표본 사각을 같은 자로 잰 값 — 수리 후(join56_web2_dpr*.json stair.px_join_on)와 짝이다',
+      what: 'web2-56 — 수리 «전» 기하의 계단 실측(D-2 · #42(d)): **같은(56) 트리에서 이동표를 끈 값**이다. «55 렌더와 같은 정점»은 코드 경로 근거의 주장이다(이동표가 비면 렌더 정점 식이 55와 같다 — 55 트리 재실행 실측이 아니다 · 리뷰어 1차 [8]). 같은 표본 사각을 같은 자로 잰 수리 후 값은 join56_web2_dpr*.json stair.px_join_on',
+      conditions: { project: info.project.name, canonical: 'LEDGER=1 node tools/e2e.mjs ledger e2e/join56.spec.ts (① 안에서 joint56OffForTest(true) 상태의 측정)' },
       probe_scr: probe, shrink: C.JOIN56_PROBE_SHRINK,
       stair_px_no_join: off.uncovered, probe_total_px: off.total,
     }, null, 2))
   OUT.stair = {
-    def: '중심 게이트: 평면 뷰 코너 표본 사각(15% 축소) 안의 «안 덮인» 픽셀(#gl 알파<128). 접합 켬 = 0(계단 없음 · 문 C.JOIN56_STAIR_PX_MAX) · 끔 = 계단이 실제로 돌아온다(D-3 ① — 그 값이 pre 원장의 짝) · 다시 켬 = 0(복귀). 55 stair 구성값(buried 75 · step 100mm)의 그 코너가 이 사각이다',
+    def: '중심 게이트: 평면 뷰 **벽-벽** 코너(⚠ 55 stair 구성값(buried 75·step 100mm)은 벽⊥바닥 코너의 «크기 눈금»이지 이 사각의 자리가 아니다 — 벽⊥바닥 접합은 둘만 두꺼울 때 서고 방 구석에선 복합 구석 기각 · 리뷰어 1차 [1] · DEFERRED) 표본 사각(15% 축소) 안의 «안 덮인» 픽셀(#gl 알파<128). ⚠ 픽셀 0의 뜻은 «코너가 덮였다»다 — 과잉 연장도 0을 낸다: 모양(정확한 마이터)의 정본은 단위(joint56.test) ①이다(자기 평면 잔차<1e-9 = 과잉이면 깨진다 · 캡 일치 · ext 크기 = 정확히 t/2 — 이 원장 ext_front/back ±0.1536이 그 값 · 리뷰어 1차 [5]). 동작점 둘(#12): 제품 대역 t=200·무확대(켬 0)와 측정 대역 t=400·4배 확대(켬 0 / 끔 실측 — 끔의 판별은 이 대역이 한다: t=200 무확대의 끔은 8px로 자 아래 · D-5). 끔 = D-3 ①(그 값이 pre 원장의 짝) · nj = 접합 끊기의 픽셀 값(끔과 같은 계단으로 복귀 = 끝이 평평)',
+    px_join_on_t200_nozoom: on200.uncovered, probe_total_t200: on200.total,
     px_join_on: on.uncovered, px_join_off: off.uncovered, px_join_on_again: on2.uncovered,
-    probe_total_px: on.total, tie: j0.tie, ext_front: j0.extA.front, ext_back: j0.extA.back,
+    px_nj_broken: nj.uncovered,
+    probe_total_px: on.total, tie: j0.tie, ext_front: j1.extA.front, ext_back: j1.extA.back,
   }
+  expect(on200.uncovered, '제품 대역(t=200·무확대) — 켬 0').toBeLessThanOrEqual(C.JOIN56_STAIR_PX_MAX)
   expect(off.uncovered, 'D-3/D-2 — 걸음을 끄면 계단이 실제로 돌아온다').toBeGreaterThan(C.THICK55_PRESENCE_PX)
   expect(on.uncovered, '중심 게이트 — 계단 픽셀 0').toBeLessThanOrEqual(C.JOIN56_STAIR_PX_MAX)
   expect(on2.uncovered, '다시 켬 — 0으로 복귀').toBeLessThanOrEqual(C.JOIN56_STAIR_PX_MAX)
+  expect(nj.uncovered, '접합 끊기 — 계단(끔 값)으로 돌아온다: 끝이 평평해졌다').toBeGreaterThan(C.THICK55_PRESENCE_PX)
 })
 
 test('② 다른 분류 L — 버트·이긴 쪽 관통 (+반증: 우선순위 뒤집기)', async ({ page }) => {
@@ -283,16 +303,27 @@ test('② 다른 분류 L — 버트·이긴 쪽 관통 (+반증: 우선순위 �
   expect(j, '접합이 섰다').not.toBeNull()
   expect(j.tie, '다른 구성 — 저절로 버트(특수 분기 없음)').toBe(false)
   expect(j.winner, '외벽(pri 4)이 벽(pri 3)을 이겨 관통한다').toBe(ids.wallB)
-  // 반증(D-3 ②) — 우선순위를 실제로 뒤집는다: 관통하는 쪽이 바뀐다
+  // 반증(D-3 ②) — 우선순위를 실제로 뒤집는다: 관통하는 쪽이 «값으로» 바뀐다
+  // (승자 이름표만으로는 안 센다 #92 — 이동량의 부호·주인이 실제로 넘어간 것을 잰다)
   await page.evaluate(() => (window as any).__b2.diag.joint56SetDefForTest('wall', { pri: 9 }))
   await settle(page)
   const j2 = await wallJoin(page, ids.wallA, ids.wallB)
   expect(j2.winner, '뒤집힌 우선순위 — 벽이 관통한다').toBe(ids.wallA)
+  const extOf = (rec: { a: number; extA: { front: number; back: number }; extB: { front: number; back: number } | null }, fid: number) =>
+    rec.a === fid ? rec.extA : rec.extB!
+  const winB = extOf(j, j.winner), loseB = extOf(j, j.winner === ids.wallA ? ids.wallB : ids.wallA)
+  const winA = extOf(j2, j2.winner), loseA = extOf(j2, j2.winner === ids.wallA ? ids.wallB : ids.wallA)
+  // 관통 = 두 표면 다 늘어난다(+) · 버트 = 두 표면 다 물러난다(−) — 뒤집기 전·후 둘 다
+  expect(Math.min(winB.front, winB.back), '이긴 쪽(전) — 두 표면 연장(+)').toBeGreaterThan(0)
+  expect(Math.max(loseB.front, loseB.back), '진 쪽(전) — 두 표면 후퇴(−)').toBeLessThan(0)
+  expect(Math.min(winA.front, winA.back), '이긴 쪽(후 · 뒤집힘) — 벽이 연장(+)').toBeGreaterThan(0)
+  expect(Math.max(loseA.front, loseA.back), '진 쪽(후) — 외벽이 후퇴(−)').toBeLessThan(0)
   OUT.butt = {
-    def: '다른 분류 L(벽3 ↔ 외벽4): tie=false · winner=외벽(관통 — 진 쪽 바깥 평면까지, 이동량은 세계 단위 extA/extB) · 반증 = pri 뒤집기(wall.pri 9)로 winner가 실제로 바뀐다. T 접합·코어 반증(D-3 ③)의 판정자는 단위 팔 ④다',
+    def: '다른 분류 L(벽3 ↔ 외벽4): tie=false · winner=외벽(관통 — 진 쪽 바깥 평면까지, 이동량은 세계 단위 extA/extB — 관통은 두 표면 +, 버트는 두 표면 −) · 반증 = pri 뒤집기(wall.pri 9)로 winner와 **이동량의 주인·부호가 실제로 넘어간다**(1차 [6] — 이름표 아님 #92: ext_*_after_flip이 그 값). T 접합·코어 반증(D-3 ③)의 판정자는 단위(joint56.test) ④·원장 gates 블록이다',
     winner_before: j.winner === ids.wallB ? 'extw' : 'wall',
     winner_after_flip: j2.winner === ids.wallA ? 'wall' : 'extw',
-    ext_win: j.winner === j.a ? j.extA : j.extB, ext_lose: j.winner === j.a ? j.extB : j.extA,
+    ext_win: winB, ext_lose: loseB,
+    ext_win_after_flip: winA, ext_lose_after_flip: loseA,
   }
 })
 
@@ -318,27 +349,73 @@ test('③ 55의 칠이 살아 있다 — 접합 켬/끔에 uv 불변 · 자국�
     for (let i = 0; i < d.length; i += 4) if ((d[i + 2]! - d[i]!) > 40 && d[i + 3]! > 30) n++
     return n
   })
-  const uvOf = () => page.evaluate(() => {
+  const wallPaintId = await page.evaluate(() => {
     const ss = (window as any).__b2.app.doc.strokes
-    const last = ss.filter((x: any) => x.paint).pop()
-    return last ? JSON.stringify(last.paint.uv) : null
+    return ss.filter((x: any) => x.paint).pop()?.id ?? null
   })
+  expect(wallPaintId).not.toBeNull()
+  const uvOf = () => page.evaluate((id) => {
+    const s = (window as any).__b2.app.doc.strokes.find((x: any) => x.id === id)
+    return s?.paint ? JSON.stringify(s.paint.uv) : null
+  }, wallPaintId)
   const uv0 = await uvOf()
   const n0 = await blueN()
   expect(uv0, '칠 획이 uv로 섰다').not.toBeNull()
   expect(n0, '칠이 화면에 실재한다').toBeGreaterThan(10)
+  // 띠(테두리 — 지시 문면이 «테두리 길이를 바꿔도»다 · 1차 [9]) — thick55 ④의 자로 띠
+  // 사각(화면 면적 최대 = 자유단 세로 모서리 — 접합 코너 밖)을 찾아 한 획 긋는다.
+  const band = await page.evaluate((fid) => {
+    const t = (window as any).__b2.diag.thick55(fid)
+    let best: any = null, bestA = 0
+    for (const q of t.band) {
+      const pts = q.scr
+      if (pts.some((p: any) => !p)) continue
+      let a = 0
+      for (let i = 0; i < 4; i++) {
+        const P = pts[i], Q = pts[(i + 1) % 4]
+        a += P.x * Q.y - Q.x * P.y
+      }
+      a = Math.abs(a) / 2
+      if (a > bestA) { bestA = a; best = q }
+    }
+    return best
+  }, ids.wallA)
+  expect(band, '띠 사각이 화면에 있다').not.toBeNull()
+  const mid = (i: number, j2: number) => ({ x: (band.scr[i].x + band.scr[j2].x) / 2, y: (band.scr[i].y + band.scr[j2].y) / 2 })
+  const m0 = mid(0, 3), m1 = mid(1, 2)
+  await page.click('#btn-paint')
+  await page.waitForTimeout(80)
+  await drawLine(page, m0.x + (m1.x - m0.x) * 0.3, m0.y + (m1.y - m0.y) * 0.3,
+    m0.x + (m1.x - m0.x) * 0.7, m0.y + (m1.y - m0.y) * 0.7)
+  await page.click('#btn-pencil')
+  await settle(page); await settle(page)
+  const bandStroke = await page.evaluate(() => {
+    const ss = (window as any).__b2.app.doc.strokes
+    const last = ss[ss.length - 1]
+    return last?.paint ? { e: last.paint.e ?? null, uv: JSON.stringify(last.paint.uv) } : null
+  })
+  expect(bandStroke?.e, '띠에 그은 획이 테두리 슬롯(e=1)로 섰다').toBe(1)
+  const nBase = await blueN()
   await page.evaluate(() => (window as any).__b2.diag.joint56OffForTest(true))
   await settle(page); await settle(page)
   const uvOff = await uvOf(), nOff = await blueN()
+  const bandOff = await page.evaluate(() => {
+    const ss = (window as any).__b2.app.doc.strokes
+    const last = ss[ss.length - 1]
+    return last?.paint ? JSON.stringify(last.paint.uv) : null
+  })
   await page.evaluate(() => (window as any).__b2.diag.joint56OffForTest(false))
   await settle(page); await settle(page)
   const uvOn = await uvOf(), nOn = await blueN()
   OUT.paint_alive = {
-    def: '칠 생존 게이트: 접합 켬/끔/켬에 칠의 uv(저장 — 중심면의 자)가 바이트로 불변, 자국 픽셀이 세 상태 전부 실재. 접합은 렌더 정점만 옮기고 칠의 자리는 안 만진다(state의 그 주석이 코드 자리)',
-    uv_unchanged: uv0 === uvOff && uv0 === uvOn, px_on: n0, px_off: nOff, px_on2: nOn,
+    def: '칠 생존 게이트. ⚠ 가름(1차 [9] — 자기참조 유형 3): uv 불변은 **구성 보장**이다(칠의 정본은 중심면의 자라 접합 코드가 그 필드에 닿지 않는다) — 여기서 재는 것은 측정이 아니라 «배선»이고(배선이 틀리면 값이 크게 갈린다 — paint54 front의 그 규약), **측정의 몫은 픽셀 실재**다: 앞면 칠 + 띠(e=1) 칠이 접합 켬/끔/켬 세 상태 전부 화면에 있다. px가 항등이 아닌 것(켬↔끔 ~6% 차)은 접합이 칠 텍스처 «메시» 정점을 면 메시와 같이 옮기기 때문이다(코너 근처 삼각의 UV 신축 — 없으면 칠막이 몸 밖에 뜬다). ⚠ 캡 «끝단»(이동으로 늘어난 영역)의 칠 적중은 자 밖 — DEFERRED 그 행이 경계다',
+    uv_face_unchanged: uv0 === uvOff && uv0 === uvOn,
+    uv_band_unchanged: bandStroke!.uv === bandOff,
+    px_base: nBase, px_on: n0, px_off: nOff, px_on2: nOn,
   }
-  expect(uv0 === uvOff && uv0 === uvOn, 'uv 불변 — 접합이 칠의 자리를 안 옮긴다').toBe(true)
-  expect(nOff, '끔에서도 자국이 있다').toBeGreaterThan(10)
+  expect(uv0 === uvOff && uv0 === uvOn, '앞면 uv 불변 — 배선 확인').toBe(true)
+  expect(bandStroke!.uv === bandOff, '띠 (s,u) 불변 — 배선 확인').toBe(true)
+  expect(nOff, '끔에서도 자국(앞면+띠)이 있다').toBeGreaterThan(10)
   expect(nOn, '켬에서도 자국이 있다').toBeGreaterThan(10)
 })
 
@@ -462,8 +539,9 @@ test('⑤ 성능 — 접합 장면의 syncStrokes·접합 통계 (원장 값 · 
   await page.evaluate(() => (window as any).__b2.diag.joint56OffForTest(false))
   await settle(page)
   OUT.perf = {
-    def: '접합 장면(벽 둘 t=200 + 바닥 t=150)의 syncStrokes ms · 접합 켬/끔 프레임(median/p90 — #46: dpr1은 vsync 상한이라 판별은 dpr2)·faceMeshes 수 대조(접합은 메시 수 불변 — 정점 이동뿐) · 접합 수·기각 수·1링 통계. 지시 대역(벽 30·접합 40)의 recompute 몫(computeJoints ms)은 단위 원장 join56_unit_web2.json이 든다(30벽 장면을 손으로 그리는 비용 대신 같은 계산을 그 규모로 — 프레임 몫은 이 대조가 «메시 수 불변»으로 값을 댄다). 절대 ms는 기계 몫(#47) — 문턱 없음(#82)',
+    def: '접합 장면(벽 둘 t=200 + 바닥 t=150 — 두꺼운 면 3 · 살아남은 접합 1 · 복합 구석 기각 2)의 syncStrokes ms · 접합 켬/끔 프레임(median/p90 — #46: dpr1은 vsync 상한이라 판별은 dpr2)·faceMeshes 수 대조(9==9 — 접합은 메시 «수» 불변: 정점 이동뿐). ⚠ stats는 **직전 recompute의** 값이고(computed/cached는 그 회의 쌍 평가 — recomputedFaces는 «접합이 평가된» 면·기각 전 단계라 이 장면(3면)에선 전체와 같다) **1링 게이트의 정본은 단위 원장 gates.onering이다**(분모 포함: 두꺼운 면 3·쌍 3에서 벽 하나 이동 → 재계산 쌍 2·재계산 면 [이동 벽, 짝] — 리뷰어 1차 [3]). ⚠ «접합의 프레임 몫 없음»은 이 장면(접합 1)의 켬/끔 실측 + 메시 수 불변에서 온 **추론**이다 — 접합 48 «장면의 프레임» 실측은 없다(그 규모 장면의 구축 비용 · 리뷰어 1차 [4]): 그 규모의 값은 recompute 몫(computeJoints — 단위 원장 perf: 신선 3.3ms · 궤도 프레임에는 아예 안 돈다)이고, 두 하네스의 값은 비로 안 묶고 각각의 절대값으로 둔다(#27 · AS-C148). 절대 ms는 기계 몫(#47) — 문턱 없음(#82)',
     sync_ms: ms, joins: (j.joins as unknown[]).length, rejects: (j.rejects as unknown[]).length,
+    thick_faces: 3,
     stats: j.stats,
     frame_join_on: onF.frame, frame_join_off: offF.frame,
     face_meshes_on: onF.meshes, face_meshes_off: offF.meshes,

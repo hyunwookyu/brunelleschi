@@ -377,6 +377,79 @@ describe('56 ⑩ 세션 통합 — 앱 경로의 접합·끊기·저장', () => 
   })
 })
 
+/** 단위 원장(join56_unit_web2.json)의 병합-쓰기(#99의 그 꼴 — 팔 둘이 같은 파일에 쓴다) */
+async function writeUnitLedger(patch: Record<string, unknown>) {
+  const { writeFileSync, mkdirSync } = await import('../tools/ledgerfs')
+  const { readFileSync } = await import('node:fs')
+  const { resolve, dirname } = await import('node:path')
+  const { fileURLToPath } = await import('node:url')
+  const here = dirname(fileURLToPath(import.meta.url))
+  const f = resolve(here, '../../stage0/out/join56_unit_web2.json')
+  let prev: Record<string, unknown> = {}
+  try { prev = JSON.parse(readFileSync(f, 'utf8')) } catch { /* 첫 실행 */ }
+  mkdirSync(resolve(here, '../../stage0/out'), { recursive: true })
+  writeFileSync(f, JSON.stringify({
+    what: 'web2-56 — 접합의 단위 원장: 게이트 값(T·코어 반증·치유 경계·결정론·1링 — 리뷰어 1차 [2][3][12]: 원장 밖 측정은 안 걸린다 §5.1)과 지시 대역 성능(벽 30 · 접합 48)',
+    conditions: { canonical: 'LEDGER=1 npx vitest run test/joint56.test.ts' },
+    ...prev, ...patch,
+  }, null, 2))
+}
+
+describe('56 ⑫ 원장 — 게이트 다섯의 값 (리뷰어 1차 [2][3][12] — 원장 밖 측정은 안 걸린다)', () => {
+  it('T·코어 반증·치유 경계·결정론·1링을 값으로 join56_unit_web2.json gates 블록에', async () => {
+    // T — 줄기 표면의 정지 평면과 잔차(세계 단위)
+    const bar = () => mkWall(2, -2, 0, 2, 0, { pri: 4 })
+    const stem = () => mkWall(1, 0, 0, 0, 3, { pri: 3 })
+    const rT = computeJoints([stem(), bar()], OPT)
+    const sT = shifted(rT, stem())!
+    const residNear = Math.max(...sT.flatMap(s => [Math.abs(s.front.z - 0.1), Math.abs(s.back.z - 0.1)]))
+    const rC = computeJoints([stem(), mkWall(2, -2, 0, 2, 0, { pri: 4, core: 0 })], OPT)
+    const sC = shifted(rC, stem())!
+    const residFar = Math.max(...sC.flatMap(s => [Math.abs(s.front.z - -0.1), Math.abs(s.back.z - -0.1)]))
+    // 치유 경계(#71) — 간격 실측치와 접합 수(경계 양쪽)
+    const heal = (k: number) => computeJoints([mkWall(1, OPT.cleanupW * k, 0, 4, 0), mkWall(2, 0, 0, 0, 4)], OPT).joins.length
+    // 결정론 — 이동 전체의 소화값(digest)이 차례·id에 불변
+    const digest = (res: ReturnType<typeof computeJoints>): string => {
+      const rows: string[] = []
+      for (const m of res.shifts.values()) for (const [k, s] of m) rows.push(`${k}|${vkey(s.f)}|${vkey(s.b)}`)
+      rows.sort()
+      let h = 5381
+      for (const r of rows) for (let i = 0; i < r.length; i++) h = ((h * 33) ^ r.charCodeAt(i)) >>> 0
+      return `${rows.length}:${h.toString(16)}`
+    }
+    const mk3 = (ids: [number, number, number]) => [
+      mkWall(ids[0], 0, 0, 4, 0), mkWall(ids[1], 0, 0, 0, 4, { pri: 4 }), mkWall(ids[2], 4, 0, 4, 4)]
+    const dA = digest(computeJoints(mk3([1, 2, 3]), OPT))
+    const dB = digest(computeJoints(mk3([1, 2, 3]).reverse(), OPT))
+    const dC = digest(computeJoints(mk3([7, 9, 8]).reverse(), OPT))
+    // 1링 — 분모 포함(#16 · 리뷰어 [3]): 두꺼운 면 3 · 쌍 3에서 벽 하나 이동
+    const cache: JointCache = new Map()
+    const mv = (cx: number) => [mkWall(1, 0, 0, 4, 0), mkWall(2, 0, 0, 0, 4), mkWall(3, cx, 0, cx, 4)]
+    const s1 = computeJoints(mv(4), OPT, cache).stats
+    const s2 = computeJoints(mv(4), OPT, cache).stats
+    const s3 = computeJoints(mv(4.02), OPT, cache).stats
+    await writeUnitLedger({
+      gates: {
+        def: '게이트 다섯의 값(전부 세계 단위 · OPT = cleanup 0.05 / maxExt 0.6 / dot 0.9994). T: 줄기 두 표면의 정지 평면 잔차(가까운 면 z=+0.1) · 코어 반증: 막대 core=0에서 줄기가 이겨 먼 면(z=−0.1)까지 — 잔차와 승자. 치유: 간격 = cleanup×0.98/×1.02의 접합 수(붙음 1/안 붙음 0 — #71 경계 양쪽). 결정론: 이동 전체 소화값(정렬 행 수:해시)이 차례 역순·id 교체에 동일. 1링: 두꺼운 면 3·쌍 3에서 벽 하나 이동 — computed/cached와 재계산 면(분모 포함 · recomputedFaces는 «접합이 평가된» 면이다 — 기각 전 단계)',
+        t_near: { target_z: 0.1, resid_max: residNear },
+        t_core_flip: { target_z: -0.1, resid_max: residFar, winner_is_stem: rC.joins[0]!.winner === 1 },
+        heal: { in_dist: +(OPT.cleanupW * 0.98).toFixed(4), joins_in: heal(0.98), out_dist: +(OPT.cleanupW * 1.02).toFixed(4), joins_out: heal(1.02), cleanup_w: OPT.cleanupW },
+        determinism: { digest_base: dA, digest_reversed: dB, digest_new_ids: dC, all_equal: dA === dB && dB === dC },
+        onering: {
+          thick_faces: 3, pairs: 3, joins: 2,
+          first: { computed: s1.computed, cached: s1.cached },
+          unchanged: { computed: s2.computed, cached: s2.cached },
+          moved_one: { computed: s3.computed, cached: s3.cached, recomputedFaces: s3.recomputedFaces },
+        },
+      },
+    })
+    expect(residNear).toBeLessThan(C.JOIN56_PLANE_EPS)
+    expect(residFar).toBeLessThan(C.JOIN56_PLANE_EPS)
+    expect(dA === dB && dB === dC).toBe(true)
+    expect(s3.recomputedFaces.length, '1링 — 전체(3)가 아니다').toBeLessThan(3)
+  })
+})
+
 describe('56 ⑪ 성능 — 지시 대역(벽 30장 · 접합 40개)의 computeJoints (원장)', () => {
   it('30벽·48접합 격자 — ms 중앙(신선/캐시)을 원장에 (LEDGER에서만 쓴다)', async () => {
     // 블록 하나 = 막대 3(z 0·3·6) + 줄기 12(x 6칸 × 줄 2) = 15벽 · T 24. 블록 둘 = 30벽 · 48접합.
@@ -407,6 +480,7 @@ describe('56 ⑪ 성능 — 지시 대역(벽 30장 · 접합 40개)의 computeJ
     runs.sort((a, b) => a - b)
     const cache: JointCache = new Map()
     computeJoints(faces, OPT, cache)
+    const warm = computeJoints(faces, OPT, cache).stats     // 적중 분모(#16 · 리뷰어 [12])
     const cruns: number[] = []
     for (let i = 0; i < 7; i++) {
       const t0 = performance.now()
@@ -414,18 +488,16 @@ describe('56 ⑪ 성능 — 지시 대역(벽 30장 · 접합 40개)의 computeJ
       cruns.push(performance.now() - t0)
     }
     cruns.sort((a, b) => a - b)
-    const { writeFileSync, mkdirSync } = await import('../tools/ledgerfs')
-    const { resolve, dirname } = await import('node:path')
-    const { fileURLToPath } = await import('node:url')
-    const here = dirname(fileURLToPath(import.meta.url))
-    mkdirSync(resolve(here, '../../stage0/out'), { recursive: true })
-    writeFileSync(resolve(here, '../../stage0/out/join56_unit_web2.json'), JSON.stringify({
-      what: 'web2-56 — 접합 계산(computeJoints)의 지시 대역 성능(벽 30 · 접합 48). 프레임 몫이 아니라 recompute 몫이다 — 접합은 메시 수를 안 늘린다(정점 이동뿐). 절대 ms는 기계 몫(#47) — 회귀 비교는 같은 원장의 전값과',
-      conditions: { canonical: 'LEDGER=1 npx vitest run test/joint56.test.ts', walls: 30, joins: 48 },
-      fresh_ms_median: +runs[3]!.toFixed(3), fresh_ms_max: +runs[6]!.toFixed(3),
-      cached_ms_median: +cruns[3]!.toFixed(3),
-      note_82: '문턱 없음 — 추세 측정. 값의 자리(#42(e)): 접합 수는 위 팔이 48로 세어 지킨다',
-    }, null, 2))
-    expect(true).toBe(true)
+    await writeUnitLedger({
+      perf: {
+        def: '접합 계산(computeJoints)의 지시 대역 성능(벽 30 · 접합 48 — 세어 지킨 값). 이것은 recompute 몫이다(문서가 바뀔 때만 돈다 — 궤도 프레임에는 없다). ⚠ 캐시 이득(fresh→cached)은 걸음 몫뿐이다 — 비용의 주인은 쌍 탐색(전 쌍 검출)이라, 1링 캐시의 뜻은 속도가 아니라 «어느 접합이 다시 걸어졌는가»의 판정(무효화 단위 — 지시 6)이다. ⚠ 벽 30 «장면의 프레임» 실측은 없다(그 규모 장면을 그리는 비용 — e2e ⑤의 켬/끔 프레임·메시 수 대조와 이 값이 각각의 절대값으로 선다 · 두 하네스를 비로 안 묶는다 #27). 절대 ms는 기계 몫(#47) — 회귀 비교는 같은 원장의 전값과',
+        walls: 30, joins: 48, pairs: 435,
+        fresh_ms_median: +runs[3]!.toFixed(3), fresh_ms_max: +runs[6]!.toFixed(3),
+        cached_ms_median: +cruns[3]!.toFixed(3),
+        cached_run_stats: { computed: warm.computed, cached: warm.cached },
+        note_82: '문턱 없음 — 추세 측정',
+      },
+    })
+    expect(warm.computed, '무변 재실행 — 전부 캐시(재계산 0)').toBe(0)
   })
 })
