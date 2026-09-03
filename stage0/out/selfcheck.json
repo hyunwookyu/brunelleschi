@@ -1,5 +1,5 @@
 {
-  "n_flags": 6359,
+  "n_flags": 6360,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -380,11 +380,6 @@
       "path": "brush51_web2_dpr1.json:cp_coverage.marker.bare",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "brush51_web2_dpr1.json:perf.delta_median_ms",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "brush51_web2_dpr2.json:pressure.flat.width_ratio",
@@ -7649,6 +7644,11 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "mark58_web2_dpr1.json:gate_stats.rows.brush.deep80_coverage",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "mark58_web2_dpr1.json:gate_stats.rows.marker.coverage",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -7667,6 +7667,11 @@
       "path": "mark58_web2_dpr2.json:gate_stats.rows.brush.coverage",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "mark58_web2_dpr2.json:gate_stats.rows.brush.deep80_coverage",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "mark58_web2_dpr2.json:gate_stats.rows.marker.coverage",
@@ -33080,10 +33085,26 @@
       99
     ],
     "mark58_web2_dpr1.json": [
-      99
+      11,
+      12,
+      13,
+      92,
+      96,
+      97,
+      99,
+      100,
+      101
     ],
     "mark58_web2_dpr2.json": [
-      99
+      11,
+      12,
+      13,
+      92,
+      96,
+      97,
+      99,
+      100,
+      101
     ],
     "materials_visible_web2.json": [
       47

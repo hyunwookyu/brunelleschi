@@ -42,6 +42,16 @@ const KNOBS: { key: keyof BrushDef; name: string; min: number; max: number; step
   { key: 'cpSkipAlpha', name: '구멍 잔량', min: 0, max: 0.7, step: 0.01, tip: '뚫린 칸에 남는 안료' },
 ]
 
+/** 모드별 유효 축(2차 [6]) — 무효 손잡이는 비활성으로 **보인다**(사람이 헛되이 밀지 않게).
+ *  ⚠ cpSkip*는 stamps 모드 전반에서 유효하다(문턱>0이 구멍 갈래를 «켠다» — 연필도 그 축을
+ *  당길 수 있는 것이 데이터 모델의 사실 · gate_lab matrix가 값). */
+const RELEVANT: Record<BrushDef['mode'], readonly string[]> = {
+  band: ['alpha', 'tipAlpha', 'tipLenK'],
+  stamps: ['spacingK', 'alpha', 'hardness', 'scatter', 'grainK', 'grainFloor', 'cpSkipTh', 'cpSkipAlpha'],
+  bristles: ['spacingK', 'alpha', 'hardness', 'scatter', 'bristles', 'splitT', 'splitK'],
+}
+const curvesRelevant = (mode: BrushDef['mode']): boolean => mode !== 'band'
+
 export interface TuneLab {
   root: HTMLElement
   isOpen(): boolean
@@ -297,7 +307,22 @@ export function initTuneLab(opts: {
       opts.notify('기기 저장이 안 된다(사생활 모드?) — 값은 이 세션에만 산다')
     }
   })
-  foot.append(resetBtn, bakeBtn)
+  // mypaint 출발점(2차 [13] — CC0 mypaint-brushes pencil.myb의 값만 · NOTES 58 대조표):
+  // 사람이 한 번 눌러 비교하는 «출발점»이지 세션의 최종값이 아니다(굳히기 전에는 세션뿐).
+  const mypaintBtn = document.createElement('button')
+  mypaintBtn.id = 'tunelab-mypaint'
+  mypaintBtn.dataset.act = 'state'
+  mypaintBtn.textContent = 'mypaint 출발점'
+  mypaintBtn.title = 'mypaint-brushes(CC0) 연필 값을 이 브러시에 얹어 본다 — 간격 w/8 · 경도 0.1 · 불투명 0.7 · 산포 0.5 · 압력→농도 0→1. 마음에 들면 「굳힌다」'
+  mypaintBtn.addEventListener('click', () => {
+    setBrushTune(instr, {
+      spacingK: 0.125, hardness: 0.1, alpha: 0.7, scatter: 0.5,
+      density: [0, 0.25, 0.5, 0.75, 1] as Curve5,
+    })
+    syncAll()
+    opts.rebake()
+  })
+  foot.append(resetBtn, mypaintBtn, bakeBtn)
 
   root.append(head, pickRow, cv, cvRow, knobWrap, curveWrap, foot)
 
@@ -308,14 +333,26 @@ export function initTuneLab(opts: {
   const syncAll = () => {
     for (const [k, b] of pickBtns) b.classList.toggle('on', k === instr)
     const def = brushDef(instr)
+    const rel = RELEVANT[def.mode]
     for (const k of KNOBS) {
       const el = knobEls.get(String(k.key))!
       el.range.value = String(def[k.key])
       el.val.textContent = String(def[k.key])
+      // 무효 축은 비활성(2차 [6] — «적어도 한 도구»가 아니라 «지금 이 도구»를 보인다)
+      const on = rel.includes(String(k.key))
+      el.range.disabled = !on
+      const rowEl = el.range.closest('label')?.parentElement as HTMLElement | null
+      if (rowEl) rowEl.style.opacity = on ? '1' : '0.35'
     }
     for (const ck of ['density', 'width'] as const) {
       const els = curveEls.get(ck)!
-      def[ck].forEach((y, i) => { els[i]!.value = String(y) })
+      const on = curvesRelevant(def.mode)
+      def[ck].forEach((y, i) => {
+        els[i]!.value = String(y)
+        els[i]!.disabled = !on
+      })
+      const rowEl = els[0]!.parentElement as HTMLElement | null
+      if (rowEl) rowEl.style.opacity = on ? '1' : '0.35'
     }
     syncTunedMark()
     redrawScratch()

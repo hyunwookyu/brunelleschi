@@ -98,24 +98,38 @@
     }
   },
   "gate_endpoint": {
-    "def": "안쪽 대역(폭 15% — 포함 끝점 양자화 밖) 도장 밀도 ±C.PAINT58_STAMP_BAND_TOL · 끝 창(굵기 폭)/몸통 창 ≤ 1.1(도구 넷 전수). 반증 = 팁 되켬(setBrushTuneForTest)에서 같은 술어가 죽는다",
+    "def": "안쪽 대역(폭 20% — 포함 끝점 양자화 밖 · **분모 = mid** · 한 자리 계수 눈금(±8%)이 임계(10%) 안) 도장 밀도 ±C.PAINT58_STAMP_BAND_TOL · 끝 창(굵기 폭)/몸통 창 ≤ 1.1(도구 넷 전수 — 시작의 술어) + 사전 대비 개선(gate_endpoint_pre_vs — 끝의 술어). end_stamps = 양 끝 1.5px 안 도장 수(사전 32/28/32의 «끝당 +» 해명: 붓은 빗살 배수). decel = 표본 간격 대역별(감속 실재 — 이 값이 없으면 시간 기반 가설을 못 가른다). 반증 = 팁 되켬에서 같은 술어가 죽는다",
     "tol": 0.1,
     "inner": {
       "brush": {
-        "start": 29,
-        "mid": 28,
-        "end": 28
+        "start": 40,
+        "mid": 41,
+        "end": 40,
+        "n": 204
       },
       "cp": {
-        "start": 8,
-        "mid": 8,
-        "end": 8
+        "start": 10,
+        "mid": 10,
+        "end": 10,
+        "n": 52
       },
       "pencil": {
-        "start": 9,
-        "mid": 10,
-        "end": 9
+        "start": 12,
+        "mid": 12,
+        "end": 12,
+        "n": 62
       }
+    },
+    "end_stamps": {
+      "brush": 7,
+      "cp": 2,
+      "pencil": 2
+    },
+    "decel": {
+      "start_gap": 0.05642298101165736,
+      "mid_gap": 0.22523898069738543,
+      "end_gap": 0.04587058693654509,
+      "n": 20
     },
     "tips": {
       "brush": {
@@ -138,29 +152,37 @@
     "tip_on_start_over_body": 1.385949418068617
   },
   "gate_stats": {
-    "def": "몸통 창(양끝 60px 제외 · 높이 24px) — coverage(dk>12) · deep_coverage(dk>60 — 구멍·결 골이 빠지는 눈금: dk>12 하나는 포화했다, 실측 전부 1) · mean_dark · transitions(중앙 행 깊음↔아님 / 100css px). 술어 넷(마커>색연필 깊은 덮임 · 색연필>마커 전이 · 연필>마커 농도 · 붓<마커 농도) + 짝별 갈림(pairs — 여섯 짝 전부 최대 상대 차 > 0.1. ⚠ 연필 중앙 행 전이는 이 굵기에서 0 — 겹침이 골을 메운다: 결 판정자는 brush51 ③)",
+    "def": "몸통 창(양끝 60px 제외 · 높이 24px) — coverage(dk>12) · deep_coverage(dk>60 — 구멍·결 골이 빠지는 눈금: dk>12 하나는 포화했다, 실측 전부 1) · mean_dark · transitions(중앙 행 깊음↔아님 / 100css px). 술어 넷(마커>색연필 깊은 덮임 — **dk 40·60·80 세 점 전부** #12·#13 · 색연필>마커 전이 · 연필>마커 농도 · 붓<마커 농도) + 짝별 갈림(pairs — 여섯 짝 전부 최대 상대 차 > 0.1. ⚠ 연필 중앙 행 전이는 이 굵기에서 0 — 겹침이 골을 메운다: 결 판정자는 brush51 ③. ⚠ 전이 자는 dpr 눈금 의존이다(붓 0(dpr1)↔2(dpr2) — 문턱 근처 무늬의 표집): 술어는 같은 dpr 안 비교만 — 2차 [7])",
     "rows": {
       "brush": {
         "coverage": 1,
+        "deep40_coverage": 0.6317708333333333,
         "deep_coverage": 0.13364583333333332,
+        "deep80_coverage": 0,
         "mean_dark": 45.034444444440545,
         "transitions": 2
       },
       "marker": {
         "coverage": 1,
+        "deep40_coverage": 0.84109375,
         "deep_coverage": 0.8271875,
+        "deep80_coverage": 0.8130208333333333,
         "mean_dark": 83.86817708332207,
         "transitions": 0
       },
       "cp": {
         "coverage": 1,
+        "deep40_coverage": 0.7239583333333334,
         "deep_coverage": 0.6065625,
+        "deep80_coverage": 0.575,
         "mean_dark": 87.30611111111183,
         "transitions": 3
       },
       "pencil": {
         "coverage": 1,
+        "deep40_coverage": 0.7671354166666666,
         "deep_coverage": 0.7405208333333333,
+        "deep80_coverage": 0.7073958333333333,
         "mean_dark": 98.72107638889011,
         "transitions": 0
       }
@@ -193,7 +215,7 @@
     }
   },
   "gate_lab": {
-    "def": "손잡이 23(값 13 + 곡선 10) × 도구 4 — 각 손잡이를 끝값으로 밀어 시험 판 해시가 바뀌는 도구 목록. 술어 = 죽은 손잡이 0(모든 손잡이가 적어도 한 도구에서 자국을 바꾼다 — 모드별 유효 축은 matrix가 값)",
+    "def": "손잡이 23(값 13 + 곡선 10) × 도구 4 — 각 손잡이를 끝값으로 밀어 시험 판 해시가 바뀌는 도구 목록. 술어 = 죽은 배선 0(모든 손잡이가 적어도 한 도구에서 자국을 바꾼다). ⚠ tipLenK 행은 전제(tipAlpha 0.5 켬 — 끝 크기는 끝 강조 0에서 보일 수 없다: 구성) 아래의 값이다(2차 [6] — 행마다 조건 명시 #11). 사람이 겪는 축은 disabled_per_instr가 값(무효 축 비활성 — 마커 20/23). overlay = #97 반증(닫힘: 안 덮음 · 열림: 맨 위). rules = 34-0의 수(#96 — 툴팁·값 표찰)",
     "matrix": {
       "tunelab-k-spacingK": [
         "pencil",
@@ -297,10 +319,66 @@
         "brush"
       ]
     },
-    "dead": []
+    "dead": [],
+    "disabled_per_instr": {
+      "pencil": 5,
+      "marker": 20,
+      "cp": 5,
+      "brush": 6
+    },
+    "overlay": {
+      "closed": {
+        "top": "ink",
+        "isLab": false
+      },
+      "open": {
+        "isLab": true
+      }
+    },
+    "rules": {
+      "handles": 24,
+      "tooltip_ok": 24,
+      "knob_value_labels": 13,
+      "slider_value_label": true
+    }
   },
   "gate_bake": {
     "stored_key": "b2.brushTune.v1",
-    "revived_tipAlpha": 0.27
+    "revived_tipAlpha": 0.27,
+    "product_tip_over_body": 1.170059480113708
+  },
+  "note_pitfalls": "#96(손잡이 라운드 34-0 값 — gate_lab.rules) · #97(전역 canvas 규칙 — 이 라운드가 사촌(패널 display가 hidden을 이김)을 밟았다: gate_lab.overlay가 반증 값) · #100(굳힘 무효화 한 걸음) · #101(web2 러너 확인) · #11(대역 분모 = mid — def) · #12·#13(임계 훑기: gate_stats thresholds 3점 · 대역 20%) · #92(판정자는 픽셀·수) · #99(병합-쓰기·열쇠 수)",
+  "gate_endpoint_pre_vs": {
+    "def": "동결 사전 원장(mark58_pre — 같은 dpr)을 읽어 마커 팁 창 비의 전/후를 같은 자로 — «끝점 뭉침» 게이트의 끝 절반(2차 [3])",
+    "pre": {
+      "start": 56494.41666666736,
+      "end": 36469.99999999968,
+      "body": 40762.24999999991,
+      "start_over_body": 1.385949418068617,
+      "end_over_body": 0.8947003661475939
+    },
+    "cur": {
+      "start_over_body": 1.0755621520729015,
+      "end_over_body": 0.7459189159904814
+    }
+  },
+  "gate_size": {
+    "def": "새 대역의 크기 게이트(2차 [1] — brush51 ⑤(2.5~40 · UI 왕복·클램프)의 위쪽 짝): 마커 100·색연필 50은 절대(문 C.PAINT51_SWATCH_W_TOL — 값은 brush51 원장 constants_used) · 붓은 비례 60→120(**같은 장면 좌/우 반쪽** — 시험 안 ?reset은 문서를 못 비운다(캐시 탈출구 · 자동 저장 복원 — 실측 획 18) · 2±0.4 · 유효 폭 ≈ 명목×1.6(빗살 산포)이라 120이 벽(이 열 ~300px) 안 실측 상한 — 250은 위 모서리에 잘렸다(실측 1.31): 그 위(250·500)는 값 왕복이 술어. 빗살 산포로 절대 두께는 명목보다 넓다 — 절대 술어는 band·stamps 몫)",
+    "thresholds": {
+      "band": 40,
+      "cp": 25,
+      "brush": 25,
+      "base_tint": "~13(실측 — 칠한 면 바탕)"
+    },
+    "marker100": 107.5,
+    "cp50": 49,
+    "cp_expected": 46.25,
+    "brush60": 98,
+    "brush120": 179,
+    "brush_ratio": 1.8265306122448979,
+    "slider_roundtrip": {
+      "w250": 250,
+      "w500": 500
+    }
   }
 }
