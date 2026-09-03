@@ -24446,22 +24446,22 @@
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
-      "path": "span57_web2.json:sweep.rows.stub_one.opened_n",
+      "path": "span57_web2.json:multi_piece.rows.then_sibling_erase.opened_seq[0]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "span57_web2.json:sweep.rows.stub_both.opened_n",
+      "path": "span57_web2.json:multi_piece.rows.then_sibling_move.face_vertex_moved_max",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "span57_web2.json:sweep.rows.whole_stroke.opened_n",
+      "path": "span57_web2.json:span_unknown.opened_seq[1]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "span57_web2.json:sweep.rows.multi_piece_span.opened_n",
+      "path": "span57_web2.json:span_unknown.opened_seq[2]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -33537,7 +33537,15 @@
       99
     ],
     "span57_web2.json": [
-      92
+      11,
+      12,
+      13,
+      61,
+      88,
+      90,
+      91,
+      92,
+      99
     ],
     "stage_browser.json": [
       3,

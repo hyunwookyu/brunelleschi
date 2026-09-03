@@ -16,7 +16,8 @@ import { dirname, resolve } from 'node:path'
 const HERE = dirname(fileURLToPath(import.meta.url))
 const OUT: Record<string, unknown> = {
   what: 'web2-57 — 구간 이관의 화면 몫: 토막 지움 뒤 칠 픽셀 동일 · 구간 지움의 알림',
-  note_92: '판정자는 픽셀 수(지우기 전/후 동일)와 #notice 문자열이다 — 상태(면 수)는 픽셀의 보조',
+  note_92: '판정자는 **RGBA 해시**(지우기 전/후 완전 동일)와 #notice 문자열이다 — 알파 계수(n)는 이 장면에서 창 포화라 보조(면의 가시성 자체가 칠에 딸려 있어 계수도 칠의 죽음을 잡기는 한다 — no_paint n=0이 그 값). 해시가 칠을 보는 반증 = no_paint 해시 상이',
+  note_88: 'win [440,455,560,480]은 면 사영 내부의 손 사각이다(경계·다른 획이 안 지나는 자리) — 자리 이탈은 단언이 스스로 잡는다(before.n>50 · no_paint.n==0이 어긋나면 빨갛다)',
 }
 const LEDGER_OF = (projectName: string) =>
   resolve(HERE, `../../stage0/out/span57_e2e_web2_dpr${projectName === 'dpr2' ? 2 : 1}.json`)

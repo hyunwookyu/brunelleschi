@@ -2817,18 +2817,36 @@ export const setSpanCarryForTest = (v: boolean): void => { spanCarry = v }
  *  «다음 지움이 무엇을 끊는가»에만 영향을 준다. 덮지 못하면 참조를 안 고친다(면이
  *  열린다 — 대기 · 불변식 j). 구간을 못 세우면(이웃 미승격 — 면이 이미 대기) 가장 긴
  *  조각으로 넘긴다: 놓지 않되 버리지 않는다 — 직선이 같으므로 이웃이 돌아오면 면도 돌아온다. */
+/** 지워질 획들을 경계로 든 (면·루프·경계)마다 구간을 **지우기 전에** 계산해 둔 표.
+ *  ⚠ 이관이 이웃 경계를 같은 호출에서 먼저 새 id로 바꾸면 그 id는 아직 lift에 없어
+ *  구간 계산이 «미상»으로 새고, 구간이 지워졌는데도 면이 산다(순서 인공물 — 1차 [1]의
+ *  r60 실측이 잡았다). 그래서 표는 호출 머리, 손대기 전의 lift 하나로 전부 계산한다. */
+function spanTableOf(app: App, erasedIds: Set<number>): Map<string, { lo: number; hi: number } | null> {
+  const out = new Map<string, { lo: number; hi: number } | null>()
+  for (const face of app.doc.faces) {
+    face.loops.forEach((loop, li) => loop.edges.forEach((e, ei) => {
+      if (!erasedIds.has(e.s)) return
+      out.set(`${face.id}:${li}:${ei}`, edgeSpanOf(app.lift, face, li, ei))
+    }))
+  }
+  return out
+}
+
 function carryFaceEdges(
   app: App, op: Op, erasedId: number, kept: Piece[], newStrokes: Stroke[],
+  spans: Map<string, { lo: number; hi: number } | null>,
 ): void {
   if (!spanCarry || kept.length === 0) return
   const seg = app.lift.lifted.get(erasedId)
-  // 매개변수 허용치 — 마디 합침과 같은 눈금(MERGE_RATIO·크기)을 그 획의 길이로 나눈다
+  // 매개변수 허용치 — 마디 합침과 같은 눈금(MERGE_RATIO·크기)을 그 획의 길이로 나눈다.
+  // ⚠ 결정 임계가 아니라 부동소수 여유다: 지우개는 조각 단위라 절단은 언제나 교차점이고
+  //   구간 끝도 교차점이다 — 덮음이 이 값으로 갈리는 국면은 없다(원장 eps_role · #61).
   const L = seg ? len3(sub3(seg.b3, seg.a3)) : 0
   const epsT = seg && L > 1e-12 ? (C.MERGE_RATIO * Math.max(geomSize3(app.lift), 1e-9)) / L : 1e-6
   for (const face of app.doc.faces) {
     face.loops.forEach((loop, li) => loop.edges.forEach((e, ei) => {
       if (e.s !== erasedId) return
-      const span = seg ? edgeSpanOf(app.lift, face, li, ei) : null
+      const span = seg ? spans.get(`${face.id}:${li}:${ei}`) ?? null : null
       let to: number | null = null
       if (span) {
         const lo = Math.max(0, span.lo), hi = Math.min(1, span.hi)
@@ -2958,6 +2976,8 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind): number[] {
     byStroke.set(h.strokeId, arr)
   }
   const op = app.activeErase
+  // 구간 표 — 손대기 전의 lift로 전부 선계산한다(carryFaceEdges 머리주석 · 순서 인공물 방지)
+  const spans = spanTableOf(app, new Set(byStroke.keys()))
   for (const [id, hit] of byStroke) {
     // 작도 획은 지우개가 못 지운다 — 카메라는 별개다
     const role = app.lift.an.roles.get(id)
@@ -3003,7 +3023,7 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind): number[] {
     app.doc.strokes.push(...newStrokes)
     // 경계 이관(web2-57) — 이 획을 경계로 든 면의 참조가 구간을 덮는 조각으로 넘어탄다.
     // ⚠ recompute 전이라 app.lift에 아직 옛 획의 3D가 있다 — 구간은 그 자로 계산한다.
-    carryFaceEdges(app, op, id, kept, newStrokes)
+    carryFaceEdges(app, op, id, kept, newStrokes, spans)
     // 드래그 안에서 이미 만든 조각을 또 지우면 — 그 조각은 op에서 지우고 원본은 그대로
     const idxInAdded = op.added.findIndex(s => s.id === id)
     if (idxInAdded >= 0) op.added.splice(idxInAdded, 1)

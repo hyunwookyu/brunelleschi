@@ -148,12 +148,14 @@ describe('게이트 ① — 삐져나간 토막을 지운다 → 면이 산다',
     expect(s.app.faces[0]!.id).toBe(fid)
   })
 
-  it('구간이 여러 조각이어도(가로지르는 획) 토막 지움에 산다 · 참조 조각을 지우면 열린다', () => {
-    const { s } = quadScene()
-    // e4의 구간 안 (600,441.67)을 vp0축 획이 가로지른다 → 구간이 조각 둘로 나뉜다
-    const cross = s.draw(510, 454.17, 705, 427.08)!
+  it('구간이 여러 조각이어도(수직 획이 3D에서 가른다) 토막 지움에 산다 · 참조 조각을 지우면 열린다', () => {
+    const { s, e4 } = quadScene()
+    // e4의 구간 안 (600,441.67)에 수직 획을 세운다 — 3D 교차로 e4가 조각 둘로 갈리지만
+    // 수직 획은 지면 평면 밖이라 루프에는 안 든다(경계 하나 · 조각 여럿 — 재려는 상태).
+    const cross = s.draw(600, 441.67, 600, 360)!
     expect(s.app.lift.lifted.has(cross.id)).toBe(true)
     const fid = makeFace(s)
+    expect(s.app.doc.faces[0]!.loops[0]!.edges.filter(e => e.s === e4.id)).toHaveLength(1)
     expect(s.app.faces).toHaveLength(1)
     const opened = eraseOnce(s, STUB_E4)                        // 토막(구간 밖)
     expect(opened).toEqual([])
@@ -161,9 +163,11 @@ describe('게이트 ① — 삐져나간 토막을 지운다 → 면이 산다',
     const face = s.app.doc.faces.find(f => f.id === fid)!
     const ref = face.loops[0]!.edges.map(e => e.s)
     // 참조가 넘어탄 조각을 지운다 → 구간이 다친다 → 열린다
-    const kept = s.app.doc.strokes.filter(x => ref.includes(x.id) && x.own3)
-    expect(kept.length).toBeGreaterThan(0)
-    const opened2 = eraseOnce(s, { x: 660, y: 446.67 })         // (700,450)~(600,441.67) 조각 위
+    const carriedId = ref.find(id => id > cross.id)!            // 새 조각 id(원획들보다 크다)
+    expect(carriedId).toBeDefined()
+    const refPiece = s.app.doc.strokes.find(x => x.id === carriedId)!
+    const mid = { x: (refPiece.a.x + refPiece.b.x) / 2, y: (refPiece.a.y + refPiece.b.y) / 2 }
+    const opened2 = eraseOnce(s, mid)                           // 참조 조각의 몸통
     expect(opened2).toEqual([fid])
     expect(s.app.faces).toHaveLength(0)
   })
@@ -256,6 +260,10 @@ describe('저장 왕복 — 새 필드가 없다(구간은 파생)', () => {
     makeFace(s)
     eraseOnce(s, STUB_E4)
     const text = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId })
+    // "z"는 face.test 저장 팔의 종전 검사(좌표 미저장) 준용 · 따옴표 포함 키 검색이라
+    // "loops"의 lo에는 안 걸린다. 반증(D-3): 이 패턴이 실제로 그 키를 잡는지 그 자리에서.
+    expect(JSON.stringify({ lo: 1 })).toMatch(/"lo"/)
+    expect(JSON.stringify({ loops: 1 })).not.toMatch(/"lo"/)
     expect(JSON.stringify(JSON.parse(text).faces)).not.toMatch(/"z"|"span"|"lo"|"hi"/)
     const back = parseBrnl(text)!
     const faces = resolveFaces(liftAll(back.doc), back.doc.faces)
