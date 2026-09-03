@@ -285,9 +285,17 @@ test('① 둥근 도장이 안 보인다 — 시험 판 가장자리 행의 도�
   // 행 넷(#12): 중심 0 · 안쪽 6 · 가장자리 10·11(반지름 11.06). 옛 엔진(도장 누적)의 물결은 «겹침 수가
   // 주기적으로 바뀌는» 안쪽 행 전부에 서고, 현행(최대값)은 도장 현이 간격보다 짧아지는 가장자리 행에만
   // AA 반 픽셀 물결이 남는다. 초판(압력 0.5 · 10~12 행)은 포화한 몸통을 재고 있었다(실측 .0026).
+  const labScene = () => page.evaluate(() => {
+    const cv = document.getElementById('tunelab-cv') as HTMLCanvasElement
+    const d = cv.getContext('2d')!.getImageData(0, 0, cv.width, cv.height).data
+    let h = 2166136261, ink = 0
+    for (let i = 3; i < d.length; i += 16) { h ^= d[i]!; h = Math.imul(h, 16777619); if (d[i]! > 8) ink++ }
+    return { hash: h >>> 0, ink_samples: ink }
+  })
   const measure = async (period: number) => {
     const rows: Record<string, unknown> = {}
     for (const off of [0, 6, 10, 11]) rows['row_' + off] = await labRipple(page, 160, yCv - off, 480, period)
+    rows.scene = await labScene()                // #103 — 조건마다 판의 해시·잉크 표본 수(누적이면 잉크가 는다)
     return rows
   }
   const def = await page.evaluate(() => (window as any).__b2.diag.brushDefForTest('pencil'))
@@ -314,7 +322,7 @@ test('① 둥근 도장이 안 보인다 — 시험 판 가장자리 행의 도�
   console.log('[①] start', JSON.stringify(start), 'startAtDefault', JSON.stringify(startAtDefaultPeriod))
   await page.click('#tunelab-reset')
   await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(false))
-  const worst = (r: Record<string, unknown>) => Math.max(...Object.values(r).map(x => (x as { rel: number | null }).rel ?? 0))
+  const worst = (r: Record<string, unknown>) => Math.max(...Object.entries(r).filter(([k]) => k !== 'scene').map(([, x]) => (x as { rel: number | null }).rel ?? 0))
   OUT.ripple = {
     def: '실험실 시험 판(굵기 28 · 압력 0.2 펜 — 낱 도장이 보이는 저압 · 결 끔 · 제품과 같은 paintMark #54 — 텍스처 축소 표집의 평활이 없는 자)의 수평 획 행 넷(중심 0 · 안쪽 6 · 가장자리 10·11px — #12)에서 x 480px 어둡기의 «도장 간격 주기» DFT 진폭(2|X|/N) ÷ 행 평균. 기본값(간격 0.25w=7px · 경도 1 · 산포 0)은 그 주기 파형이 서고, mypaint 출발점(간격 w/8=3.5px · 경도 0.1 · 산포 0.5)은 그 주기에서도 기본 주기에서도 문 아래. rel_half·rel_double은 이웃 주기(주기 오판 대비). 반증 = 기본값 행(worst_default > 문). ⚠ 첫 판은 #gl(면 텍스처 → 화면 축소)에서 쟀고 기본값이 .031로 문 아래였다 — 자가 평활을 재고 있었다(재설계의 사유)',
     threshold: cs.PAINT60_RIPPLE_MAX,
@@ -324,6 +332,7 @@ test('① 둥근 도장이 안 보인다 — 시험 판 가장자리 행의 도�
     default_old_engine: baseOld,
     worst_default: +worst(base).toFixed(4), worst_start: +Math.max(worst(start), worst(startAtDefaultPeriod)).toFixed(4),
     worst_old_engine: +Math.max(worst(baseOld), centerOld.rel ?? 0).toFixed(4),
+    note_scene: '네 조건은 «같은 획(견본 S + 이 획)을 조정만 바꿔 판을 비우고 다시 긋는 것»(redrawScratch)이다 — 누적이 아니다. rows.scene의 ink_samples가 조건마다 비슷하고(누적이면 는다) 해시가 갈린다(조정이 실제로 먹었다) — #103',
   }
   // 반증 = 옛 엔진(도장마다 쌓임 · 59 이전) — 낱 도장의 겹침 수가 주기로 실려 파형이 선다. 현행 기본값(최대값
   // 합집합)은 그 파형이 이미 없다(59-2의 몫) — 60-1의 값(경도·산포)은 가장자리 행의 나머지를 든다(값으로 기록).
@@ -383,9 +392,12 @@ test('③ 층이 쌓인다 — 같은 자리 세 번: 둘째·셋째가 첫째�
     await darkMap(page, 'L' + k, 600, y - 6, 200, 12)
     return mapStats(page, 'L' + k, 25)
   }
+  const paintN3 = () => page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)
+  const n0 = await paintN3()
   const s1 = await pass(1)
   const s2 = await pass(2)
   const s3 = await pass(3)
+  const n3 = await paintN3()
   // 증분 지도 — 둘째 획이 «어디에» 더했는가(L2 − L1)
   await page.evaluate(() => {
     const q = (window as any).__q60
@@ -405,12 +417,16 @@ test('③ 층이 쌓인다 — 같은 자리 세 번: 둘째·셋째가 첫째�
   OUT.layers = {
     def: '색연필(압력 0.35 · 굵기 20) 같은 자리 세 획(둘째는 1.5px 어긋남 — 손의 반복). 안쪽 12px 창의 어둡기 지도: corr(L1,L2)·corr(L1,L3) — «같은 봉우리»(결이 면 고정이라 높다 · 실측 .9985)이되 1 아님(1.5px 어긋남의 도장 위상 — 최대값 합집합이라 안쪽은 거의 같고 가장자리·구멍 경계가 다르다 · 자기 대조 1과 갈린다). corr(L1, L2−L1) = 둘째 획의 증분이 첫째의 봉우리 «위»에 얹히는가(양수). mean이 회마다 는다(획 사이 누적 — 59 계약). corr_self = 같은 획 재굽기의 자기 대조(1 · 결정론 · 판정 아님 #5)',
     threshold: cs.PAINT60_LAYER_CORR_MIN,
+    scene: { paint_before: n0, paint_after_three: n3, note: '#103 — 셋 쌓기는 설계(획 사이 누적) · 출발 0에서 셋' },
+    guarantee: 'corr_self 1 = 결정론(#5) — 판정자가 아니라 «같지는 않다»의 대조 기준',
     pass1: s1, pass2: s2, pass3: s3, corr_12: c12, corr_13: c13, corr_1_inc2: cInc, corr_self: cSelf,
   }
   expect(s2.mean, '둘째 획이 더한다').toBeGreaterThan(s1.mean * 1.05)
   expect(s3.mean, '셋째 획이 더한다').toBeGreaterThan(s2.mean * 1.02)
   expect(c12.corr ?? 0, '같은 봉우리(상관 ≥ 문)').toBeGreaterThanOrEqual(cs.PAINT60_LAYER_CORR_MIN)
-  expect(c12.corr ?? 1, '같지는 않다(< 0.999 — 자기 대조 1과 갈린다)').toBeLessThan(0.999)
+  // «1이 아니다»는 등록된 문이 아니라 **같은 실행의 자기 대조(corr_self)와의 대조**로 건다(2차 [11] — .999는
+  // 등록 안 된 문이었고 여유 .0005는 유효 자릿수 밖). 값은 기록.
+  expect(c12.corr ?? 1, '같지는 않다 — 자기 대조(같은 획 재굽기)보다 낮다').toBeLessThan(cSelf.corr ?? 1)
   expect(cInc.corr ?? 0, '증분이 첫째의 봉우리 위에 얹힌다(양의 상관)').toBeGreaterThan(0)
   expect(cSelf.corr ?? 0, '자기 대조 — 같은 획 재굽기는 1').toBeGreaterThan(0.999)
 })
@@ -429,6 +445,7 @@ test('④ 잉크 경로 — 마커 자기 교차는 안 진해지고(≤ 1.05) �
   await page.waitForTimeout(200)
   const selfCross = await stats(680, y)
   const selfBody = await stats(600, y)
+  const nSelf = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)
   await undoPaint(page)
   // 두 획의 교차 — 수평 + 사선(같은 자리)
   await penPath(page, hline(580, y, 780, 10), 0.5)
@@ -436,11 +453,13 @@ test('④ 잉크 경로 — 마커 자기 교차는 안 진해지고(≤ 1.05) �
   await page.waitForTimeout(200)
   const twoCross = await stats(680, y)
   const twoBody = await stats(600, y)
+  const nTwo = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)
   await undoPaint(page)
   OUT.ink_path = {
     def: '마커(굵기 20 · 압력 0.5) — 자기 교차(한 획 · 59 ② 경로)의 교차 창 p95 ÷ 몸통 p95(구성상 1 — canvas stroke() 한 번의 닫힌 경로 · AS-C175) vs 두 획의 교차(46 «겹치면 진해진다» — multiply). 60-3의 구조(«닫힌 폴리곤 하나 → 겹침 없음»)는 마커에 이미 서 있다 — perfect-freehand 불요(«펜» 칠 도구는 없다)',
-    self: { cross: selfCross, body: selfBody, p95_ratio: +(selfCross.p95 / Math.max(1, selfBody.p95)).toFixed(4) },
-    two: { cross: twoCross, body: twoBody, p95_ratio: +(twoCross.p95 / Math.max(1, twoBody.p95)).toFixed(4) },
+    self: { cross: selfCross, body: selfBody, p95_ratio: +(selfCross.p95 / Math.max(1, selfBody.p95)).toFixed(4), scene: { paint: nSelf } },
+    two: { cross: twoCross, body: twoBody, p95_ratio: +(twoCross.p95 / Math.max(1, twoBody.p95)).toFixed(4), scene: { paint: nTwo } },
+    guarantee: 'self p95_ratio 1 = canvas stroke() 한 번의 구성(AS-C175 · #5) — 판정자는 two(46 계약)와의 갈림',
   }
   expect(selfCross.p95 / Math.max(1, selfBody.p95), '자기 교차 — 안 진해진다').toBeLessThanOrEqual(1.05)
   expect(twoCross.p95 / Math.max(1, twoBody.p95), '두 획의 교차 — 진해진다(46)').toBeGreaterThanOrEqual(1.1)
@@ -455,6 +474,7 @@ test('⑤ 넷이 갈린다 — 같은 압력·같은 속도의 넷: 통계 짝�
     await penPath(page, hline(560, Y[ins], 840, 14), 0.5)
   }
   await page.waitForTimeout(250)
+  const nFour = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)
   await darkMap(page, 'base5', 600, 330 + 6, 200, 12)          // 바탕(획 없는 창 · 벽 위쪽) — 상대 문의 기준
   for (const ins of INSTRS) {
     await darkMap(page, 's' + ins, 600, Y[ins] - 12, 200, 24)
@@ -470,6 +490,8 @@ test('⑤ 넷이 갈린다 — 같은 압력·같은 속도의 넷: 통계 짝�
   }
   OUT.four_differ = {
     def: '같은 압력(0.5 펜)·같은 속도(14걸음 등간격)·굵기 20의 넷 — 24px 창의 mean(농도) · p95 · bare_share(빈 픽셀 몫 · 바탕 뺀 잉크 p95의 35% 상대 문 — 초판 절대 문 25는 cp↔연필을 .10으로 겨우 갈랐다) · edge_sd(상단 경계 행의 표준편차 — 가장자리 거칠기). 짝 여섯의 최대 상대 차 > 0.1(mark58 ② pairs와 같은 술어 · 자 넷은 60 지시의 셋 + p95)',
+    scene: { paint: nFour, note: '#103 — 넷이 각자 행(y 380·440·500·560)에 한 획 · 서로 안 겹친다' },
+    note_brush: '붓 짝 셋의 1.0은 brush.edge_sd = 0(상단 경계 행의 분산 0 — 빗살 띠의 위 경계가 한 행으로 고르다: 잉크 없음이 아니라 «반듯함»)에서 온다(2차 [7]). 갈림의 증거는 mean·bare_share의 상대 차(값)이지 1.0 자체가 아니다',
     rows, pairs,
   }
   for (const [k, v] of Object.entries(pairs)) expect(v, '짝 ' + k + ' — 갈린다').toBeGreaterThan(0.1)

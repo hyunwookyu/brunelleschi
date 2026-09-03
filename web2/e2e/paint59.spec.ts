@@ -557,21 +557,34 @@ test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감�
   // 벽이 물러나 화면 왼쪽(가까움)이 굵고 오른쪽이 가늘다 — 화면 창의 «단위 길이당 잉크»는 원근을 같이
   // 잰다. 마커의 비가 그 원근의 자다(구성상 균일한 띠) — 도장 브러시의 비를 마커의 비로 나눈다.
   const mk = noGrain.marker as { start_over_mid: number; end_over_mid: number }
+  const mkG = withGrain.marker as { start_over_mid: number; end_over_mid: number }
   const norm: Record<string, unknown> = {}
+  const normGrain: Record<string, unknown> = {}
   for (const ins of ['cp', 'pencil'] as const) {
     const r = noGrain[ins] as { mid: number; start_over_mid: number; end_over_mid: number }
+    const rg = withGrain[ins] as { start_over_mid: number; end_over_mid: number }
     const sN = r.start_over_mid / mk.start_over_mid, eN = r.end_over_mid / mk.end_over_mid
     norm[ins] = { start: +sN.toFixed(4), end: +eN.toFixed(4) }
+    normGrain[ins] = { start: +(rg.start_over_mid / mkG.start_over_mid).toFixed(4), end: +(rg.end_over_mid / mkG.end_over_mid).toFixed(4) }   // 결 켬(출하 구성)의 같은 자 — 2차 [5]
     expect(r.mid, ins + ' — 몸통에 잉크가 있다').toBeGreaterThan(100)
     expect(Math.abs(sN - 1), ins + ' — 시작 대역(분모 mid · 결 끔 · 마커로 원근 정규화)').toBeLessThanOrEqual(cs.PAINT58_STAMP_BAND_TOL)
     expect(Math.abs(eN - 1), ins + ' — 끝 대역(분모 mid · 결 끔 · 마커로 원근 정규화)').toBeLessThanOrEqual(cs.PAINT58_STAMP_BAND_TOL)
   }
-  // 반증(D-3 — 이 자의 실패 조건): 속도 축(60-4)을 켜면 감속 구간(시작·끝)이 진해져 정규화 비가 문을 넘는다
+  // 반증(D-3 — 이 자의 실패 조건): 속도 축(60-4)을 켜면 감속 구간(시작·끝)이 진해져 정규화 비가 문을 넘는다.
+  // 넷을 **다시 긋고**(2차 [6] — 초판은 undo 뒤 재굽기라 마커·붓·cp 행이 «안 그린 바탕»이었다) 같은 프레임
+  // (연필 비 ÷ 마커 비 · 결 끔)으로 잰다.
   await page.evaluate(() => (window as any).__b2.diag.setBrushTuneForTest('pencil', { speedAlphaK: -1 }))
+  for (const ins of INSTRS) {
+    await pickInstr(page, ins, 20)
+    await slowFastSlow(page, X0, Y[ins], X1)
+  }
+  await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(true))
   await page.waitForTimeout(300)
   const slowDark = await measure()
+  const sceneSlow = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)
+  await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(false))
   await page.evaluate(() => (window as any).__b2.diag.setBrushTuneForTest('pencil', null))
-  await page.waitForTimeout(200)
+  await undoPaint(page)
   const sdN = (slowDark.pencil as { start_over_mid: number }).start_over_mid / (slowDark.marker as { start_over_mid: number }).start_over_mid
   expect(Math.abs(sdN - 1), '반증 — 속도→농도 −1에서 시작 대역이 문을 넘는다').toBeGreaterThan(cs.PAINT58_STAMP_BAND_TOL)
   OUT.ends = {
@@ -581,7 +594,8 @@ test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감�
     scene: { paint_with_grain: sceneN, paint_no_grain: sceneN2, note: '#103 — 결 끔은 같은 획 재굽기(획 수 무변)' },
     rows: withGrain, rows_no_grain: noGrain,
     normalized_by_marker: { def: '도장 브러시의 대역 비 ÷ 마커의 대역 비(결 끔) — 마커 띠는 구성상 균일하므로 그 비(시작 1.083 · 끝 .916)가 이 픽스처의 원근 그 자체다. 판정은 이것(±10%)', ...norm },
-    falsification_speed: { def: '연필 속도→농도 −1(60-4 축 — 느린 구간이 진해진다) · 같은 획 재굽기 · 결 있음: 시작 정규화 비가 문을 넘는다', rows: slowDark, pencil_start_norm: +sdN.toFixed(4) },
+    normalized_by_marker_grain: { def: '같은 자 · 결 켬(출하 구성 — 2차 [5]): 결 켠 원값(rows)이 ±10% 밖이어도 마커로 나누면 문 안이다(값)', ...normGrain },
+    falsification_speed: { def: '연필 속도→농도 −1(60-4 축 — 느린 구간이 진해진다) · 넷을 다시 긋고 결 끔 · 게이트와 같은 프레임(연필 비 ÷ 마커 비): 시작 정규화 비가 문을 넘는다', rows: slowDark, scene: { paint: sceneSlow }, pencil_start_norm: +sdN.toFixed(4) },
     grain_phase_spread: { def: '연필 · 결 켬 · 시작 x 오프셋 0·2·4·6·8px(결 칸 9px 안) 다섯 획의 대역 비 평균·표준편차 — 결 켠 값의 잡음 눈금(1차 [3])', ...grainSpread },
   }
 })
@@ -645,6 +659,7 @@ test('④ 결의 위상 — 도장 위상만 반 간격 어긋난 두 획의 픽
     threshold: cs.PAINT59_GRAIN_CORR_MIN,
     window: { gate_css: [600, 'y-6', 200, 12], pre_css: [600, 'y-14', 200, 28] },
     scene: { paint_at_end: sceneEnd, note: '#103 — 획마다 undo(같은 자리 세 획이 겹치지 않는다) · 끝에 0' },
+    guarantee: 'corr_same 1 = 결정론(같은 입력 → 같은 픽셀 · #5) · corr_phase 1 = 면 고정 마스크 + 안쪽 행(도장 위상이 결에 안 실린다 — 구성에 가깝다). 판정자는 반증(획별 시드 .019)·옛 엔진(.666)과의 «갈림»이지 1 그 자체가 아니다(2차 [7])',
     corr_same: same, corr_phase: phase, falsification: perStroke,
     corr_phase_28px: phase28,
     old_engine: { corr_12px: old12, corr_28px: old28, note: '옛 엔진(strokeBufferOff — 결 도장마다)을 같은 두 창에서: 12px 창이 사전(28px · .985)보다 갈림을 더 드러내는가의 값' },
@@ -836,5 +851,11 @@ test('⑥ 성능 — 면 17 · 칠 40획: 그리는 중 프레임(합성 이동 
   ;(OUT.perf as Record<string, unknown>).draft_memory = { def: '그리는 중 사본(base) 바이트의 최대와 사본 든 텍스처 수의 최대(1차 [8] — 획은 주인 면 하나(54-1)라 1 · 고름이 있으면 그 수까지) · 커버리지 지도는 bbox×4바이트(획마다 해제)', base_bytes_max: draft.draft_base_bytes_max, with_base_max: draft.draft_with_base_max }
   ;(OUT.perf as Record<string, unknown>).draft_max_extra_ms = +(draft.max - idleMed).toFixed(2)
   ;(OUT.perf as Record<string, unknown>).threshold_extra_ms = csP.PAINT59_DRAFT_FRAME_EXTRA_MS
-  expect(draft.median - idleMed, '그리는 중 프레임 중앙값 — 유휴 + 상한(ms) 안').toBeLessThanOrEqual(csP.PAINT59_DRAFT_FRAME_EXTRA_MS)
+  // 프레임 문은 **워커 1(원장 실행)**에서만 건다 — 밤(워커 4 · 이 컨테이너 SW GL)에서는 이웃 워커의
+  // 부하가 rAF 간격에 실려 유휴·그리는 중 둘 다 요동한다(밤 실측 두 dpr 빨강 · 단독 초록). 계측 넷
+  // (cost18·brushperf…)과 같은 성질 — 값은 언제나 원장에 남고 술어만 조건부다(rep49 ⑤의 dpr 조건부 선례).
+  ;(OUT.perf as Record<string, unknown>).gate_condition = { workers: test.info().config.workers, asserted: test.info().config.workers === 1 }
+  if (test.info().config.workers === 1) {
+    expect(draft.median - idleMed, '그리는 중 프레임 중앙값 — 유휴 + 상한(ms) 안(워커 1)').toBeLessThanOrEqual(csP.PAINT59_DRAFT_FRAME_EXTRA_MS)
+  }
 })

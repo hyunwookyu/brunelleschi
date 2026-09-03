@@ -605,7 +605,7 @@ test('게이트 ④ 실험실 — 손잡이 전수가 자국을 바꾼다(도구
     expect(responding + disabledOf[ins]!, ins + ' — 반응 + 비활성 == 전체(대조)').toBe(knobIds.length)
   }
   OUT.gate_lab = {
-    def: '손잡이 23(값 13 + 곡선 10) × 도구 4 — 각 손잡이를 끝값으로 밀어 시험 판 해시가 바뀌는 도구 목록. 술어 = 죽은 배선 0(모든 손잡이가 적어도 한 도구에서 자국을 바꾼다). ⚠ tipLenK 행은 전제(tipAlpha 0.5 켬 — 끝 크기는 끝 강조 0에서 보일 수 없다: 구성) 아래의 값이다(2차 [6] — 행마다 조건 명시 #11). 사람이 겪는 축은 disabled_per_instr가 값(무효 축 비활성 — 마커 20/23). overlay = #97 반증(닫힘: 안 덮음 · 열림: 맨 위). rules = 34-0의 수(#96 — 툴팁·값 표찰)',
+    def: '손잡이 28(값 18 + 곡선 10 — web2-60이 다섯을 더했다) × 도구 4 — 각 손잡이를 끝값으로 밀어 시험 판 해시가 바뀌는 도구 목록. 술어 = 죽은 배선 0(모든 손잡이가 적어도 한 도구에서 자국을 바꾼다). ⚠ tipLenK 행은 전제(tipAlpha 0.5 켬 — 끝 크기는 끝 강조 0에서 보일 수 없다: 구성) 아래의 값이다(2차 [6] — 행마다 조건 명시 #11). 사람이 겪는 축은 disabled_per_instr가 값(무효 축 비활성 — 마커 25/28). overlay = #97 반증(닫힘: 안 덮음 · 열림: 맨 위). rules = 34-0의 수(#96 — 툴팁·값 표찰)',
     matrix: changedBy, dead, disabled_per_instr: disabledOf,
     overlay: { closed: overlayClosed, open: overlayOpen }, rules,
   }
