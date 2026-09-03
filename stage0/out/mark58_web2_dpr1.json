@@ -102,21 +102,21 @@
     "tol": 0.1,
     "inner": {
       "brush": {
-        "start": 40,
-        "mid": 41,
-        "end": 40,
+        "start": 50,
+        "mid": 52,
+        "end": 48,
         "n": 204
       },
       "cp": {
-        "start": 10,
-        "mid": 10,
-        "end": 10,
+        "start": 13,
+        "mid": 12,
+        "end": 13,
         "n": 52
       },
       "pencil": {
-        "start": 12,
-        "mid": 12,
-        "end": 12,
+        "start": 16,
+        "mid": 16,
+        "end": 16,
         "n": 62
       }
     },
@@ -250,6 +250,10 @@
         "pencil",
         "cp"
       ],
+      "tunelab-k-cpSkipAlpha": [
+        "pencil",
+        "cp"
+      ],
       "tunelab-c-density-0": [
         "pencil",
         "cp",
@@ -306,9 +310,6 @@
       "tunelab-k-tipLenK": [
         "marker"
       ],
-      "tunelab-k-cpSkipAlpha": [
-        "cp"
-      ],
       "tunelab-k-bristles": [
         "brush"
       ],
@@ -327,18 +328,33 @@
       "brush": 6
     },
     "overlay": {
-      "closed": {
-        "top": "ink",
-        "isLab": false
-      },
+      "closed": [
+        {
+          "x": 750,
+          "top": "ink",
+          "isLab": false
+        },
+        {
+          "x": 900,
+          "top": "ink",
+          "isLab": false
+        },
+        {
+          "x": 1050,
+          "top": "ink",
+          "isLab": false
+        }
+      ],
       "open": {
         "isLab": true
       }
     },
     "rules": {
-      "handles": 24,
-      "tooltip_ok": 24,
+      "handles": 33,
+      "buttons": 9,
+      "tooltip_ok": 33,
       "knob_value_labels": 13,
+      "curve_value_rows": 2,
       "slider_value_label": true
     }
   },
@@ -372,13 +388,26 @@
     },
     "marker100": 107,
     "cp50": 49,
+    "cp_ruler_sweep": {
+      "th20": 49,
+      "th25": 49,
+      "th30": 46
+    },
     "cp_expected": 46.25,
     "brush60": 98,
-    "brush120": 179,
-    "brush_ratio": 1.8265306122448979,
+    "brush90": 144,
+    "brush120": 181,
+    "brush_fit_k": 1.5805555555555557,
+    "brush_ratio": 1.846938775510204,
     "slider_roundtrip": {
       "w250": 250,
       "w500": 500
     }
+  },
+  "gate_size_tall": {
+    "def": "키 큰 벽(윗선 150 — 벽 ~480px)에서 붓 120·250 좌/우 나란히 — 비례 250/120 = 2.083 ± 0.42(게이트 ⑤ 원점 적합의 그 잔차 눈금). 500은 유효 ~750px로 화면 밖 — DEFERRED(«붓 >250 대역 절대 미측정»)와 왕복 술어가 그 대역",
+    "w120": 153,
+    "w250": 294,
+    "ratio": 1.9215686274509804
   }
 }

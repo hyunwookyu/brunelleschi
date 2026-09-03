@@ -252,6 +252,7 @@ export function initTuneLab(opts: {
   curveWrap.id = 'tunelab-curves'
   curveWrap.style.cssText = 'display:flex;flex-direction:column;gap:3px;flex-shrink:0'
   const curveEls = new Map<string, HTMLInputElement[]>()
+  const curveVals = new Map<string, HTMLSpanElement>()
   for (const ck of ['density', 'width'] as const) {
     const r = row(4)
     const name = document.createElement('span')
@@ -271,6 +272,7 @@ export function initTuneLab(opts: {
         const cur = [...brushDef(instr)[ck]] as Curve5
         cur[i] = Number(range.value)
         setBrushTune(instr, { [ck]: cur } as Partial<BrushDef>)
+        curveVals.get(ck)!.textContent = cur.map(v => v.toFixed(2)).join('·')
         redrawScratch()
         syncTunedMark()
       })
@@ -278,6 +280,12 @@ export function initTuneLab(opts: {
       els.push(range)
       r.append(range)
     }
+    // 값 표찰(R6 · 2차 [8]) — 다섯 점의 현재 값 한 줄
+    const vals = document.createElement('span')
+    vals.id = `tunelab-cvals-${ck}`
+    vals.style.cssText = 'font-size:10px;color:#6b6558;flex-shrink:0'
+    r.append(vals)
+    curveVals.set(ck, vals)
     curveEls.set(ck, els)
     curveWrap.append(r)
   }
@@ -351,6 +359,7 @@ export function initTuneLab(opts: {
         els[i]!.value = String(y)
         els[i]!.disabled = !on
       })
+      curveVals.get(ck)!.textContent = def[ck].map(v => v.toFixed(2)).join('·')
       const rowEl = els[0]!.parentElement as HTMLElement | null
       if (rowEl) rowEl.style.opacity = on ? '1' : '0.35'
     }

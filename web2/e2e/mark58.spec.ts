@@ -228,7 +228,9 @@ test('게이트 ① 끝점 — 도장 균일(안쪽 대역 ±C.PAINT58_STAMP_BAN
     const xs = log.filter(q => q.i === ITAG[ins]!).map(q => q.x)
     const lo = Math.min(...xs), hi = Math.max(...xs), L = Math.max(1e-9, hi - lo)
     const inb = (a: number, b: number) => xs.filter(x => (x - lo) / L >= a && (x - lo) / L <= b).length
-    const s = inb(0.05, 0.25), m = inb(0.40, 0.60), e = inb(0.75, 0.95)
+    // 대역 폭 25%(2차 [7] — 20%에선 색연필의 한 도장이 정확히 임계 10%였다: n_band 10.
+    // 25%면 cp 13 → 7.7% · pencil 15 → 6.5% · brush 51 → 2.0% — 셋 다 임계 아래 눈금)
+    const s = inb(0.03, 0.28), m = inb(0.375, 0.625), e = inb(0.72, 0.97)
     // 끝 도장 수(2차 [4] — 사전 원장 32/28/32의 «끝당 +» 해명의 값): 양 끝 1.5px 안 도장
     endStamps[ins] = xs.filter(x => x - lo < 1.5).length + xs.filter(x => hi - x < 1.5).length
     inner[ins] = { start: s, mid: m, end: e, n: xs.length }
@@ -280,7 +282,9 @@ test('게이트 ① 끝점 — 도장 균일(안쪽 대역 ±C.PAINT58_STAMP_BAN
     const preTip = preRaw.ink.rows.marker.tip
     const curTip = (tips.marker as { start_over_body: number; end_over_body: number })
     expect(curTip.start_over_body, '마커 시작 — 사전(1.374) 대비 개선').toBeLessThan(preTip.start_over_body * 0.85)
-    expect(curTip.end_over_body, '마커 끝 — 사전 대비 악화 없음(개선 실측은 값)').toBeLessThanOrEqual(preTip.end_over_body)
+    // ×0.9(2차 [6]③ — 시작 ×0.85와 눈금을 맞춘 끝의 문: 실측 개선 0.834가 그 아래
+    // 도달 가능(여유 7%) · 끝 창은 팁 «반원» 몫이라 시작(정원)보다 개선 폭이 작다)
+    expect(curTip.end_over_body, '마커 끝 — 사전 대비 개선(×0.9)').toBeLessThan(preTip.end_over_body * 0.9)
     ;(OUT.gate_endpoint_pre_vs = {
       def: '동결 사전 원장(mark58_pre — 같은 dpr)을 읽어 마커 팁 창 비의 전/후를 같은 자로 — «끝점 뭉침» 게이트의 끝 절반(2차 [3])',
       pre: preTip, cur: curTip,
@@ -457,11 +461,15 @@ test('게이트 ④ 실험실 — 손잡이 전수가 자국을 바꾼다(도구
   // #97 반증 값(2차 [10] — 이 라운드가 밟은 사촌(패널 display가 hidden을 이겨 포인터를
   // 삼킴 · 8획 중 3획 미커밋)의 자리): **닫힌 상태**에서 그 대역(900,610)의 맨 위는
   // 작업대가 아니어야 한다. 패널이 다시 덮이면 이 값이 빨개진다.
-  const overlayClosed = await page.evaluate(() => {
-    const el = document.elementFromPoint(900, 610)
-    return { top: el?.id || el?.tagName || null, isLab: !!el?.closest?.('#tunelab') }
-  })
-  expect(overlayClosed.isLab, '#97 — 닫힌 작업대가 화면을 안 덮는다(900,610)').toBe(false)
+  // 세 점(2차 [11] — 밟았던 결함의 대역 x≥716 전체를 훑는다: 한 점은 모양이 바뀌면 비껴간다)
+  const overlayClosed = await page.evaluate(() =>
+    [750, 900, 1050].map(x => {
+      const el = document.elementFromPoint(x, 610)
+      return { x, top: el?.id || el?.tagName || null, isLab: !!el?.closest?.('#tunelab') }
+    }))
+  for (const o of overlayClosed) {
+    expect(o.isLab, `#97 — 닫힌 작업대가 화면을 안 덮는다(${o.x},610)`).toBe(false)
+  }
   await page.click('#btn-tunelab')
   expect(await page.evaluate(() => !(document.getElementById('tunelab') as HTMLElement).hidden), '작업대가 열렸다').toBe(true)
   const overlayOpen = await page.evaluate(() => {
@@ -489,13 +497,20 @@ test('게이트 ④ 실험실 — 손잡이 전수가 자국을 바꾼다(도구
     for (const id of knobIds) {
       // 전제 축 — 끝 «크기»(tipLenK)는 끝 «강조»(tipAlpha)가 0이면 보일 수 없다(구성).
       // 죽은 배선인지 재려면 전제를 켜고 잰다(잰 뒤 걷는다).
-      const needsTip = id === 'tunelab-k-tipLenK'
-      if (needsTip) {
-        await page.evaluate(() => {
-          const el = document.getElementById('tunelab-k-tipAlpha') as HTMLInputElement
-          el.value = '0.5'
+      // 전제 축 둘(2차 [3]이 잡은 대조 어긋남의 자리): 끝 «크기»는 끝 «강조»가, 구멍
+      // «잔량»은 구멍 «문턱»이 0이면 보일 수 없다(구성) — 전제를 켜고 재고 걷는다.
+      const pre: [string, string] | null =
+        id === 'tunelab-k-tipLenK' ? ['tunelab-k-tipAlpha', '0.5']
+          : id === 'tunelab-k-cpSkipAlpha' ? ['tunelab-k-cpSkipTh', '0.5'] : null
+      let preRestore: string | null = null
+      if (pre) {
+        preRestore = await page.evaluate(([pid, pv]) => {
+          const el = document.getElementById(pid) as HTMLInputElement
+          const keep = el.value
+          el.value = pv
           el.dispatchEvent(new Event('input', { bubbles: true }))
-        })
+          return keep
+        }, pre)
       }
       const before = await cvHash()
       const prev = await page.evaluate((kid) => {
@@ -513,12 +528,13 @@ test('게이트 ④ 실험실 — 손잡이 전수가 자국을 바꾼다(도구
         el.value = p
         el.dispatchEvent(new Event('input', { bubbles: true }))
       }, [id, prev] as const)
-      if (needsTip) {
-        await page.evaluate(() => {
-          const el = document.getElementById('tunelab-k-tipAlpha') as HTMLInputElement
-          el.value = '0'
+      if (pre && preRestore !== null) {
+        // 전제 손잡이는 **이전 값으로** 되돌린다 — '0' 고정이면 cp의 cpSkipTh 기본(0.42)이 깨진다
+        await page.evaluate(([pid, keep]) => {
+          const el = document.getElementById(pid) as HTMLInputElement
+          el.value = keep
           el.dispatchEvent(new Event('input', { bubbles: true }))
-        })
+        }, [pre[0], preRestore] as const)
       }
     }
     // 이 도구의 조정을 걷는다(다음 도구 측정의 기준을 깨끗하게)
@@ -541,23 +557,34 @@ test('게이트 ④ 실험실 — 손잡이 전수가 자국을 바꾼다(도구
   const rules = await page.evaluate(() => {
     const labInputs = [...document.querySelectorAll('#tunelab-knobs input, #tunelab-curves input')] as HTMLInputElement[]
     const slider = document.getElementById('paint-size-range') as HTMLInputElement
-    const all = [...labInputs, slider]
+    // 분모 확장(2차 [8]) — 작업대의 단추 전부(고르기 4 · 판 비우기 · 기본값 · mypaint · 굳힌다 · 닫는다)
+    const labBtns = [...document.querySelectorAll('#tunelab button')] as HTMLButtonElement[]
+    const all: HTMLElement[] = [...labInputs, slider, ...labBtns]
     const tipOk = all.filter(e => {
       const host = e.closest('label, button') as HTMLElement | null
       return !!((e.title || host?.title || '').trim())
     }).length
-    const knobVals = [...document.querySelectorAll('#tunelab-knobs')].length > 0
-      ? [...document.querySelectorAll('#tunelab-knobs label')].filter(l => {
-          const sp = l.querySelectorAll('span')
-          return sp.length >= 2 && (sp[sp.length - 1]!.textContent || '').trim().length > 0
-        }).length
-      : 0
+    const knobVals = [...document.querySelectorAll('#tunelab-knobs label')].filter(l => {
+      const sp = l.querySelectorAll('span')
+      return sp.length >= 2 && (sp[sp.length - 1]!.textContent || '').trim().length > 0
+    }).length
+    // 곡선의 값 표찰(R6 — 2차 [8]): 곡선 줄마다 다섯 값 한 줄(#tunelab-cvals-*)
+    const curveVals = ['density', 'width'].filter(ck =>
+      ((document.getElementById('tunelab-cvals-' + ck)?.textContent) || '').trim().length > 0).length
     const sliderVal = ((document.getElementById('paint-size-val')?.textContent) || '').trim().length > 0
-    return { handles: all.length, tooltip_ok: tipOk, knob_value_labels: knobVals, slider_value_label: sliderVal }
+    return { handles: all.length, buttons: labBtns.length, tooltip_ok: tipOk, knob_value_labels: knobVals, curve_value_rows: curveVals, slider_value_label: sliderVal }
   })
-  expect(rules.tooltip_ok, '툴팁 — 손잡이 전수(값)').toBe(rules.handles)
+  expect(rules.tooltip_ok, '툴팁 — 손잡이·단추 전수(값)').toBe(rules.handles)
   expect(rules.knob_value_labels, '값 표찰 — 작업대 값 손잡이 13').toBe(13)
+  expect(rules.curve_value_rows, '값 표찰 — 곡선 두 줄(다섯 값 한 줄씩)').toBe(2)
   expect(rules.slider_value_label, '값 표찰 — 크기 슬라이더').toBe(true)
+  // RELEVANT ↔ matrix 대조(2차 [3] — 두 블록이 각자 값을 쓰고 아무도 안 맞춰 봤다):
+  // 도구마다 «반응한 손잡이 + 비활성 손잡이 == 전체 23»이어야 한다(전제 축은 전제를 켜고
+  // 쟀으므로 반응에 든다). 어긋나면 «활성인데 죽은» 손잡이가 있는 것이다(#96의 뒤집힌 거동).
+  for (const ins of ['pencil', 'marker', 'cp', 'brush']) {
+    const responding = Object.values(changedBy).filter(a => a.includes(ins)).length
+    expect(responding + disabledOf[ins]!, ins + ' — 반응 + 비활성 == 전체(대조)').toBe(knobIds.length)
+  }
   OUT.gate_lab = {
     def: '손잡이 23(값 13 + 곡선 10) × 도구 4 — 각 손잡이를 끝값으로 밀어 시험 판 해시가 바뀌는 도구 목록. 술어 = 죽은 배선 0(모든 손잡이가 적어도 한 도구에서 자국을 바꾼다). ⚠ tipLenK 행은 전제(tipAlpha 0.5 켬 — 끝 크기는 끝 강조 0에서 보일 수 없다: 구성) 아래의 값이다(2차 [6] — 행마다 조건 명시 #11). 사람이 겪는 축은 disabled_per_instr가 값(무효 축 비활성 — 마커 20/23). overlay = #97 반증(닫힘: 안 덮음 · 열림: 맨 위). rules = 34-0의 수(#96 — 툴팁·값 표찰)',
     matrix: changedBy, dead, disabled_per_instr: disabledOf,
@@ -680,10 +707,15 @@ test('게이트 ⑤ 크기 — 새 대역(사람 값)에서 슬라이더 == 자�
   expect(await setViaSlider('cp', 50)).toBe(50)
   await drawLine(page, 540, 600, 860, 600)
   await page.waitForTimeout(200)
-  const wCp = await thickMax(600 - 45, 600 + 45, 25)   // 색연필 — 부드러운 테두리(도장 림)가 40 아래로 흩어진다(dpr2 실측 0.254): 바탕(13) 위 25가 그 자
+  // 색연필 자 3점(2차 [6]④ — gate_stats의 3점 훑기와 같은 규약): 바탕(~13) 위 20·25·30
+  // 세 문턱에서 재고, 판정은 25 · 셋의 퍼짐이 자의 안정성 값이다.
+  const wCp20 = await thickMax(600 - 45, 600 + 45, 20)
+  const wCp = await thickMax(600 - 45, 600 + 45, 25)
+  const wCp30 = await thickMax(600 - 45, 600 + 45, 30)
   const wf = (await page.evaluate(() => (window as any).__b2.diag.paintProfile(0.5))).w as number
   const cpExpect = 50 * wf
   expect(Math.abs(wCp - cpExpect) / cpExpect, '색연필 50 — 슬라이더×곡선(0.925) == 자국').toBeLessThan(tolW)
+  expect((Math.max(wCp20, wCp, wCp30) - Math.min(wCp20, wCp, wCp30)) / wCp, '색연필 자 — 문턱 3점의 퍼짐 < 15%(자 안정성)').toBeLessThan(0.15)
   // ③ 붓 — 비례(125 → 250 = 2.00배 ± 20%) + 값 왕복 500. ⚠ **같은 장면의 좌·우 반쪽**에
   // 나란히 긋는다 — 시험 «안» 재탐색(?reset)은 문서를 못 비운다: ?reset은 캐시 탈출구이고
   // 그림(자동 저장)은 안 건드린다(main.ts 문면). 스펙의 «리셋»이 먹히는 것은 시험마다
@@ -696,12 +728,23 @@ test('게이트 ⑤ 크기 — 새 대역(사람 값)에서 슬라이더 == 자�
   await drawLine(page, 540, 430, 660, 430)
   await page.waitForTimeout(200)
   const wB1 = await thickMax(430 - 60, 430 + 60, 25, [560, 590, 620])
+  expect(await setViaSlider('brush', 90)).toBe(90)
+  await drawLine(page, 672, 430, 728, 430)
+  await page.waitForTimeout(200)
+  const wB15 = await thickMax(430 - 85, 430 + 85, 25, [690, 700, 710])
   expect(await setViaSlider('brush', 120)).toBe(120)
   await drawLine(page, 740, 430, 860, 430)
   await page.waitForTimeout(200)
   const wB2 = await thickMax(430 - 110, 430 + 110, 25, [780, 810, 840])
   const ratio = wB2 / Math.max(1, wB1)
-  expect(Math.abs(ratio - 2), '붓 — 슬라이더 2배 = 자국 ~2배(비례)').toBeLessThan(0.4)
+  // 원점 적합(2차 [2]③ — 1.83의 부족이 잘림인가 비선형인가): 세 점(60·90·120)의
+  // 유효/명목 기울기 k를 적합하고 각 점의 잔차 < 15%면 «원점 비례»다 — 그러면 부족은
+  // 확률적 가장자리(빗살 엔벌롭)의 표집 잡음이지 잘림·비선형이 아니다.
+  const k = (wB1 / 60 + wB15 / 90 + wB2 / 120) / 3
+  for (const [nom, w] of [[60, wB1], [90, wB15], [120, wB2]] as const) {
+    expect(Math.abs(w / (k * nom) - 1), '붓 ' + nom + ' — 원점 비례 잔차 < 15%').toBeLessThan(0.15)
+  }
+  expect(Math.abs(ratio - 2), '붓 — 슬라이더 2배 = 자국 ~2배(비례 · 문 ±0.4는 잔차 15%×전파의 반올림 — def)').toBeLessThan(0.4)
   const w250 = await setViaSlider('brush', 250)
   expect(w250, '값 왕복 — 붓 250').toBe(250)
   const w500 = await setViaSlider('brush', 500)
@@ -709,6 +752,86 @@ test('게이트 ⑤ 크기 — 새 대역(사람 값)에서 슬라이더 == 자�
   OUT.gate_size = {
     def: '새 대역의 크기 게이트(2차 [1] — brush51 ⑤(2.5~40 · UI 왕복·클램프)의 위쪽 짝): 마커 100·색연필 50은 절대(문 C.PAINT51_SWATCH_W_TOL — 값은 brush51 원장 constants_used) · 붓은 비례 60→120(**같은 장면 좌/우 반쪽** — 시험 안 ?reset은 문서를 못 비운다(캐시 탈출구 · 자동 저장 복원 — 실측 획 18) · 2±0.4 · 유효 폭 ≈ 명목×1.6(빗살 산포)이라 120이 벽(이 열 ~300px) 안 실측 상한 — 250은 위 모서리에 잘렸다(실측 1.31): 그 위(250·500)는 값 왕복이 술어. 빗살 산포로 절대 두께는 명목보다 넓다 — 절대 술어는 band·stamps 몫)',
     thresholds: { band: 40, cp: 25, brush: 25, base_tint: '~13(실측 — 칠한 면 바탕)' },
-    marker100: wMarker, cp50: wCp, cp_expected: cpExpect, brush60: wB1, brush120: wB2, brush_ratio: ratio, slider_roundtrip: { w250, w500 },
+    marker100: wMarker, cp50: wCp, cp_ruler_sweep: { th20: wCp20, th25: wCp, th30: wCp30 }, cp_expected: cpExpect,
+    brush60: wB1, brush90: wB15, brush120: wB2, brush_fit_k: k, brush_ratio: ratio, slider_roundtrip: { w250, w500 },
   }
+})
+
+test('게이트 ⑤b 붓 상단 대역 — 키 큰 벽에서 250의 굵기(120 대비 비례) · 실측 한계는 500', async ({ page }) => {
+  // 2차 [2] — 250이 표준 상자(벽 ~300px)에 잘렸으므로(1.31 실측) **키 큰 상자**(윗선을
+  // 330 → 150으로)에서 잰다: 벽 ~480px · 붓 250의 유효 폭(~명목×1.5)이 들어간다.
+  // 500은 유효 ~750px로 이 화면(800px · 띠·바닥 제외)에도 안 들어간다 — DEFERRED 행이
+  // 그 대역의 유보이고 왕복 500(게이트 ⑤)이 값의 술어다.
+  await page.goto('/?reset')
+  await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  const dl = async (x0: number, y0: number, x1: number, y1: number) => {
+    await page.mouse.move(x0, y0)
+    await page.mouse.down()
+    await page.mouse.move((x0 + x1) / 2, (y0 + y1) / 2, { steps: 4 })
+    await page.mouse.move(x1, y1, { steps: 4 })
+    await page.mouse.up()
+    await page.waitForTimeout(60)
+  }
+  await dl(60, 620, 1140, 620)
+  await dl(500, 700, 900, 610)
+  await dl(500, 700, 150, 620)
+  await dl(900, 610, 640, 560)
+  await dl(150, 620, 640, 560)
+  await dl(500, 700, 500, 150)
+  await dl(900, 610, 900, 150)
+  await dl(900, 150, 500, 150)
+  const postId = await page.evaluate(() => (window as any).__b2.app.doc.strokes[5].id)
+  await page.evaluate((i) => (window as any).__b2.diag.setDimForTest(i, 2500), postId)
+  await page.click('#btn-face')
+  await page.mouse.click(700, 400); await page.waitForTimeout(80)
+  expect(await page.evaluate(() => (window as any).__b2.app.faces.length), '키 큰 벽이 섰다').toBeGreaterThanOrEqual(1)
+  await page.click('#btn-pencil'); await page.click('#btn-pencil')
+  await page.waitForTimeout(80)
+  const setW = async (w: number) => {
+    await page.evaluate(() => { (window as any).__b2.app.paintSel.i = 'brush' })
+    await page.click('#btn-paint')
+    if (await page.locator('#painttray.open').count() === 0) await page.click('#btn-paint')
+    await page.evaluate((v) => {
+      const el = document.getElementById('paint-size-range') as HTMLInputElement
+      el.value = String(v)
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+    }, w)
+    await page.mouse.click(150, 730)
+    await page.waitForTimeout(60)
+  }
+  const thick = (x: number, y0: number, y1: number) => page.evaluate(([x, y0, y1]) => {
+    const c = document.getElementById('gl') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const hh = Math.round((y1 - y0) * dpr)
+    const t2 = document.createElement('canvas')
+    t2.width = 2; t2.height = hh
+    t2.getContext('2d')!.drawImage(c, Math.round(x * dpr), Math.round(y0 * dpr), 2, hh, 0, 0, 2, hh)
+    const d = t2.getContext('2d')!.getImageData(0, 0, 2, hh).data
+    let rows = 0
+    for (let ry = 0; ry < hh; ry++) {
+      const i = (ry * 2) * 4
+      const a = d[i + 3]! / 255
+      if ((255 - (d[i]! + d[i + 1]! + d[i + 2]!) / 3) * a > 25) rows++
+    }
+    return rows / dpr
+  }, [x, y0, y1] as const)
+  const thickMax2 = async (y0: number, y1: number, cols: number[]) => {
+    let m = 0
+    for (const x of cols) m = Math.max(m, await thick(x, y0, y1))
+    return m
+  }
+  await setW(120)
+  await dl(540, 400, 660, 400)
+  await page.waitForTimeout(200)
+  const w120 = await thickMax2(400 - 110, 400 + 110, [560, 590, 620])
+  await setW(250)
+  await dl(740, 400, 860, 400)
+  await page.waitForTimeout(200)
+  const w250 = await thickMax2(400 - 230, 400 + 230, [780, 810, 840])
+  const ratio = w250 / Math.max(1, w120)
+  OUT.gate_size_tall = {
+    def: '키 큰 벽(윗선 150 — 벽 ~480px)에서 붓 120·250 좌/우 나란히 — 비례 250/120 = 2.083 ± 0.42(게이트 ⑤ 원점 적합의 그 잔차 눈금). 500은 유효 ~750px로 화면 밖 — DEFERRED(«붓 >250 대역 절대 미측정»)와 왕복 술어가 그 대역',
+    w120, w250, ratio,
+  }
+  expect(Math.abs(ratio - 250 / 120), '붓 250 — 120 대비 비례(키 큰 벽)').toBeLessThan(0.42)
 })
