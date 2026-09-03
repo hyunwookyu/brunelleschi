@@ -7,7 +7,7 @@
     "no_brighter": {
       "brighter": 0,
       "maxUp": 0,
-      "darkSum": 1887659
+      "darkSum": 1847519
     },
     "edge_ramp": [
       {
@@ -658,19 +658,19 @@
     "ramp_max_lum": 166.1,
     "paper_lum": 243,
     "under_pattern": {
-      "bandPx": 34607,
-      "contrastPx": 5488
+      "bandPx": 34605,
+      "contrastPx": 3850
     },
     "under_pattern_over": {
-      "bandPx": 34136,
-      "contrastPx": 5521
+      "bandPx": 34135,
+      "contrastPx": 3883
     },
     "under_pattern_opaque": {
-      "bandPx": 33785,
+      "bandPx": 33780,
       "contrastPx": 0
     },
     "under_pattern_norep": {
-      "bandPx": 1568,
+      "bandPx": 0,
       "contrastPx": 0
     },
     "line_under_band_dark": 293,
@@ -678,11 +678,11 @@
     "falsify_over": {
       "brighter": 461427,
       "maxUp": 8.5,
-      "darkSum": 1698570
+      "darkSum": 1657496
     },
     "dom_canvas": {
-      "before": 10,
-      "after": 10
+      "before": 11,
+      "after": 11
     },
     "constants_used": {
       "PAINT50_LUM_TOL": 3,
@@ -700,15 +700,15 @@
     "reachability_source": "이 파일의 falsify_over ↔ no_brighter · under_pattern_over ↔ under_pattern"
   },
   "orbit": {
-    "before": 16846,
+    "before": 16844,
     "during": [
       15221,
       13616,
       12027,
       10487,
-      8990
+      8989
     ],
-    "after": 8990,
+    "after": 8989,
     "note_d3": "D-3 반증 스위치 없음 — «궤도 중 소실»을 되살릴 옛 경로(48-6의 타일 제외)가 삭제됐다. 이 팔이 재는 것은 궤도 «행위» 중의 픽셀이고(문면 아님 — #94), 부정 대조는 paint48 ⑥의 tileStats.paintFrames == 0(옛 절이 안 도는 것)이다"
   },
   "foreshorten_clip": {
@@ -734,10 +734,10 @@
     "reachability_source": "이 파일의 ratio ↔ expected_ratio"
   },
   "side": {
-    "before": 16846,
+    "before": 16844,
     "behind": 0,
     "scene_ink_behind": 683511,
-    "restored": 16846,
+    "restored": 16844,
     "tex_behind": [
       {
         "key": "9:1",
@@ -774,9 +774,9 @@
     "note_d3": "D-3 — 반증 스위치 없음: 쪽 게이트를 끄는 손잡이를 안 만들었다(paintVisible 계열의 단위 반증은 test/mats46 ④가 든다). 건너편 0의 귀속(쪽 때문 — 밀도·미배치 아님)은 장면 잉크 > 0과 tex의 visible=false가 가른다"
   },
   "derived": {
-    "hash_base": 940900320,
-    "hash_corrupted": 2757652693,
-    "hash_rebaked": 940900320,
+    "hash_base": 4018861001,
+    "hash_corrupted": 1657652725,
+    "hash_rebaked": 4018861001,
     "textures": 1,
     "file_bytes": 4003,
     "note_identity": "rebaked == base(정확 일치)는 **설계 보장**이다(§5.1 유형 3 — 결정론 굽기의 항등 · 임계 아님). 이 팔의 측정은 가운데 단계다: corrupted ≠ base(오염이 화면에 실제로 보였다 — 이것이 없으면 회복 항등은 아무것도 안 잰다 · D-3)"
@@ -784,7 +784,7 @@
   "tex_budget": {
     "def": "분할 두 벽(면 faceN — ⚠ 지시 목표 «20 이상»에 셋 모자란다: rep49 frame20의 그 픽스처 그대로다. note_89 참조) + 칠 40붓 — 텍스처 수·단계 분포·합계 바이트(w·h·4). 프레임은 같은 장면 전/후 «차»(#82) — 잡음 바닥(before↔before2)과 함께 읽는다",
     "faces": 17,
-    "paint_strokes": 44,
+    "paint_strokes": 30,
     "textures": 17,
     "levels": [
       1024,
@@ -868,20 +868,20 @@
     "cap": 1024,
     "min": 64,
     "before_ms": {
-      "median": 29,
-      "p90": 33.700000286102295
+      "median": 57.09999999962747,
+      "p90": 58.80000000074506
     },
     "before2_ms": {
-      "median": 29.09999990463257,
-      "p90": 33.19999980926514
+      "median": 57.899999998509884,
+      "p90": 60.90000000037253
     },
-    "noise_floor_ms": 0.1,
+    "noise_floor_ms": 0.8,
     "after_ms": {
-      "median": 49.90000009536743,
-      "p90": 55.5
+      "median": 106.20000000111759,
+      "p90": 112.19999999925494
     },
-    "delta_median_ms": 20.8,
-    "delta_p90_ms": 22.3,
+    "delta_median_ms": 48.3,
+    "delta_p90_ms": 51.3,
     "note_cap": "상한 1024의 근거 — 장당 최악 1024²×4=4.19MB(2048이면 16.7MB — 4배)이고 이 장면의 실제 합은 bytes_total이다(긴 변만 단계라 장당 그보다 작다). «상한을 올리면 커진다»는 **clamped가 참인 장에만** 걸리는 산술이다(2차 [8]) — 이 장면은 clamped 합이 그 판정이다(0이면 상한 증설에 불변 · dpr2의 단일 1024도 포화가 아니라 올림 양자화일 수 있다 — screen_px_prequant가 가른다). 상한을 실제로 누르는 것은 큰 면·줌 인 장면이고 실기기 관측 판정자다(DEFERRED)",
     "note_89": "목표 «스무 면»에 못 미치면 faces 값이 그 사실이다 — 상한을 조용히 줄이지 않는다(rep49 note_89 그대로 · 같은 픽스처가 세운 면이 17이다)",
     "note_levels": "기본 줌의 levels가 전부 같은 값인 것은 이 장면의 셀들이 비슷한 화면 크기라서다 — «작으면 낮게»의 실측은 levels_zoomed_out(줌 아웃에서 단계 하강)이 든다",

@@ -60,6 +60,12 @@ async function drawLine(page: Page, x0: number, y0: number, x1: number, y1: numb
 async function bigBox(page: Page, withFloor = true) {
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  // ⚠ 실행 중 «web2/ 아래 파일»(스펙 포함)을 고치면 vite 개발 서버가 «모듈 그래프 밖 파일 변경 → 전체
+  // 새로고침»을 보내 페이지가 재적재되고 evaluate가 __b2 undefined로 죽는다(실측 두 번 — 편집 직후의
+  // 실행에서만). 아래 대기는 부팅 직후 여유일 뿐 그 병의 수리가 아니다 — 수리는 «실행 중 편집 금지»다.
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(200)
+  await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await drawLine(page, 60, 620, 1140, 620)
   await drawLine(page, 500, 700, 900, 610)
   await drawLine(page, 500, 700, 150, 620)

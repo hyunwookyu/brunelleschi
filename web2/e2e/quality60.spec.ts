@@ -59,6 +59,12 @@ async function drawLine(page: Page, x0: number, y0: number, x1: number, y1: numb
 async function bigBox(page: Page) {
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  // ⚠ 실행 중 «web2/ 아래 파일»(스펙 포함)을 고치면 vite 개발 서버가 «모듈 그래프 밖 파일 변경 → 전체
+  // 새로고침»을 보내 페이지가 재적재되고 evaluate가 __b2 undefined로 죽는다(실측 두 번 — 편집 직후의
+  // 실행에서만). 아래 대기는 부팅 직후 여유일 뿐 그 병의 수리가 아니다 — 수리는 «실행 중 편집 금지»다.
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(200)
+  await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await drawLine(page, 60, 620, 1140, 620)
   await drawLine(page, 500, 700, 900, 610)
   await drawLine(page, 500, 700, 150, 620)
@@ -118,8 +124,8 @@ async function penPath(page: Page, pts: { x: number; y: number }[], press: numbe
 /** 작업대를 연다 — 설정 서랍(details) 안의 단추라 서랍을 먼저 편다(mark58 ④는 장면을 세운 뒤라 서랍이
  *  열려 있었다 · 빈 문서에서는 닫혀 있어 page.click이 가시성을 기다리다 멈춘다 — 실측 1.0m 타임아웃) */
 async function openLab(page: Page) {
-  // ?reset 직후의 재탐색(캐시 탈출 — 워커·캐시 정리)이 evaluate 문맥을 깬다(dpr2 실측 «Execution context
-  // was destroyed») — 네트워크가 잠잠해질 때까지 기다린 뒤 연다.
+  // dpr2 실측 «Execution context was destroyed» — 원인은 실행 중 스펙 편집이 부른 vite 전체 새로고침이었다
+  // (bigBox 주석). 부팅 직후 여유만 둔다.
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(300)
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
