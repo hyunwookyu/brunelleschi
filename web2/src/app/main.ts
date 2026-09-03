@@ -2801,6 +2801,8 @@ requestAnimationFrame(() => {
 import { project, screenAxes, vpMarks, frameAxes, isParallel, projW, horizonScreenY } from '../core/camera'
 import { setMarkerFlatForTest, setPressFlatForTest, setGrainOffForTest, setPaintOpaqueForTest, paintDensity, paintWidthFactor, setStampLogForTest, stampLogForTest, setStrokeBufferOffForTest, setGrainPerStrokeForTest } from '../core/facetex'
 import { brushDef, setBrushTune, START_POINTS, type Instr58, type BrushDef } from '../core/brush58'
+import { paintMark } from '../core/facetex'
+import { markShape, type MarkShape } from '../core/markshapes'
 import { initTuneLab } from './tunelab'
 
 // ── 브러시 작업대(web2-58 58-5) — 설정에 숨는다(R8). 시험 긋기 == 제품 굽기(#54) ────
@@ -2840,6 +2842,26 @@ const diag = {
     setBrushTune(i, patch); rebakePaintTexForTest(); invalidate()
   },
   brushDefForTest: (i: Instr58) => brushDef(i),
+  /** **자국 견본**(web2-61 게이트·사진의 자) — 흰 판(면 텍스처 규약)에 견본 도형 하나를
+   *  제품과 같은 함수(paintMark — 이음매)로 긋고 어둡기 지도(0..255)를 window.__m61에
+   *  남긴다. 화면·문서·dpr과 무관한 순수 px 판이라 원근이 자를 안 흐린다(#16 — 주기
+   *  측정에 원근 정규화가 필요 없다). 부작용 없음(문서 무변 · 오프스크린). */
+  markSampleForTest: (i: Instr58, shape: MarkShape, wPx: number, seed = 61, W = 480, H = 240) => {
+    const c = document.createElement('canvas'); c.width = W; c.height = H
+    const g2 = c.getContext('2d')!
+    g2.fillStyle = '#ffffff'; g2.fillRect(0, 0, W, H)
+    const sm = markShape(shape, W, H)
+    paintMark(g2, sm.pts, wPx, brushDef(i), {
+      color: i === 'brush' ? MAT.HB.color : '#8a4a3a',
+      baseAlpha: MAT.HB.alpha, seed, grainWpx: wPx, press: sm.press,
+    })
+    const d = g2.getImageData(0, 0, W, H).data
+    const v = new Array<number>(W * H)
+    for (let k = 0, j = 0; k < d.length; k += 4, j++) v[j] = 255 - (d[k]! + d[k + 1]! + d[k + 2]!) / 3
+    ;(window as unknown as { __m61?: unknown }).__m61 = { v, w: W, h: H }
+    ;(window as unknown as { __m61cv?: unknown }).__m61cv = c
+    return { w: W, h: H }
+  },
   /** web2-60 — 조정 전부(JSON · 실험실 「값 꺼내기」와 같은 함수) · 출발점 표(값의 출처 대조) */
   brushTuneJson: () => tuneLab.tuneJson(),
   brushStartPoints: () => START_POINTS,

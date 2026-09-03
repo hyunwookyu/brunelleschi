@@ -1,0 +1,128 @@
+{
+  "conditions": {
+    "workers": 1,
+    "project": "dpr1",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/grain61.spec.ts (워커 1 — #99)"
+  },
+  "what": "web2-61 — 자국 게이트 자: ①격자 주기 ②도장 주기 ③구멍 규칙성 ④굵기 무관 ⑤넷 갈림 (흰 판 · paintMark 직접 · 원근 무관)",
+  "note_pitfalls": "#103(호출마다 새 캔버스 — 구성 · scene 열쇠) · #102(?reset 시험당 1회) · #101(web2 러너) · #99(병합-쓰기) · #16(순수 px 판 — 원근 정규화 불요) · #12(주기 탐색은 3..60 스윕 — 동작점 하나가 아니다)",
+  "scene": "호출마다 markSampleForTest가 새 480×240 캔버스를 만든다(문서·뷰 무관 · 잔류 없음)",
+  "period_line_w20": {
+    "pencil": {
+      "edgeP": 29.5,
+      "edgeAmpN": 0.1574,
+      "mean": 22.304,
+      "dominantP": 18,
+      "ampRatio": 0.0944,
+      "p95": 90.3,
+      "bandMean": 22.3,
+      "bareShare": 0.1231,
+      "coreN": 8001,
+      "edgeSd": 3.176,
+      "edgeN": 372
+    },
+    "cp": {
+      "edgeP": 0,
+      "edgeAmpN": 0,
+      "mean": 18.523,
+      "dominantP": 22,
+      "ampRatio": 0.2624,
+      "p95": 77.7,
+      "bandMean": 18.52,
+      "bareShare": 0.1049,
+      "coreN": 8001,
+      "edgeSd": 0,
+      "edgeN": 381
+    },
+    "brush": {
+      "edgeP": 60,
+      "edgeAmpN": 0.2497,
+      "mean": 21.294,
+      "dominantP": 6,
+      "ampRatio": 0.0449,
+      "p95": 59,
+      "bandMean": 21.29,
+      "bareShare": 0.0492,
+      "coreN": 8001,
+      "edgeSd": 7.184,
+      "edgeN": 381
+    },
+    "marker": {
+      "edgeP": 0,
+      "edgeAmpN": 0,
+      "mean": 35.425,
+      "dominantP": 59,
+      "ampRatio": 0,
+      "p95": 90.3,
+      "bandMean": 35.42,
+      "bareShare": 0.0476,
+      "coreN": 8001,
+      "edgeSd": 0,
+      "edgeN": 381
+    },
+    "def": "띠(굵기+30px) 열 프로파일의 지배 주기 P(3..60 스윕)와 진폭비(DFT 2/N ÷ 평균). ①연필·색연필 격자 ②붓 도장 열 — pre 값이 반증의 기록(D-3)"
+  },
+  "width_follow": {
+    "w20": {
+      "P": 18,
+      "amp": 0.0944
+    },
+    "w40": {
+      "P": 48.5,
+      "amp": 0.1282
+    },
+    "p_ratio": 2.694,
+    "def": "굵기 2배에서 지배 주기의 비 — 결이 굵기에 실리면 ≈2(옛 엔진 · grainWpx×grainK), 종이 성질이면 ≈1"
+  },
+  "holes_cp": {
+    "col": {
+      "P": 22,
+      "ratio": 0.6051
+    },
+    "row": {
+      "P": 7,
+      "ratio": 0.4837
+    },
+    "holeShare": 0.4253,
+    "p95": 80.3,
+    "def": "몸통(±10px) 구멍(<0.35·p95) 지시자의 열·행 프로파일 지배 주기 — 격자에 실리면 두 축 다 봉우리(pre), 안 실리면 진폭이 낮다(post)"
+  },
+  "four_differ": {
+    "stats": {
+      "pencil": {
+        "p95": 90.3,
+        "bareShare": 0.1231,
+        "edgeSd": 3.176,
+        "bandMean": 22.3
+      },
+      "cp": {
+        "p95": 77.7,
+        "bareShare": 0.1049,
+        "edgeSd": 0,
+        "bandMean": 18.52
+      },
+      "brush": {
+        "p95": 59,
+        "bareShare": 0.0492,
+        "edgeSd": 7.184,
+        "bandMean": 21.29
+      },
+      "marker": {
+        "p95": 90.3,
+        "bareShare": 0.0476,
+        "edgeSd": 0,
+        "bandMean": 35.42
+      }
+    },
+    "perPair": {
+      "pencil~cp": 1,
+      "pencil~brush": 0.6003,
+      "pencil~marker": 1,
+      "cp~brush": 1,
+      "cp~marker": 0.5462,
+      "brush~marker": 1
+    },
+    "minPair": 0.5462,
+    "def": "짝별로 세 축(p95·빈 몫·가장자리 sd) 중 최대 상대 차 — 그 최소가 «가장 닮은 짝»의 갈림"
+  }
+}
