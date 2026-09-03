@@ -25,6 +25,7 @@ import { edgeSpanOf } from '../src/core/face'
 import { pieces } from '../src/core/pieces'
 import { solveMove } from '../src/core/grip'
 import { DRAW_POSE } from '../src/core/camera'
+import { C } from '../src/core/constants'
 import { sub3, len3 } from '../src/core/vec'
 
 afterEach(() => setSpanCarryForTest(true))
@@ -97,14 +98,15 @@ describe('원장 — 구간 이관 전/후 · 반경 축 · D-5 스윕 · 잔차
     const pre = stubEraseRun(false)
     const post = stubEraseRun(true)
     OUT.def = {
-      span: '면 경계 획 위에서 이웃 두 경계 직선과의 교점(면의 두 정점)이 끊는 3D 매개변수 범위 [lo,hi] — 파생(저장 안 함 · #90 관문 안 원장만)',
+      span: '면 경계 «자리(occurrence)»마다, 그 자리의 이웃 두 경계 직선과의 교점(면의 두 정점)이 끊는 3D 매개변수 범위 [lo,hi] — 파생(저장 안 함 · #90 관문 안 원장만). ⚠ 획의 것이 아니라 자리의 것이다: 한 획이 한 루프에 두 번 서면 자리마다 제 구간(chord_two_occurrences가 값)',
+      order_free: '**보장** — 구간 표를 호출 머리에서, 손대기 전의 lift 하나로 선계산한다(#100 · spanTableOf). 표의 입력에 이관 순서가 안 들어가므로 순서 무관은 측정이 아니라 구성이다(2차 [14])',
       carry: '지우개가 획을 조각으로 갈아 끼울 때 남는 조각 합집합이 구간을 덮으면 조각 하나의 새 id로 FaceEdge.s 교체(op.edgeMoved) — 조각 선택 규칙은 아래 carry_choice',
       carry_choice: '«겹침 최대»를 쓰지만 결과를 가르는 것은 규칙이 아니라 **참조 여부**다 — 모든 조각이 같은 3D 직선이라 기하는 무차(#92: sweep의 then_ref_erase/then_sibling_erase 두 행이 그 갈림의 값). 규칙 자체는 임의 선택임을 여기 적는다(1차 [11])',
       eps_role: 'εt = MERGE_RATIO·size3/|획|은 **결정 임계가 아니라 부동소수 여유**다 — 지우개는 조각 단위라(pieces.ts) 절단 위치는 언제나 3D 교차점이고 반경과 무관하다(#88 실측: cut_t − hi = 1 ulp — radius_axis 행들이 그 불변의 값). #61 대응: MERGE_RATIO의 둘째 의도가 아니라 같은 «마디 합침 잡음»의 여유이고, 결정 임계가 필요해지면 제 상수를 새로 판다',
       survived: 'sweep의 survived = «풀린 면 수 == 1»(면 표시 축)이다. 칠·두께 축은 pre/post 블록이 잰다(1차 [9] — sweep에 그 축을 겹치면 행마다 분모가 달라진다 #11)',
       pre_is: 'setSpanCarryForTest(false) — 옛 거동의 재현이자 D-3 반증(끄면 결함이 돌아온다). carryFaceEdges가 첫 줄 반환이라 옛 경로와의 차이는 반환값뿐. 수리 «전» 트리의 별도 실행(D-2)은 같은 단언 상수를 통과했다 — JSON 부재는 1차 [6] 자백(#91의 자로 바이트 대조는 아니다)',
       judge_92: '#92 — 판정자는 «면·칠·두께가 남아 있는가»의 수다(이관 성공의 이름표가 아니다). 열림(opened)은 실제 풀림 전/후 비교로 따로 센다. #99 판별 ②(열쇠 수 확인)는 마지막 팔이 한다',
-      zero_note: 'opened 0은 게이트 목표(이관 성공 = 알림 없음)다 — 같은 카운터가 span_mid·radius60에서 1을 낸다(집계 미작동이 아니라는 반증). fixture_span.lo ≈ 0은 구성 보장(그 모서리가 끝점 접촉 t=0)이라 측정이 아니다 — 임계를 안 건다(CLAUDE §5.1 유형 3)',
+      zero_note: '0의 세 갈래를 가른다(2차 [5]): ① opened 0 = 게이트 목표(이관 성공 = 알림 없음 — 같은 카운터가 span_mid·r27·r60에서 1을 낸다: 집계 미작동 아님) ② fixture_span.lo ≈ 0 = 구성 보장(그 모서리가 끝점 접촉 t=0 — §5.1 유형 3 · 임계 ⛔) ③ **then_sibling_move.face_vertex_moved_max 0 = 목표가 아니라 잔차의 값**이다(조용한 갈림 그 자체 — DEFERRED web2-57 둘째 행 · AS-C173)',
     }
     OUT.pre = pre
     OUT.post = post
@@ -138,12 +140,23 @@ describe('원장 — 구간 이관 전/후 · 반경 축 · D-5 스윕 · 잔차
 
   it('반경 축(1차 [1] — #12·#13) — 반경은 절단 위치가 아니라 «어느 조각이 맞는가»만 바꾼다', () => {
     const rows: Record<string, unknown> = {}
+    expect([...C.ERASER_R_PX]).toEqual([5, 12, 27, 60])   // 제품 크기통 전 눈금(#88 — 제품에서 읽는다)
     for (const r of [5, 12] as const) {
       const { s } = quadScene(); makeFace(s)
       const o = eraseOnce(s, STUB_E4, r)
       rows[`stub_r${r}`] = { survived: s.app.faces.length === 1, opened: o.length }
       expect(s.app.faces).toHaveLength(1)
       expect(o).toEqual([])
+    }
+    {
+      // 반경 27(크기통 셋째): 토막점~이웃 경계(e5) 수직거리 ≈ 13.3px < 27 — 이웃의 구간
+      // 조각을 물어 열린다. 게이트 ①의 결론이 «구간 밖 조각만 닿을 때»의 조건형인 근거.
+      const { s } = quadScene()
+      const fid = makeFace(s)
+      const o = eraseOnce(s, STUB_E4, 27)
+      rows.stub_r27 = { survived: s.app.faces.length === 1, opened: o.length }
+      expect(o).toEqual([fid])
+      expect(s.app.faces).toHaveLength(0)
     }
     {
       // 반경 60: 토막 자리에서 **이웃 경계(e5)의 구간 조각까지 문다** → e5의 구간이 죽어
@@ -163,8 +176,10 @@ describe('원장 — 구간 이관 전/후 · 반경 축 · D-5 스윕 · 잔차
       expect(s.app.faces).toHaveLength(0)
     }
     OUT.radius_axis = {
+      sizes_px: [...C.ERASER_R_PX],
+      regression_note: 'A-4 되살림 실험(2차 [2] — 마감 세션 실측): carryFaceEdges의 구간 조회를 옛 지연 계산(edgeSpanOf를 그 자리에서)으로 임시로 되돌리면 이 팔의 r60 행이 실제로 빨개진다(opened [] — 틀린 생존 · web2 러너 7/8) — 이 행이 #100의 회귀를 잡는다. 되살림·복원은 일회 실험이고 제품 코드는 선계산이 정본',
       rows,
-      note: '지우개는 조각 단위(pieces.ts 머리)라 절단 t는 반경과 무관 — r5·r12는 토막 조각만 물어 산다(등호 위 덮음 그대로), r60은 이웃 경계 조각까지 물어 «그 경계의 구간»이 죽어 열린다. εt가 산다/열린다를 가른 행은 없다(eps_role — 결정 임계가 아니다)',
+      note: '지우개는 조각 단위(pieces.ts 머리)라 절단 t는 반경과 무관 — r5·r12는 토막 조각만 물어 산다(등호 위 덮음 그대로), r27·r60은 이웃 경계(e5)의 구간 조각까지 물어 «그 경계의 구간»이 죽어 열린다(이 픽스처의 갈림값 = 토막점~e5 수직거리 ≈ 13.3px — 구간 산술이 아니라 어느 조각이 맞는가). εt가 산다/열린다를 가른 행은 없다(eps_role — 결정 임계가 아니다)',
     }
   })
 
@@ -216,6 +231,11 @@ describe('원장 — 구간 이관 전/후 · 반경 축 · D-5 스윕 · 잔차
       // 픽스처가 재려는 상태를 실제로 만들었는가(#88): e4는 루프에 **한 번**만 선다
       const face0 = s.app.doc.faces.find(f => f.id === fid)!
       expect(face0.loops[0]!.edges.filter(e => e.s === e4.id)).toHaveLength(1)
+      // 겹침 길이 둘(2차 [10] — «겹침 최대»의 입력값): 구간 ∩ 각 조각(3D t)
+      const ei0 = face0.loops[0]!.edges.findIndex(e => e.s === e4.id)
+      const sp = edgeSpanOf(s.app.lift, face0, 0, ei0)!
+      const pcs = pieces(s.app.lift, DRAW_POSE).filter(x => x.strokeId === e4.id)
+      const ovs = pcs.map(k => Math.max(0, Math.min(k.t1, sp.hi) - Math.max(k.t0, sp.lo)))
       const o0 = eraseOnce(s, STUB_E4)              // 토막 지움 — 이관
       expect(o0).toEqual([])
       expect(s.app.faces).toHaveLength(1)
@@ -226,16 +246,22 @@ describe('원장 — 구간 이관 전/후 · 반경 축 · D-5 스윕 · 잔차
       const p2 = s.app.doc.strokes.find(x => Math.abs(x.a.x - 600) < 1 && Math.abs(x.b.x - 500) < 1)!
       expect(p1).toBeDefined()
       expect(p2).toBeDefined()
-      return { s, fid, refIds, p1, p2, refIsP1: refIds.includes(p1.id) }
+      return { s, fid, refIds, p1, p2, refIsP1: refIds.includes(p1.id), ovs }
     }
     const rows: Record<string, unknown> = {}
     {
       const m = multiScene()
-      rows.carry_target = { ref_is_p1: m.refIsP1 }   // 겹침 최대가 고른 조각(실측)
+      // P1 = 구간의 가까운 반(t 작은 쪽 · (700,450)~교차) · P2 = 먼 반(교차~구간 끝)
+      rows.def = '앞 넷 = 수직 획 장면(경계 하나·조각 여럿 — 루프 무흡수) · chord_two_occurrences = 지면 코드 장면(루프 흡수) — 두 장면은 다른 픽스처다. erased_stroke_id는 그 팔이 지운 «획 id»(개수 아님 — 두 팔 다 조각 하나씩 지웠다)'
+      rows.carry_target = {
+        ref_is_p1: m.refIsP1,
+        overlap_t: { p1: m.ovs[0] ?? null, p2: m.ovs[1] ?? null },
+        note: '겹침 최대가 고른 조각(실측 — P2). «먼 쪽이 t에서 길다»는 해석이고 값은 overlap_t 둘이다(2차 [10] — carry_choice: 규칙 자체는 임의)',
+      }
       const ref = m.refIsP1 ? m.p1 : m.p2
       const at = m.refIsP1 ? { x: 660, y: 446.67 } : { x: 550, y: 437.5 }
       const o = eraseOnce(m.s, at)
-      rows.then_ref_erase = { erased: ref.id, survived: m.s.app.faces.length === 1, opened_seq: [o.length] }
+      rows.then_ref_erase = { erased_stroke_id: ref.id, survived: m.s.app.faces.length === 1, opened_seq: [o.length] }
       expect(o).toEqual([m.fid])                     // 참조 조각을 지우면 — 열린다
     }
     {
@@ -244,7 +270,7 @@ describe('원장 — 구간 이관 전/후 · 반경 축 · D-5 스윕 · 잔차
       const at = m.refIsP1 ? { x: 550, y: 437.5 } : { x: 660, y: 446.67 }
       const o = eraseOnce(m.s, at)
       rows.then_sibling_erase = {
-        erased: sib.id, survived: m.s.app.faces.length === 1, opened_seq: [o.length],
+        erased_stroke_id: sib.id, survived: m.s.app.faces.length === 1, opened_seq: [o.length],
         note: '**잔차**(DEFERRED web2-57 둘째 행) — 비참조 형제를 지우면 면이 산 채 경계 잉크에 틈. 다중 참조가 근본 수리(범위 밖)',
       }
       expect(m.s.app.faces).toHaveLength(1)
@@ -323,15 +349,18 @@ describe('원장 — 구간 이관 전/후 · 반경 축 · D-5 스윕 · 잔차
     expect(s.app.faces).toHaveLength(1)
   })
 
-  it('옮김의 수치(1차 [8]) — 이관된 조각을 옮기면 면 정점이 실제로 움직인다', () => {
+  it('옮김의 수치(1차 [8] · 2차 [4]·[6]) — 이관된 조각을 옮기면 옳은 정점 둘이 |d|만큼 가고 칠이 동행한다', () => {
     const { s, e4 } = quadScene()
     const fid = makeFace(s)
+    expect(commitPaint(s.app, [470, 485, 500, 515, 530].map(x => ({ x, y: 468 }))).placed).toBe(1)
     eraseOnce(s, STUB_E4)
+    expect(s.app.paintGeo.size).toBe(1)
     const face = s.app.doc.faces.find(f => f.id === fid)!
     const carried = face.loops[0]!.edges.map(e => e.s).find(id =>
       id !== e4.id && s.app.doc.strokes.some(x => x.id === id)
       && s.app.lift.an.roles.get(id) === 'content')!
     const before3 = s.app.faces[0]!.outer.map(p => ({ ...p }))
+    const paintBefore = [...s.app.paintGeo.values()][0]!.map(p => ({ ...p }))
     s.app.tool = 'pencil'
     expect(beginHold(s.app, SPAN_E4, 1000)).not.toBeNull()
     const { base, base3 } = gripBase(s.app)
@@ -339,13 +368,26 @@ describe('원장 — 구간 이관 전/후 · 반경 축 · D-5 스윕 · 잔차
     const sol = solveMove(s.app.lift.an, s.app.pose, anchor3, { x: 760, y: 435 })!
     expect(applyMove(s.app, base, base3, sol.dir, sol.t)).not.toBeNull()
     const moved = s.app.faces[0]!.outer.map((p, i) => len3(sub3(p, before3[i]!)))
+    const movedOnly = moved.filter(d => d > 1e-6)
+    const paintAfter = [...s.app.paintGeo.values()][0] ?? []
+    const paintMoved = paintAfter.length === paintBefore.length
+      ? paintAfter.map((p, i) => len3(sub3(p, paintBefore[i]!))) : []
     OUT.move = {
-      sol_t_units: sol.t, face_vertex_moved_max: Math.max(...moved),
-      face_vertex_moved_n: moved.filter(d => d > 1e-6).length,
-      note: '게이트 ②의 수치 — 이동량과 면 정점 이동(1차 [8]). 잔차의 짝은 multi_piece.then_sibling_move(0)',
+      sol_t_units: sol.t,
+      face_vertex_total: moved.length,
+      face_vertex_moved: { n: movedOnly.length, min: Math.min(...movedOnly), max: Math.max(...movedOnly) },
+      note_type3: 'max == |sol.t| (1 ulp)는 **구성 보장**이다(§5.1 유형 3 — 임계 ⛔): 이동 방향(vp0)이 움직인 두 정점의 이웃 경계(d0·e5 — 둘 다 vp0축)와 평행이라 교점이 정확히 d만큼 미끄러진다. 측정이 말하는 것은 «면이 계속 풀리고 옳은 두 정점만 움직였다(2/4 · 나머지 0)»는 형태다(2차 [4])',
+      paint: {
+        survived: s.app.paintGeo.size === 1, pts: paintMoved.length,
+        moved_min: paintMoved.length ? Math.min(...paintMoved) : null,
+        moved_max: paintMoved.length ? Math.max(...paintMoved) : null,
+        note: '칠의 동행(2차 [6] — AS-C165의 «기하가 바뀌는» 판): uv 정본이라 칠은 면 기저(outer[0] 원점)를 따른다 — 값은 기저 원점의 이동에 달렸고 임계를 안 건다(관찰값)',
+      },
     }
-    expect(Math.max(...moved)).toBeGreaterThan(1e-6)
+    expect(movedOnly.length).toBe(2)
+    expect(Math.max(...movedOnly)).toBeGreaterThan(1e-6)
     expect(s.app.faces).toHaveLength(1)
+    expect(s.app.paintGeo.size).toBe(1)
   })
 
   it('원장 쓰기(병합 — #99) · 열쇠 수 확인', () => {

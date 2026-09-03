@@ -109,6 +109,10 @@ test('① 토막 지움 — 면이 살고 칠 픽셀(해시)이 동일하다', a
   await page.mouse.move(50, 750)
   await page.waitForTimeout(60)
   const noPaint = await winPixels(page, ...win)
+  // 2차 [11] — no_paint 장면에 면이 «서 있는» 것을 값으로: n=0은 면 부재가 아니라
+  // 48-9의 숨김(안 칠한 면 + 지우개)이다. note_92의 근거가 이 수다.
+  const noPaintFaces = (await summary(page)).faces.length as number
+  expect(noPaintFaces).toBe(1)
   // 칠 — 면 안 한 붓(48-9: 칠한 면은 도구와 무관하게 보인다)
   await page.click('#btn-paint')
   await drawLine(page, 460, 468, 540, 468)
@@ -129,7 +133,7 @@ test('① 토막 지움 — 면이 살고 칠 픽셀(해시)이 동일하다', a
   expect(s.faces, '면이 산다').toHaveLength(1)
   expect(s.docFaces).toBe(1)
   const after = await winPixels(page, ...win)
-  OUT[`gate1_paint_px`] = { no_paint: noPaint, before, after, win }
+  OUT[`gate1_paint_px`] = { no_paint: { ...noPaint, faces: noPaintFaces }, before, after, win }
   expect(after.hash, '칠 픽셀 동일(게이트 — RGBA 해시)').toBe(before.hash)
   expect(after.n).toBe(before.n)
   expect(await page.textContent('#notice'), '이관 성공 — 알림이 없다(반증의 짝)').not.toContain('면이 열렸다')

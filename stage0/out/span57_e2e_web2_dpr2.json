@@ -9,7 +9,8 @@
   "gate1_paint_px": {
     "no_paint": {
       "n": 0,
-      "hash": 2624205765
+      "hash": 2624205765,
+      "faces": 1
     },
     "before": {
       "n": 12000,
