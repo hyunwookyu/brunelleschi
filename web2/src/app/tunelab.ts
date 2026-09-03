@@ -58,13 +58,9 @@ const RELEVANT: Record<BrushDef['mode'], readonly string[]> = {
   bristles: ['spacingK', 'alpha', 'hardness', 'scatter', 'bristles', 'splitT', 'splitK',
     'speedAlphaK', 'speedWidthK', 'dirK', 'dirAngle'],
 }
-/** 전제가 있는 축(2차 [6]의 tipLenK 규약과 같다): 문턱↔압력은 구멍 문턱 > 0일 때만 뜻이 있고,
- *  촉 각도는 납작한 촉 > 0일 때만 뜻이 있다 — 그 전제가 꺼져 있으면 비활성으로 «보인다». */
-const PREREQ: Record<string, (d: BrushDef) => boolean> = {
-  cpBurnish: d => d.cpSkipTh > 0,
-  dirAngle: d => d.dirK > 0,
-  tipLenK: d => d.tipAlpha > 0,
-}
+// ⚠ 전제 축(문턱↔압력은 구멍 문턱 > 0 · 촉 각도는 납작한 촉 > 0 · 끝 크기는 끝 강조 > 0)을 전제가
+// 꺼지면 비활성으로 «보이게» 하는 판은 검토 후 기각했다(D-W28) — mark58 ④의 «반응 + 비활성 ==
+// 전체» 항등(전제를 켜고 재면 반응에 든다)과 충돌한다. 58 2차 [6] 규약 그대로: 비활성은 모드 기준.
 const curvesRelevant = (mode: BrushDef['mode']): boolean => mode !== 'band'
 
 export interface TuneLab {
@@ -259,7 +255,6 @@ export function initTuneLab(opts: {
       val.textContent = range.value
       redrawScratch()
       syncTunedMark()
-      if (k.key === 'cpSkipTh' || k.key === 'dirK' || k.key === 'tipAlpha') syncEnabled()   // 전제 축이 움직였다
     })
     range.addEventListener('change', () => opts.rebake())     // 놓을 때 제품(면 텍스처)도 따라온다
     lab.append(name, range, val)
@@ -395,19 +390,6 @@ export function initTuneLab(opts: {
     const t = tunedInstrs()
     tunedMark.textContent = t.length > 0 ? `조정: ${t.map(k => INSTR_NAME[k]).join('·')}` : ''
   }
-  /** 손잡이의 활성/비활성만 다시 — 전제 축(구멍 문턱·납작한 촉·끝 강조)이 움직인 뒤 */
-  const syncEnabled = () => {
-    const def = brushDef(instr)
-    const rel = RELEVANT[def.mode]
-    for (const k of KNOBS) {
-      const el = knobEls.get(String(k.key))!
-      const pre = PREREQ[String(k.key)]
-      const on = rel.includes(String(k.key)) && (!pre || pre(def))
-      el.range.disabled = !on
-      const rowEl = el.range.closest('label')?.parentElement as HTMLElement | null
-      if (rowEl) rowEl.style.opacity = on ? '1' : '0.35'
-    }
-  }
   const syncAll = () => {
     for (const [k, b] of pickBtns) b.classList.toggle('on', k === instr)
     const def = brushDef(instr)
@@ -417,8 +399,7 @@ export function initTuneLab(opts: {
       el.range.value = String(def[k.key])
       el.val.textContent = String(def[k.key])
       // 무효 축은 비활성(2차 [6] — «적어도 한 도구»가 아니라 «지금 이 도구»를 보인다)
-      const pre = PREREQ[String(k.key)]
-      const on = rel.includes(String(k.key)) && (!pre || pre(def))
+      const on = rel.includes(String(k.key))
       el.range.disabled = !on
       const rowEl = el.range.closest('label')?.parentElement as HTMLElement | null
       if (rowEl) rowEl.style.opacity = on ? '1' : '0.35'

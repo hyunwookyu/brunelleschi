@@ -470,7 +470,8 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
   const offBrushCap = (off.brush as { cap_ratio: number | null }).cap_ratio ?? 0
   OUT.self_cross = {
     window: { cross_css: [680, 'y', W, W], body_css: [[600, 'y', W, W], [760, 'y', W, W]], note: '창 셋 전부 굵기 폭(20×20 css) · y는 도구 행(Y)' },
-    guarantee: '현행 rows의 p95_ratio(연필·색연필 1.000)·cap_ratio ≤ 1은 최대값 합집합의 구성이다(#5) — 임계 없음. 판정 = falsification(옛 엔진)이 문을 넘는가 · rows_press(0.25·0.5·0.75)에서 옛 엔진 비가 압력에 따라 움직이는가',
+    guarantee: '현행 rows의 p95_ratio(연필·색연필 1.000)·cap_ratio ≤ 1은 최대값 합집합의 구성이다(#5) — 임계 없음. 판정 = falsification(옛 엔진)이 문을 넘는가 · rows_press(0.25·0.5·0.75)에서 옛 엔진 비가 압력에 따라 움직이는가. ⚠ 붓의 cap_ratio는 옛 엔진에서도 문 아래(falsification.brush.cap_ratio)라 붓에서는 실패 조건이 없는 자다 — 기록만. 붓의 «획 안 누적»(rows.brush.p95_ratio 문 밖)은 DEFERRED(사람 판정)',
+    brush_old_cap_ratio: offBrushCap,
     rows_press: rowsPress, falsification_press: offPress,
     def: '저압(0.25 · 합성 펜) 굵기 20의 한 획이 (680,y)에서 자기 자신과 ~38°로 교차한다. 창은 굵기 폭(20×20 css) — 교차 창 p95 어둡기 ÷ 몸통 창 둘(600·760 · 사선에서 12px 넘게 떨어짐)의 p95 평균. p95가 판정자다(캡이 픽셀을 묶는다 — 합(mass_ratio)은 두 띠의 합집합 면적이 섞여 기록만). 사전(마우스 0.5 · 합 비 mass_ratio)은 재현 절 — 이 판갈이의 사유: 합 비는 기하(합집합)와 결 칸 표집이 섞이고(현행 mass_ratio는 rows_press.*.p0.5.mass_ratio에 같은 자로 든다 — 1차 [6]), 압력 0.5의 연필은 옛 엔진에서도 몸통이 포화해 교차가 안 보였다(falsification_press.pencil.p0.5 ↔ p0.25 참조). 마커는 canvas stroke() 한 번이라 두 판 다 1 대역(D-4 ㉢ — 46 계약은 획 «사이»). 술어 둘: cap_ratio(교차 p95 ÷ 압력 1.0 직선 몸통의 p95 — 지시 문면 「교차점의 알파가 획의 불투명도를 안 넘는다」 그대로 · 도장 셋) · p95_ratio(같은 압력 몸통 대비 — 연필·색연필만: 붓은 빗살 넷의 합집합이 교차에서 더 덮는 것이 물리라 기록만(실측 1.127)). falsification = 옛 엔진(strokeBufferOff)의 같은 자 — p95_ratio(연필·색연필)가 문을 넘는다',
     threshold: 1 + cs.PAINT59_CROSS_TOL,
@@ -478,8 +479,10 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
     rows, rows_grain: rowsGrain, falsification: off,
   }
   expect(Math.max(0, ...rise), '반증 — 옛 엔진에서 연필·색연필의 교차 p95 비가 문을 넘는다').toBeGreaterThan(1 + cs.PAINT59_CROSS_TOL)
-  // 붓 cap의 반증(1차 [1]) — 옛 엔진의 붓 교차 p95는 옛 엔진의 포화 몸통도 넘는다(캡이 없다)
-  expect(offBrushCap, '반증 — 옛 엔진 붓은 교차가 포화 몸통까지 넘는다(캡 없음)').toBeGreaterThan(1 + cs.PAINT59_CROSS_TOL)
+  // 붓 cap의 반증(1차 [1]) — **실패 조건이 없다**: 옛 엔진에서도 붓 교차 p95는 옛 엔진의 포화 몸통 아래다
+  // (실측 cap_ratio .69 — 압력 1.0 몸통이 저압 교차보다 진하다). 그러므로 cap_ratio는 붓에 대해 아무것도
+  // 안 재는 자다 — 임계 없이 기록만(#5 · §5.1). 붓의 획 안 누적은 DEFERRED(사람 판정)이고 그 값은
+  // rows.brush.p95_ratio(1.24 · 문 밖)다. 이 값(offBrushCap)은 원장 self_cross.falsification.brush.cap_ratio.
   // 동작점(1차 [13]): 옛 엔진에서 저압일수록 비가 크다(포화가 풀린다) — 0.25가 «더 엄한 점»의 값
   for (const ins of ['pencil', 'cp'] as const) {
     const o = offPress[ins] as Record<string, { p95_ratio: number }>

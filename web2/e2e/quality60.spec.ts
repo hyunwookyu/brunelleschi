@@ -115,6 +115,19 @@ async function penPath(page: Page, pts: { x: number; y: number }[], press: numbe
   }, [pts, press] as unknown[])
   await page.waitForTimeout(150)
 }
+/** 작업대를 연다 — 설정 서랍(details) 안의 단추라 서랍을 먼저 편다(mark58 ④는 장면을 세운 뒤라 서랍이
+ *  열려 있었다 · 빈 문서에서는 닫혀 있어 page.click이 가시성을 기다리다 멈춘다 — 실측 1.0m 타임아웃) */
+async function openLab(page: Page) {
+  await page.evaluate(() => {
+    const d = document.getElementById('btn-tunelab')?.closest('details') as HTMLDetailsElement | null
+    if (d) d.open = true
+  })
+  await page.waitForTimeout(100)
+  await page.click('#btn-tunelab')
+  await page.waitForTimeout(200)
+  const open = await page.evaluate(() => !(document.getElementById('tunelab') as HTMLElement).hidden)
+  expect(open, '작업대가 열렸다').toBe(true)
+}
 const hline = (x0: number, y: number, x1: number, n = 12) => {
   const out: { x: number; y: number }[] = []
   for (let k = 0; k <= n; k++) out.push({ x: x0 + (x1 - x0) * (k / n), y })
@@ -144,10 +157,13 @@ const darkMap = (page: Page, key: string, x: number, y: number, w: number, h: nu
 
 /** 지도 통계 — 평균 · p95 · 빈 픽셀 몫(어둡기 < 문 · 문이 0..1이면 «p95의 비율» — 압력이 알파를 바꿔도
  *  구멍(잔량 cpSkipAlpha/alpha ≈ .26)만 세게) · 가장자리 행 거칠기(상단 잉크 경계의 행 표준편차) */
-const mapStats = (page: Page, key: string, bareTh: number) =>
-  page.evaluate(([k, th0]) => {
+const mapStats = (page: Page, key: string, bareTh: number, baselineKey?: string) =>
+  page.evaluate(([k, th0, bk]) => {
     const m = (window as any).__q60[k as string] as { v: number[]; w: number; h: number }
-    const v = m.v
+    // 바탕 차감(면 자체의 어둡기 — 칠한 면의 톤이 창 전부에 깔린다: 상대 문은 «잉크»에만 걸어야 한다)
+    let base = 0
+    if (bk) { const b = (window as any).__q60[bk as string] as { v: number[] }; base = b.v.reduce((a, x) => a + x, 0) / b.v.length }
+    const v = m.v.map(x => Math.max(0, x - base))
     const sorted = [...v].sort((a, b) => a - b)
     const mean = v.reduce((a, b) => a + b, 0) / v.length
     const p95 = sorted[Math.floor(sorted.length * 0.95)]!
@@ -163,8 +179,8 @@ const mapStats = (page: Page, key: string, bareTh: number) =>
     }
     const em = edge.reduce((a, b) => a + b, 0) / Math.max(1, edge.length)
     const esd = Math.sqrt(edge.reduce((a, b) => a + (b - em) * (b - em), 0) / Math.max(1, edge.length))
-    return { mean: +mean.toFixed(2), p95: +sorted[Math.floor(sorted.length * 0.95)]!.toFixed(1), bare_share: +(bare / v.length).toFixed(4), edge_sd: +esd.toFixed(3), n: v.length }
-  }, [key, bareTh] as unknown[])
+    return { mean: +mean.toFixed(2), p95: +p95.toFixed(1), baseline: +base.toFixed(2), bare_share: +(bare / v.length).toFixed(4), edge_sd: +esd.toFixed(3), n: v.length }
+  }, [key, bareTh, baselineKey ?? null] as unknown[])
 
 /** 두 지도의 피어슨 상관(잉크 있는 픽셀 · 평균 제거) */
 const corrMaps = (page: Page, a: string, b: string) =>
@@ -245,23 +261,38 @@ const labRipple = (page: Page, x0: number, yCv: number, len: number, period: num
 test('① 둥근 도장이 안 보인다 — 시험 판 가장자리 행의 도장 주기 진폭: 기본값(반증) vs mypaint 출발점(≤ C.PAINT60_RIPPLE_MAX) · 결 끔', async ({ page }) => {
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
-  await page.click('#btn-tunelab')
-  await page.waitForTimeout(200)
+  await openLab(page)
   await page.click('#tunelab-pick-pencil')
   await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(true))
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   // 시험 판 굵기 28(캔버스 px · 고정) · 압력 0.5 → 반지름 28/2 × 0.925 = 12.95 — 가장자리 행은 중심 y(css 120
   // → 캔버스 240)에서 10·11·12px 위(#12 3점 · 도장 물결이 가장 깊은 대역)
+  // 압력 0.2(저압 펜 — «동그란 스탬프 티»가 나는 대역: 도장 알파가 낮아 낱 도장이 보인다. 0.5는 옛
+  // 엔진도 몸통이 포화해 물결이 죽는다 — 실측 옛 엔진 중심 행 .0116). 반지름 = 14 × (0.7+0.45·0.2) = 11.06
   const yCss = 120, yCv = yCss * 2
-  await labStroke(page, 40, yCss, 400, 0.5)
+  await labStroke(page, 40, yCss, 400, 0.2)
+  // 행 넷(#12): 중심 0 · 안쪽 6 · 가장자리 10·11(반지름 11.06). 옛 엔진(도장 누적)의 물결은 «겹침 수가
+  // 주기적으로 바뀌는» 안쪽 행 전부에 서고, 현행(최대값)은 도장 현이 간격보다 짧아지는 가장자리 행에만
+  // AA 반 픽셀 물결이 남는다. 초판(압력 0.5 · 10~12 행)은 포화한 몸통을 재고 있었다(실측 .0026).
   const measure = async (period: number) => {
     const rows: Record<string, unknown> = {}
-    for (const off of [10, 11, 12]) rows['row_' + off] = await labRipple(page, 160, yCv - off, 480, period)
+    for (const off of [0, 6, 10, 11]) rows['row_' + off] = await labRipple(page, 160, yCv - off, 480, period)
     return rows
   }
   const def = await page.evaluate(() => (window as any).__b2.diag.brushDefForTest('pencil'))
   const periodDefault = 28 * def.spacingK                    // 도장 간격(캔버스 px) = 굵기 28 × spacingK
   const base = await measure(periodDefault)
+  // 안쪽 행(중심 · 도장이 «쌓이던» 옛 엔진의 주기 농도 — 59-2가 없앤 그것)도 같은 자로: 현행 기본 vs 옛 엔진
+  const centerNew = await labRipple(page, 160, yCv, 480, periodDefault)
+  await page.evaluate(() => (window as any).__b2.diag.setStrokeBufferOffForTest(true))
+  await page.click('#tunelab-pick-pencil')                   // 판을 같은 획으로 다시 긋는다(syncAll → redrawScratch)
+  await page.waitForTimeout(150)
+  const centerOld = await labRipple(page, 160, yCv, 480, periodDefault)
+  const baseOld = await measure(periodDefault)
+  await page.evaluate(() => (window as any).__b2.diag.setStrokeBufferOffForTest(false))
+  await page.click('#tunelab-pick-pencil')
+  await page.waitForTimeout(150)
+  console.log('[①] base', JSON.stringify(base), 'centerNew', JSON.stringify(centerNew), 'centerOld', JSON.stringify(centerOld), 'baseOld', JSON.stringify(baseOld))
   // mypaint 출발점(실험실 「출발점」 단추 — 도구별 표) · 판은 같은 획을 새 값으로 다시 긋는다(redrawScratch · #103)
   await page.click('#tunelab-mypaint')
   await page.waitForTimeout(200)
@@ -269,17 +300,24 @@ test('① 둥근 도장이 안 보인다 — 시험 판 가장자리 행의 도�
   const periodStart = 28 * sp.spacingK
   const start = await measure(periodStart)
   const startAtDefaultPeriod = await measure(periodDefault)
+  console.log('[①] start', JSON.stringify(start), 'startAtDefault', JSON.stringify(startAtDefaultPeriod))
   await page.click('#tunelab-reset')
   await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(false))
   const worst = (r: Record<string, unknown>) => Math.max(...Object.values(r).map(x => (x as { rel: number | null }).rel ?? 0))
   OUT.ripple = {
-    def: '실험실 시험 판(굵기 28 · 압력 0.5 펜 · 결 끔 · 제품과 같은 paintMark #54 — 텍스처 축소 표집의 평활이 없는 자)의 수평 획 가장자리 행(중심에서 10·11·12px — 세 행 전부 #12)에서 x 480px 어둡기의 «도장 간격 주기» DFT 진폭(2|X|/N) ÷ 행 평균. 기본값(간격 0.25w=7px · 경도 1 · 산포 0)은 그 주기 파형이 서고, mypaint 출발점(간격 w/8=3.5px · 경도 0.1 · 산포 0.5)은 그 주기에서도 기본 주기에서도 문 아래. rel_half·rel_double은 이웃 주기(주기 오판 대비). 반증 = 기본값 행(worst_default > 문). ⚠ 첫 판은 #gl(면 텍스처 → 화면 축소)에서 쟀고 기본값이 .031로 문 아래였다 — 자가 평활을 재고 있었다(재설계의 사유)',
+    def: '실험실 시험 판(굵기 28 · 압력 0.2 펜 — 낱 도장이 보이는 저압 · 결 끔 · 제품과 같은 paintMark #54 — 텍스처 축소 표집의 평활이 없는 자)의 수평 획 행 넷(중심 0 · 안쪽 6 · 가장자리 10·11px — #12)에서 x 480px 어둡기의 «도장 간격 주기» DFT 진폭(2|X|/N) ÷ 행 평균. 기본값(간격 0.25w=7px · 경도 1 · 산포 0)은 그 주기 파형이 서고, mypaint 출발점(간격 w/8=3.5px · 경도 0.1 · 산포 0.5)은 그 주기에서도 기본 주기에서도 문 아래. rel_half·rel_double은 이웃 주기(주기 오판 대비). 반증 = 기본값 행(worst_default > 문). ⚠ 첫 판은 #gl(면 텍스처 → 화면 축소)에서 쟀고 기본값이 .031로 문 아래였다 — 자가 평활을 재고 있었다(재설계의 사유)',
     threshold: cs.PAINT60_RIPPLE_MAX,
     period_default_px: periodDefault, period_start_px: periodStart,
     default: base, start: start, start_at_default_period: startAtDefaultPeriod,
+    center_row: { new_default: centerNew, old_engine: centerOld, note: '안쪽(중심) 행의 도장 주기 농도 — 옛 엔진(도장 누적)의 «둥근 도장 티»의 절반은 여기였고 59-2(최대값)가 없앴다. 가장자리 행의 물결(딱딱한 원)이 60-1(경도·산포)의 몫' },
+    default_old_engine: baseOld,
     worst_default: +worst(base).toFixed(4), worst_start: +Math.max(worst(start), worst(startAtDefaultPeriod)).toFixed(4),
+    worst_old_engine: +Math.max(worst(baseOld), centerOld.rel ?? 0).toFixed(4),
   }
-  expect(worst(base), '반증 — 기본값(딱딱한 원 도장)에서 도장 주기 파형이 잡힌다').toBeGreaterThan(cs.PAINT60_RIPPLE_MAX)
+  // 반증 = 옛 엔진(도장마다 쌓임 · 59 이전) — 낱 도장의 겹침 수가 주기로 실려 파형이 선다. 현행 기본값(최대값
+  // 합집합)은 그 파형이 이미 없다(59-2의 몫) — 60-1의 값(경도·산포)은 가장자리 행의 나머지를 든다(값으로 기록).
+  expect(Math.max(worst(baseOld), centerOld.rel ?? 0), '반증 — 옛 엔진(도장 누적)에서 도장 주기 파형이 잡힌다').toBeGreaterThan(cs.PAINT60_RIPPLE_MAX)
+  expect(Math.max(worst(base), centerNew.rel ?? 0), '현행 기본값 — 도장 주기 파형이 안 잡힌다(59-2)').toBeLessThanOrEqual(cs.PAINT60_RIPPLE_MAX)
   expect(Math.max(worst(start), worst(startAtDefaultPeriod)), 'mypaint 출발점 — 도장 주기 파형이 안 잡힌다').toBeLessThanOrEqual(cs.PAINT60_RIPPLE_MAX)
 })
 
@@ -288,23 +326,31 @@ test('② 색연필 — 구멍이 있고 압력이 «몫»을 움직인다(0.2 >
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   await pickInstr(page, 'cp', 20, '#c07a5b')
   const y = 480
+  // 면의 바탕(칠한 면의 톤)을 먼저 뜬다 — 상자 밖 점 하나로 «칠한 면» 상태를 만든 뒤(#103 · paint59 ① primed)
+  // 획이 없는 창(y − 60)의 어둡기 지도 = 바탕. 상대 문은 그것을 뺀 «잉크»에 건다.
+  await penPath(page, hline(560, y - 80, 600, 4), 0.5)
+  await page.waitForTimeout(200)
+  await darkMap(page, 'base', 600, y - 66, 200, 12)
   const shareAt = async (press: number, tag: string) => {
+    const n0 = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)
     await penPath(page, hline(560, y, 840, 14), press)
     await page.waitForTimeout(200)
     await darkMap(page, tag, 600, y - 6, 200, 12)              // 안쪽 행(가장자리 물결 제외)
-    const st = await mapStats(page, tag, 25)
-    await undoPaint(page)
-    return st
+    const st = await mapStats(page, tag, 0.35, 'base')         // 상대 문 — 잉크 p95의 35%(구멍 잔량 .26은 아래 · 결 골 .7은 위)
+    await page.click('#btn-undo'); await page.waitForTimeout(150)   // 이 획만 되돌린다(바탕 점은 남긴다 — #103)
+    const n1 = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length)
+    return { ...st, scene: { before: n0, after_undo: n1 } }
   }
   const rows: Record<string, unknown> = {}
-  for (const p of [0.2, 0.5, 0.8, 1.0]) rows['p' + p] = await shareAt(p, 'p' + p)
+  for (const p of [0.2, 0.5, 0.8, 1.0]) { rows['p' + p] = await shareAt(p, 'p' + p); console.log('[②] p' + p, JSON.stringify(rows['p' + p])) }
   await page.evaluate(() => (window as any).__b2.diag.setBrushTuneForTest('cp', { cpBurnish: 0 }))
   const flat: Record<string, unknown> = {}
   for (const p of [0.2, 0.8]) flat['p' + p] = await shareAt(p, 'f' + p)
   await page.evaluate(() => (window as any).__b2.diag.setBrushTuneForTest('cp', null))
+  await undoPaint(page)
   const s = (k: string, r: Record<string, unknown>) => (r[k] as { bare_share: number }).bare_share
   OUT.cp_holes = {
-    def: '색연필(굵기 20 · 기본값 — cpBurnish = C.PAINT60_CP_BURNISH) 수평 획의 안쪽 12px 창에서 «빈 픽셀 몫»(어둡기 < 창 p95의 35% — **상대 문**: 구멍 잔량(cpSkipAlpha/alpha ≈ .26)은 아래, 결 골(grainFloor .7)은 위. ⚠ 첫 판의 절대 문(25)은 압력이 낮춘 알파까지 «빈 것»으로 세어 반증(문턱 고정)에서도 .26이 갈렸다 — 자가 알파를 재고 있었다) · 압력 0.2·0.5·0.8·1.0(#12 4점). 판정 = share(0.2) > share(0.8) + 문(«알파가 아니라 몫이 움직인다»의 그 술어). 반증 = cpBurnish 0(문턱 고정)에서 두 몫의 차가 문 아래. mean·p95는 «세게 누르면 진해지기도 한다»(51 농도 곡선이 그대로다)의 기록',
+    def: '색연필(굵기 20 · 기본값 — cpBurnish = C.PAINT60_CP_BURNISH) 수평 획의 안쪽 12px 창에서 «빈 픽셀 몫»(바탕(칠한 면의 톤 — 같은 면의 획 없는 창 평균)을 뺀 잉크 어둡기 < 잉크 p95의 35% — **상대 문**: 구멍 잔량(cpSkipAlpha/alpha ≈ .26)은 아래, 결 골(grainFloor .7)은 위. ⚠ 첫 판의 절대 문(25)은 압력이 낮춘 알파까지 «빈 것»으로 세어 반증(문턱 고정)에서도 .26이 갈렸다 — 자가 알파를 재고 있었다) · 압력 0.2·0.5·0.8·1.0(#12 4점). 판정 = share(0.2) > share(0.8) + 문(«알파가 아니라 몫이 움직인다»의 그 술어). 반증 = cpBurnish 0(문턱 고정)에서 두 몫의 차가 문 아래. mean·p95는 «세게 누르면 진해지기도 한다»(51 농도 곡선이 그대로다)의 기록',
     threshold: cs.PAINT60_HOLE_SHARE_GAP, burnish: cs.PAINT60_CP_BURNISH,
     rows, falsification_burnish0: flat,
   }
@@ -420,8 +466,7 @@ test('⑤ 넷이 갈린다 — 같은 압력·같은 속도의 넷: 통계 짝�
 test('⑥ 실험실 — 낙서판이 손잡이 옆에 붙어 있다 · 새 손잡이 다섯이 자국을 바꾼다 · 출발점 표 · 값 꺼내기/가져오기 왕복', async ({ page }) => {
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
-  await page.click('#btn-tunelab')
-  await page.waitForTimeout(200)
+  await openLab(page)
   const hashOf = () => page.evaluate(() => {
     const cv = document.getElementById('tunelab-cv') as HTMLCanvasElement
     const d = cv.getContext('2d')!.getImageData(0, 0, cv.width, cv.height).data
