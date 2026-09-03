@@ -2213,11 +2213,9 @@ function setPaintHex(hex: string, why: string) {
   sizeWrap.id = 'paint-sizes'
   sizeWrap.className = 'rrow prow'
   sizeWrap.title = '자국 굵기 — 도구별 최대: 붓 500 · 마커 100 · 색연필 50 · 연필 50'
-  const sizeDot = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  sizeDot.setAttribute('width', '40'); sizeDot.setAttribute('height', '40')
-  sizeDot.setAttribute('viewBox', '0 0 40 40')
-  sizeDot.style.flexShrink = '0'                       // #97 — flex 눌림 명시 차단
-  sizeDot.innerHTML = '<circle id="paint-size-dotc" cx="20" cy="20" r="10" fill="currentColor"/>'
+  // ⚠ 초판의 «1:1 점»(채운 원 단독 svg)은 papericon31 ①이 빨갛게 잡았다 — 채운 원
+  // 하나가 카메라 실루엣 견본과 IoU 0.89(48-2 초판 막대의 0.9145와 같은 병 · 문 0.75).
+  // 점을 걷는다: 값 표찰(숫자)이 R6를 지고, 시각 피드백은 자국 자체·작업대가 진다.
   const sizeRange = document.createElement('input')
   sizeRange.type = 'range'
   sizeRange.id = 'paint-size-range'
@@ -2236,8 +2234,6 @@ function setPaintHex(hex: string, why: string) {
     if (app.paintSel.w > max) app.paintSel.w = max
     if (Number(sizeRange.value) !== app.paintSel.w) sizeRange.value = String(app.paintSel.w)
     sizeVal.textContent = `${app.paintSel.w}px`
-    const r = Math.min(36, app.paintSel.w) / 2
-    document.getElementById('paint-size-dotc')?.setAttribute('r', String(Math.max(1, r)))
   }
   sizeRange.addEventListener('input', () => {
     app.paintSel.w = Math.min(paintMaxW(), Math.max(C.PAINT58_MIN_W, Number(sizeRange.value) || C.PAINT58_MIN_W))
@@ -2245,7 +2241,7 @@ function setPaintHex(hex: string, why: string) {
     syncSizeRow()
   })
   sizeRange.addEventListener('change', () => status(`자국 굵기 ${app.paintSel.w}px`))
-  sizeWrap.append(sizeDot, sizeRange, sizeVal)
+  sizeWrap.append(sizeRange, sizeVal)
   painttrayEl.append(sizeWrap)
   syncSizeRow()
 

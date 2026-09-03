@@ -321,7 +321,7 @@ export function initTuneLab(opts: {
   mypaintBtn.id = 'tunelab-mypaint'
   mypaintBtn.dataset.act = 'state'
   mypaintBtn.textContent = 'mypaint 출발점'
-  mypaintBtn.title = 'mypaint-brushes(CC0) 연필 값을 이 브러시에 얹어 본다 — 간격 w/8 · 경도 0.1 · 불투명 0.7 · 산포 0.5 · 압력→농도 0→1. 마음에 들면 「굳힌다」'
+  mypaintBtn.title = 'mypaint 연필 값(CC0 — 값만)을 지금 도구에 얹어 본다 — 간격 w/8 · 경도 0.1 · 불투명 0.7 · 산포 0.5 · 압력→농도 0→1. 마음에 들면 「굳힌다」'
   mypaintBtn.addEventListener('click', () => {
     setBrushTune(instr, {
       spacingK: 0.125, hardness: 0.1, alpha: 0.7, scatter: 0.5,
