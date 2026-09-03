@@ -39,6 +39,10 @@
         "rel": 0.0033,
         "rel_half": 0.0017,
         "rel_double": 0.0185
+      },
+      "scene": {
+        "hash": 1816494938,
+        "ink_samples": 9030
       }
     },
     "start": {
@@ -69,6 +73,10 @@
         "rel": 0.0015,
         "rel_half": 0.0032,
         "rel_double": 0.0119
+      },
+      "scene": {
+        "hash": 2062671770,
+        "ink_samples": 10045
       }
     },
     "start_at_default_period": {
@@ -99,6 +107,10 @@
         "rel": 0.0119,
         "rel_half": 0.0015,
         "rel_double": 0.0506
+      },
+      "scene": {
+        "hash": 2062671770,
+        "ink_samples": 10045
       }
     },
     "center_row": {
@@ -146,11 +158,16 @@
         "rel": 0.0244,
         "rel_half": 0.011,
         "rel_double": 0.0194
+      },
+      "scene": {
+        "hash": 1412177387,
+        "ink_samples": 9030
       }
     },
     "worst_default": 0.0065,
     "worst_start": 0.0136,
-    "worst_old_engine": 0.0716
+    "worst_old_engine": 0.0716,
+    "note_scene": "네 조건은 «같은 획(견본 S + 이 획)을 조정만 바꿔 판을 비우고 다시 긋는 것»(redrawScratch)이다 — 누적이 아니다. rows.scene의 ink_samples가 조건마다 비슷하고(누적이면 는다) 해시가 갈린다(조정이 실제로 먹었다) — #103"
   },
   "cp_holes": {
     "def": "색연필(굵기 20 · 기본값 — cpBurnish = C.PAINT60_CP_BURNISH) 수평 획의 안쪽 12px 창에서 «빈 픽셀 몫»(바탕(칠한 면의 톤 — 같은 면의 획 없는 창 평균)을 뺀 잉크 어둡기 < 잉크 p95의 35% — **상대 문**: 구멍 잔량(cpSkipAlpha/alpha ≈ .26)은 아래, 결 골(grainFloor .7)은 위. ⚠ 첫 판의 절대 문(25)은 압력이 낮춘 알파까지 «빈 것»으로 세어 반증(문턱 고정)에서도 .26이 갈렸다 — 자가 알파를 재고 있었다) · 압력 0.2·0.5·0.8·1.0(#12 4점). 판정 = share(0.2) > share(0.8) + 문(«알파가 아니라 몫이 움직인다»의 그 술어). 반증 = cpBurnish 0(문턱 고정)에서 두 몫의 차가 문 아래. mean·p95는 «세게 누르면 진해지기도 한다»(51 농도 곡선이 그대로다)의 기록",
