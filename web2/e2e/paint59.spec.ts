@@ -594,7 +594,7 @@ test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감�
     scene: { paint_with_grain: sceneN, paint_no_grain: sceneN2, note: '#103 — 결 끔은 같은 획 재굽기(획 수 무변)' },
     rows: withGrain, rows_no_grain: noGrain,
     normalized_by_marker: { def: '도장 브러시의 대역 비 ÷ 마커의 대역 비(결 끔) — 마커 띠는 구성상 균일하므로 그 비(시작 1.083 · 끝 .916)가 이 픽스처의 원근 그 자체다. 판정은 이것(±10%)', ...norm },
-    normalized_by_marker_grain: { def: '같은 자 · 결 켬(출하 구성 — 2차 [5]): 결 켠 원값(rows)이 ±10% 밖이어도 마커로 나누면 문 안이다(값)', ...normGrain },
+    normalized_by_marker_grain: { def: '같은 자 · 결 켬(출하 구성 — 2차 [5]): 마커로 나눈 값 — 시작은 문(±10%) 안(연필 ≈1.04 · cp ≈1.05)이고 **끝 연필은 문 밖**(≈1.21 — 오른쪽 끝 대역의 면 고정 결 칸이 평균보다 진한 그 자리 값 · grain_phase_spread의 기전). 판정은 결 끔(normalized_by_marker) — 이 열쇠는 기록', ...normGrain },
     falsification_speed: { def: '연필 속도→농도 −1(60-4 축 — 느린 구간이 진해진다) · 넷을 다시 긋고 결 끔 · 게이트와 같은 프레임(연필 비 ÷ 마커 비): 시작 정규화 비가 문을 넘는다', rows: slowDark, scene: { paint: sceneSlow }, pencil_start_norm: +sdN.toFixed(4) },
     grain_phase_spread: { def: '연필 · 결 켬 · 시작 x 오프셋 0·2·4·6·8px(결 칸 9px 안) 다섯 획의 대역 비 평균·표준편차 — 결 켠 값의 잡음 눈금(1차 [3])', ...grainSpread },
   }
