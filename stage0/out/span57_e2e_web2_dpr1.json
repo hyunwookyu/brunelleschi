@@ -1,0 +1,30 @@
+{
+  "conditions": {
+    "workers": 1,
+    "project": "dpr1",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/span57.spec.ts (워커 1 · 스펙 하나씩 — #99)"
+  },
+  "what": "web2-57 — 구간 이관의 화면 몫: 토막 지움 뒤 칠 픽셀 동일 · 구간 지움의 알림",
+  "note_92": "판정자는 픽셀 수(지우기 전/후 동일)와 #notice 문자열이다 — 상태(면 수)는 픽셀의 보조",
+  "gate1_paint_px": {
+    "no_paint": {
+      "n": 0,
+      "hash": 1243751237
+    },
+    "before": {
+      "n": 3000,
+      "hash": 4014275888
+    },
+    "after": {
+      "n": 3000,
+      "hash": 4014275888
+    },
+    "win": [
+      440,
+      455,
+      560,
+      480
+    ]
+  },
+  "gate3_notice": "면이 열렸다 — 경계가 지워져 면이 사라진다(칠·두께 포함). 실행취소로 돌아온다"
+}

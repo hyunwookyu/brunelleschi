@@ -1,0 +1,77 @@
+{
+  "def": {
+    "span": "면 경계 획 위에서 이웃 두 경계 직선과의 교점(면의 두 정점)이 끊는 3D 매개변수 범위 [lo,hi] — 파생(저장 안 함)",
+    "carry": "지우개가 획을 조각으로 갈아 끼울 때 남는 조각 합집합이 구간을 덮으면 겹침 최대 조각의 새 id로 FaceEdge.s 교체(op.edgeMoved)",
+    "pre_is": "setSpanCarryForTest(false) — 옛 거동의 재현이자 D-3 반증(끄면 결함이 돌아온다). 수리 전 별도 실행(D-2)과 같은 값임을 확인했다",
+    "judge_92": "#92 — 판정자는 «면·칠·두께가 남아 있는가»의 수다(이관 성공의 이름표가 아니다). 열림(opened_n)은 실제 풀림 전/후 비교로 따로 센다",
+    "zero_note": "opened_n 0은 게이트 목표(이관 성공 = 알림 없음)다 — 같은 카운터가 span_mid에서 1을 낸다(집계 미작동이 아니라는 반증). fixture_span.lo ≈ 0은 구성 보장(그 모서리가 끝점 접촉 t=0)이라 측정이 아니다 — 임계를 안 건다(CLAUDE §5.1 유형 3)"
+  },
+  "pre": {
+    "before": {
+      "faces": 1,
+      "paintGeo": 1,
+      "thickness_slots": true
+    },
+    "after": {
+      "e4_id_gone": true,
+      "faces": 0,
+      "docFaces": 1,
+      "paintGeo": 0,
+      "thickness_slots": false,
+      "opened_n": 1
+    }
+  },
+  "post": {
+    "before": {
+      "faces": 1,
+      "paintGeo": 1,
+      "thickness_slots": true
+    },
+    "after": {
+      "e4_id_gone": true,
+      "faces": 1,
+      "docFaces": 1,
+      "paintGeo": 1,
+      "thickness_slots": true,
+      "opened_n": 0
+    }
+  },
+  "fixture_span": {
+    "lo": 1.7347234759768096e-17,
+    "hi": 0.5,
+    "cut_t": 0.5000000000000001,
+    "note": "t는 3D 매개변수 — 화면 분율(2/3)이 아니다(원근 단축). hi == 절단 t가 «같은 자» 확인"
+  },
+  "sweep": {
+    "rows": {
+      "stub_one": {
+        "survived": true,
+        "opened_n": 0
+      },
+      "stub_both": {
+        "survived": true,
+        "opened_n": 0
+      },
+      "span_mid": {
+        "survived": false,
+        "opened_n": 1
+      },
+      "whole_stroke": {
+        "survived": false,
+        "opened_n": 0
+      },
+      "multi_piece_span": {
+        "survived": true,
+        "opened_n": 0
+      }
+    },
+    "expected": "산다: stub_one·stub_both·multi_piece_span (opened 0) · 열린다: span_mid (opened 1) · whole_stroke의 둘째 지움은 이미 열린 면이라 opened 0(중복 알림 ⛔)"
+  },
+  "what": "web2-57 — 면은 획의 «구간»을 든다: 이관 전/후 · 구간 값 · D-5 스윕",
+  "pitfall_citations": [
+    88,
+    90,
+    92,
+    99
+  ]
+}

@@ -18,7 +18,7 @@ import { newExtDwell, clearExtAcq, type ExtDwell } from '../core/extacq'
 import { rng32 } from '../core/material'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
 import { rdpIndices, distToPolyline } from '../core/freehand'
-import { loopAt, faceAt, faceScreen, resolveFaces, resolveFace, allLoops, inPoly, type ResolvedFace, type LoopCandidate } from '../core/face'
+import { loopAt, faceAt, faceScreen, resolveFaces, resolveFace, allLoops, inPoly, edgeSpanOf, type ResolvedFace, type LoopCandidate } from '../core/face'
 import { bakeUnderlay } from '../core/make2d'
 import { geomSize3 } from '../core/osnap'
 import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS, ORBIT_RAD_PER_PX } from '../core/constants'
@@ -124,6 +124,10 @@ export interface Op {
   clsDefChanged?: { cls: import('../core/paint').FaceClass; before: Partial<import('../core/clsdef').ClsDef> | undefined; after: Partial<import('../core/clsdef').ClsDef> | undefined }[]
   /** **면 예외**(web2-55) — 사람이 한 것이므로 실행취소 대상이다(깊은 사본) */
   exChanged?: { id: number; before: Face['ex']; after: Face['ex'] }[]
+  /** **경계 이관**(web2-57) — 지우개가 획을 조각으로 갈아 끼울 때, 그 획을 경계로 든
+   *  면의 참조(FaceEdge.s)가 구간을 덮는 조각으로 넘어탄 기록. 지우개 op에만 실린다 —
+   *  실행취소가 참조를 «전»으로 되돌린다(한 끌기에서 이관 위에 이관이 서므로 역순으로 무른다). */
+  edgeMoved?: { faceId: number; loop: number; edge: number; from: number; to: number }[]
   /** **광선이 바뀌어 대기 획을 버린 op**(web2-37 4번)가 함께 싣는 시점.
    *  ⚠⚠ 획만 되돌리면 «되살아난다»가 **쓸모없다**: 돌아온 대기 획의 내용은 「그 시점의
    *  화면 위 어디」인데 지금 시점이 그 시점이 아니고, 그 다음 시점 변경에서 **또 버려진다**
@@ -2690,6 +2694,13 @@ export function undo(app: App) {
     const i = arr.findIndex(x => x.id === q.id)
     if (i >= 0) arr.splice(i, 1)
   }
+  // 경계 이관(web2-57) — 참조를 «전»으로. 한 끌기에서 이관 위에 이관이 설 수 있으므로
+  // (A→B 뒤 B→C) **역순**으로 무른다.
+  for (const em of [...(op.edgeMoved ?? [])].reverse()) {
+    const f = app.doc.faces.find(x => x.id === em.faceId)
+    const e = f?.loops[em.loop]?.edges[em.edge]
+    if (e && e.s === em.to) e.s = em.from
+  }
   // 광선이 바뀌어 버린 op는 **그 시점까지** 되돌린다(web2-37 4번 — 위 `Op.pose` 주석).
   // ⚠ `setPose`를 안 부른다: 그것을 부르면 이 복원이 다시 «광선이 바뀌었다»로 읽혀
   //    방금 돌려놓은 획을 그 자리에서 도로 버린다(자기 자신을 되돌리는 고리).
@@ -2768,6 +2779,12 @@ export function redo(app: App) {
     if (f) { if (rc.after === undefined) delete f.rep; else f.rep = { ...rc.after } }
   }
   for (const q of op.personsAdded ?? []) (app.doc.persons ??= []).push(q)   // 다시 놓는다
+  // 경계 이관(web2-57) — 참조를 «후»로(기록 순서 그대로)
+  for (const em of op.edgeMoved ?? []) {
+    const f = app.doc.faces.find(x => x.id === em.faceId)
+    const e = f?.loops[em.loop]?.edges[em.edge]
+    if (e && e.s === em.from) e.s = em.to
+  }
   // 다시 실행 — 값 싣기는 **만든 자리와 같은 함수**를 다시 부른다(#54)
   if (op.dim) setDimension(app, op.dim.id, op.dim.mm)
   for (const m of op.measuresAdded ?? []) (app.doc.measures ??= []).push(m)
@@ -2789,8 +2806,63 @@ export function beginErase(app: App) {
  *  같은 값을 쓴다(끝은 도구를 안 바꾸므로 인자로 온다 — web2-15 2-b). */
 export type EraserKind = 'eraser-pencil' | 'eraser-ink'
 
-export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
-  if (!app.activeErase) return
+/** D-3 반증 손잡이(web2-57) — 경계 이관을 끈다(끄면 옛 결함 — 토막을 지워도 면이
+ *  죽는다 — 이 돌아온다는 것을 팔이 같은 실행에서 잰다). UI 없음. */
+let spanCarry = true
+export const setSpanCarryForTest = (v: boolean): void => { spanCarry = v }
+
+/** 획 X가 조각으로 갈릴 때, X를 경계로 든 면의 참조를 구간을 덮는 조각으로 넘긴다
+ *  (web2-57). 구간(edgeSpanOf)은 파생이라 저장이 안 늘고, 모든 조각이 X와 같은 3D
+ *  직선 위라 어느 조각으로 넘어가도 면 기하(직선 교점)는 같다 — 조각 선택(겹침 최대)은
+ *  «다음 지움이 무엇을 끊는가»에만 영향을 준다. 덮지 못하면 참조를 안 고친다(면이
+ *  열린다 — 대기 · 불변식 j). 구간을 못 세우면(이웃 미승격 — 면이 이미 대기) 가장 긴
+ *  조각으로 넘긴다: 놓지 않되 버리지 않는다 — 직선이 같으므로 이웃이 돌아오면 면도 돌아온다. */
+function carryFaceEdges(
+  app: App, op: Op, erasedId: number, kept: Piece[], newStrokes: Stroke[],
+): void {
+  if (!spanCarry || kept.length === 0) return
+  const seg = app.lift.lifted.get(erasedId)
+  // 매개변수 허용치 — 마디 합침과 같은 눈금(MERGE_RATIO·크기)을 그 획의 길이로 나눈다
+  const L = seg ? len3(sub3(seg.b3, seg.a3)) : 0
+  const epsT = seg && L > 1e-12 ? (C.MERGE_RATIO * Math.max(geomSize3(app.lift), 1e-9)) / L : 1e-6
+  for (const face of app.doc.faces) {
+    face.loops.forEach((loop, li) => loop.edges.forEach((e, ei) => {
+      if (e.s !== erasedId) return
+      const span = seg ? edgeSpanOf(app.lift, face, li, ei) : null
+      let to: number | null = null
+      if (span) {
+        const lo = Math.max(0, span.lo), hi = Math.min(1, span.hi)
+        // 덮음 판정 — 남은 조각 t 구간의 합집합이 [lo,hi]를 덮는가(인접 조각은 절단 t를
+        // 공유하므로 틈은 지워진 조각뿐이다). 겹침 최대 조각이 새 참조다.
+        const iv = kept.map((k, i) => ({ t0: k.t0, t1: k.t1, i })).sort((a, b) => a.t0 - b.t0)
+        let cur = lo, bestI = -1, bestOv = -Infinity
+        for (const k of iv) {
+          if (k.t0 > cur + epsT) break
+          cur = Math.max(cur, k.t1)
+          const ov = Math.min(k.t1, hi) - Math.max(k.t0, lo)
+          if (ov > bestOv) { bestOv = ov; bestI = k.i }
+        }
+        if (cur >= hi - epsT && bestI >= 0) to = newStrokes[bestI]!.id
+      } else {
+        let bi = 0
+        for (let i = 1; i < kept.length; i++) {
+          if (kept[i]!.t1 - kept[i]!.t0 > kept[bi]!.t1 - kept[bi]!.t0) bi = i
+        }
+        to = newStrokes[bi]!.id
+      }
+      if (to !== null) {
+        e.s = to
+        ;(op.edgeMoved ??= []).push({ faceId: face.id, loop: li, edge: ei, from: erasedId, to })
+      }
+    }))
+  }
+}
+
+/** 한 번의 지우개 적용. **반환 = 이 적용으로 «열린» 면 id들**(web2-57 — 지우기 직전에
+ *  풀려 있었는데 지운 뒤 안 풀리는 면. 조용히 사라지면 안 된다 — 부르는 쪽이 한 줄
+ *  알린다. 43-1 「조용히 빈 문서를 열지 마라」의 규칙). */
+export function eraseAt(app: App, p: Pt, kind?: EraserKind): number[] {
+  if (!app.activeErase) return []
   // 인자가 없으면 사이드바 도구가 정한다(종전 동작 — 호출부를 안 고친다)
   const ek: EraserKind = kind ?? (app.tool === 'eraser-ink' ? 'eraser-ink' : 'eraser-pencil')
   // 옐로(web2-24 4-b) — 옐로 획은 lift 밖(2D)이라 조각 목록에 없다: 정본 기하(raw
@@ -2815,8 +2887,10 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
       else op.removed.push(rm)
     }
     if (removedAny) recompute(app)
-    return
+    return []                                     // 옐로는 2D — 면 경계가 못 되므로 못 연다
   }
+  // 열림 감지(web2-57)의 기준선 — 지우기 «직전»에 풀려 있던 면들
+  const resolvedBefore = new Set(app.faces.map(f => f.id))
   // 글씨 획(web2-32 1번)은 **2D라 조각이 없다** — 옐로와 같은 갈래로 통째로 지운다.
   // 이 갈래가 없으면 글씨가 «지워지지 않는 잉크»가 된다(옐로 규격을 반만 물려받는 자리다).
   {
@@ -2865,7 +2939,7 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
   const ps = pieces(app.lift, app.pose)
   // 지우개 반경은 화면 px — 문서 좌표에서는 배율로 나눈다
   const hits = ps.filter(x => distToPiece(p, x) <= app.eraserRadius / app.view.s)
-  if (hits.length === 0) return
+  if (hits.length === 0) return []                // 3D 조각 무변 — 면이 열릴 일이 없다
   const byStroke = new Map<number, Piece[]>()
   // 잠긴 겹의 획은 안 지운다(web2-20 4부 — 잠금 = 편집만 막힘. 꺼진 겹은 리프팅에서
   // 빠져 조각 자체가 없다 — 여기 걸리는 것은 잠금뿐이다).
@@ -2927,6 +3001,9 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
       return s
     })
     app.doc.strokes.push(...newStrokes)
+    // 경계 이관(web2-57) — 이 획을 경계로 든 면의 참조가 구간을 덮는 조각으로 넘어탄다.
+    // ⚠ recompute 전이라 app.lift에 아직 옛 획의 3D가 있다 — 구간은 그 자로 계산한다.
+    carryFaceEdges(app, op, id, kept, newStrokes)
     // 드래그 안에서 이미 만든 조각을 또 지우면 — 그 조각은 op에서 지우고 원본은 그대로
     const idxInAdded = op.added.findIndex(s => s.id === id)
     if (idxInAdded >= 0) op.added.splice(idxInAdded, 1)
@@ -2934,6 +3011,13 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
     op.added.push(...newStrokes)
   }
   recompute(app)
+  // 열림 감지(web2-57) — 직전에 풀려 있었는데 이 적용으로 안 풀리게 된 면.
+  // 이관과 **별개의 자**다(이관의 예측이 아니라 실제 풀림을 비교한다 — #92의 형태).
+  const opened: number[] = []
+  for (const f of app.doc.faces) {
+    if (resolvedBefore.has(f.id) && !app.faces.some(x => x.id === f.id)) opened.push(f.id)
+  }
+  return opened
 }
 
 export function endErase(app: App) {

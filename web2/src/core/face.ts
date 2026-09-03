@@ -80,6 +80,33 @@ export function newellNormal(poly: V3[]): V3 {
   return norm3(n)
 }
 
+/** **면 경계 하나의 «구간»**(web2-57) — 그 경계 획 위에서 면이 실제로 쓰는 매개변수
+ *  범위 [lo,hi](그 획의 3D 세그먼트 t 좌표 — `pieces`의 t0/t1과 같은 자다).
+ *  이웃한 두 경계 직선과의 교점(= 면의 두 정점)이 범위를 끊는다. **파생이다** — 저장하지
+ *  않는다(원칙 b: 저장은 정체, 좌표는 계산). 이웃이 안 풀리면 null(면도 그때는 대기다). */
+export function edgeSpanOf(
+  lift: LiftResult, face: Face, li: number, ei: number,
+): { lo: number; hi: number } | null {
+  const loop = face.loops[li]
+  if (!loop) return null
+  const n = loop.edges.length
+  if (n < 3) return null
+  const self = edgeLine(lift, loop.edges[ei]!.s)
+  const prev = edgeLine(lift, loop.edges[(ei - 1 + n) % n]!.s)
+  const next = edgeLine(lift, loop.edges[(ei + 1) % n]!.s)
+  if (!self || !prev || !next) return null
+  const c1 = cornerOf(prev, self)
+  const c2 = cornerOf(self, next)
+  if (!c1 || !c2) return null
+  const seg = lift.lifted.get(loop.edges[ei]!.s)!
+  const d = sub3(seg.b3, seg.a3)
+  const L2 = dot3(d, d)
+  if (L2 < 1e-18) return null
+  const t1 = dot3(sub3(c1, seg.a3), d) / L2
+  const t2 = dot3(sub3(c2, seg.a3), d) / L2
+  return t1 <= t2 ? { lo: t1, hi: t2 } : { lo: t2, hi: t1 }
+}
+
 export interface ResolvedFace {
   id: number
   /** 외곽 3D 정점 */
