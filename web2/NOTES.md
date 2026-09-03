@@ -26721,4 +26721,19 @@ guarantee) — 그것뿐이다. layers corr_self 1 · four_differ brush 짝 1 ·
 - **[19] selfcheck 줄** → selfcheck.json 그대로(quality60은 ink_path.self.p95_ratio 둘뿐).
 - **[20] 정확히 0 넷** → layers·ink_path guarantee에 구성으로 적고 재실행.
 
-**최종 배포**(이 문서 커밋 — 아래 값은 그 커밋의 deploy-check가 채운다): 저장소 안에는 자기 커밋의 화면 식별자를 적을 수 없다(적는 순간 커밋이 바뀐다 — 58 마감과 같은 형태). 46543b1(앱 코드가 든 병합 커밋)의 확인이 위에 있고, 이 문서 커밋의 deploy-check 출력은 완주 보고(채팅)에 낸다.
+**최종 배포 — 문서 커밋 6ba7117**(3차 대응 · 앱 코드는 46543b1과 동일 — `git diff 46543b1 6ba7117 -- web2/src web2/index.html` 0):
+
+```
+cd web2 && node tools/deploy-check.mjs 6ba7117
+  원격 main == 내 커밋                                                        ✓
+  Pages 실행 completed / success (attempt 2)
+    https://github.com/hyunwookyu/brunelleschi/actions/runs/33796991023
+  화면 빌드 식별자 6ba7117 == 배포 커밋                                       ✓
+  결과: **배포됨**
+```
+
+⚠ **attempt 2인 이유**(#89 — 빨강의 귀속): attempt 1이 `npm test`(단위)에서 `cost23_measure ⑥`(굽기 비용 비 — 시간
+측정 팔 · web2-32 이후 무변) 하나로 죽었다 — seedB 면 축 비 **2.37 vs 획 축 3.02**(러너 속도 요동 · 41 마감 attempt 1과
+같은 칸·같은 형태). 같은 트리의 로컬 단위는 1088/1088이고 앱 코드가 같은 46543b1의 실행은 attempt 1에 초록이었다.
+`rerun_failed_jobs` 한 번 — 초록. 이 팔은 이 라운드 범위 밖이다(러너 요동 대역의 조사는 다음 몫 — 41 마감의 그 문장 그대로).
+⚠ 이 줄을 적는 커밋 자체의 화면 식별자는 저장소 안에 적을 수 없다(적는 순간 커밋이 바뀐다) — 완주 보고(채팅)에 낸다.
