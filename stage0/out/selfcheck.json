@@ -1,5 +1,5 @@
 {
-  "n_flags": 6309,
+  "n_flags": 6331,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -6304,6 +6304,51 @@
     },
     {
       "path": "input_capture_web2.json:last_pen_stroke.extra",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "join56_unit_web2.json:gates.t_near.resid_max",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "join56_unit_web2.json:gates.miter60.cap_gap_max_world",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "join56_unit_web2.json:perf.cached_run_stats.computed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "join56_web2_dpr1.json:stair.px_join_on_t200_nozoom",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "join56_web2_dpr1.json:stair.px_join_on",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "join56_web2_dpr1.json:stair.px_join_on_again",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "join56_web2_dpr2.json:stair.px_join_on_t200_nozoom",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "join56_web2_dpr2.json:stair.px_join_on",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "join56_web2_dpr2.json:stair.px_join_on_again",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -30535,6 +30580,36 @@
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
     {
+      "path": "join56_pretree_web2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "join56_unit_web2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "join56_web2_dpr1.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "join56_web2_dpr2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "join56_web2_pre_dpr1.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "join56_web2_pre_dpr2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
       "path": "lay_slide40_web2.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
@@ -31255,6 +31330,36 @@
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
     {
+      "path": "join56_pretree_web2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "join56_unit_web2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "join56_web2_dpr1.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "join56_web2_dpr2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "join56_web2_pre_dpr1.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "join56_web2_pre_dpr2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
       "path": "lay_slide40_web2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
@@ -31821,6 +31926,18 @@
       "flag": "**도달 가능성 값이 정확히 0 또는 1이다**(#40) — 그 자리의 0/1은 대개 측정이 아니라 **설계 보장**이다(#5). 항등을 도달 가능성으로 쓰면 정보량이 0이다. 다른 팔의 수치를 적는다"
     },
     {
+      "path": "join56_unit_web2.json:gates",
+      "val": [
+        "def",
+        "determinism",
+        "heal",
+        "miter60",
+        "onering",
+        "onering_30"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
       "path": "ledger_gate24_web2.json:gate",
       "val": [
         "for",
@@ -32021,7 +32138,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 619,
+      "files_scanned": 622,
       "exts_declared": [
         ".md",
         ".py",
@@ -32045,7 +32162,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 619,
+      "files_scanned": 622,
       "exts_declared": [
         ".md",
         ".py",
@@ -32087,7 +32204,7 @@
     {
       "scan": "scan_dead_ledger",
       "unit": "원장",
-      "targets": 241,
+      "targets": 247,
       "hits": 3,
       "note": null
     },
@@ -32108,7 +32225,7 @@
     {
       "scan": "scan_unbounded_wait",
       "unit": "마감 블록·도구 파일",
-      "targets": 12,
+      "targets": 13,
       "hits": 0,
       "note": "⚠ **세션 안에서 즉석으로 만든 대기는 안 보인다** — 저장소에 없기 때문이다. 그 자리를 지키는 것은 **마감 보고의 「도는 백그라운드 없음」 한 줄**이다"
     },
@@ -32129,16 +32246,16 @@
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 210,
+      "targets": 215,
       "hits": 3,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 104,
-      "hits": 18,
-      "note": "값 대조를 **지난 것 61** · **픽스처가 정한 값 13** · **면제 28**(`reachability_absent`) · 원장 242개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, glyph35_web2.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lay_slide40_web2.json:gate, ledger_gate24_web2.json:gate, lens31_web2_dpr1.json:gate, lens31_web2_dpr2.json:gate, lens_roll_osnap.json:gate, mats52_web2_dpr1.json:scale_pass.gate, mats52_web2_dpr1.json:two_layers.gate, mats52_web2_dpr2.json:scale_pass.gate, mats52_web2_dpr2.json:two_layers.gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, paper_grain26_web2.json:gate, paper_grain30_web2.json:gate, paper_grain40_web2.json:gate, papericon31_web2_dpr1.json:gate, papericon31_web2_dpr2.json:gate, passthru24_web2.json:gate, place34_web2_dpr1.json:gate, place34_web2_dpr2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, read42_web2.json:gate, rep49_e2e_web2_dpr1.json:frame20.gate, rep49_e2e_web2_dpr2.json:frame20.gate, restore_pose.json:gate, scale32_web2.json:gate, shutter25_web2.json:gate, shutter25_web2_dpr2.json:gate, skew34_web2.json:gate, snap_cache.json:gate, snap_stage.json:gate, turn31_web2.json:gate, view42_web2.json:gate, view42_web2_dpr1.json:gate, view42_web2_dpr2.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate, xint41_web2.json:gate, zoom31_web2.json:gate, zoom31_web2_dpr1.json:gate, zoom31_web2_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, lens31_web2.json:gate, measure34_web2.json:gate, osnap_kinds.json:gate, osnappull37_web2.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "targets": 105,
+      "hits": 19,
+      "note": "값 대조를 **지난 것 61** · **픽스처가 정한 값 13** · **면제 28**(`reachability_absent`) · 원장 248개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, glyph35_web2.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lay_slide40_web2.json:gate, ledger_gate24_web2.json:gate, lens31_web2_dpr1.json:gate, lens31_web2_dpr2.json:gate, lens_roll_osnap.json:gate, mats52_web2_dpr1.json:scale_pass.gate, mats52_web2_dpr1.json:two_layers.gate, mats52_web2_dpr2.json:scale_pass.gate, mats52_web2_dpr2.json:two_layers.gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, paper_grain26_web2.json:gate, paper_grain30_web2.json:gate, paper_grain40_web2.json:gate, papericon31_web2_dpr1.json:gate, papericon31_web2_dpr2.json:gate, passthru24_web2.json:gate, place34_web2_dpr1.json:gate, place34_web2_dpr2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, read42_web2.json:gate, rep49_e2e_web2_dpr1.json:frame20.gate, rep49_e2e_web2_dpr2.json:frame20.gate, restore_pose.json:gate, scale32_web2.json:gate, shutter25_web2.json:gate, shutter25_web2_dpr2.json:gate, skew34_web2.json:gate, snap_cache.json:gate, snap_stage.json:gate, turn31_web2.json:gate, view42_web2.json:gate, view42_web2_dpr1.json:gate, view42_web2_dpr2.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate, xint41_web2.json:gate, zoom31_web2.json:gate, zoom31_web2_dpr1.json:gate, zoom31_web2_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, lens31_web2.json:gate, measure34_web2.json:gate, osnap_kinds.json:gate, osnappull37_web2.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -32721,6 +32838,39 @@
       43,
       46,
       47
+    ],
+    "join56_unit_web2.json": [
+      27,
+      47,
+      71
+    ],
+    "join56_web2_dpr1.json": [
+      12,
+      27,
+      46,
+      47,
+      82,
+      92,
+      96,
+      97,
+      99
+    ],
+    "join56_web2_dpr2.json": [
+      12,
+      27,
+      46,
+      47,
+      82,
+      92,
+      96,
+      97,
+      99
+    ],
+    "join56_web2_pre_dpr1.json": [
+      42
+    ],
+    "join56_web2_pre_dpr2.json": [
+      42
     ],
     "lay_slide40_web2.json": [
       8,
@@ -33785,6 +33935,12 @@
     "inklayer_web2_before.json",
     "inklayer_web2_dpr2.json",
     "input_capture_web2.json",
+    "join56_pretree_web2.json",
+    "join56_unit_web2.json",
+    "join56_web2_dpr1.json",
+    "join56_web2_dpr2.json",
+    "join56_web2_pre_dpr1.json",
+    "join56_web2_pre_dpr2.json",
     "lay_slide40_web2.json",
     "ledger_gate24_web2.json",
     "lens31_web2.json",

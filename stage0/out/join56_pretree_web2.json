@@ -1,0 +1,31 @@
+{
+  "what": "web2-56 — t=0 픽셀 항등의 부모 트리(4eecab5) 대조: 같은 장면(코너 방 · 채움 · 축척 · t=0)의 #gl sha256을 dpr 1·2로. 일회 측정(세션 수행 · 스펙 비상주 — 55 pre_tree의 그 규약)",
+  "runs": {
+    "dpr1": {
+      "current": {
+        "w": 1280,
+        "h": 800,
+        "sha": "f7781fbd7f4bf830c30814cdd5e398ef570f4ccb4989dafe99d3ae1aff1fd170"
+      },
+      "parent": {
+        "w": 1280,
+        "h": 800,
+        "sha": "f7781fbd7f4bf830c30814cdd5e398ef570f4ccb4989dafe99d3ae1aff1fd170"
+      },
+      "identical": true
+    },
+    "dpr2": {
+      "current": {
+        "w": 2560,
+        "h": 1600,
+        "sha": "e2c3ca880303c1d44392d054356aa2592bb1ff19a702eed246b86518db92e28f"
+      },
+      "parent": {
+        "w": 2560,
+        "h": 1600,
+        "sha": "e2c3ca880303c1d44392d054356aa2592bb1ff19a702eed246b86518db92e28f"
+      },
+      "identical": true
+    }
+  }
+}

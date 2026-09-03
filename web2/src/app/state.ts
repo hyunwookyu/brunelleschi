@@ -102,6 +102,8 @@ export interface Op {
   moved?: { id: number; before: GripGeom; after: GripGeom }[]
   /** **잠금 토글**(web2-44) — 사람이 한 것이므로 실행취소 대상이다 */
   lockChanged?: { id: number; to: boolean }[]
+  /** **접합 끊기 토글**(web2-56) — 사람이 한 것이므로 실행취소 대상이다(lock의 규격) */
+  njChanged?: { id: number; to: boolean }[]
   /** **분류 정정**(web2-45 45-2) — 사람이 한 것이므로 실행취소 대상이다 */
   clsChanged?: { id: number; before: Face['cls']; after: Face['cls'] }[]
   /** **채움**(web2-45 45-4 · web2-48 48-3에서 **순환**이 됐다: 없음→해칭→단색→없음) —
@@ -394,6 +396,13 @@ export interface App {
   /** **칠 획의 3D 점렬**(web2-45 45-3) — **파생 캐시**다(원칙 b: 저장 ⛔ · 문서와 면에서만
    *  나온다). recompute가 매번 다시 짓는다 — 면이 못 풀리면 그 획의 항이 없다(안 보인다). */
   paintGeo: Map<number, V3[]>
+  /** **접합**(web2-56) — 두꺼운 면들 사이의 접합(정점 이동표·기록·1링 통계). doc에서만
+   *  나오는 파생이다(recompute가 매번 세운다) — 저장 ⛔. null = 두꺼운 면이 둘 미만이거나
+   *  축척 미정이거나 반증 손잡이로 껐다(그때 렌더는 55의 버트-중심선 그대로다). */
+  joints: import('../core/joint').JointsOut | null
+  /** 접합 쌍 캐시(지시 6 — 1링 무효화의 자물쇠): 쌍 서명이 안 바뀐 접합은 다시 안 걷는다.
+   *  App에 산다(문서 아님 — 파생의 캐시). */
+  jointCache: import('../core/joint').JointCache
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
@@ -408,6 +417,8 @@ export function createApp(W: number, H: number): App {
     nextId: 1,
     lift: liftAll(doc),
     faces: [],
+    joints: null,
+    jointCache: new Map(),
     docVersion: 0,
     osnap: defaultOsnap(),
     tool: 'pencil',
@@ -625,6 +636,9 @@ function recompute(app: App) {
     }
   } else app.lastCamSig = null
   app.faces = resolveFaces(app.lift, app.doc.faces)
+  // 접합(web2-56) — 두꺼운 면들 사이. 면이 선 뒤·칠 파생 전(칠은 접합과 무관 —
+  // uv·(s,u)는 중심면의 자라 접합이 옮기지 않는다: «칠이 살아 있다» 게이트의 코드 자리).
+  app.joints = buildJoints(app)
   // 칠 획의 3D — 면이 풀린 뒤에야 선다(파생 · 원칙 b). 면이 빠지면 항도 빠진다.
   // web2-50: 정본이 uv이므로 파생도 uv에서 온다(paintGeoOf — 광선 역투영이 아니다).
   app.paintGeo = new Map()
@@ -1757,7 +1771,8 @@ export function frontFlyTarget(app: App): { to: CamPose; back: boolean } | null 
 // 한 붓 → 면별 조각 → 획 여럿(paint 태그) → 한 op(붓 하나가 실행취소 한 칸이다).
 
 import { splitByFace, frontFaceAt, classOf, faceClassOf, FACE_CLASSES, paintSideAt, type FaceClass } from '../core/paint'
-import { faceThickness, slotOffsets } from '../core/clsdef'
+import { faceThickness, slotOffsets, clsDefOf } from '../core/clsdef'
+import { computeJoints, type JointFaceIn, type JointsOut } from '../core/joint'
 import { borderGeoOf, borderHitAt } from '../core/border'
 import { uvFromScreen, paintGeoOf } from '../core/facetex'
 import { cycleMat, isMatId, materialOf, type MatId, type Instr } from '../core/palette'
@@ -2085,6 +2100,86 @@ export function faceSlotsOf(
   const tW = th.t / mmPer
   const o = slotOffsets(tW, th.off)
   return { tW, frontW: o.front, backW: o.back, ex: th.ex }
+}
+
+// ── 접합(web2-56) ─────────────────────────────────────────────────────────────
+/** D-3 반증 손잡이 — 병합 걸음을 끈다(계단이 실제로 돌아오는지 e2e가 같은 실행에서
+ *  확인한다). UI 없음 — diag에서만 켠다. */
+let joint56Off = false
+export const setJoint56OffForTest = (v: boolean): void => { joint56Off = v }
+
+/** 접합 입력을 모아 계산한다(recompute의 한 걸음) — 두께가 실제로 선 면(t>0 · 축척 확정)
+ *  만 후보다. null = 후보가 둘 미만이거나 축척 미정이거나 반증 손잡이로 껐다. */
+function buildJoints(app: App): JointsOut | null {
+  if (joint56Off) return null
+  const mmPer = app.lift.mmPerUnit
+  if (mmPer === null || mmPer <= 0) return null
+  const njSet = new Set<number>()
+  for (const s of app.doc.strokes) if (s.nj === 1) njSet.add(s.id)
+  const ins: JointFaceIn[] = []
+  for (const rf of app.faces) {
+    if (rf.outer.length < 3) continue
+    const slots = faceSlotsOf(app, rf)
+    if (!slots) continue
+    const face = app.doc.faces.find(f => f.id === rf.id)
+    const cls = classOf(face, rf, C.FACE_CLASS_DEG)
+    const def = clsDefOf(app.doc, cls)
+    // 외곽 모서리 i(정점 i → i+1)의 획 — loopPoints의 규약(정점 i = 경계 i−1 ∧ i)에서
+    // 그 구간이 놓이는 직선은 경계 i다(face.ts ③ 풀기).
+    const edges = face?.loops[0]?.edges ?? []
+    const edgeStrokes = rf.outer.map((_, i) => edges[i]?.s ?? null)
+    const brokenEdges = new Set<number>()
+    edgeStrokes.forEach((sid, i) => { if (sid !== null && njSet.has(sid)) brokenEdges.add(i) })
+    ins.push({
+      id: rf.id, outer: rf.outer, holes: rf.holes, normal: rf.normal,
+      frontW: slots.frontW, backW: slots.backW, core: def.core, pri: def.pri,
+      edgeStrokes, brokenEdges,
+    })
+  }
+  if (ins.length < 2) return null
+  return computeJoints(ins, {
+    cleanupW: C.JOIN56_CLEANUP_MM / mmPer,
+    maxExtW: C.JOIN56_MAXEXT_MM / mmPer,
+    parDot: C.JOIN56_PAR_DOT,
+  }, app.jointCache)
+}
+
+/** **접합 끊기/잇기 — 획 하나**(앱 경로 · undo 한 칸). 반환 = 새 상태(끊김 = true). */
+export function setStrokeNj(app: App, id: number, on: boolean): boolean | null {
+  const s = app.doc.strokes.find(x => x.id === id)
+  if (!s) return null
+  const was = s.nj === 1
+  if (was === on) return on
+  if (on) s.nj = 1; else delete s.nj
+  app.undoStack.push({ removed: [], added: [], njChanged: [{ id, to: on }] })
+  app.redoStack = []
+  recompute(app)
+  return on
+}
+
+/** **접합 끊기 토글**(손통 「접합」) — 잡힌 선(모서리)들. 하나라도 이어져 있으면 전부
+ *  끊고, 전부 끊겨 있으면 전부 잇는다(잠금과 달리 토글 — 끊기는 보호가 아니라 스위치라
+ *  잡음을 안 푼다: 되누르면 곧장 되돌릴 수 있어야 한다). */
+export function njGrip(app: App): { n: number; on: boolean } {
+  const g = app.grip
+  if (!g || g.ids.length === 0) return { n: 0, on: false }
+  const targets: Stroke[] = []
+  for (const id of g.ids) {
+    const s = app.doc.strokes.find(x => x.id === id)
+    if (s) targets.push(s)
+  }
+  if (targets.length === 0) return { n: 0, on: false }
+  const on = targets.some(s => s.nj !== 1)
+  const changed: { id: number; to: boolean }[] = []
+  for (const s of targets) {
+    if (on && s.nj !== 1) { s.nj = 1; changed.push({ id: s.id, to: true }) }
+    else if (!on && s.nj === 1) { delete s.nj; changed.push({ id: s.id, to: false }) }
+  }
+  if (changed.length === 0) return { n: 0, on }
+  app.undoStack.push({ removed: [], added: [], njChanged: changed })
+  app.redoStack = []
+  recompute(app)
+  return { n: changed.length, on }
 }
 
 /** **채움을 돌린다**(45-4 · web2-48 48-3) — 면의 성질이다(픽셀로 굽지 않는다).
@@ -2557,6 +2652,11 @@ export function undo(app: App) {
     const s = app.doc.strokes.find(x => x.id === lc.id)
     if (s) { if (lc.to) delete s.lock; else s.lock = 1 }
   }
+  // 접합 끊기 토글(web2-56) — «전»으로
+  for (const nc of op.njChanged ?? []) {
+    const s = app.doc.strokes.find(x => x.id === nc.id)
+    if (s) { if (nc.to) delete s.nj; else s.nj = 1 }
+  }
   // 분류 정정·채움(web2-45)
   for (const cc of op.clsChanged ?? []) {
     const f = app.doc.faces.find(x => x.id === cc.id)
@@ -2633,6 +2733,11 @@ export function redo(app: App) {
   for (const lc of op.lockChanged ?? []) {
     const s = app.doc.strokes.find(x => x.id === lc.id)
     if (s) { if (lc.to) s.lock = 1; else delete s.lock }
+  }
+  // 접합 끊기 토글(web2-56) — «후»로
+  for (const nc of op.njChanged ?? []) {
+    const s = app.doc.strokes.find(x => x.id === nc.id)
+    if (s) { if (nc.to) s.nj = 1; else delete s.nj }
   }
   // 분류 정정·채움(web2-45)
   for (const cc of op.clsChanged ?? []) {

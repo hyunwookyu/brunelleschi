@@ -459,7 +459,7 @@ test('⑤ 성능 — 두께 장면의 syncStrokes ms(원장 값)', async ({ page
     return { buried_mm: +(floorS.frontW * mm).toFixed(1), step_mm: +(wallS.frontW * mm).toFixed(1) }
   }, ids)
   OUT.stair = {
-    def: '코너 계단의 크기(슬롯 유도 구성값 — 접합에 손을 안 대섰다는 값의 기록이자 56의 입력): 벽⊥바닥 모서리에서 buried = 바닥 앞면 오프셋(mm) · step = 벽 앞면 오프셋(mm). 56이 병합 걸음으로 이 계단을 ㄴ자로 만든다',
+    def: '코너 계단의 크기(슬롯 유도 구성값 — 접합에 손을 안 대섰다는 값의 기록이자 56의 입력): 벽⊥바닥 모서리에서 buried = 바닥 앞면 오프셋(mm) · step = 벽 앞면 오프셋(mm). ⚠ 56 결과(사후 정정 — 56 리뷰어 1차 [1]): 벽⊥바닥 접합은 «둘만 두꺼울 때» ㄴ자가 되고(joint56 단위 ⑩), 방 구석(벽-벽 접합과 정점을 나누는 자리)에서는 복합 구석으로 기각된다(DEFERRED web2-56). 56의 픽셀 중심 게이트는 벽-벽 코너다',
     ...(stair ?? { buried_mm: null, step_mm: null }),
   }
 })

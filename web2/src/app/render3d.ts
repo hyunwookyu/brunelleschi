@@ -18,7 +18,8 @@ import { repSegments, repBasis, repVisibleFamilies, isRepId, isMatRepId, type Se
 import { project } from '../core/camera'
 import { paintSideAt } from '../core/paint'
 import { borderQuads } from '../core/border'
-import { norm3, add3, mul3 } from '../core/vec'
+import { vkey } from '../core/joint'
+import { norm3, add3, mul3, type V3 } from '../core/vec'
 import { uvBoxOf, texLevel, bakeFaceTex, type UvBox, type RepBake } from '../core/facetex'
 import { faceHatchSpacingWorld } from '../core/hatch'
 import type { Grade, Stroke, Face } from '../core/types'
@@ -179,14 +180,24 @@ export function syncStrokes(r: R3D, app: App) {
     // null이라 아래 오프셋 0·띠 없음 — 오늘의 화면 그대로다**(중심 게이트의 코드 자리).
     const slots = faceSlotsOf(app, f)
     const n55 = slots ? norm3(f.normal) : null
+    // web2-56 — 접합 이동표(면내 · 접합 모서리 정점만 든다). 정점에 앞/뒤 몫을 더하면
+    // 오프셋 면이 상대 표면까지 연장/절단되고, 그 모서리의 띠 사각은 저절로 캡(마이터/
+    // 버트 면)이 된다 — 특수 분기 없음(지시: 마이터는 별도 모드가 아니다).
+    const jsh = slots ? app.joints?.shifts.get(f.id) : undefined
+    const j56 = (v: V3, off: number, slot: 'f' | 'b' | null): V3 => {
+      const base = off !== 0 && n55 ? add3(v, mul3(n55, off)) : v
+      if (!slot || !jsh) return base
+      const sh = jsh.get(vkey(v))
+      return sh ? add3(base, sh[slot]) : base
+    }
     const matOf55 = () => isPainted
       ? solidMatOf(face?.fill === 2 ? solidHexOf(face) : C.PAPER_HEX)
       : r.faceMat
-    const addFaceMesh = (off: number) => {
+    const addFaceMesh = (off: number, slot: 'f' | 'b' | null = null) => {
       const pos = new Float32Array(f.tris.length * 3)
       let cx = 0, cy = 0, cz = 0
       f.tris.forEach((p, i) => {
-        const q = n55 && off !== 0 ? add3(p, mul3(n55, off)) : p
+        const q = j56(p, off, slot)
         pos[i * 3] = q.x; pos[i * 3 + 1] = q.y; pos[i * 3 + 2] = q.z
         cx += q.x; cy += q.y; cz += q.z
       })
@@ -205,10 +216,12 @@ export function syncStrokes(r: R3D, app: App) {
     if (!slots) {
       addFaceMesh(0)
     } else {
-      addFaceMesh(slots.frontW)
-      addFaceMesh(slots.backW)
-      // 띠(테두리 — 셋째 슬롯의 몸): 경계 사각들. 자유단 캡 = 평평(butt) — 코너 계단은
-      // 56의 몫이다(지시: 「여기서 접합에 손대면 두 라운드가 섞인다」).
+      addFaceMesh(slots.frontW, 'f')
+      addFaceMesh(slots.backW, 'b')
+      // 띠(테두리 — 셋째 슬롯의 몸): 경계 사각들. 자유단 캡 = 평평(butt).
+      // web2-56 — 접합 모서리의 정점은 이동표(j56)가 옮긴다: 그 모서리의 사각이 곧
+      // 캡(마이터/버트 면)이 되고, 이웃 사각(위·아래 변)은 같은 정점을 나눠 따라 늘어나
+      // 틈이 없다. 접합이 없거나 끊긴 모서리는 이동이 0이라 55 그대로다.
       const { quads, n } = borderQuads(f)
       if (quads.length > 0) {
         const pos = new Float32Array(quads.length * 6 * 3)
@@ -218,8 +231,8 @@ export function syncStrokes(r: R3D, app: App) {
           bx += P.x; by += P.y; bz += P.z; k++
         }
         for (const q of quads) {
-          const af = add3(q.a, mul3(n, slots.frontW)), bf = add3(q.b, mul3(n, slots.frontW))
-          const ab = add3(q.a, mul3(n, slots.backW)), bb = add3(q.b, mul3(n, slots.backW))
+          const af = j56(q.a, slots.frontW, 'f'), bf = j56(q.b, slots.frontW, 'f')
+          const ab = j56(q.a, slots.backW, 'b'), bb = j56(q.b, slots.backW, 'b')
           put(af); put(bf); put(bb)
           put(af); put(bb); put(ab)
         }
@@ -516,6 +529,15 @@ function syncPaintTex(r: R3D, app: App) {
     if (!rf || rf.tris.length < 3) continue               // 못 풀린 면 — 칠도 쉰다(면의 규약)
     // web2-55 — 두께: 앞/뒤 텍스처는 그 표면으로 오프셋되고, 'e'는 띠 위에 선다.
     const slots = faceSlotsOf(app, rf)
+    // web2-56 — 접합 이동(칠 텍스처 판): 면 메시와 같은 정점 이동을 얹어야 두 겹이
+    // 겹친다(안 얹으면 접합 모서리에서 칠막이 몸 밖에 뜬다). UV는 중심선의 자(s·면 평면
+    // 좌표) 그대로다 — 칠의 «자리»는 접합이 옮기지 않는다(«칠이 살아 있다» 게이트).
+    const jsh56 = slots ? app.joints?.shifts.get(rf.id) : undefined
+    const j56 = (v: V3, off: number, slot: 'f' | 'b'): V3 => {
+      const base = off !== 0 ? add3(v, mul3(norm3(rf.normal), off)) : v
+      const sh = jsh56?.get(vkey(v))
+      return sh ? add3(base, sh[slot]) : base
+    }
     if (w.side === 'e') {
       if (!slots) continue                                // t=0 — 띠가 없다(칠은 대기)
       const { quads, n: bn, total } = borderQuads(rf)
@@ -535,8 +557,8 @@ function syncPaintTex(r: R3D, app: App) {
         cx += P.x; cy += P.y; cz += P.z; k++
       }
       for (const q of quads) {
-        const af = add3(q.a, mul3(bn, slots.frontW)), bf = add3(q.b, mul3(bn, slots.frontW))
-        const ab = add3(q.a, mul3(bn, slots.backW)), bb = add3(q.b, mul3(bn, slots.backW))
+        const af = j56(q.a, slots.frontW, 'f'), bf = j56(q.b, slots.frontW, 'f')
+        const ab = j56(q.a, slots.backW, 'b'), bb = j56(q.b, slots.backW, 'b')
         put(af, q.s0, tW); put(bf, q.s0 + q.len, tW); put(bb, q.s0 + q.len, 0)
         put(af, q.s0, tW); put(bb, q.s0 + q.len, 0); put(ab, q.s0, 0)
       }
@@ -561,14 +583,14 @@ function syncPaintTex(r: R3D, app: App) {
       continue
     }
     const off55 = slots ? (w.side === -1 ? slots.backW : w.side === 1 ? slots.frontW : 0) : 0
-    const n55 = off55 !== 0 ? norm3(rf.normal) : null
+    const slot56: 'f' | 'b' | null = slots ? (w.side === -1 ? 'b' : w.side === 1 ? 'f' : null) : null
     const box = uvBoxOf(rf)
     const pos = new Float32Array(rf.tris.length * 3)
     const uv = new Float32Array(rf.tris.length * 2)
     const su = Math.max(1e-9, box.u1 - box.u0), sv = Math.max(1e-9, box.v1 - box.v0)
     let cx = 0, cy = 0, cz = 0
     rf.tris.forEach((p, i) => {
-      const q = n55 ? add3(p, mul3(n55, off55)) : p
+      const q = slot56 ? j56(p, off55, slot56) : p
       pos[i * 3] = q.x; pos[i * 3 + 1] = q.y; pos[i * 3 + 2] = q.z
       cx += q.x; cy += q.y; cz += q.z
       const dx = p.x - box.basis.origin.x, dy = p.y - box.basis.origin.y, dz = p.z - box.basis.origin.z

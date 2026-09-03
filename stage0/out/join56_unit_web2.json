@@ -1,0 +1,87 @@
+{
+  "what": "web2-56 — 접합의 단위 원장: 게이트 값(T·코어 반증·치유 경계·결정론·1링·비직각 마이터 — 리뷰어 1차 [2][3][12]·2차 [4][10]: 원장 밖 측정은 안 걸린다 §5.1)과 지시 대역 성능(벽 30 · 접합 48)",
+  "conditions": {
+    "canonical": "LEDGER=1 npx vitest run test/joint56.test.ts"
+  },
+  "gates": {
+    "def": "게이트의 값. ⚠ 단위·임계의 가름(2차 [8]): OPT(cleanup 0.05 / maxExt 0.6 / dot 0.9994)는 **기제 매개변수**(임의 세계 단위)이지 제품 임계(JOIN56_CLEANUP_MM 100 · MAXEXT 600mm)가 아니다 — 여기 경계 값(#71)이 지키는 것은 «반경 기제»이고, 제품 mm→세계 환산은 buildJoints 한 줄(C/mmPerUnit — 세션 팔 ⑩이 그 경로로 접합이 서는 것을 확인)이다: 제품 임계 100mm «자체»의 경계 실사용 실측은 없다(AS-C172). ⚠ 잔차의 가름(2차 [9] — 자기참조 유형 3): resid_max는 이동식이 그 평면 방정식을 «푸는» 구성이라 0이 보장이다(부동소수 확인일 뿐 — 임계로 안 읽는다). 정보를 나르는 것은 target_z의 **부호**(가까운/먼 면의 «선택» — 코어 반증에서 실제로 뒤집힌다)와 winner다. T: 정지 평면 z=+0.1(가까운 면) · 코어 반증: 막대 core=0 → 줄기 승·z=−0.1(먼 면). 치유: 간격 cleanup×0.98/×1.02의 접합 수(1/0). 결정론: 이동 전체 소화값(정렬 행 수:해시)이 차례 역순·id 교체에 동일. 1링: recomputedFaces = «재계산된 쌍 중 접합(rec)을 낸 쌍»의 면(2차 [3] — 평행·무접합 쌍(예: 3면 픽스처의 (B,C))은 재계산돼도 안 들고, 충돌 기각(한 모서리 한 접합) «전» 단계라 방 코너 e2e에선 기각 쌍의 면이 든다 — 두 원장이 같은 코드 같은 정의다). miter60: 60°·off s·두께 다름의 이동량(비자명 — t/2 항등 아님)과 캡 최대 간격(일치의 값). onering_30: 지시 대역(2차 [4]) — 벽 30·쌍 435에서 줄기 하나 이동",
+    "t_near": {
+      "target_z": 0.1,
+      "resid_max": 0
+    },
+    "t_core_flip": {
+      "target_z": -0.1,
+      "resid_max": 0,
+      "winner_is_stem": true
+    },
+    "heal": {
+      "in_dist": 0.049,
+      "joins_in": 1,
+      "out_dist": 0.051,
+      "joins_out": 0,
+      "cleanup_w": 0.05
+    },
+    "determinism": {
+      "digest_base": "8:1ade29a5",
+      "digest_reversed": "8:1ade29a5",
+      "digest_new_ids": "8:1ade29a5",
+      "all_equal": true
+    },
+    "miter60": {
+      "tie": true,
+      "ext_a": {
+        "front": 0.331976,
+        "back": -0.101036
+      },
+      "ext_b": {
+        "front": -0.202073,
+        "back": 0.317543
+      },
+      "cap_gap_max_world": 0
+    },
+    "onering": {
+      "thick_faces": 3,
+      "pairs": 3,
+      "joins": 2,
+      "first": {
+        "computed": 3,
+        "cached": 0
+      },
+      "unchanged": {
+        "computed": 0,
+        "cached": 3
+      },
+      "moved_one": {
+        "computed": 2,
+        "cached": 1,
+        "recomputedFaces": [
+          1,
+          3
+        ]
+      }
+    },
+    "onering_30": {
+      "walls": 30,
+      "pairs": 435,
+      "moved_one": {
+        "computed": 29,
+        "cached": 406,
+        "recomputed_faces_n": 3
+      }
+    }
+  },
+  "perf": {
+    "def": "접합 계산(computeJoints)의 지시 대역 성능(벽 30 · 접합 48 — 세어 지킨 값). 이것은 recompute 몫이다(문서가 바뀔 때만 돈다 — 궤도 프레임에는 없다). ⚠ 캐시 이득(fresh→cached)은 걸음 몫뿐이다 — 비용의 주인은 쌍 탐색(전 쌍 검출)이라, 1링 캐시의 뜻은 속도가 아니라 «어느 접합이 다시 걸어졌는가»의 판정(무효화 단위 — 지시 6)이다. ⚠ 벽 30 «장면의 프레임» 실측은 없다(그 규모 장면을 그리는 비용 — e2e ⑤의 켬/끔 프레임·메시 수 대조와 이 값이 각각의 절대값으로 선다 · 두 하네스를 비로 안 묶는다 #27). 절대 ms는 기계 몫(#47) — 회귀 비교는 같은 원장의 전값과",
+    "walls": 30,
+    "joins": 48,
+    "pairs": 435,
+    "fresh_ms_median": 3.388,
+    "fresh_ms_max": 4.253,
+    "cached_ms_median": 2.717,
+    "cached_run_stats": {
+      "computed": 0,
+      "cached": 435
+    },
+    "note_82": "문턱 없음 — 추세 측정"
+  }
+}
