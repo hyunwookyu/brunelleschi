@@ -106,8 +106,9 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   //   여기인 이유는 그것이 **문서를 안 건드리는 기기 취향**이기 때문이다(localStorage).
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#pane-settings input, #pane-settings button')].map(e => e.id)))
-    // web2-47이 btn-stencil(사람 스텐실 그리기 — 지시 문면 「설정 안에 숨긴다」)을 더했다(#75 ㉣)
-    .toEqual(['chk-press', 'btn-press-cancel', 'chk-grain', 'btn-diag', 'btn-stencil'])
+    // web2-47이 btn-stencil(사람 스텐실 그리기 — 지시 문면 「설정 안에 숨긴다」)을,
+    // web2-58이 btn-tunelab(브러시 작업대 — 지시 문면 「설정에 숨겨 둔다」 R8)을 더했다(#75 ㉣)
+    .toEqual(['chk-press', 'btn-press-cancel', 'chk-grain', 'btn-diag', 'btn-stencil', 'btn-tunelab'])
   // 손(오른쪽 세로) — 되돌리기 둘(맨 위·구분선으로 가름) → 자 → 연필(접힘) → 펜 →
   // 지우개 둘 → **치수 → 롤 둘 → 면** → 서랍. #oldtools(hidden)·#tray(접힘)는 A-4/3-b' 구조물.
   // ⚠ **web2-28 4번이 한 띠 «안»의 순서를 바꿨다**: 면(면 찾기)이 롤·치수보다 **아래**로

@@ -21,6 +21,7 @@
 // «흰 장막»이 구조로 소멸한다. DEFERRED «칠은 제 겹을 가져야 한다» 행이 이 형태로 닫혔다).
 
 import type { Stroke, Face, CamPose } from './types'
+import { brushDef, instrOfTag, evalCurve, type BrushDef } from './brush58'
 import { repBasis, repSegments, repVisibleFamilies, isRepId, type MatRepId } from './matrep'
 import type { ResolvedFace } from './face'
 import { hatch2d } from './hatch'
@@ -165,13 +166,18 @@ export function grain01(qu: number, qv: number): number {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296
 }
 
-/** 획의 점렬을 등간격 도장(stamp) 자리로 편다 — {x, y, t(0..1), press(0..1)} */
-function stampsOf(
-  uv: number[], press: number[] | undefined,
-  toPx: (u: number, v: number) => Pt, spacingPx: number,
+/** **도장 기록**(web2-58 D-1 표식 — 수동적·행동 무변): 켜 두면 stamp()가 찍는 자리를
+ *  도구 표식과 함께 쌓는다. 끝점 뭉침의 «단위 길이당 도장 수»를 제품 경로 그대로 잰다. */
+let stampLog: { x: number; y: number; i: number }[] | null = null
+let stampLogInstr = 0
+export function setStampLogForTest(on: boolean): void { stampLog = on ? [] : null }
+export function stampLogForTest(): { x: number; y: number; i: number }[] { return stampLog ?? [] }
+
+/** 획의 점렬(px)을 등간격 도장(stamp) 자리로 편다 — {x, y, t(0..1), press(0..1)}.
+ *  **거리 기반이다**(58-4 D-2가 확인 — 등호장 재표집: 손이 느려져도 표집이 몰리지 않는다). */
+export function stampsOf(
+  pts: Pt[], press: number[] | undefined, spacingPx: number,
 ): { x: number; y: number; t: number; press: number }[] {
-  const pts: Pt[] = []
-  for (let i = 0; i + 1 < uv.length; i += 2) pts.push(toPx(uv[i]!, uv[i + 1]!))
   const segLen: number[] = []
   let L = 0
   for (let i = 0; i + 1 < pts.length; i++) {
@@ -197,89 +203,125 @@ function stampsOf(
   return out
 }
 
-/** 도장 하나(원) — 알파·반지름은 부른 쪽이 정한다. */
-function stamp(g: CanvasRenderingContext2D, x: number, y: number, r: number, alpha: number) {
+/** 도장 하나(원) — 알파·반지름은 부른 쪽이 정한다. 경도 < 1이면 가장자리가 방사형으로
+ *  풀린다(58 실험실 축 — 기본 1은 종전 경로 그대로: 픽셀 무회귀). */
+function stamp(
+  g: CanvasRenderingContext2D, x: number, y: number, r: number, alpha: number,
+  hardness = 1, color?: string,
+) {
   if (alpha <= 0 || r <= 0) return
+  if (stampLog) stampLog.push({ x, y, i: stampLogInstr })
   g.globalAlpha = Math.min(1, alpha)
+  if (hardness < 1 && color) {
+    const grad = g.createRadialGradient(x, y, r * Math.max(0, hardness), x, y, r)
+    grad.addColorStop(0, color)
+    grad.addColorStop(1, color + '00')     // hex + 투명 — 캔버스 8자리 hex
+    const keep = g.fillStyle
+    g.fillStyle = grad
+    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill()
+    g.fillStyle = keep
+    return
+  }
   g.beginPath()
   g.arc(x, y, r, 0, Math.PI * 2)
   g.fill()
 }
 
-function drawStrokeTex(
-  g: CanvasRenderingContext2D, s: Stroke, box: UvBox, dims: { h: number; pxPerUnit: number },
-) {
-  const p = s.paint!
-  const uv = p.uv!
-  const toPx = (u: number, v: number): Pt =>
-    pt((u - box.u0) * dims.pxPerUnit, dims.h - (v - box.v0) * dims.pxPerUnit)
-  const wWorld = p.w ?? C.PAINT_W_FALLBACK_UNITS
-  const wPx = Math.max(0.5, wWorld * dims.pxPerUnit)
-  const grade = s.mat?.grade ?? 'HB'
+/** 압력 → 농도·굵기 — **정의(BrushDef)의 곡선**으로 평가한다(58-3: 브러시는 데이터).
+ *  반증 스위치(pressFlat)는 종전 상수 그대로 — 스위치의 뜻(프로필이 상수)이 불변이다. */
+const densityOf = (def: BrushDef, press: number): number =>
+  pressFlatOverride ? 0.7 : evalCurve(def.density, press)
+const widthFactorOf = (def: BrushDef, press: number): number =>
+  pressFlatOverride ? 0.925 : evalCurve(def.width, press)
+/** 결 통과율 — grainFloor + (1−grainFloor)·grain (연필 tooth·색연필 잔결이 같은 식이었다) */
+const toothOf = (def: BrushDef, gr: number): number =>
+  def.grainFloor + (1 - def.grainFloor) * gr
+
+/** paintMark의 문맥 — 제품(굽기)과 실험실(시험 긋기)이 같은 값 꼴로 넘긴다. */
+export interface MarkOpts {
+  /** 자국 색(hex) — 붓(흑연)은 MAT 등급색이 들어온다 */
+  color: string
+  /** bristles 모드의 기저 알파(제품 = MAT[grade].alpha) */
+  baseAlpha: number
+  /** 결정론 시드(제품 = 획 id) — Math.random ⛔ (§5) */
+  seed: number
+  /** 결 격자 환산의 기준 굵기 px(= wWorld × pxPerUnit — 하한 없는 원값) */
+  grainWpx: number
+  /** 점별 압력(양자화 눈금 — C.PRESS_Q 나눔은 stampsOf 안) */
+  press?: number[]
+}
+
+/** **한 자국을 긋는다** — 엔진의 전부다(58-3: 모드 셋 · 나머지는 def의 값).
+ *  제품(drawStrokeTex — uv → px 변환 뒤)과 실험실(58-5 — 화면 px 그대로)이 **이 함수
+ *  하나**를 부른다(#54: 실험실이 보여주는 것 == 제품이 굽는 것). */
+export function paintMark(
+  g: CanvasRenderingContext2D, pts: Pt[], wPx: number, def: BrushDef, o: MarkOpts,
+): void {
+  if (pts.length < 2) return
+  const spacingPx = Math.max(def.minSpacingPx, wPx * def.spacingK)
+  const scatRng = def.scatter > 0 ? rng32(o.seed ^ 0x5bd1) : null
+  const scatOf = (): number => (scatRng ? (scatRng() - 0.5) * 2 * def.scatter * (wPx / 2) : 0)
   g.save()
   g.lineCap = 'round'
   g.lineJoin = 'round'
 
-  if (p.i === 1 && p.c) {
-    // ── 마커 — 평평한 띠(multiply · 겹치면 진해진다) + **팁**(양 끝 덧찍음 — 51) ────
-    g.globalCompositeOperation = (markerFlatOverride || paintOpaqueOverride) ? 'source-over' : 'multiply'
-    g.globalAlpha = (markerFlatOverride || paintOpaqueOverride) ? 1 : C.PAINT_MARKER_ALPHA
-    g.strokeStyle = p.c
+  if (def.mode === 'band') {
+    // ── 띠(마커) — 연속 선(multiply · 겹치면 진해진다) + 끝 원(tipAlpha — 기본 0) ────
+    g.globalCompositeOperation = (markerFlatOverride || paintOpaqueOverride) ? 'source-over' : def.composite
+    g.globalAlpha = (markerFlatOverride || paintOpaqueOverride) ? 1 : def.alpha
+    g.strokeStyle = o.color
     g.lineWidth = wPx
     g.beginPath()
-    const p0 = toPx(uv[0]!, uv[1]!)
-    g.moveTo(p0.x, p0.y)
-    for (let i = 2; i + 1 < uv.length; i += 2) {
-      const q = toPx(uv[i]!, uv[i + 1]!)
-      g.lineTo(q.x, q.y)
-    }
+    g.moveTo(pts[0]!.x, pts[0]!.y)
+    for (let i = 1; i < pts.length; i++) g.lineTo(pts[i]!.x, pts[i]!.y)
     g.stroke()
-    if (!markerFlatOverride) {
-      // 팁 — «획 경계가 살짝 남는다»(50이 51 몫으로 미룬 성질의 부활). 곱이라 겹수와
-      // 무관하게 «끝이 몸통보다 진하다»가 유지된다(mats46 팁 팔이 되쟀다).
-      g.fillStyle = p.c
-      const tipR = (wPx / 2) * C.PAINT51_MARKER_TIP_LEN_K
-      const e0 = toPx(uv[0]!, uv[1]!)
-      const e1 = toPx(uv[uv.length - 2]!, uv[uv.length - 1]!)
-      g.globalAlpha = C.PAINT51_MARKER_TIP_ALPHA
-      for (const e of [e0, e1]) { g.beginPath(); g.arc(e.x, e.y, tipR, 0, Math.PI * 2); g.fill() }
+    if (!markerFlatOverride && def.tipAlpha > 0) {
+      // 팁(51의 «끝이 몸통보다 진하다») — **58부터 기본 꺼짐**(사람 판정 「시작·끝 원형
+      // 강조가 매우 거슬린다」 · mark58_pre 실측 1.374). 기제는 손잡이로 남는다(실험실).
+      g.fillStyle = o.color
+      const tipR = (wPx / 2) * def.tipLenK
+      g.globalAlpha = def.tipAlpha
+      for (const e of [pts[0]!, pts[pts.length - 1]!]) {
+        g.beginPath(); g.arc(e.x, e.y, tipR, 0, Math.PI * 2); g.fill()
+      }
     }
     g.restore()
     return
   }
 
-  if (p.i === 2 && p.c) {
+  if (def.mode === 'stamps' && def.cpSkipTh > 0) {
     // ── 색연필 — 결이 굵고(거친 UV 격자) 색이 완전히 덮이지 않는다(빈 알갱이) ───────
     // ⚠ 도장 단위 건너뜀(초판)은 이웃 도장의 번짐이 칸을 도로 덮어 구멍이 안 남았다
-    // (dpr2 실측: 내부 맨살 0 — 그 실측이 이 재설계의 사유). **긁개 캔버스**에 이 획만
-    // 그리고 결 칸을 destination-out으로 뚫은 뒤 본판에 합성한다 — 남의 획은 안 지운다.
+    // (dpr2 실측). **긁개 캔버스**에 이 획만 그리고 결 칸을 destination-out으로 뚫은 뒤
+    // 본판에 합성한다 — 남의 획은 안 지운다.
     const scratch = document.createElement('canvas')
     scratch.width = (g.canvas as HTMLCanvasElement).width
     scratch.height = (g.canvas as HTMLCanvasElement).height
     const sg = scratch.getContext('2d')!
-    sg.fillStyle = p.c
+    sg.fillStyle = o.color
     sg.globalCompositeOperation = 'source-over'
-    const st = stampsOf(uv, p.press, toPx, Math.max(1, wPx * 0.3))
+    const st = stampsOf(pts, o.press, spacingPx)
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
     for (const q of st) {
+      const so = scatOf()
       const gr2 = grain01(Math.floor(q.x * 7.13), Math.floor(q.y * 7.13))   // 잔결(도장별 미세 변화)
-      stamp(sg, q.x, q.y, (wPx / 2) * paintWidthFactor(q.press),
-        C.PAINT_CP_ALPHA * (0.7 + 0.3 * gr2) * paintDensity(q.press))
+      stamp(sg, q.x, q.y + so, (wPx / 2) * widthFactorOf(def, q.press),
+        def.alpha * toothOf(def, gr2) * densityOf(def, q.press), def.hardness, o.color)
       if (q.x < x0) x0 = q.x
       if (q.y < y0) y0 = q.y
       if (q.x > x1) x1 = q.x
       if (q.y > y1) y1 = q.y
     }
     // 결 칸 뚫기 — UV 격자(굵기 배수 셀 · 세계 고정)에서 grain이 문 아래인 칸을 걷어낸다
-    const cellPx = Math.max(1.5, wWorld * C.PAINT51_CP_GRAIN_K * dims.pxPerUnit)
+    const cellPx = Math.max(1.5, o.grainWpx * def.grainK)
     const m = wPx
     sg.globalCompositeOperation = 'destination-out'
     sg.fillStyle = '#000'
     for (let qy = Math.floor((y0 - m) / cellPx); qy <= Math.floor((y1 + m) / cellPx); qy++) {
       for (let qx = Math.floor((x0 - m) / cellPx); qx <= Math.floor((x1 + m) / cellPx); qx++) {
         const gr = grain01(qx, qy)
-        if (gr >= C.PAINT51_CP_SKIP_TH) continue
-        sg.globalAlpha = 1 - C.PAINT51_CP_SKIP_ALPHA / C.PAINT_CP_ALPHA   // 구멍의 잔량(살짝 남는다)
+        if (gr >= def.cpSkipTh) continue
+        sg.globalAlpha = 1 - def.cpSkipAlpha / def.alpha   // 구멍의 잔량(살짝 남는다)
         sg.beginPath()
         sg.arc((qx + 0.5) * cellPx, (qy + 0.5) * cellPx, cellPx * 0.38, 0, Math.PI * 2)
         sg.fill()
@@ -292,26 +334,26 @@ function drawStrokeTex(
     return
   }
 
-  if (p.i === 3 && p.c) {
+  if (def.mode === 'stamps') {
     // ── 연필(51 신설) — 종이 결에 걸린 불연속 · 압력이 농도(가파름)·굵기(완만)를 움직인다 ──
-    g.globalCompositeOperation = 'source-over'
-    g.fillStyle = p.c
-    const cellPx = Math.max(1, wWorld * C.PAINT51_PENCIL_GRAIN_K * dims.pxPerUnit)
-    const st = stampsOf(uv, p.press, toPx, Math.max(0.8, wPx * 0.25))
+    g.globalCompositeOperation = def.composite
+    g.fillStyle = o.color
+    const cellPx = Math.max(1, o.grainWpx * def.grainK)
+    const st = stampsOf(pts, o.press, spacingPx)
     for (const q of st) {
-      const gr = grain01(Math.floor(q.x / cellPx), Math.floor(q.y / cellPx))
-      const tooth = C.PAINT51_PENCIL_GRAIN_FLOOR + (1 - C.PAINT51_PENCIL_GRAIN_FLOOR) * gr
-      stamp(g, q.x, q.y, (wPx / 2) * paintWidthFactor(q.press),
-        0.85 * tooth * paintDensity(q.press))
+      const so = scatOf()
+      const gr = def.grainK > 0 ? grain01(Math.floor(q.x / cellPx), Math.floor(q.y / cellPx)) : 1
+      stamp(g, q.x, q.y + so, (wPx / 2) * widthFactorOf(def, q.press),
+        def.alpha * toothOf(def, gr) * densityOf(def, q.press), def.hardness, o.color)
     }
     g.restore()
     return
   }
 
-  // ── 붓(흑연 — i 없음) — 획 안 농도 흐름 · 끝 갈라짐(빗살 발산) ──────────────────
-  g.globalCompositeOperation = 'source-over'
-  g.strokeStyle = MAT[grade].color
-  const rng = rng32(s.id)                       // 결정론 — 획마다 같은 빗살·같은 흐름(§5)
+  // ── 붓(bristles) — 획 안 농도 흐름 · 끝 갈라짐(빗살 발산) ─────────────────────────
+  g.globalCompositeOperation = def.composite
+  g.strokeStyle = o.color
+  const rng = rng32(o.seed)                     // 결정론 — 획마다 같은 빗살·같은 흐름(§5)
   const nodes: number[] = []
   for (let k = 0; k < C.PAINT51_BRUSH_FLOW_NODES; k++) nodes.push(0.5 + 0.5 * rng())
   const flow = (t: number): number => {
@@ -320,34 +362,59 @@ function drawStrokeTex(
     const f = x - i
     return nodes[i]! * (1 - f) + nodes[i + 1]! * f
   }
-  const bristles = C.PAINT51_BRUSH_BRISTLES
-  const st = stampsOf(uv, p.press, toPx, Math.max(1, wPx * 0.3))
+  const bristles = Math.max(2, Math.round(def.bristles))
+  const st = stampsOf(pts, o.press, spacingPx)
   // 빗살의 가로 배치·개별 세기(획당 고정 — rng 순서가 결정론의 전부다)
   const offs: { o: number; a: number; w: number }[] = []
   for (let b = 0; b < bristles; b++) {
     offs.push({ o: (b / (bristles - 1) - 0.5) * 0.8 + (rng() - 0.5) * 0.2, a: 0.5 + 0.5 * rng(), w: 0.3 + 0.35 * rng() })
   }
-  g.fillStyle = MAT[grade].color
+  g.fillStyle = o.color
   for (let i = 0; i + 1 < st.length; i++) {
     const q = st[i]!, q2 = st[i + 1]!
     // 진행 방향의 수직(빗살이 벌어지는 축)
     const dx = q2.x - q.x, dy = q2.y - q.y
     const dl = Math.hypot(dx, dy) || 1
     const nx = -dy / dl, ny = dx / dl
-    const split = q.t > C.PAINT51_BRUSH_SPLIT_T
-      ? ((q.t - C.PAINT51_BRUSH_SPLIT_T) / (1 - C.PAINT51_BRUSH_SPLIT_T)) * C.PAINT51_BRUSH_SPLIT_K
+    const split = q.t > def.splitT
+      ? ((q.t - def.splitT) / Math.max(1e-9, 1 - def.splitT)) * def.splitK
       : 0
     for (const b of offs) {
-      const off = (b.o * (1 + split * 2)) * wPx
+      const off = (b.o * (1 + split * 2)) * wPx + scatOf()
       stamp(g, q.x + nx * off, q.y + ny * off,
-        (wPx / 2) * b.w * paintWidthFactor(q.press) * (split > 0 ? 0.7 : 1),
-        MAT[grade].alpha * b.a * flow(q.t) * paintDensity(q.press) * 0.6)
+        (wPx / 2) * b.w * widthFactorOf(def, q.press) * (split > 0 ? 0.7 : 1),
+        o.baseAlpha * b.a * flow(q.t) * densityOf(def, q.press) * def.alpha, def.hardness, o.color)
     }
   }
   g.restore()
 }
 
-
+function drawStrokeTex(
+  g: CanvasRenderingContext2D, s: Stroke, box: UvBox, dims: { h: number; pxPerUnit: number },
+) {
+  const p = s.paint!
+  stampLogInstr = p.i ?? 0                        // 도장 기록의 도구 표식(0 = 붓)
+  const uv = p.uv!
+  const toPx = (u: number, v: number): Pt =>
+    pt((u - box.u0) * dims.pxPerUnit, dims.h - (v - box.v0) * dims.pxPerUnit)
+  const pts: Pt[] = []
+  for (let i = 0; i + 1 < uv.length; i += 2) pts.push(toPx(uv[i]!, uv[i + 1]!))
+  const wWorld = p.w ?? C.PAINT_W_FALLBACK_UNITS
+  const wPx = Math.max(0.5, wWorld * dims.pxPerUnit)
+  const grade = s.mat?.grade ?? 'HB'
+  const def = brushDef(instrOfTag(p.i))
+  // 색 — 붓(흑연)은 MAT 등급색, 색이 있는 도구(마커·색연필·연필)는 획의 hex.
+  // hex가 없는 band·stamps 획은 종전처럼 흑연 규약(bristles 경로)으로 떨어진다.
+  const useHex = def.mode !== 'bristles' && p.c
+  const effDef = useHex ? def : brushDef('brush')
+  paintMark(g, pts, wPx, effDef, {
+    color: useHex ? p.c! : MAT[grade].color,
+    baseAlpha: MAT[grade].alpha,
+    seed: s.id,
+    grainWpx: wWorld * dims.pxPerUnit,
+    press: p.press,
+  })
+}
 
 /** **굽는다** — 흰 바탕 + (이 면·이 쪽의) 획 전부, 획 id 차례(그린 차례 = 쌓인 차례).
  *  면 고정 해칭(hatchMode 'face' · web2-45의 둘째 판)은 획보다 **아래**에 깐다

@@ -10,10 +10,10 @@
       "extMean": 13.8
     },
     "strong": {
-      "px": 864,
-      "pigPerPx": 493.2,
+      "px": 859,
+      "pigPerPx": 490.3,
       "rows": 23,
-      "extMean": 21.6
+      "extMean": 21.48
     },
     "flat": {
       "weak": {
@@ -32,7 +32,7 @@
       "width_ratio": 1,
       "note_width_ratio": "flat.width_ratio는 반증이 아니라 «두 측정 자리의 축척 동등성» 실측이다(3차 [14] — 같은 w_world·같은 배수의 두 띠가 같은 폭인가. 1.0은 구성상 강제가 아니다: 축척이 다르면 1이 아니게 된다). 압력 반증은 농도 술어 반전 + 폭 양방향 부호의 소멸이다"
     },
-    "density_ratio": 1.658,
+    "density_ratio": 1.649,
     "width_ratio": 1.533
   },
   "constants_used": {
@@ -69,34 +69,36 @@
     "reachability_source": "이 파일의 pressure.flat ↔ pressure"
   },
   "marker_tip": {
-    "def": "마커 가로획 — 끝 상자(578..592) ↔ 몸통 상자(540..554)의 픽셀당 안료. 문 C.PAINT51_TIP_MIN_RATIO(값은 constants_used). 반증 = setMarkerFlatForTest(팁이 안 찍힌다 — 같은 술어가 죽는다). 두-자리 비교 주석(3차 [4]): 자가 픽셀당 안료(위치 축척 무관)이고, 위치 요인의 대조값은 flat.ratio(같은 두 상자·팁 없음)가 든다 — 0.93 대역이면 두 자리의 바닥 차가 문(1.05) 밖 여유를 안 먹는다",
-    "tip": {
-      "px": 115,
-      "pigPerPx": 251.7,
-      "rows": 12,
-      "extMean": 10.45
-    },
-    "mid": {
-      "px": 182,
-      "pigPerPx": 229,
-      "rows": 13,
-      "extMean": 13
-    },
-    "ratio": 1.099,
-    "flat": {
+    "def": "58 계약: 기본 팁 0(끝 상자(578..592) ↔ 몸통 상자(540..554) 픽셀당 안료 비 < C.PAINT51_TIP_MIN_RATIO) · setBrushTuneForTest(marker, {tipAlpha})로 51의 값이 되살아난다(비 > 문 — 기제 생존). 자는 51과 동일(픽셀당 안료 — 위치 축척 무관)",
+    "off": {
       "tip": {
-        "px": 122,
-        "pigPerPx": 347.5,
-        "rows": 13,
-        "extMean": 11.09
+        "px": 114,
+        "pigPerPx": 221.4,
+        "rows": 12,
+        "extMean": 10.36
       },
       "mid": {
-        "px": 186,
-        "pigPerPx": 374.9,
-        "rows": 14,
-        "extMean": 13.29
+        "px": 182,
+        "pigPerPx": 229,
+        "rows": 13,
+        "extMean": 13
       },
-      "ratio": 0.927
+      "ratio": 0.967
+    },
+    "on": {
+      "tip": {
+        "px": 115,
+        "pigPerPx": 251.7,
+        "rows": 12,
+        "extMean": 10.45
+      },
+      "mid": {
+        "px": 182,
+        "pigPerPx": 229,
+        "rows": 13,
+        "extMean": 13
+      },
+      "ratio": 1.099
     }
   },
   "grain_zoom": {
@@ -122,14 +124,14 @@
     "retried3": false
   },
   "swatch": {
-    "def": "다섯 칸 전수(#12 · 34-3의 전수 규약) — 견본 원의 «렌더» 지름(getBoundingClientRect)과 그은 자국의 띠 두께(채색 행 / dpr). 문 = 상대 편차 < C.PAINT51_SWATCH_W_TOL(2.5 칸은 물리 행 눈금이 거칠어 기록만 — 판정은 5 이상 네 칸). 반증 = 틀린 짝(20 자국 <-> 40 견본)이 같은 자로 문 밖(cross_mismatch)",
-    "swatch_rendered_px": [
-      2.5,
-      5,
-      10,
-      20,
-      40
-    ],
+    "def": "58-1 게이트 — **슬라이더 값(UI input) == 그은 자국의 띠 두께(채색 행 / dpr)**. 다섯 값 전수(#12) · 문 = 상대 편차 < C.PAINT51_SWATCH_W_TOL(2.5는 행 눈금이 거칠어 기록만 — 판정은 5 이상 네 값). 반증 = 틀린 짝(20 자국 <-> 40 값)이 같은 자로 문 밖(cross_mismatch). 도구별 최대·갈아탐 클램프는 maxes/clamp가 값",
+    "maxes": {
+      "brush": 500,
+      "marker": 100,
+      "cp": 50,
+      "pencil": 50
+    },
+    "clamp_after_switch": 50,
     "tray_px": [
       2.5,
       5,
@@ -198,23 +200,23 @@
     "def": "네 도구 x 3획(합성 펜 필압 0.4/0.6/0.8)이 든 방 — 프레임 dt(중앙·p90 · #82: 차는 before2 기준, 잡음 바닥 = |before−before2| 중앙값 차) · 재굽기 ms(rebakePaintTex 5회 — rAF+30ms 대기 포함이라 상한 기록). 판정은 실기기 몫(rep49 frame20의 유보 그대로 — 헤드리스 소프트웨어 GL)",
     "paint_strokes": 12,
     "before_ms": {
-      "median": 16.799999997019768,
-      "p90": 19.200000002980232
+      "median": 17,
+      "p90": 17.899999991059303
     },
     "before2_ms": {
-      "median": 16.899999998509884,
-      "p90": 18
+      "median": 16.799999997019768,
+      "p90": 17.799999997019768
     },
-    "noise_floor_ms": 0.1,
+    "noise_floor_ms": 0.2,
     "after_ms": {
-      "median": 16.899999998509884,
-      "p90": 18.100000001490116
+      "median": 16.899999991059303,
+      "p90": 18.099999994039536
     },
-    "delta_median_ms": 0,
-    "delta_p90_ms": 0.1,
+    "delta_median_ms": 0.1,
+    "delta_p90_ms": 0.3,
     "bake_ms": {
-      "median": 34.8,
-      "max": 49.7
+      "median": 48.3,
+      "max": 50.8
     },
     "note_20faces": "스무 면 축은 paint50 tex_budget(마커 40획 · 면 17)이 든다 — 이 팔은 «도구 넷» 축이다(#12의 축 배분)",
     "note_82": "중앙값이 vsync 바닥(16.7ms)에 붙은 실행에서는 차의 해상도가 눈금뿐이다(paint50 note_82 그대로 — dpr1이 그 조건이다). 부호 주석(3차 [7]): dpr2는 동일 조건 기준선 둘(before/before2)의 차가 재려는 효과보다 커서 Δ의 부호가 기준 선택으로 뒤집힌다 — |Δ|>잡음 바닥이어도 신호로 못 읽는다(판정 불능을 그렇게 적는다). 실기기로 넘기는 것은 크기·부호 둘 다다 — 헤드리스 소프트웨어 GL의 유보(rep49 frame20)와 같은 자리"

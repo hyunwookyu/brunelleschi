@@ -145,7 +145,9 @@ test('① 칠통 — 재누름이 열고 · 견본이 화면과 같은 상태에
   expect(await page.locator('#btn-paint-auto').count(), '「톤 자동」은 없다(48-8)').toBe(0)
   // 그 자리에 들어온 것 둘이 실제로 서 있다
   expect(await page.locator('#paint-wheel-cv').count(), '색상 휠이 기본이다(48-7)').toBe(1)
-  expect(await page.locator('#paint-sizes .sizebtn').count(), '크기 트레이 다섯 칸(48-2)').toBe(5)
+  // 58-1 — 다섯 칸 트레이는 슬라이더로 대체됐다(D-W26 · R1 오적용 철회)
+  expect(await page.locator('#paint-size-range').count(), '크기 슬라이더(58-1)').toBe(1)
+  expect(await page.locator('#paint-sizes .sizebtn').count(), '이산 칸은 없다(철회의 값)').toBe(0)
   OUT.tray = { rows, sel_after_swatch: sel, sel_after_cp: sel2.i }
   OUT.constants_used = await page.evaluate(() => (window as any).__b2.diag.mats46().constants)
 })

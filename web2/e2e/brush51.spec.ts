@@ -220,7 +220,11 @@ test('① 압력 — 진하기·굵기가 갈리고 농도 비 > 굵기 비 · D
   }
 })
 
-test('② 마커 팁 — 끝이 몸통보다 진하다 · D-3(평면 덮어쓰기 — 팁 생략)', async ({ page }) => {
+test('② 마커 팁 — **기본 꺼짐**(58 사람 판정) · 손잡이를 켜면 «끝이 진하다»가 되살아난다', async ({ page }) => {
+  // ⚠⚠ **계약이 web2-58에서 뒤집혔다**: 51의 「끝이 몸통보다 진하다」(이 팔의 옛 술어)를
+  // 사람이 「시작·끝 원형 강조가 매우 거슬린다」로 철회했다(mark58_pre 실측 1.374 —
+  // 그 값이 바로 이 팁이다). 기본은 팁 0(끝 ≈ 몸통)이고, 기제는 데이터 손잡이(tipAlpha —
+  // 실험실)로 남는다 — 이 팔은 «기본 꺼짐»과 «손잡이 생존» 둘 다 잰다(D-3의 짝).
   await room(page)
   await pickInstr(page, 'marker', '#1e7fd0', 12)
   await drawLine(page, 515, 420, 585, 420)
@@ -230,18 +234,20 @@ test('② 마커 팁 — 끝이 몸통보다 진하다 · D-3(평면 덮어쓰�
   expect(tip.px).toBeGreaterThan(10)
   expect(mid.px).toBeGreaterThan(10)
   const csT = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
-  expect(tip.pigPerPx, '끝(팁)이 몸통보다 진하다(문 C.PAINT51_TIP_MIN_RATIO)').toBeGreaterThan(mid.pigPerPx * csT.PAINT51_TIP_MIN_RATIO)
-  await page.evaluate(() => (window as any).__b2.diag.setMarkerFlatForTest(true))
+  expect(tip.pigPerPx, '기본 — 팁이 없다(끝이 문 아래 · 58의 새 계약)').toBeLessThan(mid.pigPerPx * csT.PAINT51_TIP_MIN_RATIO)
+  // 손잡이 켬 — 51의 그 값(tipAlpha = C.PAINT51_MARKER_TIP_ALPHA)으로 기제가 되살아난다
+  await page.evaluate(([a, k]) => (window as any).__b2.diag.setBrushTuneForTest('marker', { tipAlpha: a, tipLenK: k }),
+    [csT.PAINT51_MARKER_TIP_ALPHA, csT.PAINT51_MARKER_TIP_LEN_K] as const)
   await page.waitForTimeout(250)
-  const tipF = await bandStats(page, 578, 410, 14, 20)
-  const midF = await bandStats(page, 540, 410, 14, 20)
-  expect(tipF.pigPerPx, '반증 — 평면 덮어쓰기(팁 생략)에서 같은 술어가 죽는다').toBeLessThan(midF.pigPerPx * csT.PAINT51_TIP_MIN_RATIO)
-  await page.evaluate(() => (window as any).__b2.diag.setMarkerFlatForTest(false))
+  const tipOn = await bandStats(page, 578, 410, 14, 20)
+  const midOn = await bandStats(page, 540, 410, 14, 20)
+  expect(tipOn.pigPerPx, '손잡이 켬 — 끝이 몸통보다 진하다(기제 생존 · 문 C.PAINT51_TIP_MIN_RATIO)').toBeGreaterThan(midOn.pigPerPx * csT.PAINT51_TIP_MIN_RATIO)
+  await page.evaluate(() => (window as any).__b2.diag.setBrushTuneForTest('marker', null))
   await page.waitForTimeout(200)
   OUT.marker_tip = {
-    def: '마커 가로획 — 끝 상자(578..592) ↔ 몸통 상자(540..554)의 픽셀당 안료. 문 C.PAINT51_TIP_MIN_RATIO(값은 constants_used). 반증 = setMarkerFlatForTest(팁이 안 찍힌다 — 같은 술어가 죽는다). 두-자리 비교 주석(3차 [4]): 자가 픽셀당 안료(위치 축척 무관)이고, 위치 요인의 대조값은 flat.ratio(같은 두 상자·팁 없음)가 든다 — 0.93 대역이면 두 자리의 바닥 차가 문(1.05) 밖 여유를 안 먹는다',
-    tip, mid, ratio: +(tip.pigPerPx / Math.max(1, mid.pigPerPx)).toFixed(3),
-    flat: { tip: tipF, mid: midF, ratio: +(tipF.pigPerPx / Math.max(1, midF.pigPerPx)).toFixed(3) },
+    def: '58 계약: 기본 팁 0(끝 상자(578..592) ↔ 몸통 상자(540..554) 픽셀당 안료 비 < C.PAINT51_TIP_MIN_RATIO) · setBrushTuneForTest(marker, {tipAlpha})로 51의 값이 되살아난다(비 > 문 — 기제 생존). 자는 51과 동일(픽셀당 안료 — 위치 축척 무관)',
+    off: { tip, mid, ratio: +(tip.pigPerPx / Math.max(1, mid.pigPerPx)).toFixed(3) },
+    on: { tip: tipOn, mid: midOn, ratio: +(tipOn.pigPerPx / Math.max(1, midOn.pigPerPx)).toFixed(3) },
   }
 })
 
@@ -387,23 +393,54 @@ test('④ dpr 1↔3 — 굵기(물리 px ÷ dpr) 비가 1 ± C.PAINT51_DPR_W_TOL
   expect(Math.abs(w3 / Math.max(1, w1) - 1), 'dpr 1↔3 굵기 비').toBeLessThan(tol)
 })
 
-test('⑤ 트레이 견본(원 지름 = w) == 자국 굵기(픽셀) · ⑥ Injector(행위)', async ({ page }) => {
+test('⑤ **슬라이더 값 == 자국 굵기(픽셀)**(58-1 게이트) · ⑥ Injector(행위)', async ({ page }) => {
+  // ⚠⚠ **계약이 web2-58에서 바뀌었다**: 48-2의 이산 크기 트레이(다섯 칸 · 견본 원)는
+  // 슬라이더로 대체됐다(51의 「슬라이더 ⛔」는 R1 오적용 — 사람 정정 · DECISIONS D-W26).
+  // 이 팔의 자(자국의 띠 두께 픽셀)는 그대로이고, 판정 대상이 «견본 원 지름»에서
+  // **«슬라이더 값»**으로 바뀌었다 — 값은 실제 UI(#paint-size-range input 이벤트)로 넣는다.
   await room(page)
-  // ⑤ — 마커 20px 칸: 견본은 지름 20의 원(구성 — 48-2의 그 문법), 자국의 띠 두께를 잰다
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const dpr = await page.evaluate(() => window.devicePixelRatio || 1)
-  // 견본의 **렌더 실측**(리뷰어 [7] — 34-3의 그 규약: 구성값이 아니라 그려진 지름)
+  /** 슬라이더로 굵기를 정한다 — 제품 핸들러 그대로(input 이벤트) */
+  const setSize = async (w: number) => {
+    await page.click('#btn-paint')
+    if (await page.locator('#painttray.open').count() === 0) await page.click('#btn-paint')
+    await page.evaluate((v) => {
+      const el = document.getElementById('paint-size-range') as HTMLInputElement
+      el.value = String(v)
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+    }, w)
+    await page.mouse.click(150, 700); await page.waitForTimeout(60)
+  }
+  // 도구별 최대(사람 값 — C.PAINT58_MAX_W)가 슬라이더 max로 서 있다 + 갈아탈 때 클램프
   await page.click('#btn-paint')
   if (await page.locator('#painttray.open').count() === 0) await page.click('#btn-paint')
-  const cells: number[] = await page.evaluate(() =>
-    [...document.querySelectorAll('#paint-sizes .sizebtn circle')].map(c => c.getBoundingClientRect().width))
+  const maxOf = async (instr: string) => {
+    await page.click(`#btn-paint-${instr}`)
+    await page.waitForTimeout(40)
+    return page.evaluate(() => Number((document.getElementById('paint-size-range') as HTMLInputElement).max))
+  }
+  const maxes = { brush: await maxOf('brush'), marker: await maxOf('marker'), cp: await maxOf('cp'), pencil: await maxOf('pencil') }
+  expect(maxes, '도구별 최대 — 사람 값 그대로').toEqual({ brush: 500, marker: 100, cp: 50, pencil: 50 })
+  // 클램프 — 마커 100으로 놓고 연필로 갈아타면 50으로 준다(최대 밖 값이 안 남는다)
+  await page.evaluate(() => {
+    const el = document.getElementById('paint-size-range') as HTMLInputElement
+    ;(document.getElementById('btn-paint-marker') as HTMLButtonElement).click()
+    el.value = '100'; el.dispatchEvent(new Event('input', { bubbles: true }))
+    ;(document.getElementById('btn-paint-pencil') as HTMLButtonElement).click()
+  })
+  const clamped = await page.evaluate(() => (window as any).__b2.app.paintSel.w)
+  expect(clamped, '갈아탈 때 도구 최대로 클램프').toBe(50)
   await page.mouse.click(150, 700); await page.waitForTimeout(60)
-  // 자국 — 다섯 칸 전수(#12 · 34-3의 전수 규약). 벽 중심 대역에 y를 갈라 긋는다.
+  // 자국 — 다섯 값 전수(#12 · 34-3의 전수 규약). 벽 중심 대역에 y를 갈라 긋는다.
   const trays = [2.5, 5, 10, 20, 40]
   const centers = [388, 399, 413, 436, 468]          // 겹치지 않게 굵기에 맞춘 간격(벽 안)
   const rowsOf: number[] = []
   for (let k = 0; k < trays.length; k++) {
-    await pickInstr(page, 'marker', '#1e7fd0', trays[k]!)
+    await pickInstr(page, 'marker', '#1e7fd0', 10)   // 도구·색만 — 굵기는 슬라이더가 정한다
+    await setSize(trays[k]!)
+    const selW = await page.evaluate(() => (window as any).__b2.app.paintSel.w)
+    expect(selW, '슬라이더 → paintSel.w 왕복').toBe(trays[k])
     const y = centers[k]!
     await drawLine(page, 515, y, 585, y)
     await page.waitForTimeout(150)
@@ -411,16 +448,15 @@ test('⑤ 트레이 견본(원 지름 = w) == 자국 굵기(픽셀) · ⑥ Injec
     rowsOf.push(b.rows / dpr)
   }
   OUT.swatch = {
-    def: '다섯 칸 전수(#12 · 34-3의 전수 규약) — 견본 원의 «렌더» 지름(getBoundingClientRect)과 그은 자국의 띠 두께(채색 행 / dpr). 문 = 상대 편차 < C.PAINT51_SWATCH_W_TOL(2.5 칸은 물리 행 눈금이 거칠어 기록만 — 판정은 5 이상 네 칸). 반증 = 틀린 짝(20 자국 <-> 40 견본)이 같은 자로 문 밖(cross_mismatch)',
-    swatch_rendered_px: cells, tray_px: trays, stroke_px: rowsOf.map(v => +v.toFixed(2)),
+    def: '58-1 게이트 — **슬라이더 값(UI input) == 그은 자국의 띠 두께(채색 행 / dpr)**. 다섯 값 전수(#12) · 문 = 상대 편차 < C.PAINT51_SWATCH_W_TOL(2.5는 행 눈금이 거칠어 기록만 — 판정은 5 이상 네 값). 반증 = 틀린 짝(20 자국 <-> 40 값)이 같은 자로 문 밖(cross_mismatch). 도구별 최대·갈아탐 클램프는 maxes/clamp가 값',
+    maxes, clamp_after_switch: clamped, tray_px: trays, stroke_px: rowsOf.map(v => +v.toFixed(2)),
     tol: cs.PAINT51_SWATCH_W_TOL,
     cross_mismatch: +(Math.abs(rowsOf[3]! - trays[4]!) / trays[4]!).toFixed(3),
     note_bias: '자국 잔차가 전 칸 한 방향(+)이고 두 성분이다(3차 [13]): 상수 항(AA 가장자리 ~1행)과 40칸에서 두드러지는 비례 성분(+8~10% — dpr1 +4·dpr2 +3행. 원인 후보는 팁 덧찍음의 가장자리·환산 잔여이며 이 팔로는 못 가른다 — 실기기 확인 항목 ㉓에 얹는다). 판정은 문 SWATCH_W_TOL 안이다. 2.5 칸은 행 눈금(±1행 = ±40%)이 문보다 거칠어 판정 밖(기록만 · «가장 가는 칸의 1:1»은 실기기 눈 판정 몫)',
     note_reach: '렌더==구성 문(0.1)의 도달 가능성은 «수리 전» 실측이다 — 눌림 상태에서 20칸 16.07(편차 0.196)·40칸 18.75(0.531)로 둘 다 문 밖(NOTES 51 [7] 대응이 그 기록)',
   }
   for (let k = 1; k < trays.length; k++) {
-    expect(Math.abs(rowsOf[k]! - trays[k]!) / trays[k]!, '칸 ' + trays[k] + ' — 견본 == 자국').toBeLessThan(cs.PAINT51_SWATCH_W_TOL)
-    expect(Math.abs(cells[k]! - trays[k]!) / trays[k]!, '칸 ' + trays[k] + ' — 견본 렌더 지름 == 구성(문 0.1 — 수리 전 눌림 20→16.07(0.196)·40→18.75(0.531)가 이 문에 걸린다: 도달 가능성의 실측)').toBeLessThan(0.1)
+    expect(Math.abs(rowsOf[k]! - trays[k]!) / trays[k]!, '값 ' + trays[k] + ' — 슬라이더 == 자국').toBeLessThan(cs.PAINT51_SWATCH_W_TOL)
   }
   expect(Math.abs(rowsOf[3]! - trays[4]!) / trays[4]!, '반증 — 틀린 짝은 문 밖').toBeGreaterThan(cs.PAINT51_SWATCH_W_TOL)
   // 연필 줄 34-0의 «행위» 값(리뷰어 [12] — 쓸 수 있는 상태에서 뜨는가 · 그 점의 맨 위인가)

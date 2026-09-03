@@ -2083,7 +2083,7 @@ function doGripAction(key: string) {
 //
 //     기본    **색상 휠**(프로크리에이트·모폴리오 방식) — 고리(색상) + 안쪽 판(채도·명도)
 //     곁에    재료 프리셋 열넷 — 빠른 길이지 유일한 길이 아니다
-//     그리고  **크기 트레이**(48-2) — 붓·마커·색연필의 자국 굵기. 슬라이더 ⛔(R1)
+//     그리고  **크기 슬라이더**(58-1 — 48-2의 트레이를 대체. 「슬라이더 ⛔」는 R1 오적용으로 철회 · DECISIONS)
 //
 // ⛔ 「톤 자동」(46의 분류 제안)은 **48-8이 없앴다** — 사용자가 원하지 않았다.
 // 그림 정본은 docs/instrument-icons.md 「마커·색연필(칠통)」.
@@ -2096,7 +2096,8 @@ const PAINT_INSTRS: { i: Instr; name: string; tip: string; svg: string }[] = [
   { i: 'pencil', name: '연필', tip: '연필 — 종이 결에 걸린다. 세게 누르면 진해진다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 24 L24 12 l-4 -4 L8 20 l-1 5 z"/><path d="M18 10 l4 4"/></svg>' },
 ]
 const paintInstrRow = new Map<Instr, HTMLButtonElement>()
-const paintSizeRow = new Map<number, HTMLButtonElement>()
+/** 크기 슬라이더 줄의 동기화(58-1) — 도구가 바뀌면 max·값·점이 따라온다(아래 블록이 채운다) */
+let syncPaintSizeRow: () => void = () => {}
 
 // ── 색상 휠(48-7) — 기하·색 변환은 `core/colorwheel.ts`가 든다(이 파일은 DOM만) ──
 // 크기는 통의 폭(208px — index.html `--dim-w` 계산의 그 내용 폭)에 맞춘다.
@@ -2198,44 +2199,51 @@ function setPaintHex(hex: string, why: string) {
     painttrayEl.append(b)
   }
 
-  // ── 크기 트레이(48-2) — **각 줄에 그 굵기의 실제 자국을 1:1로** 그린다 ────────
-  // 펜 촉(30-2)·지우개 크기(34-3)와 같은 문법이다: 고르는 것이지 미는 것이 아니다(R1).
-  // 자국은 SVG 선 하나이고 `stroke-width`가 곧 그 굵기 px다 — 「1:1」이 문면이 아니라
-  // 기하로 참이다(`e2e/paint48.spec.ts` ③이 화면에서 그 폭을 잰다).
-  const sizeWrap = document.createElement('div')
+  // ── 크기 **슬라이더**(web2-58 58-1 — 48-2의 이산 트레이를 철회) ─────────────────
+  // ⚠⚠ 51의 「슬라이더 ⛔(R1)」는 **R1의 오적용**이었다(사람 정정 — 58 지시):
+  // R1은 「진짜 도구가 **이산**인 곳」의 규칙이다(연필 등급·펜 촉 — 실물이 이산).
+  // **칠 도구의 크기는 이산이 아니다** — 실제 붓도 마커도 연속이다. 그래서 연속 조절이
+  // 맞고, 최대는 도구별 사람 값(C.PAINT58_MAX_W — 마커 100 · 붓 500 · 색연필/연필 50).
+  // DECISIONS 「51 문면 철회」가 기록. 34-0 재대조는 NOTES 58 절(#96).
+  // 곁의 점은 «지금 값의 1:1 자국»(48-2의 그 문법)— 통 폭을 넘는 값은 36px에 멎고
+  // 숫자 라벨이 항상 정확한 값을 든다(1:1의 판정자는 e2e — 슬라이더 값 == 자국 픽셀).
+  // <label>인 이유(#96 · 28-2): 툴팁 대상 선택자(button·summary·label·[role=button])의
+  // 규칙 — input 낱개는 대상이 아니라서 label로 감싼다(45·47의 체크상자 선례 그대로).
+  const sizeWrap = document.createElement('label')
   sizeWrap.id = 'paint-sizes'
   sizeWrap.className = 'rrow prow'
-  for (const w of C.PAINT_W_PX) {
-    const b = document.createElement('button')
-    b.id = `btn-paint-w-${String(w).replace('.', '_')}`
-    b.className = 'sizebtn'
-    b.dataset.act = 'state'
-    b.title = `자국 굵기 ${w}px`
-    // ⚠⚠ **자국의 문법은 지우개 크기통(34-3)을 그대로 따른다**(A-3 · 지시 문면이
-    // 그 둘을 짝으로 가리킨다): **라벨 + 그 크기의 동그라미**다. 지우개는 윤곽 원이고
-    // 칠은 **채운 점**이다 — 지우개는 «닿는 범위»이고 칠은 «남는 자국»이기 때문이다.
-    // 지름 = 그 굵기 px이므로 **1:1이 문면이 아니라 기하로 참**이다.
-    // ⚠ **초판은 둥근 끝의 막대였고 팔이 빨개 잡았다**: 44×46 상자의 40px 막대가
-    // 채운 `camera-slash` 견본과 **IoU 0.9145**를 냈다(`papericon31.spec` ① · 문 0.75).
-    // 문을 무르지 않고 **도형을 선례 있는 것으로 바꿨다** — 같은 문법의 지우개 줄은
-    // 그 팔 아래에 이미 살고 있다(새 모양을 지어 문을 다시 시험하지 않는다).
-    const rmax = Math.max(...C.PAINT_W_PX) / 2
-    const bh = Math.max(2 * (w / 2) + 8, 22)
-    const bw = 34 + 2 * rmax + 8
-    b.innerHTML = `<svg width="${bw}" height="${bh}" viewBox="0 0 ${bw} ${bh}">`
-      + `<text x="28" y="${(bh / 2 + 4).toFixed(1)}" text-anchor="end"`
-      + ` font-family="system-ui, sans-serif" font-size="11" fill="#3c3831">${w}</text>`
-      + `<circle cx="${(34 + rmax).toFixed(1)}" cy="${(bh / 2).toFixed(1)}" r="${w / 2}" fill="currentColor"/></svg>`
-    b.addEventListener('click', () => {
-      app.paintSel.w = w
-      if (app.tool !== 'paint') setTool('paint')
-      syncPainttray()
-      status(`자국 굵기 ${w}px`)
-    })
-    sizeWrap.append(b)
-    paintSizeRow.set(w, b)
+  sizeWrap.title = '자국 굵기 — 도구별 최대: 붓 500 · 마커 100 · 색연필 50 · 연필 50'
+  // ⚠ 초판의 «1:1 점»(채운 원 단독 svg)은 papericon31 ①이 빨갛게 잡았다 — 채운 원
+  // 하나가 카메라 실루엣 견본과 IoU 0.89(48-2 초판 막대의 0.9145와 같은 병 · 문 0.75).
+  // 점을 걷는다: 값 표찰(숫자)이 R6를 지고, 시각 피드백은 자국 자체·작업대가 진다.
+  const sizeRange = document.createElement('input')
+  sizeRange.type = 'range'
+  sizeRange.id = 'paint-size-range'
+  sizeRange.min = String(C.PAINT58_MIN_W)
+  sizeRange.step = '0.5'
+  sizeRange.style.width = '110px'
+  sizeRange.style.flexShrink = '0'                     // #97
+  sizeRange.title = '자국 굵기(px) — 끌어서 조절한다'
+  const sizeVal = document.createElement('span')
+  sizeVal.id = 'paint-size-val'
+  sizeVal.style.minWidth = '44px'
+  const paintMaxW = (): number => brushDef(app.paintSel.i === 'brush' ? 'brush' : app.paintSel.i).maxW
+  const syncSizeRow = syncPaintSizeRow = () => {
+    const max = paintMaxW()
+    sizeRange.max = String(max)
+    if (app.paintSel.w > max) app.paintSel.w = max
+    if (Number(sizeRange.value) !== app.paintSel.w) sizeRange.value = String(app.paintSel.w)
+    sizeVal.textContent = `${app.paintSel.w}px`
   }
+  sizeRange.addEventListener('input', () => {
+    app.paintSel.w = Math.min(paintMaxW(), Math.max(C.PAINT58_MIN_W, Number(sizeRange.value) || C.PAINT58_MIN_W))
+    if (app.tool !== 'paint') setTool('paint')
+    syncSizeRow()
+  })
+  sizeRange.addEventListener('change', () => status(`자국 굵기 ${app.paintSel.w}px`))
+  sizeWrap.append(sizeRange, sizeVal)
   painttrayEl.append(sizeWrap)
+  syncSizeRow()
 
   // ── 브러시 프리셋(web2-52-3) — 도구 설정 묶음(종류·크기·색)을 **기기에** 저장한다 ──
   // 문서가 아니다 — 손에 붙는 것이다(필압 보정과 같은 이유 · 지시 52-3). 세 칸:
@@ -2400,7 +2408,7 @@ function syncPainttray() {
     }
   }
   for (const [i, b] of paintInstrRow) b.classList.toggle('on', app.paintSel.i === i)
-  for (const [w, b] of paintSizeRow) b.classList.toggle('on', app.paintSel.w === w)
+  syncPaintSizeRow()                          // 58-1 — 슬라이더 max·값·점이 도구를 따른다
   drawWheel(wheelHsv())
   wheelHex.textContent = app.paintSel.hex
   for (const m of MATERIALS) {
@@ -2773,7 +2781,21 @@ requestAnimationFrame(() => {
 
 // e2e 진단 통로 — 앱과 같은 함수·같은 상태를 본다(측정 경로와 앱 경로를 가르지 않는다)
 import { project, screenAxes, vpMarks, frameAxes, isParallel, projW, horizonScreenY } from '../core/camera'
-import { setMarkerFlatForTest, setPressFlatForTest, setGrainOffForTest, setPaintOpaqueForTest, paintDensity, paintWidthFactor } from '../core/facetex'
+import { setMarkerFlatForTest, setPressFlatForTest, setGrainOffForTest, setPaintOpaqueForTest, paintDensity, paintWidthFactor, setStampLogForTest, stampLogForTest } from '../core/facetex'
+import { brushDef, setBrushTune, type Instr58, type BrushDef } from '../core/brush58'
+import { initTuneLab } from './tunelab'
+
+// ── 브러시 작업대(web2-58 58-5) — 설정에 숨는다(R8). 시험 긋기 == 제품 굽기(#54) ────
+const tuneLab = initTuneLab({
+  hexOf: () => app.paintSel.hex,
+  rebake: () => { rebakePaintTexForTest(); invalidate() },
+  notify: (m) => notify(m),
+})
+document.getElementById('btn-tunelab')?.addEventListener('click', () => tuneLab.setOpen(true))
+registerBox({
+  id: '#tunelab', isOpen: () => tuneLab.isOpen(), close: () => tuneLab.setOpen(false),
+  zone: () => [tuneLab.root, document.getElementById('btn-tunelab')],
+})
 import { forwardOf, yawDir } from '../core/level'
 import { loopAt, buildGraph, cyclesOf, planesOf, faceScreen } from '../core/face'
 import { geomSize3 } from '../core/osnap'
@@ -2784,6 +2806,15 @@ const diag = {
   openBoxes: () => openBoxIds(),
   /** R7의 **반증 손잡이**(D-3) — 'off'(안 듣는다) · 'swallow'(삼킨다) · 'on'(제자리) */
   boxAwayModeForTest: (m: 'on' | 'off' | 'swallow') => setBoxAwayModeForTest(m),
+  /** **도장 기록**(web2-58 D-1 표식) — 굽기 도장 자리의 수동 기록(끝점 뭉침 D-2의 자) */
+  setStampLogForTest: (on: boolean) => setStampLogForTest(on),
+  stampLogForTest: () => stampLogForTest(),
+  /** **브러시 조정**(web2-58) — 실험실과 같은 배선(#54: setBrushTune 하나) + 재굽기.
+   *  팔이 «손잡이가 실제로 자국을 바꾼다»·«기제가 산다»를 이 길로 잰다. */
+  setBrushTuneForTest: (i: Instr58, patch: Partial<BrushDef> | null) => {
+    setBrushTune(i, patch); rebakePaintTexForTest(); invalidate()
+  },
+  brushDefForTest: (i: Instr58) => brushDef(i),
   /** **임의의 포즈로 한 점을 사영한다**(web2-42) — 팔이 「원근 판과 얼마나 갈리는가」를
    *  재는 자리다. 사영의 출처는 `camera.project` 하나이고 여기서 식을 다시 안 적는다(#54). */
   projectWith(pose: CamPose, P: { x: number; y: number; z: number }) {
