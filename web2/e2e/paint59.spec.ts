@@ -362,6 +362,7 @@ test('① 미리보기 ↔ 확정 — 줌 셋 × 면 둘의 합성 픽셀 차(�
 })
 
 test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하는 창의 p95 / 몸통 창 p95 · 게이트 ≤ 1 + C.PAINT59_CROSS_TOL · 반증(옛 엔진)', async ({ page }) => {
+  test.setTimeout(240_000)                      // dpr2 — 팔이 늘어(동작점 셋·위상 다섯·창 둘) 60s를 넘는다(실측 타임아웃)
   await bigBox(page, false)
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const Y: Record<Instr, number> = { brush: 370, marker: 430, cp: 490, pencil: 550 }
@@ -491,6 +492,7 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
 })
 
 test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감속 몸짓 · 도구 넷) · 게이트 ±C.PAINT58_STAMP_BAND_TOL(도장 셋 — 붓 제외 · 결 끔)', async ({ page }) => {
+  test.setTimeout(240_000)                      // dpr2 — 팔이 늘어(동작점 셋·위상 다섯·창 둘) 60s를 넘는다(실측 타임아웃)
   await bigBox(page, false)
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const X0 = 540, X1 = 860
@@ -545,23 +547,41 @@ test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감�
     end_mean: +(spread.reduce((a, r) => a + r.end_over_mid, 0) / spread.length).toFixed(4),
     end_sd: +sd(spread.map(r => r.end_over_mid)).toFixed(4),
   }
-  for (const ins of ['cp', 'pencil', 'marker'] as const) {
+  // **원근 정규화**(판갈이 원장이 드러낸 것 — 마커(띠 · 폭 일정 · 58과 같은 경로)조차 시작 1.083 · 끝 .916:
+  // 벽이 물러나 화면 왼쪽(가까움)이 굵고 오른쪽이 가늘다 — 화면 창의 «단위 길이당 잉크»는 원근을 같이
+  // 잰다. 마커의 비가 그 원근의 자다(구성상 균일한 띠) — 도장 브러시의 비를 마커의 비로 나눈다.
+  const mk = noGrain.marker as { start_over_mid: number; end_over_mid: number }
+  const norm: Record<string, unknown> = {}
+  for (const ins of ['cp', 'pencil'] as const) {
     const r = noGrain[ins] as { mid: number; start_over_mid: number; end_over_mid: number }
+    const sN = r.start_over_mid / mk.start_over_mid, eN = r.end_over_mid / mk.end_over_mid
+    norm[ins] = { start: +sN.toFixed(4), end: +eN.toFixed(4) }
     expect(r.mid, ins + ' — 몸통에 잉크가 있다').toBeGreaterThan(100)
-    expect(Math.abs(r.start_over_mid - 1), ins + ' — 시작 대역(분모 mid · 결 끔)').toBeLessThanOrEqual(cs.PAINT58_STAMP_BAND_TOL)
-    expect(Math.abs(r.end_over_mid - 1), ins + ' — 끝 대역(분모 mid · 결 끔)').toBeLessThanOrEqual(cs.PAINT58_STAMP_BAND_TOL)
+    expect(Math.abs(sN - 1), ins + ' — 시작 대역(분모 mid · 결 끔 · 마커로 원근 정규화)').toBeLessThanOrEqual(cs.PAINT58_STAMP_BAND_TOL)
+    expect(Math.abs(eN - 1), ins + ' — 끝 대역(분모 mid · 결 끔 · 마커로 원근 정규화)').toBeLessThanOrEqual(cs.PAINT58_STAMP_BAND_TOL)
   }
+  // 반증(D-3 — 이 자의 실패 조건): 속도 축(60-4)을 켜면 감속 구간(시작·끝)이 진해져 정규화 비가 문을 넘는다
+  await page.evaluate(() => (window as any).__b2.diag.setBrushTuneForTest('pencil', { speedAlphaK: -1 }))
+  await page.waitForTimeout(300)
+  const slowDark = await measure()
+  await page.evaluate(() => (window as any).__b2.diag.setBrushTuneForTest('pencil', null))
+  await page.waitForTimeout(200)
+  const sdN = (slowDark.pencil as { start_over_mid: number }).start_over_mid / (slowDark.marker as { start_over_mid: number }).start_over_mid
+  expect(Math.abs(sdN - 1), '반증 — 속도→농도 −1에서 시작 대역이 문을 넘는다').toBeGreaterThan(cs.PAINT58_STAMP_BAND_TOL)
   OUT.ends = {
-    def: '감속 몸짓(처음·끝 15% 잘게) 획의 안쪽 대역(3~28% · 37.5~62.5% · 72~97% — 같은 폭 25%)의 어둡기 합. 분모 mid(#11). mark58 게이트 ①의 자 그대로(#54). 게이트는 **결 끔**(rows_no_grain) 판이다 — 결 칸 표집 잡음이 문(±10%)과 같은 눈금이어서(사전 재현 절: cp 시작 1.149가 그 잡음+누적). **붓은 술어 밖**: 51의 흐름(brush51 ⑦ «흐름 CV ≥ 0.05» 게이트)·끝 갈라짐 감쇠가 균일 술어와 정면 충돌한다 — 값으로만 남긴다(rows.brush). 반증 팔은 58의 것(마커 팁 되켬 — mark58 ①)이 든다: 이 자의 실패 조건은 끝 창 강조이고 그 팔이 그것을 실제로 낸다',
+    def: '감속 몸짓(처음·끝 15% 잘게) 획의 안쪽 대역(3~28% · 37.5~62.5% · 72~97% — 같은 폭 25%)의 어둡기 합. 분모 mid(#11). mark58 게이트 ①의 자 그대로(#54). ⚠ 화면 창은 원근을 같이 잰다(마커 시작 1.083 · 끝 .916이 그 값) — 판정은 normalized_by_marker(마커 비로 나눔 · 결 끔)이고 rows·rows_no_grain은 기록. 게이트는 **결 끔**(rows_no_grain) 판이다 — 결 칸 표집 잡음이 문(±10%)과 같은 눈금이어서(사전 재현 절: cp 시작 1.149가 그 잡음+누적). **붓은 술어 밖**: 51의 흐름(brush51 ⑦ «흐름 CV ≥ 0.05» 게이트)·끝 갈라짐 감쇠가 균일 술어와 정면 충돌한다 — 값으로만 남긴다(rows.brush). 반증 팔은 58의 것(마커 팁 되켬 — mark58 ①)이 든다: 이 자의 실패 조건은 끝 창 강조이고 그 팔이 그것을 실제로 낸다',
     threshold: cs.PAINT58_STAMP_BAND_TOL,
     window: { bands: [[0.03, 0.28], [0.375, 0.625], [0.72, 0.97]], band_h_css: 26, x: [X0, X1] },
     scene: { paint_with_grain: sceneN, paint_no_grain: sceneN2, note: '#103 — 결 끔은 같은 획 재굽기(획 수 무변)' },
     rows: withGrain, rows_no_grain: noGrain,
+    normalized_by_marker: { def: '도장 브러시의 대역 비 ÷ 마커의 대역 비(결 끔) — 마커 띠는 구성상 균일하므로 그 비(시작 1.083 · 끝 .916)가 이 픽스처의 원근 그 자체다. 판정은 이것(±10%)', ...norm },
+    falsification_speed: { def: '연필 속도→농도 −1(60-4 축 — 느린 구간이 진해진다) · 같은 획 재굽기 · 결 있음: 시작 정규화 비가 문을 넘는다', rows: slowDark, pencil_start_norm: +sdN.toFixed(4) },
     grain_phase_spread: { def: '연필 · 결 켬 · 시작 x 오프셋 0·2·4·6·8px(결 칸 9px 안) 다섯 획의 대역 비 평균·표준편차 — 결 켠 값의 잡음 눈금(1차 [3])', ...grainSpread },
   }
 })
 
 test('④ 결의 위상 — 도장 위상만 반 간격 어긋난 두 획의 픽셀 상관(연필) · 게이트 ≥ C.PAINT59_GRAIN_CORR_MIN · 반증(결 시드 획별)', async ({ page }) => {
+  test.setTimeout(240_000)                      // dpr2 — 팔이 늘어(동작점 셋·위상 다섯·창 둘) 60s를 넘는다(실측 타임아웃)
   await bigBox(page, false)
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   await pickInstr(page, 'pencil', 20, '#3a6b35')

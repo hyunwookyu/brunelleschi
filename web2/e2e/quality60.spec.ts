@@ -118,6 +118,11 @@ async function penPath(page: Page, pts: { x: number; y: number }[], press: numbe
 /** 작업대를 연다 — 설정 서랍(details) 안의 단추라 서랍을 먼저 편다(mark58 ④는 장면을 세운 뒤라 서랍이
  *  열려 있었다 · 빈 문서에서는 닫혀 있어 page.click이 가시성을 기다리다 멈춘다 — 실측 1.0m 타임아웃) */
 async function openLab(page: Page) {
+  // ?reset 직후의 재탐색(캐시 탈출 — 워커·캐시 정리)이 evaluate 문맥을 깬다(dpr2 실측 «Execution context
+  // was destroyed») — 네트워크가 잠잠해질 때까지 기다린 뒤 연다.
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(300)
+  await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await page.evaluate(() => {
     const d = document.getElementById('btn-tunelab')?.closest('details') as HTMLDetailsElement | null
     if (d) d.open = true
@@ -444,9 +449,10 @@ test('⑤ 넷이 갈린다 — 같은 압력·같은 속도의 넷: 통계 짝�
     await penPath(page, hline(560, Y[ins], 840, 14), 0.5)
   }
   await page.waitForTimeout(250)
+  await darkMap(page, 'base5', 600, 330 + 6, 200, 12)          // 바탕(획 없는 창 · 벽 위쪽) — 상대 문의 기준
   for (const ins of INSTRS) {
     await darkMap(page, 's' + ins, 600, Y[ins] - 12, 200, 24)
-    rows[ins] = await mapStats(page, 's' + ins, 25)
+    rows[ins] = await mapStats(page, 's' + ins, 0.35, 'base5')  // 빈 픽셀 몫은 잉크 p95의 35% 상대 문(②와 같은 자)
   }
   const names = [...INSTRS]
   const pairs: Record<string, number> = {}
@@ -457,7 +463,7 @@ test('⑤ 넷이 갈린다 — 같은 압력·같은 속도의 넷: 통계 짝�
     pairs[names[i]! + '_vs_' + names[j]!] = +Math.max(rel(A.mean, B.mean), rel(A.p95, B.p95), rel(A.bare_share, B.bare_share), rel(A.edge_sd, B.edge_sd)).toFixed(4)
   }
   OUT.four_differ = {
-    def: '같은 압력(0.5 펜)·같은 속도(14걸음 등간격)·굵기 20의 넷 — 24px 창의 mean(농도) · p95 · bare_share(빈 픽셀 몫 · 어둡기<25) · edge_sd(상단 경계 행의 표준편차 — 가장자리 거칠기). 짝 여섯의 최대 상대 차 > 0.1(mark58 ② pairs와 같은 술어 · 자 넷은 60 지시의 셋 + p95)',
+    def: '같은 압력(0.5 펜)·같은 속도(14걸음 등간격)·굵기 20의 넷 — 24px 창의 mean(농도) · p95 · bare_share(빈 픽셀 몫 · 바탕 뺀 잉크 p95의 35% 상대 문 — 초판 절대 문 25는 cp↔연필을 .10으로 겨우 갈랐다) · edge_sd(상단 경계 행의 표준편차 — 가장자리 거칠기). 짝 여섯의 최대 상대 차 > 0.1(mark58 ② pairs와 같은 술어 · 자 넷은 60 지시의 셋 + p95)',
     rows, pairs,
   }
   for (const [k, v] of Object.entries(pairs)) expect(v, '짝 ' + k + ' — 갈린다').toBeGreaterThan(0.1)
