@@ -1,5 +1,5 @@
 {
-  "n_flags": 6562,
+  "n_flags": 6568,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -22019,6 +22019,11 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "paint62_web2_dpr1.json:probe.calib.deevad/4H_pencil|fine-grain.gainResidual",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
       "path": "paint62_web2_dpr1.json:probe.calib.deevad/detail_brush_thin_glazing.a",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -22264,6 +22269,11 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "paint62_web2_dpr2.json:probe.calib.deevad/4H_pencil|fine-grain.gainResidual",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
       "path": "paint62_web2_dpr2.json:probe.calib.deevad/detail_brush_thin_glazing.a",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -22424,12 +22434,22 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "paint64_web2_dpr1.json:roundtrip.migration_tuned.migrated",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "paint64_web2_dpr1.json:roundtrip.migration_tuned.brs[0][0]",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "paint64_web2_dpr1.json:roundtrip.migrated",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "paint64_web2_dpr1.json:density.with_gain.cp@10.ratio",
+      "path": "paint64_web2_dpr1.json:density.with_gain.cp@10#63.ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -22439,12 +22459,22 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "paint64_web2_dpr2.json:roundtrip.migration_tuned.migrated",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "paint64_web2_dpr2.json:roundtrip.migration_tuned.brs[0][0]",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "paint64_web2_dpr2.json:roundtrip.migrated",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "paint64_web2_dpr2.json:density.with_gain.cp@10.ratio",
+      "path": "paint64_web2_dpr2.json:density.with_gain.cp@10#63.ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -32989,7 +33019,7 @@
       "flag": "**성공률이 0인 자리가 있다**(#38) — 특정 팔·구도의 0이면 정상이고 원장이 그렇게 적어야 한다. **원장 전체가 0이면 그 하네스는 «깨지지 않고 죽은» 것이다**(18차에 `order_lock`이 실제로 그랬다: `camera_ok 0/300`인데 시험은 통과)"
     },
     {
-      "path": "web2/NOTES.md:마감 — web2-63",
+      "path": "web2/NOTES.md:마감 — web2-64",
       "val": "「도는 백그라운드」 줄 없음",
       "flag": "**마감 보고가 「도는 백그라운드 없음」을 값으로 안 적었다**(#95 · #81 ㉤) — 세션 끝에 도는 대기가 있으면 그 자체가 결함이다. 12시간 51분짜리 배포 대기가 그렇게 남았다"
     },
@@ -34519,21 +34549,33 @@
     ],
     "paint64_web2_dpr1.json": [
       1,
+      5,
       12,
+      14,
+      63,
+      64,
+      65,
       96,
       99,
       101,
       103,
+      105,
       107,
       108
     ],
     "paint64_web2_dpr2.json": [
       1,
+      5,
       12,
+      14,
+      63,
+      64,
+      65,
       96,
       99,
       101,
       103,
+      105,
       107,
       108
     ],
