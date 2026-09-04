@@ -18,6 +18,48 @@
     "after": 1
   },
   "pigment": {
+    "sweep": {
+      "yellow_0.35_grain_off": {
+        "hue": 197.1,
+        "sat": 0.631
+      },
+      "yellow_0.5_grain_off": {
+        "hue": 158.6,
+        "sat": 0.393
+      },
+      "yellow_0.65_grain_off": {
+        "hue": 95,
+        "sat": 0.397
+      },
+      "yellow_0.8_grain_off": {
+        "hue": 66.9,
+        "sat": 0.595
+      },
+      "yellow_0.35_grain_on": {
+        "hue": 200,
+        "sat": 0.511
+      },
+      "yellow_0.5_grain_on": {
+        "hue": 173.1,
+        "sat": 0.341
+      },
+      "yellow_0.65_grain_on": {
+        "hue": 124.1,
+        "sat": 0.254
+      },
+      "yellow_0.8_grain_on": {
+        "hue": 83.3,
+        "sat": 0.405
+      }
+    },
+    "threshold": {
+      "hue": [
+        70,
+        170
+      ],
+      "sat": 0.25
+    },
+    "note_sweep": "노랑 몫 스윕 × 결(리뷰어 [M4]): 어느 동작점이 초록 창 안인지 값으로 — .5는 청록 경계(첫 실측 173°)라 술어의 동작점은 .65 · 결 끔이다. 결 켬은 캡을 깎아 노랑 몫이 준다(값이 그 정도를 든다)",
     "def": "굽기 통로(drawMarksSeam) — 파랑(#2040e0 · paint_mode 1 · opaque 1 · 압력 1 — opaque_multiply 곡선이 1) 직선 위에 노랑(#f0d020 · paint_mode 1 · opaque .65 · 압력 1 → 덮임 캡 .65 = 노랑 몫 .65 — 결 끔). ⚠ 반반(.5)은 이 10채널 모형에서 청록(hue 155 — node 실측)이라 «초록 대역 끝»이었다: 실물처럼 노랑이 조금 더 든 판을 자로 삼는다(.65 → hue ~110 예상). 몸통(±5px · x 100..380) 평균 색의 색상각(0..360)·채도. 초록 = 색상각 70..170 ∧ 채도 > .25. 반증 = paint_mode 강제 0(가산 over) — 초록 대역 밖",
     "on": {
       "rgb": [
@@ -176,6 +218,14 @@
       "three": 0.9089,
       "ratio_2_1": 1.45,
       "ratio_3_2": 1.1397
+    },
+    "falsification_binds": {
+      "def": "capOff에서 교차가 캡을 문(1.08) 넘게 넘는 도구 — 여기서만 반증이 실행됐다(연필·잉크펜은 캡이 안 걸린 상태라 capOff가 항등: 실패 조건 미실행 — 그 도구의 ④는 «캡 안»이 아니라 «캡에 안 닿음»이다)",
+      "pencil": false,
+      "cp": true,
+      "marker": true,
+      "brush": false,
+      "n": 2
     }
   },
   "smudge": {
@@ -221,6 +271,10 @@
         "liveTouched": 36862,
         "liveClean": 1086
       }
+    },
+    "threshold": {
+      "red_excess_min": 8,
+      "note_liveClean": "liveClean = 이 획이 «안 닿은» 타일을 층에서 읽은 표집(획 전 내용 그대로 — 오염 아님) · 오염의 술어는 liveTouched(닿은 타일을 층에서 읽음)뿐"
     }
   },
   "mapping": {
@@ -236,10 +290,11 @@
     }
   },
   "differ": {
-    "def": "196 견본(직선 12px · 시드 62 · 잉크펜 슬롯 · 층 알파) 통계 서명 {mean,p95,bare,edgeSd}(4자리) — painted = 최대 알파 ≥ .008인 것 · distinct = 고유 서명 수 · empty = 빈 층에 아무것도 안 남긴 것과 그 사유(값 — eraser · smudge≥.65(젖은 붓·물만·블렌더) · posterize · opaque≤.05 · lock_alpha · smudge_transparency · dabs_sparse(반지름당 도장 < .2 — splatter)) · unexplained = 사유 없는 빈 것(0이어야). 반증 = 같은 브러시 8번 → 서명 1",
+    "def": "196 견본(직선 12px · 시드 62 · 잉크펜 슬롯 · 층 알파) 통계 서명 {mean,p95,bare,edgeSd} — painted = 최대 알파 ≥ C.PAINT62_PAINTED_ALPHA인 것 · distinct2 = 두 자리(§5 유효 자릿수 — 술어) 고유 서명 수 · distinct4 = 네 자리(기록) · empty_reasons = 사유별 수(겹침 포함) · empty = 빈 층에 아무것도 안 남긴 것과 그 사유(값 — eraser · smudge≥.65(젖은 붓·물만·블렌더) · posterize · opaque≤.05 · lock_alpha · smudge_transparency · dabs_sparse(반지름당 도장 < .2 — splatter)) · unexplained = 사유 없는 빈 것(0이어야). 반증 = 같은 브러시 8번 → 서명 1",
     "total": 196,
     "painted": 154,
-    "distinct": 145,
+    "distinct4": 145,
+    "distinct2": 141,
     "empty": {
       "Dieterle/Blender": "smudge≥.65",
       "Dieterle/Dissolver": "smudge≥.65+smudge_transparency",
@@ -284,8 +339,15 @@
       "kaerhon_v1/paint_sm": "smudge≥.65",
       "kaerhon_v1/Smear_sm": "smudge≥.65"
     },
+    "empty_reasons": {
+      "smudge≥.65": 33,
+      "smudge_transparency": 2,
+      "eraser": 9,
+      "posterize": 1,
+      "opaque≤.05": 2
+    },
     "unexplained": [],
-    "ms": 21562,
+    "ms": 20967,
     "falsification_same_brush_distinct": 1,
     "sample": {
       "Dieterle/8B_Pencil#1": {
@@ -324,104 +386,207 @@
         "bare": 0,
         "edgeSd": 0.221
       }
+    },
+    "threshold": {
+      "painted_alpha": 0.008,
+      "sig_digits": 2,
+      "distinct_min": 0.8
     }
   },
   "fringe": {
-    "def": "회색 바탕(140) 위 어두운 안료(#2a2a30) 물결 22px. 층 알파 2..70/255인 픽셀(edge)의 합성 RGB가 배경+2보다 밝은 수(brighter) — 흰 테의 정의. darkerThanPig는 안료보다 어두운 수(기록). 도구 넷 + 프리셋 여덟(분류 일곱 가로지름). 반증 fringeBreak = 그 픽셀의 rgb를 흰색으로 — 실제로 걸린다",
+    "def": "조합 ① 회색 바탕(140) 위 어두운 안료(#2a2a30) · 조합 ② 어두운 바탕(48) 위 밝은 안료(#d8d0c0) — 물결 22px. 층 알파 창(C.PAINT62_EDGE_ALPHA_LO..HI /255)의 픽셀(edge)에서 brighter = 배경+C.PAINT62_FRINGE_TOL보다 밝은 수(흰 테의 정의 · 조합 ①의 술어) · brighter0 = 관용 0으로 센 수(기록 — 8비트 반올림의 몫) · outside = 배경·안료 사이 창 밖(어느 쪽이든 · 조합 ②의 술어 — 안료보다 밝은 것이 흰 테) · maxOver = 창 위로 벗어난 최대. 도구 넷 + 프리셋 8(①) / 넷 + 4(②). 반증 fringeBreak = 그 픽셀의 rgb를 흰색(조합 ①)/검정(조합 ② — 어두운 쪽으로 새는 병)으로 — 두 조합 다 실제로 걸린다",
     "rows": {
       "pencil": {
         "edge": 17106,
         "brighter": 0,
-        "darkerThanPig": 0,
+        "brighter0": 0,
+        "outside": 0,
         "maxOver": 0,
         "painted": 21495
       },
       "cp": {
         "edge": 15080,
         "brighter": 0,
-        "darkerThanPig": 0,
+        "brighter0": 0,
+        "outside": 0,
         "maxOver": 0,
         "painted": 21154
       },
       "marker": {
         "edge": 93,
         "brighter": 0,
-        "darkerThanPig": 0,
+        "brighter0": 0,
+        "outside": 0,
         "maxOver": 0,
         "painted": 9770
       },
       "brush": {
         "edge": 299,
         "brighter": 0,
-        "darkerThanPig": 0,
+        "brighter0": 0,
+        "outside": 0,
         "maxOver": 0,
         "painted": 9725
       },
       "classic/pen": {
         "edge": 598,
         "brighter": 0,
-        "darkerThanPig": 0,
+        "brighter0": 0,
+        "outside": 0,
         "maxOver": 0,
         "painted": 11322
       },
       "deevad/airbrush": {
         "edge": 14516,
         "brighter": 0,
-        "darkerThanPig": 0,
+        "brighter0": 0,
+        "outside": 0,
         "maxOver": 0,
         "painted": 15432
       },
       "Dieterle/Round#1": {
         "edge": 4843,
         "brighter": 0,
-        "darkerThanPig": 0,
+        "brighter0": 0,
+        "outside": 0,
         "maxOver": 0,
         "painted": 12820
       },
       "tanda/watercolor-02-paint": {
         "edge": 36924,
         "brighter": 0,
-        "darkerThanPig": 0,
+        "brighter0": 0,
+        "outside": 0,
         "maxOver": 0,
         "painted": 49808
       },
       "ramon/Pastel_1": {
         "edge": 26439,
         "brighter": 0,
-        "darkerThanPig": 0,
+        "brighter0": 0,
+        "outside": 0,
         "maxOver": 0,
         "painted": 52135
       },
       "kaerhon_v1/paint_sm": {
         "edge": 3237,
         "brighter": 0,
-        "darkerThanPig": 0,
+        "brighter0": 0,
+        "outside": 0,
         "maxOver": 0,
         "painted": 6948
       },
       "experimental/soft": {
         "edge": 9546,
         "brighter": 0,
-        "darkerThanPig": 0,
+        "brighter0": 0,
+        "outside": 0,
         "maxOver": 0,
         "painted": 10166
       },
       "classic/knife": {
         "edge": 3077,
         "brighter": 0,
-        "darkerThanPig": 0,
+        "brighter0": 0,
+        "outside": 0,
         "maxOver": 0,
         "painted": 11128
       }
     },
     "edge_total": 131758,
     "brighter_total": 0,
+    "brighter0_total": 0,
+    "outside_total": 0,
+    "rows_light": {
+      "pencil": {
+        "edge": 17106,
+        "brighter": 14511,
+        "brighter0": 17106,
+        "outside": 0,
+        "maxOver": 0,
+        "painted": 21495
+      },
+      "cp": {
+        "edge": 15080,
+        "brighter": 12480,
+        "brighter0": 15080,
+        "outside": 0,
+        "maxOver": 0,
+        "painted": 21154
+      },
+      "marker": {
+        "edge": 93,
+        "brighter": 92,
+        "brighter0": 93,
+        "outside": 0,
+        "maxOver": 0,
+        "painted": 9770
+      },
+      "brush": {
+        "edge": 299,
+        "brighter": 281,
+        "brighter0": 299,
+        "outside": 0,
+        "maxOver": 0,
+        "painted": 9725
+      },
+      "classic/pen": {
+        "edge": 598,
+        "brighter": 579,
+        "brighter0": 598,
+        "outside": 0,
+        "maxOver": 0,
+        "painted": 11322
+      },
+      "deevad/airbrush": {
+        "edge": 14516,
+        "brighter": 13478,
+        "brighter0": 14516,
+        "outside": 0,
+        "maxOver": 0,
+        "painted": 15432
+      },
+      "Dieterle/Round#1": {
+        "edge": 4843,
+        "brighter": 4596,
+        "brighter0": 4843,
+        "outside": 0,
+        "maxOver": 0,
+        "painted": 12820
+      },
+      "ramon/Pastel_1": {
+        "edge": 26439,
+        "brighter": 19131,
+        "brighter0": 26439,
+        "outside": 0,
+        "maxOver": 0,
+        "painted": 52135
+      }
+    },
+    "edge_total_light": 78974,
+    "outside_total_light": 0,
     "falsification_fringe_break": {
       "edge": 17106,
       "brighter": 13081,
-      "darkerThanPig": 0,
+      "brighter0": 16455,
+      "outside": 13081,
       "maxOver": 31,
       "painted": 21495
+    },
+    "falsification_fringe_break_light": {
+      "edge": 17106,
+      "brighter": 0,
+      "brighter0": 0,
+      "outside": 10819,
+      "maxOver": 0,
+      "painted": 21495
+    },
+    "threshold": {
+      "fringe_tol": 2,
+      "edge_alpha": [
+        2,
+        70
+      ]
     }
   },
   "determinism": {
@@ -521,9 +686,9 @@
     "markPx": 8584,
     "deterministic": true,
     "seed_differs": true,
-    "bake_stress_20faces_x40strokes_ms": 21467.9,
-    "bake_20faces_40strokes_total_ms": 1530.8,
-    "bake_perstroke_2x40_ms": 1892.1,
+    "bake_stress_20faces_x40strokes_ms": 20698.1,
+    "bake_20faces_40strokes_total_ms": 1483.7,
+    "bake_perstroke_2x40_ms": 1849,
     "calib": {
       "Dieterle/8B_Pencil#1": {
         "a": 0.16666666666666666,
@@ -1916,5 +2081,21 @@
     },
     "premul_violations": 0,
     "speed_px_s": 300
+  },
+  "constants_snapshot": {
+    "PAINT62_EDGE_ALPHA_LO": 2,
+    "PAINT62_EDGE_ALPHA_HI": 70,
+    "PAINT62_FRINGE_TOL": 2,
+    "PAINT62_GREEN_HUE": [
+      70,
+      170
+    ],
+    "PAINT62_GREEN_SAT": 0.25,
+    "PAINT62_SMUDGE_RG_MIN": 8,
+    "PAINT62_PAINTED_ALPHA": 0.008,
+    "PAINT62_SIG_DIGITS": 2,
+    "PAINT62_DISTINCT_MIN": 0.8,
+    "PAINT62_CAP_TOL": 0.02,
+    "note": "스냅샷-라이트(web2 원장의 constantsSnapshot 기계 부재는 종전 유보 · 값은 constants.ts가 정본)"
   }
 }

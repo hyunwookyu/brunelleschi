@@ -82,8 +82,8 @@ let smudgeSelfOverride = false
 export function setSmudgeSelfSampleForTest(v: boolean): void { smudgeSelfOverride = v }
 let premulBreakOnce = false
 export function setPremulBreakForTest(v: boolean): void { premulBreakOnce = v }
-let fringeBreak = false
-export function setFringeBreakForTest(v: boolean): void { fringeBreak = v }
+let fringeBreak: boolean | 'dark' = false
+export function setFringeBreakForTest(v: boolean | 'dark'): void { fringeBreak = v }
 let paintModeOff = false
 export function setPaintModeOffForTest(v: boolean): void { paintModeOff = v }
 let smudgeOff = false
@@ -92,6 +92,10 @@ export function setSmudgeOffForTest(v: boolean): void { smudgeOff = v }
  *  붓의 끝이 뭉친다(58 사람 계약의 그 증상). 제품은 null(걸음 ÷ 일정 속도). */
 let eventDtimeMs: number | null = null
 export function setEventDtimeForTest(ms: number | null): void { eventDtimeMs = ms }
+/** 반증(grain61 ⑥ — 자가 보정이 게이트의 자(반최대 폭)와 같은 양을 푼다는 자기참조 물음): 보정을 끄면 반지름 = 폭/2 —
+ *  프리셋의 마스크·산포에 따라 반최대 폭이 요청에서 벗어나야 한다(벗어나면 보정이 «무엇인가를 한다»는 실증). */
+let calibOff = false
+export function setCalibOffForTest(v: boolean): void { calibOff = v }
 /** 층 추적(진단) — 마지막으로 그린 캔버스의 표면 */
 let lastSurface: StrokeSurface | null = null
 /** 진단 — draw(초안 통로)는 층을 되돌리므로, 팔이 켜면 되돌리기 «전» 알파 지도를 떠 둔다 */
@@ -226,6 +230,7 @@ function radiusFor(c: Calib, wPx: number): number {
 }
 /** 요청 폭(px) → radius_logarithmic 기준값 */
 function radiusLogFor(name: string, wPx: number): number {
+  if (calibOff) return Math.log(Math.max(0.15, wPx / 2))
   return Math.log(radiusFor(calib(name), wPx))
 }
 export const calibForTest = (): Record<string, Calib> => Object.fromEntries(calibs)

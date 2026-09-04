@@ -2820,7 +2820,7 @@ import {
   mypaintRenderer, mypaintProbeForTest, calibForTest as mypaintCalibForTest, presetMappingForTest,
   lastLayerAlphaForTest, smudgeStatsForTest, resetSmudgeStatsForTest, premulViolationsForTest, layerStatsForTest, lastStrokeCapForTest, presetBaseForTest,
   setCapOffForTest, setSmudgeSelfSampleForTest, setPremulBreakForTest, setFringeBreakForTest,
-  setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, PRESET_CATALOG, DEFAULT_PRESET,
+  setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET,
 } from './mypaintpaint'
 import { grainTileForTest } from '../mypaint/paper'
 import { initTuneLab } from './tunelab'
@@ -2904,9 +2904,11 @@ const diag = {
   setCapOffForTest: (v: boolean) => { setCapOffForTest(v); rebakePaintTexForTest(); invalidate() },
   setSmudgeSelfSampleForTest: (v: boolean) => setSmudgeSelfSampleForTest(v),
   setPremulBreakForTest: (v: boolean) => setPremulBreakForTest(v),
-  setFringeBreakForTest: (v: boolean) => setFringeBreakForTest(v),
+  setFringeBreakForTest: (v: boolean | 'dark') => setFringeBreakForTest(v),
   setPaintModeOffForTest: (v: boolean) => setPaintModeOffForTest(v),
   setSmudgeOffForTest: (v: boolean) => setSmudgeOffForTest(v),
+  /** 반증(grain61 ⑥ — 리뷰어 [H4]) — 크기 자가 보정 끔(반지름 = 폭/2 · 기하 그대로) */
+  setCalibOffForTest: (v: boolean) => { setCalibOffForTest(v); rebakePaintTexForTest(); invalidate() },
   /** 반증(AS-C184) — 이벤트 고정 dtime(ms) · null = 제품(걸음 ÷ 일정 속도) */
   setEventDtimeForTest: (ms: number | null) => { setEventDtimeForTest(ms); rebakePaintTexForTest(); invalidate() },
   /** 엔진 갈아끼움(62-vs-61 사진 · 이음매 계약의 반증) — 'mypaint' | 'p5brush' */
@@ -3500,7 +3502,10 @@ const diag = {
     PAINT_MARKER_ALPHA: C.PAINT_MARKER_ALPHA, PAINT_CP_ALPHA: C.PAINT_CP_ALPHA,
     PAINT_W_FALLBACK_UNITS: C.PAINT_W_FALLBACK_UNITS,
     PAINT50_LUM_TOL: C.PAINT50_LUM_TOL, PAINT50_FORESHORTEN_TOL: C.PAINT50_FORESHORTEN_TOL,
-    PAINT62_CAP_TOL: C.PAINT62_CAP_TOL,
+    PAINT62_CAP_TOL: C.PAINT62_CAP_TOL, PAINT62_EDGE_ALPHA_LO: C.PAINT62_EDGE_ALPHA_LO, PAINT62_EDGE_ALPHA_HI: C.PAINT62_EDGE_ALPHA_HI,
+    PAINT62_FRINGE_TOL: C.PAINT62_FRINGE_TOL, PAINT62_GREEN_HUE: C.PAINT62_GREEN_HUE, PAINT62_GREEN_SAT: C.PAINT62_GREEN_SAT,
+    PAINT62_SMUDGE_RG_MIN: C.PAINT62_SMUDGE_RG_MIN, PAINT62_PAINTED_ALPHA: C.PAINT62_PAINTED_ALPHA, PAINT62_SIG_DIGITS: C.PAINT62_SIG_DIGITS,
+    PAINT62_DISTINCT_MIN: C.PAINT62_DISTINCT_MIN,
     PAINT50_PATTERN_MIN_PX: C.PAINT50_PATTERN_MIN_PX, PAINT50_LINE_INK_MIN_PX: C.PAINT50_LINE_INK_MIN_PX,
     PAINT51_DPR_W_TOL: C.PAINT51_DPR_W_TOL, PAINT51_SWATCH_W_TOL: C.PAINT51_SWATCH_W_TOL,
     PAINT51_DENSITY_SLOPE: C.PAINT51_DENSITY_SLOPE, PAINT51_WIDTH_SLOPE: C.PAINT51_WIDTH_SLOPE,

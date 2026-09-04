@@ -58,33 +58,43 @@ const TOOLS: Instr[] = ['pencil', 'cp', 'marker', 'brush']
 const FRINGE_PRESETS = ['classic/pen', 'deevad/airbrush', 'Dieterle/Round#1', 'tanda/watercolor-02-paint',
   'ramon/Pastel_1', 'kaerhon_v1/paint_sm', 'experimental/soft', 'classic/knife']
 
-/** 흰 테 자 — 회색 바탕 위 어두운 안료: 층 알파 2..70/255인 픽셀의 합성 RGB가 [안료, 배경] 밖으로 나가는 수 */
-const fringeOf = (page: Page, tool: Instr, preset: string | undefined, seed = 62) =>
-  page.evaluate(([t, p, sd]) => {
+/** 흰 테 자 — 배경 위 안료: 층 알파 창(C.PAINT62_EDGE_ALPHA_LO..HI /255) 안 픽셀의 합성 RGB가 «배경과 안료 사이»를 벗어나는 수.
+ *  brighter = 배경보다 밝아진 쪽(관용 C.PAINT62_FRINGE_TOL — 흰 테의 정의) · brighter0 = 관용 0 · outside = 배경·안료 어느
+ *  쪽으로든 창 밖(안료가 밝을 때는 «안료보다 밝은» 것이 흰 테다). 조합 둘: 어두운 안료/밝은 배경 · 밝은 안료/어두운 배경. */
+const fringeOf = (page: Page, tool: Instr, preset: string | undefined, seed = 62, combo: 'dark' | 'light' = 'dark') =>
+  page.evaluate(([t, p, sd, cb]) => {
     const b2 = (window as any).__b2
-    const BG = 140, PIG = '#2a2a30'
+    const cs = b2.diag.paint50Constants()
+    const BG = cb === 'dark' ? 140 : 48, PIG = cb === 'dark' ? '#2a2a30' : '#d8d0c0', BGHEX = cb === 'dark' ? '#8c8c8c' : '#303030'
+    const pig = cb === 'dark' ? [0x2a, 0x2a, 0x30] : [0xd8, 0xd0, 0xc0]
     const W = 480, H = 240
-    b2.diag.markSampleForTest(t, 'wave', 22, sd, W, H, { preset: p, color: PIG, bg: '#8c8c8c' })
+    b2.diag.markSampleForTest(t, 'wave', 22, sd, W, H, { preset: p, color: PIG, bg: BGHEX })
     const cv = (window as any).__m61cv as HTMLCanvasElement
     const d = cv.getContext('2d')!.getImageData(0, 0, W, H).data
     const L = b2.diag.lastLayerAlphaForTest() as { a: number[]; w: number; h: number } | null
-    if (!L || L.w !== W) return { edge: 0, brighter: 0, darkerThanPig: 0, maxOver: 0, painted: 0 }
-    const pig = [0x2a, 0x2a, 0x30]
-    const TOL = 2
-    let edge = 0, brighter = 0, darker = 0, maxOver = 0, painted = 0
+    if (!L || L.w !== W) return { edge: 0, brighter: 0, brighter0: 0, outside: 0, maxOver: 0, painted: 0 }
+    const TOL = cs.PAINT62_FRINGE_TOL as number, LO = cs.PAINT62_EDGE_ALPHA_LO as number, HI = cs.PAINT62_EDGE_ALPHA_HI as number
+    let edge = 0, brighter = 0, brighter0 = 0, outside = 0, maxOver = 0, painted = 0
     for (let i = 0; i < W * H; i++) {
       const a = L.a[i]! * 255
       if (a > 0.5) painted++
-      if (a < 2 || a > 70) continue
+      if (a < LO || a > HI) continue
       edge++
+      let bright = false, bright0 = false, out = false
       for (let c = 0; c < 3; c++) {
         const v = d[i * 4 + c]!
-        if (v > BG + TOL) { brighter++; maxOver = Math.max(maxOver, v - BG); break }
-        if (v < pig[c]! - TOL) { darker++; break }
+        const hi = Math.max(BG, pig[c]!), lo = Math.min(BG, pig[c]!)
+        if (v > hi + TOL) { out = true; maxOver = Math.max(maxOver, v - hi) }
+        if (v < lo - TOL) out = true
+        if (v > BG + TOL) bright = true
+        if (v > BG) bright0 = true
       }
+      if (bright) brighter++
+      if (bright0) brighter0++
+      if (out) outside++
     }
-    return { edge, brighter, darkerThanPig: darker, maxOver, painted }
-  }, [tool, preset, seed] as const)
+    return { edge, brighter, brighter0, outside, maxOver, painted }
+  }, [tool, preset, seed, combo] as const)
 
 test('① 흰 테 0 — 옅은 가장자리 전수(도구 넷 + 프리셋 여덟) · 반증(fringeBreak)', async ({ page }) => {
   test.setTimeout(180_000)
@@ -101,16 +111,36 @@ test('① 흰 테 0 — 옅은 가장자리 전수(도구 넷 + 프리셋 여덟
     const r = await fringeOf(page, 'brush', p)
     rows[p] = r; edgeTotal += r.edge; brighterTotal += r.brighter
   }
+  let brighter0Total = 0, outsideTotal = 0
+  for (const r of Object.values(rows) as { brighter0: number; outside: number }[]) { brighter0Total += r.brighter0; outsideTotal += r.outside }
+  // 둘째 조합(리뷰어 [M3] — 배경·안료 한 조합은 동작점 하나 #12): 밝은 안료 / 어두운 배경 — 여기서 «흰 테»는 안료보다 밝은 픽셀이다
+  const rowsLight: Record<string, unknown> = {}
+  let edgeL = 0, outsideL = 0
+  for (const t of TOOLS) { const r = await fringeOf(page, t, undefined, 62, 'light'); rowsLight[t] = r; edgeL += r.edge; outsideL += r.outside }
+  for (const p of ['classic/pen', 'deevad/airbrush', 'Dieterle/Round#1', 'ramon/Pastel_1']) { const r = await fringeOf(page, 'brush', p, 62, 'light'); rowsLight[p] = r; edgeL += r.edge; outsideL += r.outside }
   // 반증 — 옅은 가장자리 rgb를 흰색으로(흰 테 ①의 형태) → 회색 바탕 위에서 «배경보다 밝은» 픽셀이 선다
   await page.evaluate(() => (window as any).__b2.diag.setFringeBreakForTest(true))
   const broken = await fringeOf(page, 'pencil', undefined)
+  // 밝은 안료 조합의 흰 테는 «안료보다 밝은» 것 — 그 조합에서 새는 형태는 검정(premultiplied를 스트레이트로 읽는 병)이라 검정 주입으로 반증
+  await page.evaluate(() => (window as any).__b2.diag.setFringeBreakForTest('dark'))
+  const brokenLight = await fringeOf(page, 'pencil', undefined, 62, 'light')
   await page.evaluate(() => (window as any).__b2.diag.setFringeBreakForTest(false))
+  const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
+  OUT.constants_snapshot = { PAINT62_EDGE_ALPHA_LO: cs.PAINT62_EDGE_ALPHA_LO, PAINT62_EDGE_ALPHA_HI: cs.PAINT62_EDGE_ALPHA_HI, PAINT62_FRINGE_TOL: cs.PAINT62_FRINGE_TOL, PAINT62_GREEN_HUE: cs.PAINT62_GREEN_HUE, PAINT62_GREEN_SAT: cs.PAINT62_GREEN_SAT, PAINT62_SMUDGE_RG_MIN: cs.PAINT62_SMUDGE_RG_MIN, PAINT62_PAINTED_ALPHA: cs.PAINT62_PAINTED_ALPHA, PAINT62_SIG_DIGITS: cs.PAINT62_SIG_DIGITS, PAINT62_DISTINCT_MIN: cs.PAINT62_DISTINCT_MIN, PAINT62_CAP_TOL: cs.PAINT62_CAP_TOL, note: '스냅샷-라이트(web2 원장의 constantsSnapshot 기계 부재는 종전 유보 · 값은 constants.ts가 정본)' }
   OUT.fringe = {
-    def: '회색 바탕(140) 위 어두운 안료(#2a2a30) 물결 22px. 층 알파 2..70/255인 픽셀(edge)의 합성 RGB가 배경+2보다 밝은 수(brighter) — 흰 테의 정의. darkerThanPig는 안료보다 어두운 수(기록). 도구 넷 + 프리셋 여덟(분류 일곱 가로지름). 반증 fringeBreak = 그 픽셀의 rgb를 흰색으로 — 실제로 걸린다',
-    rows, edge_total: edgeTotal, brighter_total: brighterTotal, falsification_fringe_break: broken,
+    def: '조합 ① 회색 바탕(140) 위 어두운 안료(#2a2a30) · 조합 ② 어두운 바탕(48) 위 밝은 안료(#d8d0c0) — 물결 22px. 층 알파 창(C.PAINT62_EDGE_ALPHA_LO..HI /255)의 픽셀(edge)에서 brighter = 배경+C.PAINT62_FRINGE_TOL보다 밝은 수(흰 테의 정의 · 조합 ①의 술어) · brighter0 = 관용 0으로 센 수(기록 — 8비트 반올림의 몫) · outside = 배경·안료 사이 창 밖(어느 쪽이든 · 조합 ②의 술어 — 안료보다 밝은 것이 흰 테) · maxOver = 창 위로 벗어난 최대. 도구 넷 + 프리셋 8(①) / 넷 + 4(②). 반증 fringeBreak = 그 픽셀의 rgb를 흰색(조합 ①)/검정(조합 ② — 어두운 쪽으로 새는 병)으로 — 두 조합 다 실제로 걸린다',
+    rows, edge_total: edgeTotal, brighter_total: brighterTotal, brighter0_total: brighter0Total, outside_total: outsideTotal,
+    rows_light: rowsLight, edge_total_light: edgeL, outside_total_light: outsideL,
+    falsification_fringe_break: broken, falsification_fringe_break_light: brokenLight,
+    threshold: { fringe_tol: cs.PAINT62_FRINGE_TOL, edge_alpha: [cs.PAINT62_EDGE_ALPHA_LO, cs.PAINT62_EDGE_ALPHA_HI] },
   }
-  expect(brighterTotal, '흰 테 0 — 옅은 가장자리 어디서도 배경보다 밝지 않다(전수)').toBe(0)
+  expect(brighterTotal, '흰 테 0 — 옅은 가장자리 어디서도 배경보다 밝지 않다(전수 · 관용 2)').toBe(0)
+  expect(brighter0Total, '흰 테 0 — 관용 0으로 세어도 0').toBe(0)
+  expect(outsideTotal, '옅은 가장자리가 배경·안료 사이를 안 벗어난다(전수)').toBe(0)
+  expect(edgeL, '밝은 안료 조합에도 옅은 가장자리가 있다(분모)').toBeGreaterThan(200)
+  expect(outsideL, '밝은 안료 / 어두운 배경 — 안료보다 밝은 픽셀 0(전수)').toBe(0)
   expect(broken.brighter, '반증 — fringeBreak가 밝은 픽셀을 실제로 만든다(자가 산다)').toBeGreaterThan(20)
+  expect(brokenLight.outside, '반증(밝은 안료 조합) — 창 밖(배경보다 어두운) 픽셀이 선다').toBeGreaterThan(20)
 })
 
 test('② rgb ≤ a — 단언이 돈다: 정상 0 · 일부러 깨면 던지고 수가 는다', async ({ page }) => {
@@ -172,10 +202,37 @@ const overlapHue = (page: Page, paintOff: boolean) =>
 
 test('③ 겹침 물성 — 파랑 위 노랑 = 초록(색상각) · 반증: paint_mode 끔은 초록이 아니다', async ({ page }) => {
   await boot(page)
+  const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const on = await overlapHue(page, false)
   const off = await overlapHue(page, true)
-  const green = (h: number, s: number) => h > 70 && h < 170 && s > 0.25
+  const [H0, H1] = cs.PAINT62_GREEN_HUE as [number, number]
+  const green = (h: number, s: number) => h > H0 && h < H1 && s > cs.PAINT62_GREEN_SAT
+  // 동작점 스윕(리뷰어 [M4] · #12): 노랑 몫 .35/.5/.65/.8 × 결 끔·켬 — 초록 창이 어디까지인지 값으로
+  const sweep: Record<string, unknown> = {}
+  for (const grain of [false, true]) for (const y of [0.35, 0.5, 0.65, 0.8]) {
+    const r = await page.evaluate(([yy, g]) => {
+      const b2 = (window as any).__b2
+      b2.diag.setGrainOffForTest(!g)
+      const W = 480, H = 240
+      b2.diag.markMultiForTest([
+        { tool: 'brush', shape: 'line', wPx: 28, seed: 11, preset: 'classic/pen', color: '#2040e0', over: { paint_mode: 1, opaque: 1, opaque_linearize: 0 }, press: 1 },
+        { tool: 'brush', shape: 'line', wPx: 28, seed: 12, preset: 'classic/pen', color: '#f0d020', over: { paint_mode: 1, opaque: yy, opaque_linearize: 0 }, press: 1 },
+      ], W, H, true)
+      b2.diag.setGrainOffForTest(false)
+      const d = ((window as any).__m61cv as HTMLCanvasElement).getContext('2d')!.getImageData(0, 0, W, H).data
+      let r = 0, g2 = 0, b = 0, n = 0
+      for (let yy2 = H / 2 - 5; yy2 <= H / 2 + 5; yy2++) for (let x = 100; x < W - 100; x++) { const i = (yy2 * W + x) * 4; r += d[i]!; g2 += d[i + 1]!; b += d[i + 2]!; n++ }
+      r /= n; g2 /= n; b /= n
+      const mx = Math.max(r, g2, b), mn = Math.min(r, g2, b)
+      let h = 0
+      if (mx > mn) { if (mx === r) h = ((g2 - b) / (mx - mn)) % 6; else if (mx === g2) h = (b - r) / (mx - mn) + 2; else h = (r - g2) / (mx - mn) + 4; h = ((h * 60) + 360) % 360 }
+      return { hue: +h.toFixed(1), sat: mx > 0 ? +((mx - mn) / mx).toFixed(3) : 0 }
+    }, [y, grain] as const)
+    sweep[`yellow_${y}_grain_${grain ? 'on' : 'off'}`] = r
+  }
   OUT.pigment = {
+    sweep, threshold: { hue: cs.PAINT62_GREEN_HUE, sat: cs.PAINT62_GREEN_SAT },
+    note_sweep: '노랑 몫 스윕 × 결(리뷰어 [M4]): 어느 동작점이 초록 창 안인지 값으로 — .5는 청록 경계(첫 실측 173°)라 술어의 동작점은 .65 · 결 끔이다. 결 켬은 캡을 깎아 노랑 몫이 준다(값이 그 정도를 든다)',
     def: '굽기 통로(drawMarksSeam) — 파랑(#2040e0 · paint_mode 1 · opaque 1 · 압력 1 — opaque_multiply 곡선이 1) 직선 위에 노랑(#f0d020 · paint_mode 1 · opaque .65 · 압력 1 → 덮임 캡 .65 = 노랑 몫 .65 — 결 끔). ⚠ 반반(.5)은 이 10채널 모형에서 청록(hue 155 — node 실측)이라 «초록 대역 끝»이었다: 실물처럼 노랑이 조금 더 든 판을 자로 삼는다(.65 → hue ~110 예상). 몸통(±5px · x 100..380) 평균 색의 색상각(0..360)·채도. 초록 = 색상각 70..170 ∧ 채도 > .25. 반증 = paint_mode 강제 0(가산 over) — 초록 대역 밖',
     on, off, on_is_green: green(on.hue, on.sat), off_is_green: green(off.hue, off.sat),
   }
@@ -252,6 +309,11 @@ test('④ 획 안/사이 — 자기교차 ≤ 몸통(캡) · 반증(capOff) · �
   }
   for (const t of ['pencil', 'cp'] as Instr[]) expect((unsat[t] as { cross_over_cap: number }).cross_over_cap, `${t} 비포화(.4)에서도 캡 안`).toBeLessThanOrEqual(1 + cs.PAINT62_CAP_TOL)
   const offMax = Math.max(...TOOLS.map(t => (rowsOff[t] as { cross_over_cap: number }).cross_over_cap))
+  // 반증의 귀속(리뷰어 [H2]): 캡이 «묶는» 도구에서만 capOff가 값을 바꾼다 — 몸통이 목표에 못 미치는 도구(연필 — 산포 · 잉크펜 — 이미 1)는
+  // 캡이 안 걸려 capOff와 제품이 같다. 어느 도구에서 반증이 실제로 섰는지를 값으로 남긴다.
+  const capBinds = Object.fromEntries(TOOLS.map(t => [t, (rowsOff[t] as { cross_over_cap: number }).cross_over_cap > 1 + cs.PAINT59_CROSS_TOL]))
+  ;(OUT.self_cross as Record<string, unknown>).falsification_binds = { def: 'capOff에서 교차가 캡을 문(1.08) 넘게 넘는 도구 — 여기서만 반증이 실행됐다(연필·잉크펜은 캡이 안 걸린 상태라 capOff가 항등: 실패 조건 미실행 — 그 도구의 ④는 «캡 안»이 아니라 «캡에 안 닿음»이다)', ...capBinds, n: Object.values(capBinds).filter(Boolean).length }
+  expect(Object.values(capBinds).filter(Boolean).length, '반증 — 캡이 묶는 도구 둘 이상(cp·마커)에서 capOff가 캡을 넘는다').toBeGreaterThanOrEqual(2)
   expect(offMax, '반증 — capOff(원문 누적)에서 어느 도구든 교차가 캡을 넘는다').toBeGreaterThan(1 + cs.PAINT59_CROSS_TOL)
   expect(stack.ratio_2_1, '두 획은 쌓인다(마커 .55 → .80 대역)').toBeGreaterThan(1.3)
   expect(stack.ratio_3_2, '세 획 > 두 획(단조)').toBeGreaterThan(1.02)
@@ -289,8 +351,10 @@ test('⑤ 젖은 붓 — smudge가 캔버스 색을 실제로 문다(값) · 제
     def: '굽기 통로 — 빨강 라이너(24px · 압력 .8) 위에 classic/smudge(30px · 14px 아래 · 검정 «색»)를 긋는다. 빨강 띠 «아래» 자리(y H/2+13..+26 · x 120..360)의 평균 색: red_excess = R−G(빨강을 물어 왔는가) · dark = 어둡기. stats = 스머지 표집 출처(fromSnapshot = 획 «전» 스냅숏 · liveTouched = 이 획이 이미 닿은 타일을 층에서 읽음 = 제 자국 오염). 반증 ① smudgeOff(smudge 0 — 제 색 검정을 칠한다 → red_excess 0 대역) ② selfSample(스냅숏 대신 층 — liveTouched > 0)',
     on, falsification_smudge_off: off, falsification_self_sample: self,
   }
+  const cs5 = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
+  ;(OUT.smudge as Record<string, unknown>).threshold = { red_excess_min: cs5.PAINT62_SMUDGE_RG_MIN, note_liveClean: 'liveClean = 이 획이 «안 닿은» 타일을 층에서 읽은 표집(획 전 내용 그대로 — 오염 아님) · 오염의 술어는 liveTouched(닿은 타일을 층에서 읽음)뿐' }
   expect(on.dark, '스머지 자국이 실재한다').toBeGreaterThan(8)
-  expect(on.red_excess, '캔버스의 빨강을 물어 왔다(R − G)').toBeGreaterThan(8)
+  expect(on.red_excess, '캔버스의 빨강을 물어 왔다(R − G ≥ C.PAINT62_SMUDGE_RG_MIN)').toBeGreaterThanOrEqual(cs5.PAINT62_SMUDGE_RG_MIN)
   expect(on.stats.fromSnapshot, '표집이 있었다').toBeGreaterThan(0)
   expect(on.stats.liveTouched, '제 자국을 문 표본 0(오염 0)').toBe(0)
   expect(off.red_excess, '반증 ① — smudge 0이면 빨강을 안 문다(제 색)').toBeLessThan(on.red_excess / 3)
@@ -319,7 +383,7 @@ test('⑥⑦⑧ 프리셋 충실도 · 196이 서로 갈린다 · 결정론 · �
       const mean = band.reduce((p, q) => p + q, 0) / band.length
       let mx = 0
       for (const v of band) if (v > mx) mx = v
-      if (mx < 0.008) return null                      // «자국 없음» = 최대 알파 .008 미만(4H 연필 .013이 문 위)
+      if (mx < (b2.diag.paint50Constants().PAINT62_PAINTED_ALPHA as number)) return null   // «자국 없음» = 최대 알파 문턱 미만(4H 연필 .013이 문 위)
       const s = [...band].sort((p, q) => p - q)
       const p95 = s[Math.floor(s.length * 0.95)]!
       let core = 0, bare = 0
@@ -336,6 +400,9 @@ test('⑥⑦⑧ 프리셋 충실도 · 196이 서로 갈린다 · 결정론 · �
     const ms = performance.now() - t0
     const painted = Object.entries(sigs).filter(([, v]) => v !== null)
     const keys = new Set(painted.map(([, v]) => JSON.stringify(v)))
+    // 유효 자릿수 2(§5 · 리뷰어 [M2]) — 서명을 두 자리로 반올림한 고유 수가 술어다(4자리는 기록)
+    const r2 = (v: number): number => +v.toPrecision(2)
+    const keys2 = new Set(painted.map(([, v]) => JSON.stringify({ m: r2(v!.mean), p: r2(v!.p95), b: r2(v!.bare), e: r2(v!.edgeSd) })))
     // 빈 것의 사유(값) — 지우개 · 스머지 ≥ .7(젖은 붓·물만 · 빈 층에서는 문 것이 없다) · 포스터라이즈 · 투명(opaque ≤ .05) ·
     // 알파 잠금(빈 층에 못 칠한다) · smudge_transparency(문 알파가 문턱 아래면 안 칠한다)
     const reasonOf = (name: string): string => {
@@ -357,12 +424,16 @@ test('⑥⑦⑧ 프리셋 충실도 · 196이 서로 갈린다 · 결정론 · �
     // 반증 — 전부 같은 브러시면 서명이 하나
     const same = new Set<string>()
     for (let k = 0; k < 8; k++) same.add(JSON.stringify(sigOf('classic/pencil')))
-    return { total: Object.keys(sigs).length, painted: painted.length, distinct: keys.size, empty, unexplained, ms: +ms.toFixed(0), falsification_same_brush_distinct: same.size, sample: Object.fromEntries(painted.slice(0, 6)) }
+    const reasonCount: Record<string, number> = {}
+    for (const r of Object.values(empty)) for (const k of (r as string).split('+')) reasonCount[k] = (reasonCount[k] ?? 0) + 1
+    return { total: Object.keys(sigs).length, painted: painted.length, distinct4: keys.size, distinct2: keys2.size, empty, empty_reasons: reasonCount, unexplained, ms: +ms.toFixed(0), falsification_same_brush_distinct: same.size, sample: Object.fromEntries(painted.slice(0, 6)) }
   })
-  OUT.differ = { def: '196 견본(직선 12px · 시드 62 · 잉크펜 슬롯 · 층 알파) 통계 서명 {mean,p95,bare,edgeSd}(4자리) — painted = 최대 알파 ≥ .008인 것 · distinct = 고유 서명 수 · empty = 빈 층에 아무것도 안 남긴 것과 그 사유(값 — eraser · smudge≥.65(젖은 붓·물만·블렌더) · posterize · opaque≤.05 · lock_alpha · smudge_transparency · dabs_sparse(반지름당 도장 < .2 — splatter)) · unexplained = 사유 없는 빈 것(0이어야). 반증 = 같은 브러시 8번 → 서명 1', ...differ }
+  const cs7 = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
+  OUT.differ = { def: '196 견본(직선 12px · 시드 62 · 잉크펜 슬롯 · 층 알파) 통계 서명 {mean,p95,bare,edgeSd} — painted = 최대 알파 ≥ C.PAINT62_PAINTED_ALPHA인 것 · distinct2 = 두 자리(§5 유효 자릿수 — 술어) 고유 서명 수 · distinct4 = 네 자리(기록) · empty_reasons = 사유별 수(겹침 포함) · empty = 빈 층에 아무것도 안 남긴 것과 그 사유(값 — eraser · smudge≥.65(젖은 붓·물만·블렌더) · posterize · opaque≤.05 · lock_alpha · smudge_transparency · dabs_sparse(반지름당 도장 < .2 — splatter)) · unexplained = 사유 없는 빈 것(0이어야). 반증 = 같은 브러시 8번 → 서명 1', ...differ }
+  ;(OUT.differ as Record<string, unknown>).threshold = { painted_alpha: cs7.PAINT62_PAINTED_ALPHA, sig_digits: cs7.PAINT62_SIG_DIGITS, distinct_min: cs7.PAINT62_DISTINCT_MIN }
   expect(differ.unexplained, '빈 자국에는 전부 사유가 있다(엔진이 조용히 못 그리는 것이 없다)').toEqual([])
   expect(differ.painted, '196 중 140 이상이 빈 층에 자국을 남긴다(나머지는 사유 있는 젖은/지우개/투명 붓)').toBeGreaterThanOrEqual(140)
-  expect(differ.distinct / differ.painted, '칠해진 것의 90% 이상이 고유한 서명').toBeGreaterThanOrEqual(0.9)
+  expect(differ.distinct2 / differ.painted, '칠해진 것의 80% 이상이 두 자리 서명에서도 고유(§5 유효 자릿수)').toBeGreaterThanOrEqual(cs7.PAINT62_DISTINCT_MIN)
   expect(differ.falsification_same_brush_distinct, '반증 — 같은 브러시는 서명 하나').toBe(1)
   // ⑧ 결정론 — 분류 일곱의 프리셋 하나씩 + 도구 넷
   const det = await page.evaluate(() => {

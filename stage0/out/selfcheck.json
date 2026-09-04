@@ -1,5 +1,5 @@
 {
-  "n_flags": 6527,
+  "n_flags": 6532,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -21734,11 +21734,6 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint50_web2_dpr1.json:tex_budget.delta_median_ms",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
       "path": "paint50_web2_dpr2.json:multiply.under_pattern_opaque.contrastPx",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -21964,7 +21959,12 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint62_web2_dpr1.json:fringe.rows.kaerhon_v1/paint_sm.darkerThanPig",
+      "path": "paint62_web2_dpr1.json:fringe.rows.kaerhon_v1/paint_sm.brighter0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint62_web2_dpr1.json:fringe.rows.kaerhon_v1/paint_sm.outside",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -21974,7 +21974,17 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint62_web2_dpr1.json:fringe.falsification_fringe_break.darkerThanPig",
+      "path": "paint62_web2_dpr1.json:fringe.falsification_fringe_break_light.brighter",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint62_web2_dpr1.json:fringe.falsification_fringe_break_light.brighter0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint62_web2_dpr1.json:fringe.falsification_fringe_break_light.maxOver",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -22124,7 +22134,12 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint62_web2_dpr2.json:fringe.rows.kaerhon_v1/paint_sm.darkerThanPig",
+      "path": "paint62_web2_dpr2.json:fringe.rows.kaerhon_v1/paint_sm.brighter0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint62_web2_dpr2.json:fringe.rows.kaerhon_v1/paint_sm.outside",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -22134,7 +22149,17 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint62_web2_dpr2.json:fringe.falsification_fringe_break.darkerThanPig",
+      "path": "paint62_web2_dpr2.json:fringe.falsification_fringe_break_light.brighter",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint62_web2_dpr2.json:fringe.falsification_fringe_break_light.brighter0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint62_web2_dpr2.json:fringe.falsification_fringe_break_light.maxOver",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -33122,7 +33147,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 658,
+      "files_scanned": 659,
       "exts_declared": [
         ".md",
         ".py",
@@ -33146,7 +33171,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 658,
+      "files_scanned": 659,
       "exts_declared": [
         ".md",
         ".py",

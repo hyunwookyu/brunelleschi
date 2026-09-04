@@ -78,8 +78,8 @@ export class StrokeSurface implements DabSurface {
   premulViolations = 0
   /** 반증 — 다음 획 끝에 한 픽셀을 일부러 깬다 */
   breakPremulOnce = false
-  /** 반증 — blit에서 옅은 가장자리(0<a<.3)의 rgb를 흰색으로(흰 테 ①의 재현) */
-  fringeBreak = false
+  /** 반증 — blit에서 옅은 가장자리(0<a<.3)의 rgb를 흰색(흰 테 ①의 재현)/검정('dark' — 어두운 안료가 새는 형태)으로 */
+  fringeBreak: boolean | 'dark' = false
   dabs = 0
   /** 진단 — 이 획의 덮임 캡 최대(결 «전» 목표 × 도구 캡) = «획 불투명도»(게이트 ④의 자) */
   maxCap = 0
@@ -440,7 +440,7 @@ export class StrokeSurface implements DabSurface {
         p[j + 1] = LIN2SRGB8[Math.round(g * 4096)]!
         p[j + 2] = LIN2SRGB8[Math.round(b * 4096)]!
         p[j + 3] = Math.round(clamp(a, 0, 1) * 255)
-        if (fringe && a < 0.3) { p[j] = 255; p[j + 1] = 255; p[j + 2] = 255 }   // 반증 — 흰 테 ①의 재현
+        if (fringe && a < 0.3) { const v = fringe === 'dark' ? 0 : 255; p[j] = v; p[j + 1] = v; p[j + 2] = v }   // 반증 — 흰 테 ①의 재현(밝은 안료 조합은 검정)
       }
     }
   }

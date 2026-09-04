@@ -26,9 +26,10 @@
     "restored": true
   },
   "brush_pick": {
-    "default_tanda_marker01": 2059660774,
+    "default_marker": 2059660774,
     "classic_marker_small": -1897160416,
-    "changed": true
+    "changed": true,
+    "note": "기본 마커 = 엔진 DEFAULT_PRESET.marker(62: ramon/100%_Opaque)"
   },
   "roundtrip": {
     "json_len": 42,

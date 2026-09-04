@@ -159,11 +159,17 @@ test('④ 굵기 무관 — 연필 20 vs 40', async ({ page }) => {
   const b = await measureLine(page, 'pencil', 40)
   expect(a.mean, '20px 자국 실재').toBeGreaterThan(2)
   expect(b.mean, '40px 자국 실재').toBeGreaterThan(2)
+  // web2-62: 같은 자를 결 «끔»에서 — 지배 주기가 결의 것이면 끔에서 사라지고, 도장 산포의 것이면 그대로다(리뷰어 [H5]의 값)
+  await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(true))
+  const a0 = await measureLine(page, 'pencil', 20)
+  const b0 = await measureLine(page, 'pencil', 40)
+  await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(false))
   OUT.width_follow = {
     w20: { P: a.dominantP, amp: a.ampRatio },
     w40: { P: b.dominantP, amp: b.ampRatio },
     p_ratio: a.dominantP > 0 ? +(b.dominantP / a.dominantP).toFixed(3) : 0,
-    def: '굵기 2배에서 지배 주기의 비 — 결이 굵기에 실리면 ≈2(옛 엔진 · grainWpx×grainK), 종이 성질이면 ≈1',
+    grain_off: { w20: { P: a0.dominantP, amp: a0.ampRatio }, w40: { P: b0.dominantP, amp: b0.ampRatio }, p_ratio: a0.dominantP > 0 ? +(b0.dominantP / a0.dominantP).toFixed(3) : 0 },
+    def: '굵기 2배에서 지배 주기의 비 — 61 자의 뜻: 결이 굵기에 실리면 ≈2(옛 엔진), 종이 성질이면 ≈1. ⚠ web2-62: mypaint 연필(classic/pencil — 도장 산포 offset_by_random × base_radius)에서 이 자의 «지배 주기»는 결이 아니라 도장 산포 주기다(반지름에 비례 — 원문 설계) → 비 ≈2가 «결이 굵기에 실림»을 뜻하지 않는다. grain_off(결 끔)가 같은 비를 내는 것이 그 증거(값). 결의 면 고정·굵기 무관은 paint59 ④(대상 px 타일 상관)가 잰다',
   }
 })
 
@@ -364,6 +370,15 @@ test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 ·
     def: '직선 견본(압력 0.5 상수)의 열별 반최대 폭 중앙값 ÷ 요청 굵기(px). 58 ⛔ 「크기 슬라이더·도구별 최대」의 정직성 — 사다리(√2 파생)와 칸별 실측 보정이 실제로 px를 낸다. doubling = 연필 48 ÷ 24의 폭 비(기대 ~2) · 상한 대역은 marker_w100·cp_w50·brush_w250(단언)·brush_w500(기록) — 연필 최대(50)는 w48이 대리',
     threshold: cs.PAINT61_SIZE_TOL,
   }
+  // 반증(리뷰어 [H4] · D-3): 자가 보정이 게이트의 자(반최대 폭)와 «같은 양을 푼다»는 물음 — 보정을 끄면(반지름 = 폭/2 · 기하 그대로)
+  // 프리셋의 마스크·산포가 반최대 폭을 요청에서 벗어나게 해야 한다. 벗어난 만큼이 보정이 «한 일»이다(값).
+  await page.evaluate(() => (window as any).__b2.diag.setCalibOffForTest(true))
+  const naive: Record<string, number> = {}
+  for (const i of ['pencil', 'cp', 'brush', 'marker'] as Instr[]) naive[i] = +((await widthOf(i, 24)) / 24).toFixed(3)
+  await page.evaluate(() => (window as any).__b2.diag.setCalibOffForTest(false))
+  const naiveDev = Math.max(...Object.values(naive).map(v => Math.abs(v - 1)))
+  ;(OUT.size_honesty as Record<string, unknown>).falsification_calib_off = { def: '보정 끔(반지름 = 요청 폭/2)의 w24 반최대 폭 비 — 보정이 무엇인가를 «한다»의 실증(넷 중 최대 편차가 문 밖이어야 자가 산다). 보정과 게이트가 같은 자(반최대 폭)를 쓰는 것은 «자가 보정의 정의»이지 자기참조가 아니다 — 보정은 반지름 6·24 두 점의 직선 견본에서 폭을 재고, 게이트는 그 표로 «다른 요청 폭(24·48·100·250·500)»의 자국을 다시 잰다(보간·비례가 실제로 서는가)', rows: naive, max_dev: +naiveDev.toFixed(3) }
+  expect(naiveDev, '반증 — 보정을 끄면 어느 도구의 반최대 폭이 허용을 벗어난다(보정이 실제로 일한다)').toBeGreaterThan(cs.PAINT61_SIZE_TOL)
   expect(doubling, '연필 — 굵기 2배는 폭도 2배 대역').toBeGreaterThan(1.6)
   expect(doubling, '연필 — 굵기 2배는 폭도 2배 대역').toBeLessThan(2.4)
   expect(Math.abs(rm - 1), '마커 100(도구 최대) — 반최대 폭이 허용 안').toBeLessThanOrEqual(cs.PAINT61_SIZE_TOL)

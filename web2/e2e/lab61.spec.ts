@@ -115,7 +115,7 @@ test('작업대 — 열림·손잡이·브러시 선택·값의 왕복', async (
   await page.click('#tunelab-b-classic\\/marker_small')       // 62: 끌 마커(elliptical 8)로 갈아 앉힌다
   await page.waitForTimeout(200)
   const m1 = await markHash(page, 'marker')
-  OUT.brush_pick = { default_tanda_marker01: m0, classic_marker_small: m1, changed: m0 !== m1 }
+  OUT.brush_pick = { default_marker: m0, classic_marker_small: m1, changed: m0 !== m1, note: '기본 마커 = 엔진 DEFAULT_PRESET.marker(62: ramon/100%_Opaque)' }
   expect(m0 !== m1, 'classic/marker_small(끌) — 자국이 갈린다').toBe(true)
 
   // ④ 값 꺼내기 → JSON · 굳힌다 → 기기 · 가져온다 → 왕복
