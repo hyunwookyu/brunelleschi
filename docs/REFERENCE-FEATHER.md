@@ -266,6 +266,13 @@ Feather가 점마다 **법선**을 저장하는 이유가 여기 있다.
                             spline이 점별 압력을 받는다. ⚠ 크기는 scaleBrushes가 아니라
                             파생 브러시(지름·산포만 k배 — spacing은 절대 걸음 · AS-C181)
   mypaint-brushes (CC0)     의무 없음. 값을 그대로 실어도 된다
+  rubberduck 「60 free gimp / krita brushes」(OpenGameArt · CC0)
+                            팁 원본(.gih/.gbr). 페이지의 License 칸이 정본(파일 안 문서 없음) — web2-63이 2개 실었다
+  David Revoy Krita brushes 2025-01 bundle (CC-0)
+                            번들 meta.xml <meta:license>CC-0 · 페이지 「include them in your software」 —
+                            팁 원본 3개(chalk_chisel·rock_pitted·scratches_rough). ⚠ 시연 그림은 CC-BY — 안 싣는다
+  ambientCG Paper001 (CC0 1.0)
+                            종이 결 변위 맵. docs.ambientcg.com/license 「include the raw files in your project」
   libmypaint (ISC)          안전. WASM 빌드는 죽었다(2015 asm.js)
   google/ink (Apache-2.0)   Jetpack Ink의 핵심. 메쉬 기반. 연필 브러시는 없다
   spectral.js (MIT)         안료 혼색
@@ -274,6 +281,8 @@ Feather가 점마다 **법선**을 저장하는 이유가 여기 있다.
   mixbox                    CC BY-NC — 유료 앱 불가
   tldraw                    사유 라이선스
   Krita · GIMP · MyPaint 앱  GPL — 기법은 읽되 코드는 절대 안 된다
+  Krita·GIMP «기존» 브러시 파일 · portnov/krita-brushes · ShareTextures · .abr 팩
+                            per-file 라이선스 없음·혼합·「앱 포함 금지」·재배포 금지 — 지시 63 ⛔(63이 열지도 않았다)
   CGAL 스트레이트 스켈레톤   GPL (npm이 MIT라 적어도 GPL이다)
 ```
 

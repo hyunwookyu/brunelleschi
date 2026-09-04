@@ -333,26 +333,35 @@ test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 ·
       b2.diag.markSampleForTest(tool, 'line', w, 61, bw2, bh)
       const m = (window as any).__m61 as { v: number[]; w: number; h: number }
       const W = m.w, H = m.h
-      const widths: number[] = []
-      for (let x = 60; x < W - 60; x += 2) {
-        let mx = 0
-        for (let y = 0; y < H; y++) mx = Math.max(mx, m.v[y * W + x]!)
-        if (mx < 20) continue
-        const th = mx / 2
-        let n = 0
-        for (let y = 0; y < H; y++) if (m.v[y * W + x]! > th) n++
-        widths.push(n)
+      // web2-63: 팁이 든 슬롯(연필·색연필 기본)은 «범위 폭»(열 최대의 25% 위 — 보정이 쓰는 그 자 · 희소 판에서 반최대는 판의
+      // 몇 픽셀만 센다)으로, 팁 없는 슬롯은 61의 반최대 그대로. 어느 자였는지와 다른 자의 값도 함께 남긴다(ruler · alt).
+      const tipOn = (b2.diag.tipStatsForTest?.().defaults ?? {})[tool as string] != null
+      const measure = (frac: number): number => {
+        const widths: number[] = []
+        for (let x = 60; x < W - 60; x += 2) {
+          let mx = 0
+          for (let y = 0; y < H; y++) mx = Math.max(mx, m.v[y * W + x]!)
+          if (mx < 20) continue
+          const th = mx * frac
+          let n = 0
+          for (let y = 0; y < H; y++) if (m.v[y * W + x]! > th) n++
+          widths.push(n)
+        }
+        widths.sort((a, b) => a - b)
+        return widths.length ? widths[Math.floor(widths.length / 2)]! : 0
       }
-      widths.sort((a, b) => a - b)
-      return widths.length ? widths[Math.floor(widths.length / 2)]! : 0
+      const half = measure(0.5), ext = measure(0.25)
+      ;(window as any).__w61 = { ruler: tipOn ? 'extent25' : 'halfmax', halfmax: half, extent25: ext }
+      return tipOn ? ext : half
     }, [i, wPx] as const)
+  const lastRuler = () => page.evaluate(() => (window as any).__w61 as { ruler: string; halfmax: number; extent25: number })
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const rows: Record<string, unknown> = {}
   OUT.constants_snapshot = { PAINT61_SIZE_TOL: cs.PAINT61_SIZE_TOL, PAINT61_END_TOL: cs.PAINT61_END_TOL, PAINT61_PAPER_CORR_MIN: cs.PAINT61_PAPER_CORR_MIN, note: '스냅샷-라이트(#42 ⑥의 최소 고리 — web2 원장의 constantsSnapshot 기계 부재는 종전 유보)' }
   for (const i of ['pencil', 'cp', 'brush', 'marker'] as Instr[]) {
     const w24 = await widthOf(i, 24)
     const r = +(w24 / 24).toFixed(3)
-    rows[i] = { w24, ratio: r }
+    rows[i] = { w24, ratio: r, ...(await lastRuler()) }
     expect(Math.abs(r - 1), `${i} — 반최대 폭 ÷ 요청 24px이 허용 안`).toBeLessThanOrEqual(cs.PAINT61_SIZE_TOL)
   }
   const p48 = await widthOf('pencil', 48)
@@ -369,7 +378,7 @@ test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 ·
     rows, pencil_w48: p48, doubling,
     marker_w100: { w: m100, ratio: rm }, cp_w50: { w: c50, ratio: rc }, brush_w250: { w: b250, ratio: rb },
     brush_w500: { w: b500, ratio: +(b500 / 500).toFixed(3), note: '기록 — 견본 판·굽기 캔버스(1024)의 상한 대역. 대형 자국의 눈 판정은 실기기 몫' },
-    def: '직선 견본(압력 0.5 상수)의 열별 반최대 폭 중앙값 ÷ 요청 굵기(px). 58 ⛔ 「크기 슬라이더·도구별 최대」의 정직성 — 사다리(√2 파생)와 칸별 실측 보정이 실제로 px를 낸다. doubling = 연필 48 ÷ 24의 폭 비(기대 ~2) · 상한 대역은 marker_w100·cp_w50·brush_w250(단언)·brush_w500(기록) — 연필 최대(50)는 w48이 대리',
+    def: '직선 견본(압력 0.5 상수)의 열별 폭 중앙값 ÷ 요청 굵기(px) — 자는 슬롯의 팁 유무로 갈린다(web2-63: 팁 든 연필·색연필 = 범위 폭(열 최대의 25% 위 · 보정과 같은 자) · 잉크펜·마커 = 반최대(61 그대로) · 행의 ruler·halfmax·extent25가 그 값). 58 ⛔ 「크기 슬라이더·도구별 최대」의 정직성 — 사다리(√2 파생)와 칸별 실측 보정이 실제로 px를 낸다. doubling = 연필 48 ÷ 24의 폭 비(기대 ~2) · 상한 대역은 marker_w100·cp_w50·brush_w250(단언)·brush_w500(기록) — 연필 최대(50)는 w48이 대리',
     threshold: cs.PAINT61_SIZE_TOL,
   }
   // 반증(리뷰어 [H4] · D-3): 자가 보정이 게이트의 자(반최대 폭)와 «같은 양을 푼다»는 물음 — 보정을 끄면(반지름 = 폭/2 · 기하 그대로)

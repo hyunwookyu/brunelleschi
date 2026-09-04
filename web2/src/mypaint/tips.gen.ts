@@ -1,6 +1,6 @@
 // 자동 생성 — tools/tips-gen.mjs (web2-63). 손으로 고치지 않는다. 원본은 tips/src/ · 출처·라이선스는 tips/src/tips.json.
 export interface TipMeta { name: string; frames: number; size: number; src_frames: number; src_size: string; mask_mode: string;
-  file: string; source: string; license: string; license_check: string; spacing_hint: number | null; mean: number; fill: number; png_bytes: number }
+  file: string; source: string; license: string; license_check: string; spacing_hint: number | null; window?: string; scale?: string; mean: number; fill: number; png_bytes: number }
 export const TIPS: readonly TipMeta[] = [
   {
     "name": "fine-grain",
@@ -14,9 +14,11 @@ export const TIPS: readonly TipMeta[] = [
     "license": "CC0 1.0",
     "license_check": "OGA 자산 페이지의 License 칸 «CC0» · 파일 안에는 라이선스 문서 없음(페이지가 정본)",
     "spacing_hint": null,
-    "mean": 0.0878,
-    "fill": 0.4057,
-    "png_bytes": 137826
+    "window": "disk .92 cos",
+    "scale": "p95",
+    "mean": 0.1822,
+    "fill": 0.4812,
+    "png_bytes": 154505
   },
   {
     "name": "chalk-chisel",
@@ -30,9 +32,11 @@ export const TIPS: readonly TipMeta[] = [
     "license": "CC0 (CC-0 Public Domain)",
     "license_check": "번들 안 meta.xml <meta:license>CC-0</meta:license> · 페이지 문면 «include them in your software» · 시연 그림(CC-BY)은 안 실음",
     "spacing_hint": null,
-    "mean": 0.2318,
-    "fill": 0.3266,
-    "png_bytes": 97510
+    "window": "disk .92 cos",
+    "scale": "p95",
+    "mean": 0.2315,
+    "fill": 0.3258,
+    "png_bytes": 98033
   },
   {
     "name": "rock-pitted",
@@ -46,9 +50,11 @@ export const TIPS: readonly TipMeta[] = [
     "license": "CC0 (CC-0 Public Domain)",
     "license_check": "위와 같음(meta.xml)",
     "spacing_hint": null,
-    "mean": 0.1163,
-    "fill": 0.4392,
-    "png_bytes": 155376
+    "window": "disk .92 cos",
+    "scale": "p95",
+    "mean": 0.1748,
+    "fill": 0.4899,
+    "png_bytes": 158039
   },
   {
     "name": "scratches-rough",
@@ -62,9 +68,11 @@ export const TIPS: readonly TipMeta[] = [
     "license": "CC0 (CC-0 Public Domain)",
     "license_check": "위와 같음(meta.xml)",
     "spacing_hint": null,
-    "mean": 0.1153,
-    "fill": 0.2797,
-    "png_bytes": 116178
+    "window": "disk .92 cos",
+    "scale": "p95",
+    "mean": 0.1456,
+    "fill": 0.3171,
+    "png_bytes": 117093
   },
   {
     "name": "scratches2",
@@ -78,9 +86,11 @@ export const TIPS: readonly TipMeta[] = [
     "license": "CC0 1.0",
     "license_check": "위와 같음(OGA 페이지)",
     "spacing_hint": null,
-    "mean": 0.2551,
-    "fill": 0.6013,
-    "png_bytes": 211907
+    "window": "disk .92 cos",
+    "scale": "p95",
+    "mean": 0.3072,
+    "fill": 0.5947,
+    "png_bytes": 196830
   },
   {
     "name": "paper001",

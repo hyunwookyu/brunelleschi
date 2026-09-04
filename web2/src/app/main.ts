@@ -2821,8 +2821,10 @@ import {
   lastLayerAlphaForTest, smudgeStatsForTest, resetSmudgeStatsForTest, premulViolationsForTest, layerStatsForTest, lastStrokeCapForTest, presetBaseForTest,
   setCapOffForTest, setSmudgeSelfSampleForTest, setPremulBreakForTest, setFringeBreakForTest,
   setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET,
+  setTipsOffForTest, setTipFrameLockForTest, tipsReadyForTest, tipStatsForTest, resetTipStatsForTest, tipDefaultOfForTest, onTipAssetsLoaded,
 } from './mypaintpaint'
-import { grainTileForTest } from '../mypaint/paper'
+import { grainTileForTest, setPaper61ForTest, paper61ForTest } from '../mypaint/paper'
+import { loadTipAssets, tipAtlasesForTest } from '../mypaint/tips'
 import { initTuneLab } from './tunelab'
 import { initBrushPicker, persistTune } from './brushpicker'
 
@@ -2907,6 +2909,16 @@ const diag = {
   setFringeBreakForTest: (v: boolean | 'dark') => setFringeBreakForTest(v),
   setPaintModeOffForTest: (v: boolean) => setPaintModeOffForTest(v),
   setSmudgeOffForTest: (v: boolean) => setSmudgeOffForTest(v),
+  // ── web2-63 팁·종이 ──
+  setTipsOffForTest: (v: boolean) => { setTipsOffForTest(v); rebakePaintTexForTest(); invalidate() },
+  setTipFrameLockForTest: (v: number) => setTipFrameLockForTest(v),
+  setPaper61ForTest: (v: boolean) => { setPaper61ForTest(v); rebakePaintTexForTest(); invalidate() },
+  paper61ForTest: () => paper61ForTest(),
+  tipsReadyForTest: () => tipsReadyForTest(),
+  tipStatsForTest: () => tipStatsForTest(),
+  resetTipStatsForTest: () => resetTipStatsForTest(),
+  tipDefaultOfForTest: (preset: string) => tipDefaultOfForTest(preset),
+  tipAtlasesForTest: () => tipAtlasesForTest(),
   /** 반증(grain61 ⑥ — 리뷰어 [H4]) — 크기 자가 보정 끔(반지름 = 폭/2 · 기하 그대로) */
   setCalibOffForTest: (v: boolean) => { setCalibOffForTest(v); rebakePaintTexForTest(); invalidate() },
   /** 반증(AS-C184) — 이벤트 고정 dtime(ms) · null = 제품(걸음 ÷ 일정 속도) */
@@ -2923,7 +2935,7 @@ const diag = {
    *  남긴다. 화면·문서·dpr과 무관한 순수 px 판이라 원근이 자를 안 흐린다(#16 — 주기
    *  측정에 원근 정규화가 필요 없다). 부작용 없음(문서 무변 · 오프스크린). */
   markSampleForTest: (i: Instr58, shape: MarkShape, wPx: number, seed = 61, W = 480, H = 240,
-    ext?: { preset?: string; over?: Record<string, number>; color?: string; bg?: string }) => {
+    ext?: { preset?: string; over?: Record<string, number>; color?: string; bg?: string; tip?: string }) => {
     const c = document.createElement('canvas'); c.width = W; c.height = H
     const g2 = c.getContext('2d')!
     g2.fillStyle = ext?.bg ?? '#ffffff'; g2.fillRect(0, 0, W, H)
@@ -2933,7 +2945,7 @@ const diag = {
       drawMark(g2, {
         pts: sm.pts, press: sm.press, wPx, seed, tool: i,
         color: ext?.color ?? (i === 'brush' ? MAT.HB.color : '#8a4a3a'),
-        preset: ext?.preset, over: ext?.over,
+        preset: ext?.preset, over: ext?.over, tip: ext?.tip,
       })
     } finally { setAlphaCaptureForTest(false) }
     const d = g2.getImageData(0, 0, W, H).data
@@ -2948,7 +2960,7 @@ const diag = {
    *  도형을 (dx,dy)만큼 옮긴 것 — 시드·도구·굵기는 항이 정한다. */
   markMultiForTest: (
     items: { tool: Instr58; shape: MarkShape; wPx: number; seed: number; dx?: number; dy?: number;
-      preset?: string; over?: Record<string, number>; color?: string; press?: number }[],
+      preset?: string; over?: Record<string, number>; color?: string; press?: number; tip?: string }[],
     W = 480, H = 240, bake = false, bg = '#ffffff',
   ) => {
     const c = document.createElement('canvas'); c.width = W; c.height = H
@@ -2961,7 +2973,7 @@ const diag = {
         press: it.press !== undefined ? sm.press.map(() => it.press! * C.PRESS_Q) : sm.press,
         wPx: it.wPx, seed: it.seed, tool: it.tool,
         color: it.color ?? (it.tool === 'brush' ? MAT.HB.color : '#8a4a3a'),
-        preset: it.preset, over: it.over,
+        preset: it.preset, over: it.over, tip: it.tip,
       }
     })
     // bake = 굽기 통로(drawMarksSeam — 층 하나에 차례로 · 스머지가 앞 획을 본다) · 아니면 draw 하나씩
@@ -3506,6 +3518,8 @@ const diag = {
     PAINT62_FRINGE_TOL: C.PAINT62_FRINGE_TOL, PAINT62_GREEN_HUE: C.PAINT62_GREEN_HUE, PAINT62_GREEN_SAT: C.PAINT62_GREEN_SAT,
     PAINT62_SMUDGE_RG_MIN: C.PAINT62_SMUDGE_RG_MIN, PAINT62_PAINTED_ALPHA: C.PAINT62_PAINTED_ALPHA, PAINT62_SIG_DIGITS: C.PAINT62_SIG_DIGITS,
     PAINT62_DISTINCT_MIN: C.PAINT62_DISTINCT_MIN,
+    PAINT63_DISTINCT_REL: C.PAINT63_DISTINCT_REL, PAINT63_AC_MARGIN: C.PAINT63_AC_MARGIN, PAINT63_AC_MAX: C.PAINT63_AC_MAX,
+    PAINT63_TILE_CORR_MAX: C.PAINT63_TILE_CORR_MAX, PAINT63_TILE_CORR_TIP_MAX: C.PAINT63_TILE_CORR_TIP_MAX, PAINT63_SAMESPOT_CORR: C.PAINT63_SAMESPOT_CORR, PAINT63_ASPECT_WIDTH_RATIO_MIN: C.PAINT63_ASPECT_WIDTH_RATIO_MIN,
     PAINT50_PATTERN_MIN_PX: C.PAINT50_PATTERN_MIN_PX, PAINT50_LINE_INK_MIN_PX: C.PAINT50_LINE_INK_MIN_PX,
     PAINT51_DPR_W_TOL: C.PAINT51_DPR_W_TOL, PAINT51_SWATCH_W_TOL: C.PAINT51_SWATCH_W_TOL,
     PAINT51_DENSITY_SLOPE: C.PAINT51_DENSITY_SLOPE, PAINT51_WIDTH_SLOPE: C.PAINT51_WIDTH_SLOPE,
@@ -3605,3 +3619,6 @@ declare global { interface Window { __b2?: { app: typeof app; diag: typeof diag;
 // `widthOfMat`을 함께 내보낸다(web2-30 2번) — 획의 굵기는 **`mat.w`가 아니라 이 함수**가
 // 정한다(기본 촉이면 `mat.w`가 아예 없다). 팔이 그 사실을 우회해 상수를 베끼면 #54가 깨진다.
 window.__b2 = { app, diag, widthOfMat }
+// web2-63 — 팁 아틀라스·종이 높이맵을 푼다(비동기). 준비 전 자국은 절차 타원(62)이고 준비되면 굽기 텍스처를 한 번 다시 굽는다.
+//   팔은 diag.tipsReadyForTest()를 기다린다(#105 — 폴백은 값으로 보인다).
+void loadTipAssets().then(() => { onTipAssetsLoaded(); rebakePaintTexForTest(); invalidate() })

@@ -53,6 +53,45 @@ export function initBrushPicker(opts: {
   note.style.cssText = 'font-size:11px;color:#6b665c;flex-shrink:0'
   note.textContent = '분류를 열면 견본이 그려진다(제품과 같은 함수). 누르면 지금 도구 자리에 앉는다 — 이 기기에 남는다.'
 
+  // web2-63 — 팁 줄: 지금 슬롯의 비트맵 팁(없음 · 다섯) — 프리셋 기본(null)이면 «기본» 표시. 기기 조정(tune.tip)이고 곧바로 굳힌다.
+  const tipRow = document.createElement('div')
+  tipRow.id = 'brushpick-tips'
+  tipRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;align-items:center;flex-shrink:0;padding:2px 0;border-bottom:1px solid #d8d2c4'
+  const buildTips = (): void => {
+    tipRow.replaceChildren()
+    const r = paintRenderer()
+    if (!r?.tipChoices || !r.tipOf || !r.setTip) return
+    const tool = opts.toolOf()
+    const cur = r.tipOf(tool)
+    const lab = document.createElement('span')
+    lab.textContent = `팁(도장 비트맵) — ${INSTR_NAME[tool]}:`
+    lab.style.cssText = 'font-weight:600'
+    tipRow.append(lab)
+    const items: { key: string | null; label: string; title: string }[] = [
+      { key: null, label: '기본', title: '프리셋의 기본 팁(연필·목탄·파스텔·마른붓·색연필 계열은 팁 · 잉크·마커는 없음)' },
+      { key: 'none', label: '없음', title: '절차 타원 도장(62 그대로)' },
+      ...r.tipChoices().map(n => ({ key: n, label: n, title: `${n} — tips/src/tips.json의 출처·라이선스(CC0)` })),
+    ]
+    for (const it of items) {
+      const b = document.createElement('button')
+      b.id = `brushpick-tip-${it.key ?? 'default'}`
+      b.dataset.act = 'state'
+      b.dataset.tip = it.key ?? 'default'
+      b.textContent = it.label
+      b.title = it.title
+      b.classList.toggle('on', cur === it.key)
+      b.addEventListener('click', () => {
+        r.setTip!(tool, it.key)
+        persistTune()
+        for (const q of tipRow.querySelectorAll('button')) q.classList.toggle('on', q === b)
+        // 견본을 다시 그린다(팁이 바뀌면 자국이 바뀐다)
+        for (const [name, cv] of samples) if (drawn.has(cv)) sampleOf(name, cv)
+        opts.notify(`${INSTR_NAME[tool]} 팁 ← ${it.label}(이 기기에 남는다)`)
+      })
+      tipRow.append(b)
+    }
+  }
+
   const list = document.createElement('div')
   list.id = 'brushpick-list'
   list.style.cssText = 'display:flex;flex-direction:column;gap:4px'
@@ -141,9 +180,10 @@ export function initBrushPicker(opts: {
       list.append(det)
     }
     title.textContent = `브러시 고르개 — ${INSTR_NAME[tool]} 자리${cur ? ` · 지금 ${cur}` : ''}`
+    buildTips()
   }
 
-  root.append(head, note, list)
+  root.append(head, note, tipRow, list)
   let open = false
   const api: BrushPicker = {
     root,

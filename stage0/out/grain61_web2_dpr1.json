@@ -9,39 +9,39 @@
   "scene": "호출마다 markSampleForTest가 새 480×240 캔버스를 만든다(문서·뷰 무관 · 잔류 없음)",
   "period_line_w20": {
     "pencil": {
-      "edgeP": 22,
-      "edgeAmpN": 0.1411,
-      "mean": 7.909,
-      "dominantP": 31,
-      "ampRatio": 0.1098,
-      "p95": 22,
-      "bandMean": 7.91,
-      "bareShare": 0,
+      "edgeP": 28,
+      "edgeAmpN": 0.105,
+      "mean": 5.057,
+      "dominantP": 46.5,
+      "ampRatio": 0.1403,
+      "p95": 18.7,
+      "bandMean": 5.06,
+      "bareShare": 0.0826,
       "coreN": 8001,
-      "edgeSd": 2.997,
-      "edgeN": 372
+      "edgeSd": 2.576,
+      "edgeN": 381
     },
     "cp": {
-      "edgeP": 47.5,
-      "edgeAmpN": 0.0525,
-      "mean": 13.725,
-      "dominantP": 23.5,
-      "ampRatio": 0.0349,
-      "p95": 35,
-      "bandMean": 13.73,
-      "bareShare": 0,
+      "edgeP": 56.5,
+      "edgeAmpN": 0.0452,
+      "mean": 8.363,
+      "dominantP": 27.5,
+      "ampRatio": 0.0441,
+      "p95": 27,
+      "bandMean": 8.36,
+      "bareShare": 0.0199,
       "coreN": 8001,
-      "edgeSd": 1.134,
+      "edgeSd": 1.038,
       "edgeN": 381
     },
     "brush": {
       "edgeP": 0,
       "edgeAmpN": 0,
-      "mean": 50.35,
-      "dominantP": 36.5,
-      "ampRatio": 0.0309,
+      "mean": 50.229,
+      "dominantP": 43.5,
+      "ampRatio": 0.0181,
       "p95": 148,
-      "bandMean": 50.35,
+      "bandMean": 50.23,
       "bareShare": 0.0476,
       "coreN": 8001,
       "edgeSd": 0,
@@ -65,69 +65,69 @@
   "width_follow": {
     "sweep_max_P": 120,
     "w20": {
-      "P": 31,
-      "amp": 0.1098
+      "P": 46.5,
+      "amp": 0.1403
     },
     "w40": {
-      "P": 62.5,
-      "amp": 0.1911
+      "P": 60,
+      "amp": 0.154
     },
-    "p_ratio": 2.016,
+    "p_ratio": 1.29,
     "grain_off": {
       "w20": {
-        "P": 31,
-        "amp": 0.1134
+        "P": 46.5,
+        "amp": 0.1325
       },
       "w40": {
-        "P": 63,
-        "amp": 0.1839
+        "P": 60,
+        "amp": 0.1543
       },
-      "p_ratio": 2.032
+      "p_ratio": 1.29
     },
     "def": "굵기 2배에서 지배 주기의 비 — 61 자의 뜻: 결이 굵기에 실리면 ≈2(옛 엔진), 종이 성질이면 ≈1. ⚠ web2-62: mypaint 연필(classic/pencil — 도장 산포 offset_by_random × base_radius)에서 이 자의 «지배 주기»는 결이 아니라 도장 산포 주기다(반지름에 비례 — 원문 설계) → 비 ≈2가 «결이 굵기에 실림»을 뜻하지 않는다. grain_off(결 끔)가 같은 비를 내는 것이 그 증거(값). 결의 면 고정·굵기 무관은 paint59 ④(대상 px 타일 상관)가 잰다"
   },
   "holes_cp": {
     "col": {
-      "P": 46.5,
-      "ratio": 1.3175
+      "P": 60,
+      "ratio": 0.1989
     },
     "row": {
-      "P": 10.5,
-      "ratio": 1.8351
+      "P": 9.5,
+      "ratio": 1.499
     },
-    "holeShare": 0.0129,
-    "p95": 36.7,
+    "holeShare": 0.1741,
+    "p95": 30,
     "def": "몸통(±10px) 구멍(<0.35·p95) 지시자의 열·행 프로파일 지배 주기 — 격자에 실리면 두 축 다 봉우리(pre), 안 실리면 진폭이 낮다(post)"
   },
   "four_differ": {
     "stats": {
       "pencil": {
-        "p95": 21.6667,
-        "bareShare": 0.0067,
-        "edgeSd": 3.967,
-        "bandMean": 7.85,
+        "p95": 18.7,
+        "bareShare": 0.0876,
+        "edgeSd": 3.0023,
+        "bandMean": 5.04,
         "sd": {
-          "p95": 0.4714,
-          "bareShare": 0.0078,
-          "edgeSd": 0.6941
+          "p95": 0,
+          "bareShare": 0.0038,
+          "edgeSd": 0.3482
         }
       },
       "cp": {
-        "p95": 34.5333,
-        "bareShare": 0.0001,
-        "edgeSd": 1.2197,
-        "bandMean": 13.11,
+        "p95": 26.9,
+        "bareShare": 0.0273,
+        "edgeSd": 1.151,
+        "bandMean": 8.05,
         "sd": {
-          "p95": 0.33,
-          "bareShare": 0.0001,
-          "edgeSd": 0.0668
+          "p95": 0.1414,
+          "bareShare": 0.0053,
+          "edgeSd": 0.098
         }
       },
       "brush": {
         "p95": 148,
         "bareShare": 0.0476,
         "edgeSd": 0,
-        "bandMean": 50.35,
+        "bandMean": 50.23,
         "sd": {
           "p95": 0,
           "bareShare": 0,
@@ -147,15 +147,15 @@
       }
     },
     "perPair": {
-      "pencil~cp": 5.495,
-      "pencil~brush": 15.792,
-      "pencil~marker": 8.579,
-      "cp~brush": 14.183,
-      "cp~marker": 6.971,
+      "pencil~cp": 3.703,
+      "pencil~brush": 16.163,
+      "pencil~marker": 8.95,
+      "cp~brush": 15.137,
+      "cp~marker": 7.925,
       "brush~marker": 7.213
     },
-    "minPair": 5.495,
-    "null_same_tool": 2.284,
+    "minPair": 3.703,
+    "null_same_tool": 1.706,
     "seeds": [
       61,
       4242,
@@ -169,36 +169,36 @@
     "by_seed": {
       "pencil": [
         {
-          "p95": 22,
-          "bareShare": 0,
-          "edgeSd": 2.997
+          "p95": 18.7,
+          "bareShare": 0.0826,
+          "edgeSd": 2.576
         },
         {
-          "p95": 21,
-          "bareShare": 0.0176,
-          "edgeSd": 4.582
+          "p95": 18.7,
+          "bareShare": 0.0885,
+          "edgeSd": 3.429
         },
         {
-          "p95": 22,
-          "bareShare": 0.0025,
-          "edgeSd": 4.322
+          "p95": 18.7,
+          "bareShare": 0.0917,
+          "edgeSd": 3.002
         }
       ],
       "cp": [
         {
-          "p95": 35,
-          "bareShare": 0,
-          "edgeSd": 1.134
+          "p95": 27,
+          "bareShare": 0.0199,
+          "edgeSd": 1.038
         },
         {
-          "p95": 34.3,
-          "bareShare": 0.0002,
-          "edgeSd": 1.297
+          "p95": 26.7,
+          "bareShare": 0.0295,
+          "edgeSd": 1.138
         },
         {
-          "p95": 34.3,
-          "bareShare": 0,
-          "edgeSd": 1.228
+          "p95": 27,
+          "bareShare": 0.0324,
+          "edgeSd": 1.277
         }
       ],
       "brush": [
@@ -241,24 +241,36 @@
   "size_honesty": {
     "rows": {
       "pencil": {
-        "w24": 20,
-        "ratio": 0.833
+        "w24": 22,
+        "ratio": 0.917,
+        "ruler": "extent25",
+        "halfmax": 13,
+        "extent25": 22
       },
       "cp": {
         "w24": 24,
-        "ratio": 1
+        "ratio": 1,
+        "ruler": "extent25",
+        "halfmax": 18,
+        "extent25": 24
       },
       "brush": {
         "w24": 24,
-        "ratio": 1
+        "ratio": 1,
+        "ruler": "halfmax",
+        "halfmax": 24,
+        "extent25": 24
       },
       "marker": {
         "w24": 24,
-        "ratio": 1
+        "ratio": 1,
+        "ruler": "halfmax",
+        "halfmax": 24,
+        "extent25": 24
       }
     },
-    "pencil_w48": 40,
-    "doubling": 2,
+    "pencil_w48": 43,
+    "doubling": 1.955,
     "marker_w100": {
       "w": 100,
       "ratio": 1
@@ -276,40 +288,40 @@
       "ratio": 0.988,
       "note": "기록 — 견본 판·굽기 캔버스(1024)의 상한 대역. 대형 자국의 눈 판정은 실기기 몫"
     },
-    "def": "직선 견본(압력 0.5 상수)의 열별 반최대 폭 중앙값 ÷ 요청 굵기(px). 58 ⛔ 「크기 슬라이더·도구별 최대」의 정직성 — 사다리(√2 파생)와 칸별 실측 보정이 실제로 px를 낸다. doubling = 연필 48 ÷ 24의 폭 비(기대 ~2) · 상한 대역은 marker_w100·cp_w50·brush_w250(단언)·brush_w500(기록) — 연필 최대(50)는 w48이 대리",
+    "def": "직선 견본(압력 0.5 상수)의 열별 폭 중앙값 ÷ 요청 굵기(px) — 자는 슬롯의 팁 유무로 갈린다(web2-63: 팁 든 연필·색연필 = 범위 폭(열 최대의 25% 위 · 보정과 같은 자) · 잉크펜·마커 = 반최대(61 그대로) · 행의 ruler·halfmax·extent25가 그 값). 58 ⛔ 「크기 슬라이더·도구별 최대」의 정직성 — 사다리(√2 파생)와 칸별 실측 보정이 실제로 px를 낸다. doubling = 연필 48 ÷ 24의 폭 비(기대 ~2) · 상한 대역은 marker_w100·cp_w50·brush_w250(단언)·brush_w500(기록) — 연필 최대(50)는 w48이 대리",
     "threshold": 0.35,
     "falsification_calib_off_binds": {
       "def": "보정 끔이 게이트 값을 문 밖으로 밀어낸 도구(여기서만 반증이 섰다 — 2차 [7]). 마커(ramon/100%_Opaque)는 보정표가 w = 2r(a 2 · b 0)이라 «반지름 = 폭/2»와 같은 사상 = 항등이 맞다 · 잉크펜은 .917(문 안)",
-      "pencil": true,
+      "pencil": false,
       "cp": true,
       "brush": false,
       "marker": false,
-      "n": 2
+      "n": 1
     },
     "falsification_calib_off": {
       "def": "보정 끔(반지름 = 요청 폭/2)의 w24 반최대 폭 비 — 보정이 무엇인가를 «한다»의 실증(넷 중 최대 편차가 문 밖이어야 자가 산다). 보정과 게이트가 같은 자(반최대 폭)를 쓰는 것은 «자가 보정의 정의»이지 자기참조가 아니다 — 보정은 반지름 6·24 두 점의 직선 견본에서 폭을 재고, 게이트는 그 표로 «다른 요청 폭(24·48·100·250·500)»의 자국을 다시 잰다(보간·비례가 실제로 서는가)",
       "rows": {
-        "pencil": 0.5,
-        "cp": 0.542,
+        "pencil": 0.75,
+        "cp": 0.625,
         "brush": 0.917,
         "marker": 1
       },
-      "max_dev": 0.5
+      "max_dev": 0.375
     }
   },
   "falsification_period": {
     "def": "연필 간격 배수 6(62: 도장 걸음 ×6 — 도장 지름 대역 · 61의 p5 판은 120) — 도장이 성겨지면 점열 주기가 자에 실려야 한다(D-3: ①②의 실패 조건 실행). 제품(base) 대비 진폭 비",
     "base": {
-      "P": 31,
-      "amp": 0.1098,
-      "edgeAmpN": 0.1411
+      "P": 46.5,
+      "amp": 0.1403,
+      "edgeAmpN": 0.105
     },
     "sparse": {
-      "P": 53.5,
-      "amp": 0.4174,
-      "edgeAmpN": 0.2
+      "P": 18,
+      "amp": 0.2991,
+      "edgeAmpN": 0.1817
     },
-    "amp_rise": 3.801
+    "amp_rise": 2.132
   },
   "constants_snapshot": {
     "PAINT61_SIZE_TOL": 0.35,

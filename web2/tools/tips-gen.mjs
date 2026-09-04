@@ -4,7 +4,10 @@
 // 형식: GBR v2(GIMP 단일 브러시 — 28바이트 머리 + 이름 + 회색(1) 또는 RGBA(4)) · GIH(첫 줄 이름 · 둘째 줄
 // 머리 · 뒤에 GBR 연속) · PNG(8비트 · 비인터레이스). 마스크 극성: 회색 GBR = 값이 덮임(255 = 칠) · RGBA는
 // 알파가 전부 1이면(Krita «미리 정의된 팁»의 관행) 1 − 밝기, 아니면 (1 − 밝기) × 알파.
-// 판 하나는 정사각 S×S로 패드·축소(면적 평균) · 최대값을 1로 정규화 · 판 수는 뒤집기(h·v·hv)로 8까지 늘린다.
+// 판 하나는 정사각 S×S로 패드·축소(면적 평균) · **원형 창**(반지름 .92·S/2까지 1 · 가장자리 코사인 감쇠 — 전면 텍스처
+// 판(rock_pitted 같은 300² 풀블리드)이 «네모 도장»으로 찍히지 않게) · **p95 눈금**(0.02 넘는 값의 95백분위를 1로 · 초과는 1로
+// 자름 — 최대값 눈금은 밝은 점 몇 개가 판 전체를 옅게 만들었다: fine-grain 평균 .088 → 연필이 절차 타원의 절반 어둡기) ·
+// 판 수는 뒤집기(h·v·hv)로 8까지 늘린다. 눈금·창의 값은 tips.gen.ts(meta)에 실린다.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -119,6 +122,17 @@ function squareResize(fr) {
     out[y * S + x] = v; if (v > mx) mx = v
   }
   if (mx > 0) for (let i = 0; i < out.length; i++) out[i] /= mx
+  // 원형 창
+  const c = (S - 1) / 2, rIn = 0.92 * S / 2, rOut = S / 2
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const r = Math.hypot(x - c, y - c)
+    const wgt = r <= rIn ? 1 : r >= rOut ? 0 : 0.5 * (1 + Math.cos(Math.PI * (r - rIn) / (rOut - rIn)))
+    out[y * S + x] *= wgt
+  }
+  // p95 눈금
+  const vals = Array.from(out).filter(v => v > 0.02).sort((a, b) => a - b)
+  const p95 = vals.length ? vals[Math.floor(vals.length * 0.95)] : 1
+  if (p95 > 0) for (let i = 0; i < out.length; i++) out[i] = Math.min(1, out[i] / p95)
   return out
 }
 function flip(m, h, v) {
@@ -156,7 +170,7 @@ for (const t of manifest.tips) {
   const png = writePngGray(S * n, S, gray)
   writeFileSync(join(OUT_DIR, `${t.name}.png`), png)
   meta.push({ name: t.name, frames: n, size: S, src_frames: srcFrames, src_size: srcSize, mask_mode: mode, file: t.file,
-    source: t.source, license: t.license, license_check: t.license_check, spacing_hint: t.spacing ?? null,
+    source: t.source, license: t.license, license_check: t.license_check, spacing_hint: t.spacing ?? null, window: 'disk .92 cos', scale: 'p95',
     mean: +mean.toFixed(4), fill: +fill.toFixed(4), png_bytes: png.length })
   console.log(`${t.name}: ${srcFrames}판 ${srcSize} (${mode}) → ${n}판 ${S}² · 평균 ${mean.toFixed(3)} · 채움 ${fill.toFixed(3)} · ${(png.length / 1024).toFixed(0)} KB`)
 }
@@ -184,7 +198,7 @@ const paper = manifest.paper
 }
 const ts = `// 자동 생성 — tools/tips-gen.mjs (web2-63). 손으로 고치지 않는다. 원본은 tips/src/ · 출처·라이선스는 tips/src/tips.json.
 export interface TipMeta { name: string; frames: number; size: number; src_frames: number; src_size: string; mask_mode: string;
-  file: string; source: string; license: string; license_check: string; spacing_hint: number | null; mean: number; fill: number; png_bytes: number }
+  file: string; source: string; license: string; license_check: string; spacing_hint: number | null; window?: string; scale?: string; mean: number; fill: number; png_bytes: number }
 export const TIPS: readonly TipMeta[] = ${JSON.stringify(meta, null, 2)} as const
 export const TIP_SIZE = ${S}
 export const PAPER_NAME = 'paper001'

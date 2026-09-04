@@ -27328,6 +27328,8 @@ main 1f912bf · cd web2 && node tools/deploy-check.mjs 1f912bf
 
 ⚠ 이 뒤의 커밋은 **문서뿐**이다(NOTES·HANDOFF — web2/src·e2e·test 0개). 화면의 앱은 1f912bf 그대로다.
 
+**도는 백그라운드 없음(실측 · #81 ㉤ · #95)**: 위 「마감 검증」의 값 그대로 — 이 저장소 몫 node 0 · 5xxx 리스너 0(5040은 svchost) · 배포 대기 루프는 45s × 8회 상한(7회째 일치) · 세션 배경 작업 전부 completed.
+
 **⚠ 무엇이 초록인가(#89)**: 위 「마감 검증」 표가 정본이다 — 최종 밤은 3차(트리 e346796 · 724/728 · 빨강 0 ·
 skip 4 설계). e346796 → 병합 커밋 1f912bf 사이의 차는 NOTES 마감 검증 커밋 하나 + 병합 커밋이고
 `git diff e346796..1f912bf -- web2/src web2/e2e web2/test`는 **비어 있다**(값으로 확인). CI(pages.yml)가 도는 e2e는
@@ -27380,5 +27382,94 @@ static_deploy 하나다 — 「Pages 초록 = 전량」으로 읽지 않는다.
 ⛔ 안 실은 것: Krita·GIMP 기존 브러시 파일 · portnov · ShareTextures · .abr — 지시 문면 그대로. rubberduck 팩의 나머지 55개·Revoy 번들의 나머지 팁(PNG 컬러 팁 등)도 이 회차는 안 싣는다(마른 매체 다섯에 필요한 것만 — 부족분은 ⚑ 실기기 항목).
 내려받기는 이 세션이 지시 63의 명시 출처 셋에서 했다(2026-09-04 — 저장소에는 확인된 원본 파일 여섯만).
 
-## 구현 — web2-63
-(진행 중)
+## 구현 — web2-63 (정본: DECISIONS 「web2-63 — 도장은 팁 아틀라스(비트맵) · 결은 CC0 높이맵」)
+
+- **팁 아틀라스** — `tools/tips-gen.mjs`(GIH/GBR/PNG 최소 판독기·PNG 기록기 자체 구현 · 의존성 0)가 `tips/src/`의 원본 여섯을
+  `src/mypaint/tips/<name>.png`(8비트 회색 · 192² × 8판 가로)와 `src/mypaint/tips.gen.ts`(판 수·크기·마스크 극성·출처·라이선스·확인 방법·
+  창·눈금·평균·채움·바이트)로 낸다. 판 = 정사각 패드·면적 평균 축소 → **원형 창**(.92·S/2까지 1 · 코사인 감쇠) → **p95 눈금**(0.02 넘는 값의
+  95백분위 = 1 · 초과는 1) → 뒤집기(h·v·hv)로 8판. 종이 = 변위 PNG 1024²를 1·99 백분위로 펴고 뒤집음(골 = 1 · 평균 .527).
+- **로더** `src/mypaint/tips.ts` — 부팅에서 PNG를 Image→canvas로 풀어 Float32 아틀라스로(비동기 · `tipsReady` · `tipsLoadError` ·
+  아틀라스 크기 대조). 준비 뒤 main이 `onTipAssetsLoaded`(종이 타일 꽂기 · 보정표 비움) + 굽기 재생성 + 무효화.
+- **엔진** `src/mypaint/surface.ts` — `StrokeOpts`에 `tip`·`tipFrameLock`·`grainN` · `renderTipMask`(원문 좌표 변환 그대로 · 쌍선형 · 상자 r·√2+1) ·
+  `drawDab`의 마스크 분기 한 곳(팁이면 판 하나를 획 난수로 고름 · 아니면 62의 `renderDabMask` 그대로) · 계수기 `tipDabs`·`tipFrames`.
+  결 접기는 `yp % grainN`(62의 상수 256 → 옵션).
+- **종이** `src/mypaint/paper.ts` — 61 값 잡음 `grainTile61` 보존 · `setPaperHeightTile` · `grainTile()`/`grainTileN()`/`grainSource()` ·
+  `setPaper61ForTest`(⑤의 대조 판 · 사진 63-vs-62·63-paper의 오른쪽).
+- **바인딩** `src/app/mypaintpaint.ts` — `TIP_EXACT`·`tipDefaultOf`(프리셋 → 팁 · 마른 매체만) · `tipNameFor`(mark.tip > tune.tip > 기본 표 · tipsOff) ·
+  보정 열쇠 `프리셋|팁` · 팁이면 **범위 폭 자(열 최대의 25%)** · 렌더러 표면 `tipChoices`/`tipOf`/`setTip` · `tune.tip`(loadTune이 'none'|이름만 받음) ·
+  덮개의 모르는 키는 던짐(#108) · 진단 `tipsReadyForTest`·`tipStatsForTest`·`tipDefaultOfForTest`·`setTipsOffForTest`·`setTipFrameLockForTest`.
+- **이음매** `core/paintseam.ts` — `SeamMark.tip?`(팔·고르개 통로 · 제품 굽기는 안 넣음 — 저장 형식 무변) · `PaintRenderer`의 팁 셋(선택).
+- **고르개** `src/app/brushpicker.ts` — 팁 줄(기본 · 없음 · 다섯) → `setTip` + `persistTune` + 열린 견본 다시 그림(사진 63-picker.png).
+- **자** `e2e/paint63.spec.ts`(게이트 ①~⑤ + 탐침) · `e2e/ref63.spec.ts`(62 기준 해시 — REF63=1로만) · `e2e/shots63.spec.ts`(사진 8장 ·
+  `tools/shots63-copy.mjs`) · `test/mypaint63.test.ts`(6 — 메타 · 회전·비율의 기제 · 판 돌려 쓰기 · 종이 접기 · 기본 표) · grain61 ⑥ 자 팁 인식.
+- **상수** `PAINT63_DISTINCT_REL .25 · AC_MARGIN .15 · AC_MAX .5 · TILE_CORR_MAX −.3 · TILE_CORR_TIP_MAX −.1 · SAMESPOT_CORR .5(기록용) ·
+  ASPECT_WIDTH_RATIO_MIN 1.5`(constants.ts 주석에 실측 사유 · paint50Constants로 팔에).
+- **첫 실행이 잡은 것 셋**(D-3 — 자가 아무것도 안 재던 판): ② 열 평균 프로파일(무늬를 평균이 지움) → 2차원 이동 상관 · 자리 흔들림(주기를 지움) →
+  주기 자리 판에서만 반증 · ④ `dab_angle` 오타(조용히 무시 · 단언=반증=1.000) → #108 · 파스텔 폭발(반최대 자가 희소 판을 3배로) → 범위 자.
+
+## 검증 — web2-63 (원장: paint63 · ref63 · 무회귀 일곱 — LEDGER=1 · 워커 1 · 2dpr)
+
+### paint63 — 게이트(원장 `paint63_web2_dpr{1,2}.json` — 두 dpr 값 동일(시간 열 제외 · 견본 판 고정 px) · 이 표는 스크래치 생성기 gen_notes63.py가 원장에서 뽑았다)
+
+| 게이트 | 값(dpr1 원장) | 반증(D-3 — 실제로 실패시킨 값) |
+|---|---|---|
+| ① 마른 매체 갈림 | 팁 켬 **10/10** 쌍(문 rel > 0.25 · 최소 0.291) — pencil(거칠기 1.696 · 빈 0.0223 · 평균 0.0934 · p95 0.1516) · charcoal(거칠기 2.058 · 빈 0.1071 · 평균 0.2071 · p95 0.2993) · pastel(거칠기 2.039 · 빈 0.0082 · 평균 0.2898 · p95 0.5974) · drybrush(거칠기 1.462 · 빈 0.0484 · 평균 0.3005 · p95 0.4235) · cp(거칠기 0.595 · 빈 0 · 평균 0.1666 · p95 0.2209) · 기본 팁 {'classic/pencil': 'fine-grain', 'classic/charcoal': 'chalk-chisel', 'ramon/Pastel_1': 'rock-pitted', 'classic/dry_brush': 'scratches-rough', 'ramon/B-pencil': 'scratches2'} | 팁 끔(62 판 · D-2 재현): 9/10 · 최소 0.23 — 62의 프리셋 다섯도 이 자로는 갈렸다(팁이 더한 것은 최소 갈림 0.23 → 0.291) · 같은 프리셋·같은 팁(시드 다섯): **0/10** · 최대 0.07 |
+| ② 도장 반복 없음 | 제품 간격 판(돌려 쓰기 봉우리 ≤ 0.5): 목탄 0.057 · 연필 0.193 · 색연필 0.388 | 주기 자리 판(판 고정 − 돌려 쓰기 ≥ 0.15): 목탄 rot 0.474@16 · lock 0.906@8 · 연필 rot 0.257@30 · lock 0.746@15 · 색연필 rot 0.267@47 · lock 0.87@47 — 판 고정이 도장 간격 lag에 봉우리를 세운다 |
+| ③ 결이 종이 | 포화 몸통 타일 상관 w26 **-0.862** · w52 **-0.9193**(비 1.066 · 문 ≤ -0.3 · 타일 1024² height) · 팁 매체: 목탄 -0.4949 · 연필 -0.252 · 색연필 -0.2727(문 ≤ -0.1) · 같은 자리 잔차 상관(기록) 목탄 0.0953 | 결 끔: w26 0.0039 · 목탄 0.0077 · 연필 -0.0339 · 색연필 -0.0357(0 대역) |
+| ④ 회전·비율 | charcoal 비율 3 폭 9/17 = **1.889** · drybrush 비율 3 폭 15/27 = **1.8**(문 ≥ 1.5) · 기제는 단위 mypaint63 ②(합성 막대 판 각 0/90 · 이방성) | 비율 1: charcoal 16/17 = 1.063 · drybrush 28/27 = 1.037(각이 뜻이 없다) |
+| ⑤ 무회귀(62 픽셀 항등) | 팁 없음 + 61 결: **8/8** 행 해시·자국 픽셀 수 일치(ref63 원장 · 뜬 트리 = 63 갈래 첫 커밋(엔진은 main 1f912bf의 62 그대로 — src/mypaint 무변)) — 행 liner_line, liner_wave, opaque_marker_line, pen_wave, airbrush_wave, round1_wave, pencil_slot_wave, cp_slot_wave | 팁 켬(슬롯 기본): 갈린 행 ['pencil_slot_wave', 'cp_slot_wave'](연필·색연필 슬롯만) · 새 종이 결: 갈린 행 7/8(opaque_marker_line는 같음 — 결 0 도구) |
+| ⑥ 62 게이트 전부 | paint62 재실행 — 아래 무회귀 표 | — |
+| 탐침 | 로드 {'ready': True, 'error': None, 'paper': 'height', 'missing': 0} · 기본 팁 {'pencil': 'fine-grain', 'cp': 'scratches2', 'marker': None, 'brush': None} · 굽기(면 20·획 40) 팁 켬 1085 ms / 끔 1494.7 ms · 스트레스 800획 켬 16488.2 / 끔 20804.6 ms · 상주 Float32 10,092,544 B · 팁 든 보정 열쇠 2 | 결정론 True · 시드 갈림 True |
+
+dpr2 원장 대조: 게이트 다섯의 값 블록이 dpr1과 전부 같다(탐침의 시간 열만 다르다).
+
+### 무회귀 — 62·61·59·50·46·lab·bake의 자를 63 트리에서 다시(원장 · 워커 1 · 2dpr)
+
+| 원장 | 결과 | 비고 |
+|---|---|---|
+| paint62 | dpr1 6 통과 · dpr2 6 통과 | |
+| grain61 | dpr1 5 통과 · 1 실패 · dpr2 5 통과 · 1 실패 | |
+| paint59 | dpr1 6 통과 · dpr2 6 통과 | |
+| paint50 | dpr1 8 통과 · dpr2 8 통과 | |
+| lab61 | dpr1 1 통과 · dpr2 1 통과 | |
+| mats46 | dpr1 6 통과 · dpr2 6 통과 | |
+| bake61 | dpr1 1 통과 | |
+
+
+### 사진 — `web2/shots/63-*.png` (⛳ 사람 눈의 판정대 · CHAIN5 「사진이 나쁘면 그 라운드는 안 끝난 것」)
+
+| 파일 | 무엇 |
+|---|---|
+| 63-pencil · 63-charcoal · 63-pastel · 63-drybrush · 63-cp | 마른 매체 다섯(프리셋 + 기본 팁) × 직선·물결·자기교차(w20 · 제품 경로) |
+| 63-vs-62 | 다섯 매체의 물결 — 왼쪽 63(팁 + 높이맵 결) · 오른쪽 62(팁 끔 + 61 값 잡음 결) |
+| 63-tips | 팁 아틀라스 다섯 × 판 8(엔진이 읽는 그 값) + 종이 타일 조각(높이맵) |
+| 63-paper | 잉크펜 포화 몸통 2배 확대 — 높이맵 결(유기적) vs 61 값 잡음(4px 칸 격자) |
+| 63-picker | 브러시 고르개의 팁 줄(기본·없음·다섯) — 화면 |
+
+**⚑ 사람 눈 판정(열림 — 사슬 규약 ①대로 멈추지 않았다)**:
+1. **연필·색연필이 팁을 받아 더 옅어졌다**(63-vs-62 첫·마지막 줄 · 원장 몸통 평균 .093 vs .110 · .167 vs .190) — 62의 ⚑「연필 슬롯 옅음」 위에 얹힌다. 손잡이는 실험실 «불투명 배수».
+2. **팁의 크기(범위 25% 자)가 눈의 굵기와 맞는가** — 63-*.png의 w20이 잉크펜 w20과 같은 «굵기»로 읽히는가(AS-C188).
+3. **팁 다섯의 «성격»** — 목탄의 끌 끝(chalk-chisel) · 파스텔의 구멍(rock-pitted) · 마른붓의 끊김(scratches-rough) · 색연필의 빗금(scratches2)이 그 매체로 읽히는가 · 원형 창·p95 눈금이 성격을 해치지 않았는가(AS-C187).
+4. **부족한 매체** — 콘테·크레용·굵은 목탄·파스텔 옆면·넓은 마른붓은 CC0에 없다(DEFERRED) → 사람의 스캔(종이에 실제 매체를 찍어 300² 회색 PNG · tips/src에 넣고 tips.json 한 줄이면 생성기가 나머지).
+5. **종이 결(높이맵)이 종이로 읽히는가** — 63-paper.png 왼쪽. 결 깊이 손잡이는 실험실 «종이 결»(paperK).
+6. 62의 ⚑ 여섯(연필 슬롯 옅음 · 마커 블록 · 부드러운 브러시 교차 진해짐 · 카탈로그 고르기 · 과슈 · 59 술어 교체)은 그대로 열려 있다.
+
+## 마감 검증 — web2-63 (#89 「무엇이 초록인가」)
+
+| 실행 | 트리 | 결과 | 비고 |
+|---|---|---|---|
+| 단위(`npx vitest run` · web2) | @@TREE@@ | @@UNIT@@ | mypaint63(6 — 메타·회전·비율·판 돌려 쓰기·종이 접기·기본 표) · dpr2list54(shots63 등재) |
+| 원장(`e2e:ledger` · 워커 1 · 2dpr) | @@TREE@@ | paint63 6/6 ×2 · ref63(63 이전 트리 4470fa7 — REF63=1) · 무회귀 표(paint62·grain61·paint59·paint50·lab61·mats46·bake61) · shots63 2/2 | 검증 절의 표가 이 실행의 값 |
+| 밤(`e2e:night` · 워커 4 · 전량 2dpr) | @@TREE@@ | @@NIGHT@@ | |
+| 빌드(`vite build`) | @@TREE@@ | @@BUILD@@ | 팁 PNG 여섯(약 1.5 MB)은 해시 자산 — index-*.js는 62와 같은 급 |
+| typecheck(`tsc --noEmit`) | @@TREE@@ | ✓ | |
+
+**selfcheck(최종)**: `scan_pitfalls_table_last` 0 · `scan_ledger_guard` 0 · 63 원장 플래그의 정체 — paint63 `dry.falsification_same.distinct_pairs = 0`은 반증의 «0이 정상»(같은 프리셋·같은 팁은 안 갈린다 — 술어 그 자체) · «상수 스냅샷 없음»(paint63·ref63)은 web2 원장 종전 유보(62와 같음) · `scan_unbounded_wait`의 62 마감 블록 «도는 백그라운드 줄 없음»은 이 회차가 그 줄을 62 블록에 넣어 닫았다.
+
+**도는 백그라운드 없음(실측 · #81 ㉤ · #95)**: @@BG@@
+
+**⛳ #42 ⑩ — 다음 라운드(64 · 새 세션) 착수 표에 옮길 것**:
+- **#108**(덮개·설정 키의 존재 검증 · 단언=반증 «정확히 같은 값»은 자·입력부터) · #107·#105는 63이 지켰다(캡처 통로 · 팁 로드는 값 · 보정 열쇠에 팁).
+- **팁·종이는 값이 다 원장에 있다** — 64(그리는 화면)는 칠 엔진을 안 건드린다(지시 문면 예상) · 건드리면 ⑤의 기준(ref63)을 다시 뜨고 사유를 적는다.
+- **⚑ 열림** — 62의 여섯 + 63의 다섯(위) · 사람의 스캔 팁이 오면 tips/src + tips.json 한 줄 → 생성기 → paint63 ①에 행 추가.
+- **수치는 원장에서(생성기)** · 자는 두 번 대면 장면 확인(#103) · e2e 중 web2/ 편집 금지(#104).

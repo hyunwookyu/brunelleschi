@@ -110,8 +110,8 @@ describe('62 ③ 프리셋 충실도(게이트 ⑥)', () => {
 
 // ── ④ 표면 ────────────────────────────────────────────────────────────────────
 const opts = (over: Partial<StrokeOpts> = {}): StrokeOpts => ({
-  cap: 1, capExact: false, opacityK: 1, capOff: false, grain: null, grainDepth: 0, snapshotAll: false, smudgeSnapshot: true,
-  rng: rng32(1), ...over,
+  cap: 1, capExact: false, opacityK: 1, capOff: false, grain: null, grainN: GRAIN_TILE, grainDepth: 0, snapshotAll: false, smudgeSnapshot: true,
+  rng: rng32(1), tip: null, tipFrameLock: -1, ...over,
 })
 /** 같은 자리에 도장 n번(목표 opaque) — 중심 픽셀 알파 */
 function stampN(surf: StrokeSurface, n: number, opaque: number, capTarget = opaque): number {

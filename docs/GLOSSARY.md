@@ -97,4 +97,9 @@ e2e:ledger   LEDGER=1 · 워커 1 · 스펙 하나씩       원장을 쓸 때만
 | **슬롯 (도구 슬롯)** | 칠통의 넷(연필 · 잉크펜 · 마커 · 색연필 — paint.i 0..3의 자리). 어떤 브러시가 앉는가는 기기 조정(tune)이고 저장 형식은 안 바뀐다(web2-62). 잉크펜 = 옛 «붓» 슬롯(흑연 톤 그대로) |
 | **브러시 고르개 (brushpick)** | 196개를 분류(order.conf)로 접어 보이고 칸마다 실제 자국 견본(같은 drawMark)을 그 자리에서 내는 판(web2-62) — 고르면 지금 슬롯에 앉고 곧바로 기기에 남는다 |
 | **paint_mode (안료)** | libmypaint의 「Pigment: Subtractive spectral color mixing」 — 10채널 스펙트럼 가중기하평균(파랑 위 노랑 = 초록). 프리셋 19개(Dieterle)가 켠다. 저알파 보호막 spectral_blend_factor가 가산↔스펙트럼을 잇는다 |
-
+| **팁 아틀라스 (tip atlas)** | 비트맵 도장 판(192² · 8판)을 가로로 이어 붙인 8비트 회색 PNG(web2-63 · src/mypaint/tips/) — tools/tips-gen.mjs가 GIH/GBR/PNG 원본(tips/src · CC0만)에서 낸다(원형 창 · p95 눈금 · 뒤집기로 8판). 엔진(surface.renderTipMask)이 도장마다 판 하나를 원문의 좌표 변환으로 표집한다 |
+| **판 (frame)** | 팁 아틀라스의 한 장(GIH의 cell). 도장마다 획의 결정론 난수로 고른다 — 판 고정(tipFrameLock)은 ②의 반증 스위치 |
+| **종이 높이맵 (paper height tile)** | ambientCG Paper001 변위 1024²를 1·99 백분위로 펴고 뒤집은 결 타일(골 = 1 · web2-63) — 61 값 잡음(256²)을 «값»만 갈아 끼웠다(엔진의 곱하는 자리는 그대로 · StrokeOpts.grainN이 접기 변) · setPaper61ForTest가 61 타일로 되돌린다(⑤의 대조 판) |
+| **범위 폭 자 (extent width)** | 팁이 든 프리셋의 크기 보정 자(web2-63) — 직선 견본의 열별 «열 최대의 25% 위» 픽셀 수 중앙값. 62의 반최대 자는 희소 판에서 반지름을 부풀렸다. 보정 열쇠는 프리셋|팁 |
+| **ref63(62 기준 해시)** | 63 이전 트리(main 1f912bf · 62 엔진)에서 뜬 팁 없는 자국 8행의 어둡기 지도 해시(FNV-1a 32) + 자국 픽셀 수(stage0/out/ref63_web2_dpr1.json · REF63=1로만 다시 뜬다) — paint63 ⑤가 «팁 없음 + 61 결 = 62 픽셀»을 이것과 대조한다 |
+| **기본 팁 표 (TIP_EXACT / tipDefaultOf)** | 프리셋 → 팁(마른 매체만: 연필 계열 fine-grain · 목탄 chalk-chisel · 파스텔 rock-pitted · 마른붓 scratches-rough · 색연필 슬롯 scratches2 · 그 밖은 없음). 슬롯 조정 tune.tip('none' | 이름)이 표를 이긴다 — 고르개의 «팁 줄» |
