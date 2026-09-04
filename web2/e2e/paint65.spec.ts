@@ -27,6 +27,10 @@ const OUT: Record<string, unknown> = {
   note_pitfalls: '#110(파생의 캐시 열쇠는 «그 파생이 의존하는 것»으로 — docVersion은 무효화 신호다) · #107(해시는 확정본 캔버스 — 되돌림 무관) · #103(같은 장면을 두 번 읽는다 — ink가 장면 확인) · #12(도구 넷 · 트리거 여섯 — 동작점 하나로 주장하지 않는다) · #102(한 test 안에서 ?reset을 다시 안 부른다) · #99 · #101',
   note_meter: '캔버스 해시(paintTexHash)만으로는 ④ 부분 업로드의 결함이 «안 잡힌다» — 그 자는 CPU 캔버스를 읽는다. 그래서 ①은 화면(#gl) 픽셀도 같이 본다',
   scene: 'paint50의 bigBox(오른쪽 벽 · 축척 2500)',
+  no_constants_snapshot: true,
+  constants_used: { note: 'web2 라인은 constantsSnapshot 기계가 없다(라인 유보 — lens31·paint50의 no_constants_snapshot이 정본 · 그 기계는 web/test/constants.ts에만 있다)' },
+  pitfall_citations: [12, 42, 99, 101, 102, 103, 105, 107, 108, 110],
+  selfcheck_notes: { zero_counters: 'g3의 bakes·baked가 0인 것이 게이트 ③의 «통과»다(0 = 전량 재굽기 없음) — 카운터가 안 도는 것이 아니다. 자가 산다는 증거는 같은 원장의 g5(트리거마다 1)와 g6(누적 끔 → 14)이다' },
 }
 const LEDGER_OF = (projectName: string) =>
   resolve(HERE, `../../stage0/out/paint65_web2_dpr${projectName === 'dpr2' ? 2 : 1}.json`)
@@ -42,6 +46,11 @@ test.afterEach(async ({}, info) => {
     ...OUT,
   }, null, 2))
 })
+
+// ── selfcheck 몫(§5) — 이 원장이 스스로 밝히는 것 ──────────────────────────────
+// ⚠ web2 라인에는 `constantsSnapshot()` 기계가 없다(라인 유보 — lens31·paint50의 그 자리와 같다).
+// 그래서 STALE 자동 판정 대신 «인용 규약»(문서가 `원장.json@해시`로 적는다)이 그 몫을 진다.
+
 
 async function drawLine(page: Page, x0: number, y0: number, x1: number, y1: number) {
   await page.mouse.move(x0, y0)
@@ -96,7 +105,7 @@ async function paintStroke(page: Page, x0: number, y0: number) {
 /** 벽 안의 격자 자리(6 × 10) */
 const wallSpot = (i: number): [number, number] => [530 + (i % 6) * 58, 355 + Math.floor(i / 6) * 25]
 
-type Bake = { bakes: number; bakedStrokes: number; appends: number; appendStrokes: number; uploads: number; uploadBytes: number; drops: number; rebuilds: number; evicts: number; entries: number; bytes: number; budget: number }
+type Bake = { bakes: number; bakedStrokes: number; appends: number; appendStrokes: number; uploads: number; uploadBytes: number; drops: number; rebuilds: number; evicts: number; texReallocs: number; entries: number; bytes: number; budget: number }
 const bakeStat = (page: Page) => page.evaluate(() => (window as any).__b2.diag.paintBake() as Bake)
 const bakeReset = (page: Page) => page.evaluate(() => { (window as any).__b2.diag.paintBakeReset() })
 type TexHash = { key: string; level: number; hash: number; ink: number; w: number; h: number }
@@ -255,7 +264,7 @@ test('⑤ 무회귀 트리거가 «산다» — 여섯 전수', async ({ page })
     await rebakeAndWait(page)
     const ref = await texHash(page)
     const same = JSON.stringify(now) === JSON.stringify(ref)
-    rows.push({ what: name, bakes: st.bakes, baked_strokes: st.bakedStrokes, drops: st.drops, entries: st.entries, matches_full_bake: same })
+    rows.push({ what: name, bakes: st.bakes, baked_strokes: st.bakedStrokes, drops: st.drops, entries: st.entries, tex_reallocs: st.texReallocs, matches_full_bake: same })
     if (expectBake) expect(st.bakes + st.drops, `${name}: 다시 굽거나 항목을 버린다`).toBeGreaterThanOrEqual(1)
     expect(same, `${name}: 그 뒤 그림이 정본 굽기와 같다(낡은 그림 0)`).toBe(true)
   }
@@ -290,10 +299,30 @@ test('⑤ 무회귀 트리거가 «산다» — 여섯 전수', async ({ page })
   await trigger('그 모서리 되돌리기(면이 돌아온다)', async () => { await page.click('#btn-undo') })
   const backFaces = await page.evaluate(() => (window as any).__b2.app.faces.length as number)
   OUT.g5_face_boundary = { faces_after_erase: goneFaces, faces_after_undo: backFaces }
-  await trigger('해상도 단계(줌)', async () => {
+  // ⚠ **줌은 «줄이는» 쪽이다**(dpr2 실측): dpr2에서는 이 벽이 이미 해상도 상한(FACETEX_MAX_PX
+  // 1024)에 걸려 있어 «키우면» 단계가 안 갈리고 재굽기도 없다 — 그것이 옳은 거동이다(포화).
+  // 그래서 단계가 «실제로 갈릴 때까지» 줄이고, 갈렸다는 것을 값으로 먼저 확인한다(안 갈렸으면
+  // 이 팔은 아무것도 안 잰 것이다 — D-3).
+  const levelNow = () => page.evaluate(() => ((window as any).__b2.diag.paintTex()[0]?.level ?? 0) as number)
+  let lvBefore = 0, lvAfter = 0
+  await trigger('해상도 단계(줌 — 단계가 갈릴 때까지 줄인다)', async () => {
+    lvBefore = await levelNow()
+    lvAfter = lvBefore
     await page.mouse.move(700, 480)
-    for (let k = 0; k < 6; k++) { await page.mouse.wheel(0, -240); await page.waitForTimeout(40) }
+    for (let k = 0; k < 12 && lvAfter === lvBefore; k++) {
+      await page.mouse.wheel(0, 300)
+      await page.waitForTimeout(70)
+      lvAfter = await levelNow()
+    }
   })
+  expect(lvAfter, `줌이 해상도 «단계»를 실제로 갈랐다(${lvBefore} → ${lvAfter})`).not.toBe(lvBefore)
+  // ⚠⚠ **단계가 갈리면 GPU 텍스처를 «다시 할당»해야 한다.** three는 WebGL2에서 texStorage2D로
+  // 한 번 할당하고 그 뒤는 texSubImage2D로만 올린다(불변 저장) — 항목을 살려 쓰는 65에서
+  // 캔버스가 커져도 GPU가 옛 크기면 화면에 «옛 그림이 늘어난다». **굽힌 캔버스 해시로는
+  // 안 잡힌다**(CPU 캔버스는 정확하다) — 무회귀 팔 thick55 ④가 잡았고, 여기가 그 자리 팔이다.
+  const zoomRow = rows[rows.length - 1] as { tex_reallocs: number }
+  expect(zoomRow.tex_reallocs, '단계가 갈렸으니 GPU 텍스처를 다시 할당했다').toBeGreaterThanOrEqual(1)
+  OUT.g5_zoom_level = { before: lvBefore, after: lvAfter, tex_reallocs: zoomRow.tex_reallocs }
   await trigger('재료 변경', async () => {
     const fid = await page.evaluate(() => (window as any).__b2.app.faces[0].id as number)
     await page.evaluate((i) => (window as any).__b2.diag.cycleRep49(i), fid)

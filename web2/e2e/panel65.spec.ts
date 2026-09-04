@@ -20,6 +20,10 @@ const OUT: Record<string, unknown> = {
   what: 'web2-65 §2 — 칠 패널: ①자리(세로바와 안 겹침) ②즐겨찾기 여섯이 픽셀로 다름 ③원 이름 사상 ④잘린 글자 0(폭 800·1200)',
   note_pitfalls: '#96(손잡이가 늘면 34-0 표를 그 라운드 안에서 다시 — paint64 ⑦이 그 자리) · #97(견본 캔버스는 position:static·flex-shrink 0) · #87(펼침은 화면에서 눌러 센다) · #12(폭 둘 · 칸 여섯 — 동작점 하나로 주장하지 않는다) · #99 · #101',
   note_meter: '「잘렸다」 = ① 제 상자가 hidden·clip으로 자르는데 내용이 더 크다 ② 조상 중 hidden·clip 상자 밖으로 사각이 나갔다. overflow:visible의 넘침(글자는 다 보인다)과 auto·scroll(굴려서 닿는다)은 «잘린 것이 아니다» — 초판이 그 둘을 세어 거짓 양성을 냈고 실측이 고쳤다',
+  no_constants_snapshot: true,
+  constants_used: { note: 'web2 라인은 constantsSnapshot 기계가 없다(라인 유보 — lens31·paint50의 no_constants_snapshot이 정본 · 그 기계는 web/test/constants.ts에만 있다)' },
+  pitfall_citations: [12, 87, 96, 97, 99, 101],
+  selfcheck_notes: { zero_counters: 'p4의 잘린 칸 0이 게이트 ④의 «통과»다 — 자가 산다는 증거는 같은 원장의 falsify(자르는 CSS를 주입하면 1건, 걷으면 0)다' },
 }
 const LEDGER_OF = (projectName: string) =>
   resolve(HERE, `../../stage0/out/panel65_web2_dpr${projectName === 'dpr2' ? 2 : 1}.json`)
@@ -35,6 +39,11 @@ test.afterEach(async ({}, info) => {
     ...OUT,
   }, null, 2))
 })
+
+// ── selfcheck 몫(§5) — 이 원장이 스스로 밝히는 것 ──────────────────────────────
+// ⚠ web2 라인에는 `constantsSnapshot()` 기계가 없다(라인 유보 — lens31·paint50의 그 자리와 같다).
+// 그래서 STALE 자동 판정 대신 «인용 규약»(문서가 `원장.json@해시`로 적는다)이 그 몫을 진다.
+
 
 async function boot(page: Page) {
   await page.goto('/?reset')

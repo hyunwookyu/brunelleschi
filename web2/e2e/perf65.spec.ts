@@ -20,7 +20,7 @@
 // ⚠ 계측 스펙이다(§1㉠ · MEASURE_SPECS) — 워커 수가 값을 바꾼다. 초록 실행에서 빠지고
 // 밤·원장에만 돈다. 게이트(픽셀 항등·재굽힌 획 수·무회귀 트리거)는 `paint65.spec.ts`다.
 
-import { test, type Page } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -34,6 +34,10 @@ const OUT: Record<string, unknown> = {
   note_pitfalls: '#12(동작점 하나로 주장하지 않는다 — 획 1·10·30·60 네 점 · 면 하나/셋 두 판) · #14(ms는 요동한다 — 정본은 «획 수», ms는 배수만) · #99(워커 1) · #101(web2 안에서) · #103(같은 장면을 두 번 읽는다 — 획 수가 장면 확인) · #47(수치는 원장이 정본)',
   note_meter: '자는 diag.paintBake()(render3d 굽기 계수기)와 diag.frameCost()(18-0부) — 앱이 실제로 도는 그 함수다(#54). ms는 페이지 «안»에서 잰 굽기 시간이라 플레이라이트 왕복이 안 섞인다',
   scene: 'paint50의 bigBox(오른쪽 벽 · 축척 2500) · 면 셋 판은 왼쪽 벽을 더한다',
+  no_constants_snapshot: true,
+  constants_used: { note: 'web2 라인은 constantsSnapshot 기계가 없다(라인 유보 — lens31·paint50의 no_constants_snapshot이 정본 · 그 기계는 web/test/constants.ts에만 있다)' },
+  pitfall_citations: [12, 14, 47, 99, 101, 103, 110],
+  selfcheck_notes: { zero_counters: '(a)의 post 행에서 baked_strokes가 0인 것은 «집계 미작동»이 아니라 이 라운드가 잰 그것이다 — 얹기(appends 1 · appendStrokes 1)가 그 자리를 대신한다. 반증은 게이트 ⑥(누적 끔 → 0이 아니라 그 면의 획 전부)' },
 }
 const LEDGER_OF = (projectName: string) =>
   resolve(HERE, `../../stage0/out/perf65${PRE ? '_pre' : ''}_web2_dpr${projectName === 'dpr2' ? 2 : 1}.json`)
@@ -49,6 +53,11 @@ test.afterEach(async ({}, info) => {
     ...OUT,
   }, null, 2))
 })
+
+// ── selfcheck 몫(§5) — 이 원장이 스스로 밝히는 것 ──────────────────────────────
+// ⚠ web2 라인에는 `constantsSnapshot()` 기계가 없다(라인 유보 — lens31·paint50의 그 자리와 같다).
+// 그래서 STALE 자동 판정 대신 «인용 규약»(문서가 `원장.json@해시`로 적는다)이 그 몫을 진다.
+
 
 async function drawLine(page: Page, x0: number, y0: number, x1: number, y1: number) {
   await page.mouse.move(x0, y0)
@@ -133,8 +142,11 @@ const wallSpot = (i: number): [number, number] => [530 + (i % 6) * 58, 355 + Mat
 /** 바닥 안 — (500,700)(900,610)(640,560)(150,620)의 안쪽 왼쪽 몫(벽이 안 가리는 자리). 스무 자리.
  *  ⚠ 왼쪽 벽이 선 «뒤»에는 이 자리가 벽에 가린다 — 바닥 칠은 addLeftWall 전에 한다. */
 const floorSpot = (i: number): [number, number] => [280 + (i % 5) * 35, 615 + Math.floor(i / 5) * 9]
-/** 왼쪽 벽 안 — (500,700)(150,620)(150,250)(500,330)의 안쪽. 스무 자리. */
-const leftSpot = (i: number): [number, number] => [230 + (i % 5) * 42, 400 + Math.floor(i / 5) * 30]
+/** 왼쪽 벽 안 — (500,700)(150,620)(150,250)(500,330)의 안쪽. 스무 자리.
+ *  ⚠ **칠 패널의 오른쪽**이어야 한다(web2-65 §2 ①로 패널이 화면 왼쪽 x 6..278로 옮겼다) —
+ *  옛 자리(x 230~)는 앞자락이 패널에 먹혀 놓인 획이 60 → 52가 됐다(실측). 벽은 화면 x 150~500이라
+ *  300부터가 그 벽의 «패널 안 가리는» 몫이다. */
+const leftSpot = (i: number): [number, number] => [300 + (i % 5) * 34, 400 + Math.floor(i / 5) * 30]
 
 test('(a)(b)(c) 커밋 한 번의 값 — 면 하나에 획 60까지', async ({ page }) => {
   test.setTimeout(900_000)
@@ -173,6 +185,7 @@ test('(d) 궤도 중 프레임 — 획 60 · 면 셋', async ({ page }) => {
   for (let i = 0; i < 20; i++) { const [x, y] = wallSpot(i); await paintStroke(page, x, y) }
   for (let i = 0; i < 20; i++) { const [x, y] = leftSpot(i); await paintStroke(page, x, y) }
   const painted = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length as number)
+  expect(painted, '예순 획이 다 놓였다 — 장면이 pre와 같다(#103)').toBe(60)
   await page.evaluate(() => { (window as any).__b2.diag.frameCostReset() })
   await bakeReset(page)
   // 궤도 — **중버튼 끌기**(cost20 orbitFrames·rollpose와 같은 몸짓 #54). 서른 걸음이 프레임 표본이다.
@@ -205,6 +218,7 @@ test('(e) 면 셋에 각각 20획 — 면 수만큼 곱해지는가', async ({ p
   await run('wall', wallSpot)
   await run('left', leftSpot)
   const painted = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length as number)
+  expect(painted, '예순 획이 다 놓였다 — 장면이 pre와 같다(#103)').toBe(60)
   const last = rows[rows.length - 1] as unknown as Bake
   OUT.e_three_faces = {
     faces: nf, painted, rows,

@@ -507,10 +507,11 @@ export interface PaintBakeStat {
   /** 항목의 기하를 다시 세운 횟수 */ rebuilds: number
   /** syncPaintTex가 실제로 일한 횟수(열쇠가 갈린 프레임) */ syncs: number
   /** ⑤ 상한에서 «안 보이는 면»을 버린 횟수 */ evicts: number
+  /** 캔버스 크기가 바뀌어 GPU 텍스처를 다시 할당시킨 횟수(아래 ⚠⚠ — 0이면 옛 그림이 늘어난다) */ texReallocs: number
 }
 const zeroBakeStat = (): PaintBakeStat => ({
   bakes: 0, bakedStrokes: 0, appends: 0, appendStrokes: 0,
-  uploads: 0, uploadBytes: 0, ms: 0, drops: 0, rebuilds: 0, syncs: 0, evicts: 0,
+  uploads: 0, uploadBytes: 0, ms: 0, drops: 0, rebuilds: 0, syncs: 0, evicts: 0, texReallocs: 0,
 })
 let bakeStat: PaintBakeStat = zeroBakeStat()
 export function paintBakeStats(): PaintBakeStat & { entries: number; bytes: number; budget: number; accum: boolean; partial: boolean } {
@@ -891,8 +892,16 @@ function gatePaintTex(r: R3D, app: App) {
         if (!e.bg && !paintAccumOff) e.bg = document.createElement('canvas')
         if (paintAccumOff) e.bg = null
         const t0 = performance.now()
+        const w0 = e.canvas.width, h0 = e.canvas.height
         bakeFaceTex(e.canvas, rf, e.box, lv, strokes, e.side === 0 ? 1 : e.side, hatch, e.side === 'e' ? null : rep, e.bg)
         bakeStat.ms += performance.now() - t0
+        // ⚠⚠ **GPU 저장은 «첫 크기»로 굳는다** — three r185는 WebGL2에서 `texStorage2D`로 한 번
+        // 할당하고 그 뒤는 `texSubImage2D`로만 올린다(불변 저장). 65가 항목을 살려 쓰면서(②)
+        // 텍스처도 살아남았고, **캔버스가 커져도 GPU는 옛 크기 그대로**여서 화면에는 «옛 그림이
+        // 늘어난» 것이 나왔다 — CPU 캔버스는 정확했으므로 굽힌 캔버스 해시로는 안 잡힌다.
+        // 잡은 것은 무회귀 팔 `thick55 ④`(테두리 띠 t 200→500 · 질량이 t에 비례 · 500/400 1.255)다.
+        // 크기가 바뀌면 텍스처를 «놓아» 다시 할당시킨다(dispose → properties 비움 → texStorage2D 재실행).
+        if (e.canvas.width !== w0 || e.canvas.height !== h0) { e.tex.dispose(); bakeStat.texReallocs++ }
         bakeStat.bakes++
         bakeStat.bakedStrokes += strokes.length
         bakeStat.uploads++
