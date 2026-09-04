@@ -27543,15 +27543,17 @@ dpr2 원장 대조: 게이트 다섯의 값 블록이 dpr1과 전부 같다(탐�
 
 | 실행 | 트리 | 결과 | 비고 |
 |---|---|---|---|
-| 단위(`npx vitest run` · web2) | @@TREE@@ | @@UNIT@@ | mypaint63(6 — 메타·회전·비율·판 돌려 쓰기·종이 접기·기본 표) · dpr2list54(shots63 등재) |
-| 원장(`e2e:ledger` · 워커 1 · 2dpr) | @@TREE@@ | paint63 6/6 ×2 · ref63(63 이전 트리 4470fa7 — REF63=1) · 무회귀 표(paint62·grain61·paint59·paint50·lab61·mats46·bake61) · shots63 2/2 | 검증 절의 표가 이 실행의 값 |
-| 밤(`e2e:night` · 워커 4 · 전량 2dpr) | @@TREE@@ | @@NIGHT@@ | |
-| 빌드(`vite build`) | @@TREE@@ | @@BUILD@@ | 팁 PNG 여섯(약 1.5 MB)은 해시 자산 — index-*.js는 62와 같은 급 |
-| typecheck(`tsc --noEmit`) | @@TREE@@ | ✓ | |
+| 단위(`npx vitest run` · web2) | b7c601f | 1096/1096 · 135파일 | mypaint63(6 — 메타·회전·비율·판 돌려 쓰기·종이 접기·기본 표) · dpr2list54(shots63 등재) |
+| 원장(`e2e:ledger` · 워커 1 · 2dpr) | b7c601f | paint63 6/6 ×2 · ref63(63 이전 트리 4470fa7 — REF63=1) · 무회귀 표(paint62·grain61·paint59·paint50·lab61·mats46·bake61) · shots63 2/2 | 검증 절의 표가 이 실행의 값 |
+| 밤 1차(`e2e:night` · 워커 4 · 전량 2dpr) | ba02815 | 737/746 · 빨강 1(paint63 탐침 dpr2 — 60s timeout · 부하) · skip 8 (34.0m) | 탐침 timeout 180s로 수리(a507000) |
+| 밤 2차 | 832a493 | 737/746 · 빨강 1(dim.spec dpr2 — 칠과 무관) · skip 8 (35.1m) | 단독 재실행 10/10 → 부하 귀속(#14) |
+| 밤 3차(최종 트리 — 2차 대응 뒤) | b7c601f | 738/746 · 빨강 0 · skip 8 (34.6m) | 빨강 0 |
+| 빌드(`vite build`) | b7c601f | ✓ · index-*.js 1,263.79 kB(gzip 400.19) | 팁 PNG 여섯(약 1.5 MB)은 해시 자산 — index-*.js는 62와 같은 급 |
+| typecheck(`tsc --noEmit`) | b7c601f | ✓ | |
 
-**selfcheck(최종)**: `scan_pitfalls_table_last` 0 · `scan_ledger_guard` 0 · 63 원장 플래그의 정체 — paint63 `dry.falsification_same.distinct_pairs = 0`은 반증의 «0이 정상»(같은 프리셋·같은 팁은 안 갈린다 — 술어 그 자체) · «상수 스냅샷 없음»(paint63·ref63)은 web2 원장 종전 유보(62와 같음) · `scan_unbounded_wait`의 62 마감 블록 «도는 백그라운드 줄 없음»은 이 회차가 그 줄을 62 블록에 넣어 닫았다 · grain61 `size_honesty.rows.cp.ratio = 1`(정확히 1)의 정체가 63에서 바뀌었다(2차 [10]): 62까지는 «절차 도장을 반최대로 잰 1», 63부터는 «팁 든 도장을 보정과 같은 자(범위 25%)로 잰 1» — r 6·24 두 점 보간의 잔차 0(자가 보정의 정의) · 대역 확인은 cp_w50(상한)·doubling이 진다.
+**selfcheck(최종)**: `scan_pitfalls_table_last` 0 · `scan_ledger_guard` 0 · 63 원장 플래그의 정체 — paint63 `dry.falsification_same.distinct_pairs = 0`은 반증의 «0이 정상»(같은 프리셋·같은 팁은 안 갈린다 — 술어 그 자체) · paint63 `rotation.rows.pencil.ratio1.width_ratio = 1`(정확히 1)은 반증 판(비율 1)에서 각 0/90의 몸통 폭이 정수 px로 같은 것 — «각이 뜻이 없다»의 값 그 자체(정상) · grain61 size_honesty의 «정확히 1» 다섯은 62와 같은 정체(보정 두 점의 보간 잔차 · cp는 63부터 범위 자 — 2차 [10]) · «상수 스냅샷 없음»(paint63·ref63)은 web2 원장 종전 유보(62와 같음) · `scan_unbounded_wait`의 62 마감 블록 «도는 백그라운드 줄 없음»은 이 회차가 그 줄을 62 블록에 넣어 닫았다 · grain61 `size_honesty.rows.cp.ratio = 1`(정확히 1)의 정체가 63에서 바뀌었다(2차 [10]): 62까지는 «절차 도장을 반최대로 잰 1», 63부터는 «팁 든 도장을 보정과 같은 자(범위 25%)로 잰 1» — r 6·24 두 점 보간의 잔차 0(자가 보정의 정의) · 대역 확인은 cp_w50(상한)·doubling이 진다.
 
-**도는 백그라운드 없음(실측 · #81 ㉤ · #95)**: @@BG@@
+**도는 백그라운드 없음(실측 · #81 ㉤ · #95)**: 이 저장소 몫 node 0(vite·playwright 잔존 0 — wmic 전수 · 남은 node는 Adobe CC) · 5xxx 리스너 1(5040 = svchost · vite 아님) · 세션 배경 작업(밤 3회 · 원장 판갈이 3회 · 리뷰어 2회) 전부 completed · 대기 전부 상한부(#95 — TaskOutput 10분 · 배포 루프 45s × 8).
 
 **#42 ⑦ — 완료 시 자기 원장 인용 번호 대조**: paint63 원장 note_pitfalls(#107 · #105 · #103 · #99 · #101 · #12) ⊂ 착수 표(#107 · #106 · #105 · #104 · #103 · #12 · #99 · #101 · #42) ✓ · 원장이 안 든 #106·#104는 표에서 근거·행동으로(값 ⑤ 8/8 · e2e 중 무편집).
 
