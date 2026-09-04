@@ -17,7 +17,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintDraftClamped, paintDraftStats, paintBakeStats, resetPaintBakeStats } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintDraftClamped, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -2875,6 +2875,7 @@ import {
   setCapOffForTest, setSmudgeSelfSampleForTest, setPremulBreakForTest, setFringeBreakForTest,
   setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET,
   setTipsOffForTest, setTipFrameLockForTest, tipsReadyForTest, tipStatsForTest, resetTipStatsForTest, tipDefaultOfForTest, onTipAssetsLoaded,
+  setPaintAppendBreakForTest,
   unknownBrushIdsForTest, setTipGainOffForTest, presetStatsForTest, resetCpTilesForTest, setCpThresholdOffForTest,
 } from './mypaintpaint'
 import { setBrushIdOffForTest } from '../core/facetex'
@@ -3607,6 +3608,13 @@ const diag = {
   /** web2-65 — 굽기 계수기(D-1 표식 · 게이트 ②③④의 자): 재굽기 수·재굽힌 획 수·업로드 바이트·ms */
   paintBake: () => paintBakeStats(),
   paintBakeReset: () => { resetPaintBakeStats() },
+  /** web2-65 ⑥ 반증 — 누적을 끈다(pre의 O(N)이 돌아온다) · 부분 업로드를 끈다(픽셀은 같아야 한다) */
+  setPaintAccumOffForTest: (v: boolean) => { setPaintAccumOffForTest(v); invalidate() },
+  setPaintPartialOffForTest: (v: boolean) => { setPaintPartialOffForTest(v); invalidate() },
+  /** web2-65 ⑤ — 텍스처 바이트 상한을 낮춰 축출을 «실제로» 일으킨다(게이트 ⑦) */
+  setPaintTexBudgetForTest: (bytes: number) => { setPaintTexBudgetForTest(bytes); invalidate() },
+  /** web2-65 ① 반증 — 누적 얹기의 «바탕 되깔기»를 끈다: 켜면 중심 게이트(픽셀 항등)가 «빨개져야» 한다 */
+  setPaintAppendBreakForTest: (v: boolean) => { setPaintAppendBreakForTest(v); rebakePaintTexForTest(); invalidate() },
   paint50Constants: () => ({ FACETEX_MIN_PX: C.FACETEX_MIN_PX, FACETEX_MAX_PX: C.FACETEX_MAX_PX,
     PAINT_MARKER_ALPHA: C.PAINT_MARKER_ALPHA, PAINT_CP_ALPHA: C.PAINT_CP_ALPHA,
     PAINT_W_FALLBACK_UNITS: C.PAINT_W_FALLBACK_UNITS,
@@ -3622,7 +3630,8 @@ const diag = {
     PAINT59_PREVIEW_DIFF_MAX: C.PAINT59_PREVIEW_DIFF_MAX, PAINT59_CROSS_TOL: C.PAINT59_CROSS_TOL, PAINT59_DRAFT_FRAME_EXTRA_MS: C.PAINT59_DRAFT_FRAME_EXTRA_MS,
     PAINT61_END_TOL: C.PAINT61_END_TOL, PAINT61_PAPER_CORR_MIN: C.PAINT61_PAPER_CORR_MIN,
     PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS: C.PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS, PAINT61_SIZE_TOL: C.PAINT61_SIZE_TOL,
-    PAINT64_DENSITY_TOL: C.PAINT64_DENSITY_TOL, PAINT64_WET_MIN_PX: C.PAINT64_WET_MIN_PX, PAINT64_TAP_MAX_PX: C.PAINT64_TAP_MAX_PX }),
+    PAINT64_DENSITY_TOL: C.PAINT64_DENSITY_TOL, PAINT64_WET_MIN_PX: C.PAINT64_WET_MIN_PX, PAINT64_TAP_MAX_PX: C.PAINT64_TAP_MAX_PX,
+    PAINT65_TEX_BUDGET_BYTES: C.PAINT65_TEX_BUDGET_BYTES, PAINT65_COMMIT_MS_SPREAD_MAX: C.PAINT65_COMMIT_MS_SPREAD_MAX }),
   /** 저장물 원문(파일 저장과 같은 함수 — #54) — paint50 팔이 «텍스처가 파일에 없다»를 잰다 */
   serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
   corruptPaintTex: () => { const n = corruptPaintTexForTest(); invalidate(); return n },

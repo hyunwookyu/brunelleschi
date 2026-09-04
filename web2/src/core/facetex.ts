@@ -21,7 +21,7 @@
 // «흰 장막»이 구조로 소멸한다. DEFERRED «칠은 제 겹을 가져야 한다» 행이 이 형태로 닫혔다).
 
 import type { Stroke, Face, CamPose } from './types'
-import { drawMark, drawMarksSeam, instrOfTag, type SeamMark } from './paintseam'
+import { drawMark, drawMarksSeam, appendMarkSeam, instrOfTag, type SeamMark, type MarkBox } from './paintseam'
 import { repBasis, repSegments, repVisibleFamilies, isRepId, type MatRepId } from './matrep'
 import type { ResolvedFace } from './face'
 import { hatch2d } from './hatch'
@@ -194,6 +194,10 @@ export function bakeFaceTex(
   strokes: Stroke[], side: 1 | -1 | 'e',
   hatchFace: { face: Face; spacingWorld: number } | null,
   rep: RepBake | null = null,
+  /** web2-65 — 획 «없는» 바탕(흰 + 재료 + 해칭)의 사본을 받을 캔버스. 누적 얹기가 더티
+   *  사각을 여기서 되깐다(그래야 얹기의 합성이 굽기와 «같은 식»이 된다 — appendMarkOnTex).
+   *  안 주면 종전과 한 글자도 안 다르다. */
+  bgOut: HTMLCanvasElement | null = null,
 ): void {
   const dims = texDims(box, level)
   if (canvas.width !== dims.w || canvas.height !== dims.h) {
@@ -208,9 +212,34 @@ export function bakeFaceTex(
   // 차례는 제도 그대로(52-4): 톤·무늬가 바닥 → 도면 위 면 고정 해칭 → 손으로 그은 칠
   if (rep) drawRepTex(g, rf, box, dims, rep)
   if (hatchFace) drawHatchTex(g, rf, box, dims, hatchFace.face, hatchFace.spacingWorld)
+  // web2-65 — 바탕의 사본을 여기서 뜬다(획 «전»). 획이 얹히기 전의 이 상태가 누적의 기준이다.
+  if (bgOut) {
+    if (bgOut.width !== dims.w || bgOut.height !== dims.h) { bgOut.width = dims.w; bgOut.height = dims.h }
+    const bg = bgOut.getContext('2d')!
+    bg.setTransform(1, 0, 0, 1, 0, 0)
+    bg.globalCompositeOperation = 'copy'
+    bg.globalAlpha = 1
+    bg.drawImage(canvas, 0, 0)
+  }
   // 획은 묶음 통로(drawMarksSeam)로 — 엔진이 같은 합성 모드의 연속 획을 한 패스에 굽는다
   // (차례는 목록 차례 그대로 = 그린 차례. 비용 실측은 bake61 원장).
   drawMarksSeam(g, strokes.filter(s => inTex(s, rf.id, side)).map(s => markOfStroke(s, box, dims)))
+}
+
+/** **획 하나를 얹는다**(web2-65 ③ — 굽기의 누적 판). 굽힌 텍스처 위에 «새 획 하나»만 더
+ *  그리고 그 자국의 사각만 다시 합성한다. 전량 재굽기와 **픽셀로 같다**(사유는 이음매의
+ *  appendMark 주석 — 층 상태가 같고 자국 생성이 획마다 독립이다).
+ *  못 얹으면 **null**(층이 없다·크기가 안 맞는다·이 (면,쪽)의 획이 아니다) — 부르는 쪽은
+ *  전량 재굽기로 떨어진다. 굽기와 **같은 함수**(markOfStroke)를 쓴다: 두 길이 갈릴 자리가 없다(#54). */
+export function appendMarkOnTex(
+  canvas: HTMLCanvasElement, bg: HTMLCanvasElement, rf: ResolvedFace, box: UvBox,
+  level: number, s: Stroke, side: 1 | -1 | 'e',
+): MarkBox | null {
+  const dims = texDims(box, level)
+  if (canvas.width !== dims.w || canvas.height !== dims.h) return null
+  if (bg.width !== dims.w || bg.height !== dims.h) return null
+  if (!inTex(s, rf.id, side)) return null
+  return appendMarkSeam(canvas.getContext('2d')!, markOfStroke(s, box, dims), bg)
 }
 
 /** web2-52 — 재료를 텍스처에: 기본 톤(밝음)으로 바탕을 물들이고(곱 — 종이가 그 톤이 된다)

@@ -23,15 +23,15 @@ export const DPR2_NEED_RE = /screenshot\(|getImageData|readPixels|toDataURL/
 
 /** 계측 스펙 넷(§1㉠) — 회귀 시험이 아니라 **추세 측정**이고 워커 수가 그 수를 바꾼다
  *  (#99와 같은 뿌리). 초록 실행에서 빠지고 밤(e2e:night)·원장(e2e:ledger)에만 돈다. */
-export const MEASURE_SPECS = ['cost18', 'cost20', 'cost22', 'brushperf'] as const
+export const MEASURE_SPECS = ['cost18', 'cost20', 'cost22', 'brushperf', 'perf65'] as const
 
-/** 조건이 낸 목록(2026-09-04 · web2-64: paint64·shots64가 늘고(getImageData·screenshot) bake61·shots61이 스펙째 갔다(옛 엔진의 팔 — 64-6·64-8) · web2-63: shots63이 늘었다 — 55 → 56 · paint63·ref63은 픽셀 API를 안 부른다(__m61 어둡기 지도만) · web2-62: paint62·shots62가 늘었다 — 53 → 55 · 61: shots61이 늘고 옛 엔진 축 스펙 셋(brush51·mark58·quality60)이 스펙과 함께 갔다) — 갱신은 조건을 다시 돌려서만 한다. */
+/** 조건이 낸 목록(2026-09-05 · web2-65: paint65가 늘었다(화면 #gl의 getImageData — 부분 업로드의 결함은 캔버스 해시로는 안 잡힌다) · perf65는 계측이라 MEASURE_SPECS이고 픽셀 API를 안 부른다 — 56 → 57 · 2026-09-04 · web2-64: paint64·shots64가 늘고(getImageData·screenshot) bake61·shots61이 스펙째 갔다(옛 엔진의 팔 — 64-6·64-8) · web2-63: shots63이 늘었다 — 55 → 56 · paint63·ref63은 픽셀 API를 안 부른다(__m61 어둡기 지도만) · web2-62: paint62·shots62가 늘었다 — 53 → 55 · 61: shots61이 늘고 옛 엔진 축 스펙 셋(brush51·mark58·quality60)이 스펙과 함께 갔다) — 갱신은 조건을 다시 돌려서만 한다. */
 export const DPR2_SPECS = [
   'axisproj', 'brush', 'dimwrite29', 'draftgate', 'drafting', 'draw',
   'entry17', 'extacq', 'eyelayer27', 'face', 'files43', 'flow', 'gesture',
   'grain26', 'grain30', 'grain40', 'graphite', 'icons', 'inklayer', 'input',
   'join56', 'level', 'materials', 'mats46', 'mats52', 'nums47', 'own3d', 'paint45',
-  'paint48', 'paint50', 'paint54', 'paint59', 'paint62', 'paint64', 'paper', 'papericon31', 'press26', 'rep49', 'rollpose',
+  'paint48', 'paint50', 'paint54', 'paint59', 'paint62', 'paint64', 'paint65', 'paper', 'papericon31', 'press26', 'rep49', 'rollpose',
   'roundsave', 'shots62', 'shots63', 'shots64', 'slide40', 'snapghost', 'span57', 'thick55', 'turn31', 'ui34r7', 'underlay', 'view42',
   'waitfade', 'waitink37', 'yellow', 'yellowfree', 'zones',
 ] as const

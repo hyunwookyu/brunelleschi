@@ -119,6 +119,11 @@ async function paintStroke(page: Page, x0: number, y0: number) {
   await page.waitForTimeout(70)
 }
 
+/** 값 무리의 «평평함» — 평균 대비 최대 벗어남의 몫(게이트 ②의 ±20%가 이 자다) */
+const spread = (v: number[]): number | null => {
+  const mean = v.reduce((a, b) => a + b, 0) / v.length
+  return mean > 0 ? +(Math.max(...v.map(x => Math.abs(x - mean))) / mean).toFixed(3) : null
+}
 type Bake = { bakes: number; bakedStrokes: number; appends: number; appendStrokes: number; uploads: number; uploadBytes: number; ms: number; drops: number; entries: number }
 const bakeStat = (page: Page) => page.evaluate(() => (window as any).__b2.diag.paintBake() as Bake)
 const bakeReset = (page: Page) => page.evaluate(() => { (window as any).__b2.diag.paintBakeReset() })
@@ -151,11 +156,11 @@ test('(a)(b)(c) 커밋 한 번의 값 — 면 하나에 획 60까지', async ({ 
     points: [1, 10, 30, 60].map(n => ({ n, ms: at(n).ms, baked_strokes: at(n).bakedStrokes, bakes: at(n).bakes, appends: at(n).appends, upload_bytes: at(n).uploadBytes, drops: at(n).drops })),
     ms_ratio_60_over_1: at(1).ms > 0 ? +(at(60).ms / at(1).ms).toFixed(2) : null,
     baked_ratio_60_over_1: at(1).bakedStrokes > 0 ? +(at(60).bakedStrokes / at(1).bakedStrokes).toFixed(2) : null,
-    ms_spread_frac: (() => {
-      const v = [1, 10, 30, 60].map(n => at(n).ms)
-      const mean = v.reduce((a, b) => a + b, 0) / v.length
-      return mean > 0 ? +(Math.max(...v.map(x => Math.abs(x - mean))) / mean).toFixed(3) : null
-    })(),
+    // 게이트 ②의 자 둘. **넷 전부**와 **첫 커밋을 뺀 셋**을 갈라 적는다:
+    // 획 1의 커밋은 «그 (면,쪽) 텍스처가 서는» 자리라 전량 굽기가 맞고(얹을 바탕이 아직 없다)
+    // 그 몫은 누적의 평평함과 다른 일이다. 지시의 ±20%가 묻는 것은 «누적 커밋»의 평평함이다.
+    ms_spread_frac: spread([1, 10, 30, 60].map(n => at(n).ms)),
+    ms_spread_frac_incremental: spread([10, 30, 60].map(n => at(n).ms)),
   }
 })
 
