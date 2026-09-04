@@ -608,7 +608,7 @@ test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감�
     scene: { paint_with_grain: sceneN, paint_no_grain: sceneN2, note: '#103 — 결 끔은 같은 획 재굽기(획 수 무변)' },
     rows: withGrain, rows_no_grain: noGrain,
     end_windows: endRows,
-    falsification_tip: { def: '마커 브러시 = marker46(markerTip 켬) — 끝/시작 창 최대비가 문을 넘는다', rows: tipRows, max: tipMax },
+    falsification_tip: { def: '마커 브러시 = marker46(markerTip 켬) — 끝/시작 창 최대비가 문을 넘는다. 이 팔은 마커만 다시 그린다 — 마커 행만 싣는다(다른 도구 창은 빈 띠의 균일 바탕이라 정확히 1이 나와 자기참조로 오독된다 · selfcheck)', marker: tipRows.marker, max: tipMax },
     grain_phase_spread: { def: '연필 · 결 켬 · 시작 x 오프셋 0·2·4·6·8px 다섯 획의 대역 비 평균·표준편차 — 결 켠 값의 잡음 눈금(1차 [3] · 새 종이 결에서도 같은 자)', ...grainSpread },
   }
   expect(tipMax, '반증 — markerTip 켬(marker46)에서 끝/시작 창이 문을 넘는다').toBeGreaterThan(1 + cs.PAINT61_END_TOL)
