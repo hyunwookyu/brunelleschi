@@ -1,0 +1,22 @@
+{
+  "_": "web2-63 팁 원본 목록 — 이름 · 파일 · 출처 · 라이선스 · 확인 방법(값). 확인 안 된 자산은 싣지 않는다(지시 63).",
+  "tips": [
+    { "name": "fine-grain", "file": "rubberduck/fine-grain.gih", "role": "연필(흑연 이빨)",
+      "source": "OpenGameArt — rubberduck 「60 free gimp / krita brushes」 https://opengameart.org/content/60-free-gimp-krita-brushes (60-free-gimp-and-krita-brushes.zip 12,758,188 B · 2026-09-04 내려받음)",
+      "license": "CC0 1.0", "license_check": "OGA 자산 페이지의 License 칸 «CC0» · 파일 안에는 라이선스 문서 없음(페이지가 정본)" },
+    { "name": "chalk-chisel", "file": "deevad/chalk_chisel_random.gih", "role": "목탄(끌 끝 · 4판)",
+      "source": "David Revoy — Krita brushes 2025-01 bundle https://www.davidrevoy.com/article1060/krita-brushes-2025-01-bundle (deevad-bundle_25.01.zip 8,509,341 B · sha256 4c628a94…f8173 페이지와 일치 · Deevad_25.01.bundle/brushes/)",
+      "license": "CC0 (CC-0 Public Domain)", "license_check": "번들 안 meta.xml <meta:license>CC-0</meta:license> · 페이지 문면 «include them in your software» · 시연 그림(CC-BY)은 안 실음" },
+    { "name": "rock-pitted", "file": "deevad/rock_pitted-fixed.gih", "role": "파스텔(구멍 난 분필 · 7판)",
+      "source": "David Revoy — Krita brushes 2025-01 bundle (위와 같음)", "license": "CC0 (CC-0 Public Domain)", "license_check": "위와 같음(meta.xml)" },
+    { "name": "scratches-rough", "file": "deevad/scratches_rough.gih", "role": "마른붓(끊긴 결 · 9판)",
+      "source": "David Revoy — Krita brushes 2025-01 bundle (위와 같음)", "license": "CC0 (CC-0 Public Domain)", "license_check": "위와 같음(meta.xml)" },
+    { "name": "scratches2", "file": "rubberduck/scratches2.gih", "role": "색연필(빗금 · 6판)",
+      "source": "OpenGameArt — rubberduck (위와 같음)", "license": "CC0 1.0", "license_check": "위와 같음(OGA 페이지)" }
+  ],
+  "paper": {
+    "name": "paper001", "file": "ambientcg/Paper001_2K_Displacement_crop1024.png",
+    "source": "ambientCG Paper001 https://ambientcg.com/view?id=Paper001 (Paper001_2K-JPG.zip 16,201,816 B · 2048×1201 변위 맵 · 저장소에는 왼쪽 위 1024² 크롭을 회색 PNG로(값 무변 · PIL) — 원본 JPEG는 안 실음)",
+    "license": "CC0 1.0 Universal", "license_check": "https://docs.ambientcg.com/license/ — «You can include the raw files in your project, for example a video game»"
+  }
+}

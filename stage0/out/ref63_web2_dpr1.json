@@ -1,0 +1,97 @@
+{
+  "conditions": {
+    "canonical": "REF63=1 LEDGER=1 node tools/e2e.mjs ledger e2e/ref63.spec.ts --project=dpr1 (워커 1)"
+  },
+  "what": "63 ⑤의 기준 — 62 엔진(절차 타원 도장 · 61 값 잡음 결 타일 · paperK 기본)의 자국 해시(FNV-1a 32) + 자국 픽셀 수(> 8). 63은 같은 행을 「팁 없음 + 61 결」로 다시 그려 해시가 같음을 단언하고, 「새 종이 결」에서는 다름을 기록한다",
+  "tree_note": "뜬 트리 = 63 갈래 첫 커밋(엔진은 main 1f912bf의 62 그대로 — src/mypaint 무변)",
+  "rows": {
+    "liner_line": {
+      "hash": 412139917,
+      "ink": 8258
+    },
+    "liner_wave": {
+      "hash": 1275824927,
+      "ink": 8779
+    },
+    "opaque_marker_line": {
+      "hash": 3280177381,
+      "ink": 8268
+    },
+    "pen_wave": {
+      "hash": 1288383569,
+      "ink": 10235
+    },
+    "airbrush_wave": {
+      "hash": 1975819213,
+      "ink": 14427
+    },
+    "round1_wave": {
+      "hash": 2965375427,
+      "ink": 12480
+    },
+    "pencil_slot_wave": {
+      "hash": 1390270579,
+      "ink": 9700
+    },
+    "cp_slot_wave": {
+      "hash": 571242107,
+      "ink": 10771
+    }
+  },
+  "row_defs": [
+    {
+      "key": "liner_line",
+      "tool": "brush",
+      "preset": "deevad/liner",
+      "shape": "line",
+      "w": 20
+    },
+    {
+      "key": "liner_wave",
+      "tool": "brush",
+      "preset": "deevad/liner",
+      "shape": "wave",
+      "w": 20
+    },
+    {
+      "key": "opaque_marker_line",
+      "tool": "marker",
+      "preset": "ramon/100%_Opaque",
+      "shape": "line",
+      "w": 20
+    },
+    {
+      "key": "pen_wave",
+      "tool": "brush",
+      "preset": "classic/pen",
+      "shape": "wave",
+      "w": 20
+    },
+    {
+      "key": "airbrush_wave",
+      "tool": "brush",
+      "preset": "deevad/airbrush",
+      "shape": "wave",
+      "w": 30
+    },
+    {
+      "key": "round1_wave",
+      "tool": "brush",
+      "preset": "Dieterle/Round#1",
+      "shape": "wave",
+      "w": 24
+    },
+    {
+      "key": "pencil_slot_wave",
+      "tool": "pencil",
+      "shape": "wave",
+      "w": 20
+    },
+    {
+      "key": "cp_slot_wave",
+      "tool": "cp",
+      "shape": "wave",
+      "w": 20
+    }
+  ]
+}

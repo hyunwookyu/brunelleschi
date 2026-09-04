@@ -1,0 +1,104 @@
+// 자동 생성 — tools/tips-gen.mjs (web2-63). 손으로 고치지 않는다. 원본은 tips/src/ · 출처·라이선스는 tips/src/tips.json.
+export interface TipMeta { name: string; frames: number; size: number; src_frames: number; src_size: string; mask_mode: string;
+  file: string; source: string; license: string; license_check: string; spacing_hint: number | null; mean: number; fill: number; png_bytes: number }
+export const TIPS: readonly TipMeta[] = [
+  {
+    "name": "fine-grain",
+    "frames": 8,
+    "size": 192,
+    "src_frames": 3,
+    "src_size": "256x256",
+    "mask_mode": "gray",
+    "file": "rubberduck/fine-grain.gih",
+    "source": "OpenGameArt — rubberduck 「60 free gimp / krita brushes」 https://opengameart.org/content/60-free-gimp-krita-brushes (60-free-gimp-and-krita-brushes.zip 12,758,188 B · 2026-09-04 내려받음)",
+    "license": "CC0 1.0",
+    "license_check": "OGA 자산 페이지의 License 칸 «CC0» · 파일 안에는 라이선스 문서 없음(페이지가 정본)",
+    "spacing_hint": null,
+    "mean": 0.0878,
+    "fill": 0.4057,
+    "png_bytes": 137826
+  },
+  {
+    "name": "chalk-chisel",
+    "frames": 8,
+    "size": 192,
+    "src_frames": 4,
+    "src_size": "256x256",
+    "mask_mode": "gray",
+    "file": "deevad/chalk_chisel_random.gih",
+    "source": "David Revoy — Krita brushes 2025-01 bundle https://www.davidrevoy.com/article1060/krita-brushes-2025-01-bundle (deevad-bundle_25.01.zip 8,509,341 B · sha256 4c628a94…f8173 페이지와 일치 · Deevad_25.01.bundle/brushes/)",
+    "license": "CC0 (CC-0 Public Domain)",
+    "license_check": "번들 안 meta.xml <meta:license>CC-0</meta:license> · 페이지 문면 «include them in your software» · 시연 그림(CC-BY)은 안 실음",
+    "spacing_hint": null,
+    "mean": 0.2318,
+    "fill": 0.3266,
+    "png_bytes": 97510
+  },
+  {
+    "name": "rock-pitted",
+    "frames": 8,
+    "size": 192,
+    "src_frames": 7,
+    "src_size": "300x300",
+    "mask_mode": "gray",
+    "file": "deevad/rock_pitted-fixed.gih",
+    "source": "David Revoy — Krita brushes 2025-01 bundle (위와 같음)",
+    "license": "CC0 (CC-0 Public Domain)",
+    "license_check": "위와 같음(meta.xml)",
+    "spacing_hint": null,
+    "mean": 0.1163,
+    "fill": 0.4392,
+    "png_bytes": 155376
+  },
+  {
+    "name": "scratches-rough",
+    "frames": 8,
+    "size": 192,
+    "src_frames": 9,
+    "src_size": "300x300",
+    "mask_mode": "gray",
+    "file": "deevad/scratches_rough.gih",
+    "source": "David Revoy — Krita brushes 2025-01 bundle (위와 같음)",
+    "license": "CC0 (CC-0 Public Domain)",
+    "license_check": "위와 같음(meta.xml)",
+    "spacing_hint": null,
+    "mean": 0.1153,
+    "fill": 0.2797,
+    "png_bytes": 116178
+  },
+  {
+    "name": "scratches2",
+    "frames": 8,
+    "size": 192,
+    "src_frames": 6,
+    "src_size": "250x250",
+    "mask_mode": "gray",
+    "file": "rubberduck/scratches2.gih",
+    "source": "OpenGameArt — rubberduck (위와 같음)",
+    "license": "CC0 1.0",
+    "license_check": "위와 같음(OGA 페이지)",
+    "spacing_hint": null,
+    "mean": 0.2551,
+    "fill": 0.6013,
+    "png_bytes": 211907
+  },
+  {
+    "name": "paper001",
+    "frames": 1,
+    "size": 1024,
+    "src_frames": 1,
+    "src_size": "1024x1024",
+    "mask_mode": "height→tooth(1−norm · 백분위 94..221)",
+    "file": "ambientcg/Paper001_2K_Displacement_crop1024.png",
+    "source": "ambientCG Paper001 https://ambientcg.com/view?id=Paper001 (Paper001_2K-JPG.zip 16,201,816 B · 2048×1201 변위 맵 · 저장소에는 왼쪽 위 1024² 크롭을 회색 PNG로(값 무변 · PIL) — 원본 JPEG는 안 실음)",
+    "license": "CC0 1.0 Universal",
+    "license_check": "https://docs.ambientcg.com/license/ — «You can include the raw files in your project, for example a video game»",
+    "spacing_hint": null,
+    "mean": 0.5272,
+    "fill": 1,
+    "png_bytes": 887952
+  }
+] as const
+export const TIP_SIZE = 192
+export const PAPER_NAME = 'paper001'
+export const TIP_NAMES = TIPS.filter(t => t.name !== PAPER_NAME).map(t => t.name)
