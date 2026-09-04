@@ -1,0 +1,1920 @@
+{
+  "conditions": {
+    "workers": 1,
+    "project": "dpr1",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/paint62.spec.ts (워커 1 — #99)"
+  },
+  "what": "web2-62 — mypaint 엔진·합성 게이트 여덟: ①흰 테 0 ②rgb≤a ③겹침 물성 ④획 안/사이 ⑤젖은 붓 ⑥프리셋 충실도 ⑦넷을 넘어 ⑧결정론 + 탐침(비용·보정·층)",
+  "note_pitfalls": "#103(호출마다 새 캔버스 — scene 열쇠) · #102(?reset 시험당 1회) · #101(web2 러너) · #99(병합-쓰기) · #105(보정 실패는 ok:false 표식) · #12(⑦은 196 전수 · ①은 도구 넷+프리셋 여덟 · 동작점 하나가 아니다)",
+  "scene": "호출마다 markSample/markMulti가 새 캔버스를 만든다(문서·뷰 무관 · 잔류 없음)",
+  "premul": {
+    "def": "층 rgb ≤ a 단언(획마다 상자 전수 · DEV에서 던진다). before = 도구 넷 뒤 누적 위반 · broken = premulBreak(한 픽셀 r = a + .5) 뒤 · after = 그다음 정상 획 뒤(수가 더 안 는다)",
+    "before": 0,
+    "broken": {
+      "threw": true,
+      "msg": "mypaint: premultiplied 위반 — rgb > a 텍셀 1개(상자 29,88..459,152)",
+      "violations": 1
+    },
+    "after": 1
+  },
+  "pigment": {
+    "def": "굽기 통로(drawMarksSeam) — 파랑(#2040e0 · paint_mode 1 · opaque 1 · 압력 1 — opaque_multiply 곡선이 1) 직선 위에 노랑(#f0d020 · paint_mode 1 · opaque .65 · 압력 1 → 덮임 캡 .65 = 노랑 몫 .65 — 결 끔). ⚠ 반반(.5)은 이 10채널 모형에서 청록(hue 155 — node 실측)이라 «초록 대역 끝»이었다: 실물처럼 노랑이 조금 더 든 판을 자로 삼는다(.65 → hue ~110 예상). 몸통(±5px · x 100..380) 평균 색의 색상각(0..360)·채도. 초록 = 색상각 70..170 ∧ 채도 > .25. 반증 = paint_mode 강제 0(가산 over) — 초록 대역 밖",
+    "on": {
+      "rgb": [
+        119,
+        155,
+        94
+      ],
+      "hue": 95,
+      "sat": 0.397
+    },
+    "off": {
+      "rgb": [
+        199,
+        175,
+        142
+      ],
+      "hue": 34.7,
+      "sat": 0.286
+    },
+    "on_is_green": true,
+    "off_is_green": false
+  },
+  "self_cross": {
+    "def": "층 알파 지도(결 끔) — cross 도형(압력 .6 상수) 교차 창(굵기 폭 20×20) p95 · 첫 변 25%·75% 몸통 창 p95 · cap = 이 획의 «획 불투명도»(도장 목표 불투명도(선형화 전 opaque × 압력 곡선) × 도구 캡 — 엔진이 값으로 낸다). **술어 = cross_over_cap ≤ 1 + C.PAINT62_CAP_TOL**(지시 문면 「한 획 자기교차는 획 불투명도를 안 넘는다」 그대로). ratio(교차 ÷ 몸통)는 기록 — 부드러운 브러시(classic/pencil hardness .1 · 도장 산포)는 몸통이 목표에 못 미쳐 교차가 목표까지 «진해진다»(실물 연필과 같다 · libmypaint 설계 · 59의 최대값 합집합 구성과 다른 자리 — DECISIONS). 반증 capOff = libmypaint 원문 누적(cross_over_cap이 1을 넘는다). rows_unsaturated = 불투명 배수 .4(61이 못 가른 비포화 판 — 캡은 «목표»라 여기서도 cap 안). stack = 마커 직선 1·2·3번(굽기 통로 · 층 over)의 몸통 평균 알파 — 획 «사이»는 쌓인다",
+    "threshold_cap": 1.02,
+    "threshold_ratio_record_only": 1.08,
+    "rows": {
+      "pencil": {
+        "cross": 0.3687,
+        "body_l": 0.2204,
+        "body_r": 0.1957,
+        "ratio": 1.7725,
+        "cap": 0.42,
+        "cross_over_cap": 0.8778,
+        "at": [
+          224,
+          127
+        ]
+      },
+      "cp": {
+        "cross": 0.3418,
+        "body_l": 0.3418,
+        "body_r": 0.3418,
+        "ratio": 1,
+        "cap": 0.3798,
+        "cross_over_cap": 0.9,
+        "at": [
+          224,
+          127
+        ]
+      },
+      "marker": {
+        "cross": 0.55,
+        "body_l": 0.55,
+        "body_r": 0.55,
+        "ratio": 1,
+        "cap": 0.55,
+        "cross_over_cap": 1,
+        "at": [
+          224,
+          127
+        ]
+      },
+      "brush": {
+        "cross": 1,
+        "body_l": 1,
+        "body_r": 1,
+        "ratio": 1,
+        "cap": 1,
+        "cross_over_cap": 1,
+        "at": [
+          224,
+          127
+        ]
+      }
+    },
+    "rows_capoff": {
+      "pencil": {
+        "cross": 0.3687,
+        "body_l": 0.2204,
+        "body_r": 0.1957,
+        "ratio": 1.7725,
+        "cap": 0.42,
+        "cross_over_cap": 0.8778,
+        "at": [
+          224,
+          127
+        ]
+      },
+      "cp": {
+        "cross": 0.5545,
+        "body_l": 0.3817,
+        "body_r": 0.3849,
+        "ratio": 1.4467,
+        "cap": 0.3798,
+        "cross_over_cap": 1.4599,
+        "at": [
+          224,
+          127
+        ]
+      },
+      "marker": {
+        "cross": 1,
+        "body_l": 1,
+        "body_r": 1,
+        "ratio": 1,
+        "cap": 0.55,
+        "cross_over_cap": 1.8182,
+        "at": [
+          224,
+          127
+        ]
+      },
+      "brush": {
+        "cross": 1,
+        "body_l": 1,
+        "body_r": 1,
+        "ratio": 1,
+        "cap": 1,
+        "cross_over_cap": 1,
+        "at": [
+          224,
+          127
+        ]
+      }
+    },
+    "rows_unsaturated": {
+      "pencil": {
+        "cross": 0.1659,
+        "body_l": 0.0931,
+        "body_r": 0.0821,
+        "ratio": 1.8929,
+        "cap": 0.168,
+        "cross_over_cap": 0.9872,
+        "at": [
+          224,
+          127
+        ]
+      },
+      "cp": {
+        "cross": 0.1367,
+        "body_l": 0.1367,
+        "body_r": 0.1367,
+        "ratio": 1,
+        "cap": 0.1519,
+        "cross_over_cap": 0.9,
+        "at": [
+          224,
+          127
+        ]
+      }
+    },
+    "stack": {
+      "one": 0.55,
+      "two": 0.7975,
+      "three": 0.9089,
+      "ratio_2_1": 1.45,
+      "ratio_3_2": 1.1397
+    }
+  },
+  "smudge": {
+    "def": "굽기 통로 — 빨강 라이너(24px · 압력 .8) 위에 classic/smudge(30px · 14px 아래 · 검정 «색»)를 긋는다. 빨강 띠 «아래» 자리(y H/2+13..+26 · x 120..360)의 평균 색: red_excess = R−G(빨강을 물어 왔는가) · dark = 어둡기. stats = 스머지 표집 출처(fromSnapshot = 획 «전» 스냅숏 · liveTouched = 이 획이 이미 닿은 타일을 층에서 읽음 = 제 자국 오염). 반증 ① smudgeOff(smudge 0 — 제 색 검정을 칠한다 → red_excess 0 대역) ② selfSample(스냅숏 대신 층 — liveTouched > 0)",
+    "on": {
+      "rgb": [
+        251,
+        237,
+        237
+      ],
+      "dark": 13,
+      "red_excess": 13.8,
+      "stats": {
+        "fromSnapshot": 36862,
+        "liveTouched": 0,
+        "liveClean": 1086
+      }
+    },
+    "falsification_smudge_off": {
+      "rgb": [
+        148,
+        148,
+        148
+      ],
+      "dark": 107.1,
+      "red_excess": 0,
+      "stats": {
+        "fromSnapshot": 0,
+        "liveTouched": 0,
+        "liveClean": 0
+      }
+    },
+    "falsification_self_sample": {
+      "rgb": [
+        252,
+        238,
+        239
+      ],
+      "dark": 12.2,
+      "red_excess": 13.1,
+      "stats": {
+        "fromSnapshot": 0,
+        "liveTouched": 36862,
+        "liveClean": 1086
+      }
+    }
+  },
+  "mapping": {
+    "def": "196 프리셋 전부를 실어 센다 — settings(설정 항목) · curves(입력 곡선) · unknownSettings(65 밖 — 0이어야) · unknownInputs(18 밖 — surfacemap_*뿐 · libmypaint 원문도 경고·건너뜀)",
+    "presets": 196,
+    "settings": 2569,
+    "curves": 1602,
+    "unknownSettings": 0,
+    "unknownInputs": {},
+    "skipped": {
+      "surfacemap_x": 12,
+      "surfacemap_y": 12
+    }
+  },
+  "differ": {
+    "def": "196 견본(직선 12px · 시드 62 · 잉크펜 슬롯 · 층 알파) 통계 서명 {mean,p95,bare,edgeSd}(4자리) — painted = 최대 알파 ≥ .008인 것 · distinct = 고유 서명 수 · empty = 빈 층에 아무것도 안 남긴 것과 그 사유(값 — eraser · smudge≥.65(젖은 붓·물만·블렌더) · posterize · opaque≤.05 · lock_alpha · smudge_transparency · dabs_sparse(반지름당 도장 < .2 — splatter)) · unexplained = 사유 없는 빈 것(0이어야). 반증 = 같은 브러시 8번 → 서명 1",
+    "total": 196,
+    "painted": 154,
+    "distinct": 145,
+    "empty": {
+      "Dieterle/Blender": "smudge≥.65",
+      "Dieterle/Dissolver": "smudge≥.65+smudge_transparency",
+      "Dieterle/Eraser": "eraser+smudge≥.65+smudge_transparency",
+      "Dieterle/Posterizer": "posterize",
+      "classic/blending_knife": "smudge≥.65",
+      "classic/blur": "smudge≥.65",
+      "classic/imp_blending": "smudge≥.65",
+      "classic/ink_eraser": "eraser",
+      "classic/smudge": "smudge≥.65",
+      "classic/wet_knife": "smudge≥.65",
+      "deevad/blending": "smudge≥.65",
+      "deevad/grainy_blending": "smudge≥.65",
+      "deevad/kneaded_eraser": "eraser",
+      "deevad/kneaded_eraser_large": "eraser",
+      "deevad/large_hard_eraser": "eraser",
+      "deevad/only_water_fringe": "smudge≥.65",
+      "deevad/rough": "opaque≤.05",
+      "deevad/sponge_smudging": "smudge≥.65",
+      "deevad/thin_hard_eraser": "eraser",
+      "ramon/Blur_Fast": "smudge≥.65",
+      "ramon/Dirty_Noise": "smudge≥.65",
+      "ramon/Grain": "smudge≥.65",
+      "ramon/Hard_Eraser": "eraser",
+      "ramon/Knife": "smudge≥.65",
+      "ramon/Smear": "smudge≥.65",
+      "ramon/Soft_Eraser": "eraser",
+      "tanda/acrylic-03-only-water": "smudge≥.65",
+      "tanda/acrylic-04-only-water": "smudge≥.65",
+      "tanda/acrylic-05-only-water": "smudge≥.65",
+      "tanda/charcoal-blur1": "smudge≥.65",
+      "tanda/oil-01-clean": "smudge≥.65",
+      "tanda/oil-03-clean": "smudge≥.65",
+      "tanda/oil-06-clean": "smudge≥.65",
+      "tanda/oil-mop": "smudge≥.65+opaque≤.05",
+      "tanda/water-01": "smudge≥.65",
+      "tanda/water-02": "smudge≥.65",
+      "tanda/water-05": "smudge≥.65",
+      "tanda/water-06": "eraser+smudge≥.65",
+      "tanda/watercolor-02-water": "smudge≥.65",
+      "kaerhon_v1/airsmudge_a": "smudge≥.65",
+      "kaerhon_v1/paint_sm": "smudge≥.65",
+      "kaerhon_v1/Smear_sm": "smudge≥.65"
+    },
+    "unexplained": [],
+    "ms": 21562,
+    "falsification_same_brush_distinct": 1,
+    "sample": {
+      "Dieterle/8B_Pencil#1": {
+        "mean": 0.0536,
+        "p95": 0.155,
+        "bare": 0.1288,
+        "edgeSd": 3.219
+      },
+      "Dieterle/arrow#1": {
+        "mean": 0.3131,
+        "p95": 0.8678,
+        "bare": 0.0721,
+        "edgeSd": 3.24
+      },
+      "Dieterle/Fan#1": {
+        "mean": 0.1329,
+        "p95": 0.1864,
+        "bare": 0.0026,
+        "edgeSd": 1.792
+      },
+      "Dieterle/Flat2#1": {
+        "mean": 0.0258,
+        "p95": 0.0416,
+        "bare": 0,
+        "edgeSd": 0.516
+      },
+      "Dieterle/Flight_Feathers": {
+        "mean": 0.0863,
+        "p95": 0.3014,
+        "bare": 0.5054,
+        "edgeSd": 4.565
+      },
+      "Dieterle/Fount-offset#1": {
+        "mean": 0.3023,
+        "p95": 0.8577,
+        "bare": 0,
+        "edgeSd": 0.221
+      }
+    }
+  },
+  "fringe": {
+    "def": "회색 바탕(140) 위 어두운 안료(#2a2a30) 물결 22px. 층 알파 2..70/255인 픽셀(edge)의 합성 RGB가 배경+2보다 밝은 수(brighter) — 흰 테의 정의. darkerThanPig는 안료보다 어두운 수(기록). 도구 넷 + 프리셋 여덟(분류 일곱 가로지름). 반증 fringeBreak = 그 픽셀의 rgb를 흰색으로 — 실제로 걸린다",
+    "rows": {
+      "pencil": {
+        "edge": 17106,
+        "brighter": 0,
+        "darkerThanPig": 0,
+        "maxOver": 0,
+        "painted": 21495
+      },
+      "cp": {
+        "edge": 15080,
+        "brighter": 0,
+        "darkerThanPig": 0,
+        "maxOver": 0,
+        "painted": 21154
+      },
+      "marker": {
+        "edge": 93,
+        "brighter": 0,
+        "darkerThanPig": 0,
+        "maxOver": 0,
+        "painted": 9770
+      },
+      "brush": {
+        "edge": 299,
+        "brighter": 0,
+        "darkerThanPig": 0,
+        "maxOver": 0,
+        "painted": 9725
+      },
+      "classic/pen": {
+        "edge": 598,
+        "brighter": 0,
+        "darkerThanPig": 0,
+        "maxOver": 0,
+        "painted": 11322
+      },
+      "deevad/airbrush": {
+        "edge": 14516,
+        "brighter": 0,
+        "darkerThanPig": 0,
+        "maxOver": 0,
+        "painted": 15432
+      },
+      "Dieterle/Round#1": {
+        "edge": 4843,
+        "brighter": 0,
+        "darkerThanPig": 0,
+        "maxOver": 0,
+        "painted": 12820
+      },
+      "tanda/watercolor-02-paint": {
+        "edge": 36924,
+        "brighter": 0,
+        "darkerThanPig": 0,
+        "maxOver": 0,
+        "painted": 49808
+      },
+      "ramon/Pastel_1": {
+        "edge": 26439,
+        "brighter": 0,
+        "darkerThanPig": 0,
+        "maxOver": 0,
+        "painted": 52135
+      },
+      "kaerhon_v1/paint_sm": {
+        "edge": 3237,
+        "brighter": 0,
+        "darkerThanPig": 0,
+        "maxOver": 0,
+        "painted": 6948
+      },
+      "experimental/soft": {
+        "edge": 9546,
+        "brighter": 0,
+        "darkerThanPig": 0,
+        "maxOver": 0,
+        "painted": 10166
+      },
+      "classic/knife": {
+        "edge": 3077,
+        "brighter": 0,
+        "darkerThanPig": 0,
+        "maxOver": 0,
+        "painted": 11128
+      }
+    },
+    "edge_total": 131758,
+    "brighter_total": 0,
+    "falsification_fringe_break": {
+      "edge": 17106,
+      "brighter": 13081,
+      "darkerThanPig": 0,
+      "maxOver": 31,
+      "painted": 21495
+    }
+  },
+  "determinism": {
+    "def": "같은 획·같은 시드 두 번의 어둡기 지도 해시가 같고(same — 전부 단언) 시드가 다르면 다르다(differs — 난수를 «쓰는» 것만 단언: 분류 일곱의 난수 프리셋 + 연필·색연필·마커. 잉크펜(deevad/liner)은 난수 없음 → 시드 무관이 맞다 · 기록)",
+    "rows": {
+      "Dieterle/Round#1": {
+        "same": true,
+        "differs": true
+      },
+      "classic/charcoal": {
+        "same": true,
+        "differs": true
+      },
+      "deevad/spray": {
+        "same": true,
+        "differs": true
+      },
+      "ramon/Pastel_1": {
+        "same": true,
+        "differs": true
+      },
+      "experimental/bubble": {
+        "same": true,
+        "differs": true
+      },
+      "tanda/splatter-04": {
+        "same": true,
+        "differs": true
+      },
+      "kaerhon_v1/Dirty_Transparent_sk": {
+        "same": true,
+        "differs": false
+      },
+      "pencil": {
+        "same": true,
+        "differs": true
+      },
+      "cp": {
+        "same": true,
+        "differs": true
+      },
+      "marker": {
+        "same": true,
+        "differs": false
+      },
+      "brush": {
+        "same": true,
+        "differs": false
+      }
+    },
+    "differs_asserted": [
+      "Dieterle/Round#1",
+      "classic/charcoal",
+      "deevad/spray",
+      "ramon/Pastel_1",
+      "experimental/bubble",
+      "tanda/splatter-04",
+      "pencil",
+      "cp"
+    ],
+    "note_marker": "마커 슬롯 기본 ramon/100%_Opaque는 난수 없음(딱딱한 불투명 블록) → 시드 무관이 맞다 · same만 단언",
+    "note_kaerhon": "kaerhon_v1 스무 개는 난수를 하나도 안 쓴다(offset/radius_by_random·tracking_noise·random 입력 전부 0 — 원문 실측) → 시드 무관이 맞다 · same만 단언"
+  },
+  "probe": {
+    "def": "실재(markPx) · 결정론 · 면 20×획 40 굽기 ms(스트레스 800획 · 지시 픽스처 40획 · 획별 80) · 보정표(프리셋별 {a,b,ok,w1,w2} — 반지름 6·24의 반최대 폭 선형 · ok:false = 실패 표식 #105) · 층 현황 · 사상 · 합성 속도. ⚠ ms는 워커 1 원장의 값 — 밤(워커 4)은 기록만",
+    "presets": 196,
+    "groups": [
+      {
+        "group": "Dieterle",
+        "n": 19
+      },
+      {
+        "group": "Classic",
+        "n": 35
+      },
+      {
+        "group": "Deevad",
+        "n": 36
+      },
+      {
+        "group": "Ramon",
+        "n": 28
+      },
+      {
+        "group": "Experimental",
+        "n": 23
+      },
+      {
+        "group": "Tanda",
+        "n": 35
+      },
+      {
+        "group": "Kaerhon",
+        "n": 20
+      }
+    ],
+    "markPx": 8584,
+    "deterministic": true,
+    "seed_differs": true,
+    "bake_stress_20faces_x40strokes_ms": 21467.9,
+    "bake_20faces_40strokes_total_ms": 1530.8,
+    "bake_perstroke_2x40_ms": 1892.1,
+    "calib": {
+      "Dieterle/8B_Pencil#1": {
+        "a": 0.16666666666666666,
+        "b": 2,
+        "ok": true,
+        "w1": 3,
+        "w2": 6
+      },
+      "Dieterle/arrow#1": {
+        "a": 7.888888888888889,
+        "b": -31.333333333333336,
+        "ok": true,
+        "w1": 16,
+        "w2": 158
+      },
+      "Dieterle/Blender": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "Dieterle/Dissolver": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "Dieterle/Eraser": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "Dieterle/Fan#1": {
+        "a": -1.2222222222222223,
+        "b": 126.33333333333333,
+        "ok": true,
+        "w1": 119,
+        "w2": 97
+      },
+      "Dieterle/Flat2#1": {
+        "a": -1.2222222222222223,
+        "b": 161.33333333333334,
+        "ok": true,
+        "w1": 154,
+        "w2": 132
+      },
+      "Dieterle/Flight_Feathers": {
+        "a": -0.4444444444444444,
+        "b": 31.666666666666668,
+        "ok": true,
+        "w1": 29,
+        "w2": 21
+      },
+      "Dieterle/Fount-offset#1": {
+        "a": 0.4444444444444444,
+        "b": -0.6666666666666665,
+        "ok": true,
+        "w1": 2,
+        "w2": 10
+      },
+      "Dieterle/Fountain_SF#1": {
+        "a": 1.2222222222222223,
+        "b": 0.6666666666666661,
+        "ok": true,
+        "w1": 8,
+        "w2": 30
+      },
+      "Dieterle/HalfTone#1": {
+        "a": 1.3333333333333333,
+        "b": 12,
+        "ok": true,
+        "w1": 20,
+        "w2": 44
+      },
+      "Dieterle/HalfToneCMY#1": {
+        "a": 1.2222222222222223,
+        "b": 12.666666666666666,
+        "ok": true,
+        "w1": 20,
+        "w2": 42
+      },
+      "Dieterle/Pencil-_Left_Handed": {
+        "a": 0.2222222222222222,
+        "b": 3.666666666666667,
+        "ok": true,
+        "w1": 5,
+        "w2": 9
+      },
+      "Dieterle/Posterizer": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "Dieterle/Round#1": {
+        "a": 1.7777777777777777,
+        "b": 52.333333333333336,
+        "ok": true,
+        "w1": 63,
+        "w2": 95
+      },
+      "Dieterle/Splash": {
+        "a": -0.5,
+        "b": 12,
+        "ok": false,
+        "w1": 9,
+        "w2": 0
+      },
+      "Dieterle/Tail_Feathers": {
+        "a": -2.2777777777777777,
+        "b": 92.66666666666667,
+        "ok": true,
+        "w1": 79,
+        "w2": 38
+      },
+      "Dieterle/Tail_Feathers2": {
+        "a": 0.05555555555555555,
+        "b": 9.666666666666666,
+        "ok": true,
+        "w1": 10,
+        "w2": 11
+      },
+      "Dieterle/WateryFlatbrush": {
+        "a": -0.5,
+        "b": 103,
+        "ok": true,
+        "w1": 100,
+        "w2": 91
+      },
+      "classic/blend+paint": {
+        "a": 1.7777777777777777,
+        "b": -0.6666666666666661,
+        "ok": true,
+        "w1": 10,
+        "w2": 42
+      },
+      "classic/blending_knife": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "classic/blur": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "classic/brush": {
+        "a": 1.3333333333333333,
+        "b": 0,
+        "ok": true,
+        "w1": 8,
+        "w2": 32
+      },
+      "classic/bulk": {
+        "a": 1.7777777777777777,
+        "b": -0.6666666666666661,
+        "ok": true,
+        "w1": 10,
+        "w2": 42
+      },
+      "classic/calligraphy": {
+        "a": 1.3333333333333333,
+        "b": 0,
+        "ok": true,
+        "w1": 8,
+        "w2": 32
+      },
+      "classic/charcoal": {
+        "a": 2.2222222222222223,
+        "b": 0.6666666666666661,
+        "ok": true,
+        "w1": 14,
+        "w2": 54
+      },
+      "classic/coarse_bulk_1": {
+        "a": 1.5555555555555556,
+        "b": 33.666666666666664,
+        "ok": true,
+        "w1": 43,
+        "w2": 71
+      },
+      "classic/coarse_bulk_2": {
+        "a": 3.1666666666666665,
+        "b": 24,
+        "ok": true,
+        "w1": 43,
+        "w2": 100
+      },
+      "classic/coarse_bulk_3": {
+        "a": 2.1666666666666665,
+        "b": -2,
+        "ok": true,
+        "w1": 11,
+        "w2": 50
+      },
+      "classic/dry_brush": {
+        "a": 2.6666666666666665,
+        "b": 1,
+        "ok": true,
+        "w1": 17,
+        "w2": 65
+      },
+      "classic/imp_blending": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "classic/imp_details": {
+        "a": 2.0555555555555554,
+        "b": -0.33333333333333215,
+        "ok": true,
+        "w1": 12,
+        "w2": 49
+      },
+      "classic/impressionism": {
+        "a": 3.888888888888889,
+        "b": -3.333333333333332,
+        "ok": true,
+        "w1": 20,
+        "w2": 90
+      },
+      "classic/ink_blot": {
+        "a": 1.0555555555555556,
+        "b": -1.333333333333334,
+        "ok": true,
+        "w1": 5,
+        "w2": 24
+      },
+      "classic/ink_eraser": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "classic/kabura": {
+        "a": 1.5555555555555556,
+        "b": -1.333333333333334,
+        "ok": true,
+        "w1": 8,
+        "w2": 36
+      },
+      "classic/knife": {
+        "a": 1.6666666666666667,
+        "b": 0,
+        "ok": true,
+        "w1": 10,
+        "w2": 40
+      },
+      "classic/long_grass": {
+        "a": 2.7777777777777777,
+        "b": -5.666666666666664,
+        "ok": true,
+        "w1": 11,
+        "w2": 61
+      },
+      "classic/marker_fat": {
+        "a": 0.4444444444444444,
+        "b": 1.3333333333333335,
+        "ok": true,
+        "w1": 4,
+        "w2": 12
+      },
+      "classic/marker_small": {
+        "a": 0.6666666666666666,
+        "b": 0,
+        "ok": true,
+        "w1": 4,
+        "w2": 16
+      },
+      "classic/modelling": {
+        "a": 4.888888888888889,
+        "b": -1.3333333333333357,
+        "ok": true,
+        "w1": 28,
+        "w2": 116
+      },
+      "classic/modelling2": {
+        "a": 6.666666666666667,
+        "b": 0,
+        "ok": true,
+        "w1": 40,
+        "w2": 160
+      },
+      "classic/pen": {
+        "a": 1.7777777777777777,
+        "b": -0.6666666666666661,
+        "ok": true,
+        "w1": 10,
+        "w2": 42
+      },
+      "classic/pencil": {
+        "a": 1.1111111111111112,
+        "b": 0.33333333333333304,
+        "ok": true,
+        "w1": 7,
+        "w2": 27
+      },
+      "classic/pointy_ink": {
+        "a": 7.111111111111111,
+        "b": -0.6666666666666643,
+        "ok": true,
+        "w1": 42,
+        "w2": 170
+      },
+      "classic/puantilism": {
+        "a": 6.888888888888889,
+        "b": -4.333333333333336,
+        "ok": true,
+        "w1": 37,
+        "w2": 161
+      },
+      "classic/puantilism2": {
+        "a": 4.333333333333333,
+        "b": -7,
+        "ok": true,
+        "w1": 19,
+        "w2": 97
+      },
+      "classic/rounded": {
+        "a": 1.8888888888888888,
+        "b": -1.3333333333333321,
+        "ok": true,
+        "w1": 10,
+        "w2": 44
+      },
+      "classic/short_grass": {
+        "a": 2.888888888888889,
+        "b": -0.33333333333333215,
+        "ok": true,
+        "w1": 17,
+        "w2": 69
+      },
+      "classic/slow_ink": {
+        "a": 1.4444444444444444,
+        "b": 1.333333333333334,
+        "ok": true,
+        "w1": 10,
+        "w2": 36
+      },
+      "classic/smudge": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "classic/smudge+paint": {
+        "a": 1.5555555555555556,
+        "b": 0.6666666666666661,
+        "ok": true,
+        "w1": 10,
+        "w2": 38
+      },
+      "classic/textured_ink": {
+        "a": 4.055555555555555,
+        "b": 0.6666666666666679,
+        "ok": true,
+        "w1": 25,
+        "w2": 98
+      },
+      "classic/wet_knife": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/2B_pencil": {
+        "a": 1.8333333333333333,
+        "b": 0,
+        "ok": true,
+        "w1": 11,
+        "w2": 44
+      },
+      "deevad/4H_pencil": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/airbrush": {
+        "a": 1.1111111111111112,
+        "b": -0.666666666666667,
+        "ok": true,
+        "w1": 6,
+        "w2": 26
+      },
+      "deevad/ballpen": {
+        "a": 1.8333333333333333,
+        "b": 0,
+        "ok": true,
+        "w1": 11,
+        "w2": 44
+      },
+      "deevad/basic_digital_brush": {
+        "a": 1.8888888888888888,
+        "b": -1.3333333333333321,
+        "ok": true,
+        "w1": 10,
+        "w2": 44
+      },
+      "deevad/basic_digital_brush_smudging": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/basic_digital_knife": {
+        "a": 0.7777777777777778,
+        "b": -0.666666666666667,
+        "ok": true,
+        "w1": 4,
+        "w2": 18
+      },
+      "deevad/basic_digital_knife_smudging": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/blending": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/brush": {
+        "a": 2.111111111111111,
+        "b": -0.6666666666666679,
+        "ok": true,
+        "w1": 12,
+        "w2": 50
+      },
+      "deevad/chalk": {
+        "a": 6.388888888888889,
+        "b": 7.666666666666664,
+        "ok": true,
+        "w1": 46,
+        "w2": 161
+      },
+      "deevad/detail_brush_large": {
+        "a": 3,
+        "b": 0,
+        "ok": true,
+        "w1": 18,
+        "w2": 72
+      },
+      "deevad/detail_brush_large_glazing": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/detail_brush_thin": {
+        "a": 3,
+        "b": 0,
+        "ok": true,
+        "w1": 18,
+        "w2": 72
+      },
+      "deevad/detail_brush_thin_glazing": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/fill": {
+        "a": 2.3333333333333335,
+        "b": 0,
+        "ok": true,
+        "w1": 14,
+        "w2": 56
+      },
+      "deevad/grainy_blending": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/kneaded_eraser": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/kneaded_eraser_large": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/large_hard_eraser": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/large_watercolor_fringe": {
+        "a": 0.8333333333333334,
+        "b": 0,
+        "ok": true,
+        "w1": 5,
+        "w2": 20
+      },
+      "deevad/liner": {
+        "a": 1.8888888888888888,
+        "b": 0.6666666666666679,
+        "ok": true,
+        "w1": 12,
+        "w2": 46
+      },
+      "deevad/only_water_fringe": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/pen": {
+        "a": 1.6666666666666667,
+        "b": 0,
+        "ok": true,
+        "w1": 10,
+        "w2": 40
+      },
+      "deevad/pen-note": {
+        "a": 1.2222222222222223,
+        "b": 0.6666666666666661,
+        "ok": true,
+        "w1": 8,
+        "w2": 30
+      },
+      "deevad/rigger_brush": {
+        "a": 3,
+        "b": 0,
+        "ok": true,
+        "w1": 18,
+        "w2": 72
+      },
+      "deevad/rigger_brush_thin": {
+        "a": 2.4444444444444446,
+        "b": 1.3333333333333321,
+        "ok": true,
+        "w1": 16,
+        "w2": 60
+      },
+      "deevad/rough": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/soft-dip-pen": {
+        "a": 1.5555555555555556,
+        "b": -1.333333333333334,
+        "ok": true,
+        "w1": 8,
+        "w2": 36
+      },
+      "deevad/sponge_smudging": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/spray": {
+        "a": 1.1666666666666667,
+        "b": -2,
+        "ok": true,
+        "w1": 5,
+        "w2": 26
+      },
+      "deevad/spray2": {
+        "a": 2.1666666666666665,
+        "b": 96,
+        "ok": true,
+        "w1": 109,
+        "w2": 148
+      },
+      "deevad/thin_hard_eraser": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "deevad/thin_watercolor": {
+        "a": 0.7777777777777778,
+        "b": 0.33333333333333304,
+        "ok": true,
+        "w1": 5,
+        "w2": 19
+      },
+      "deevad/watercolor_expressive": {
+        "a": 0.2222222222222222,
+        "b": 0.6666666666666667,
+        "ok": true,
+        "w1": 2,
+        "w2": 6
+      },
+      "deevad/watercolor_glazing": {
+        "a": 1.6666666666666667,
+        "b": 0,
+        "ok": true,
+        "w1": 10,
+        "w2": 40
+      },
+      "ramon/100%_Opaque": {
+        "a": 2,
+        "b": 0,
+        "ok": true,
+        "w1": 12,
+        "w2": 48
+      },
+      "ramon/2B_pencil": {
+        "a": 1.2777777777777777,
+        "b": 0.3333333333333339,
+        "ok": true,
+        "w1": 8,
+        "w2": 31
+      },
+      "ramon/B-pencil": {
+        "a": 1.1111111111111112,
+        "b": -0.666666666666667,
+        "ok": true,
+        "w1": 6,
+        "w2": 26
+      },
+      "ramon/Beamlight": {
+        "a": 0.6666666666666666,
+        "b": 0,
+        "ok": true,
+        "w1": 4,
+        "w2": 16
+      },
+      "ramon/BigAirbrush": {
+        "a": 2.111111111111111,
+        "b": 1.3333333333333321,
+        "ok": true,
+        "w1": 14,
+        "w2": 52
+      },
+      "ramon/Blur_Fast": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "ramon/Classic_Paint": {
+        "a": 1.4444444444444444,
+        "b": 1.333333333333334,
+        "ok": true,
+        "w1": 10,
+        "w2": 36
+      },
+      "ramon/Clouds": {
+        "a": 6,
+        "b": 48,
+        "ok": true,
+        "w1": 84,
+        "w2": 192
+      },
+      "ramon/Delayed_": {
+        "a": 1.3333333333333333,
+        "b": 0,
+        "ok": true,
+        "w1": 8,
+        "w2": 32
+      },
+      "ramon/Dirty_Noise": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "ramon/Glow_Airbrush": {
+        "a": 0.8888888888888888,
+        "b": 0.666666666666667,
+        "ok": true,
+        "w1": 6,
+        "w2": 22
+      },
+      "ramon/Grain": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "ramon/Hard_Eraser": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "ramon/Knife": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "ramon/Marker": {
+        "a": 1.1111111111111112,
+        "b": -0.666666666666667,
+        "ok": true,
+        "w1": 6,
+        "w2": 26
+      },
+      "ramon/P._Shade": {
+        "a": 3.2777777777777777,
+        "b": 5.333333333333336,
+        "ok": true,
+        "w1": 25,
+        "w2": 84
+      },
+      "ramon/Pastel_1": {
+        "a": 3.1666666666666665,
+        "b": 3,
+        "ok": true,
+        "w1": 22,
+        "w2": 79
+      },
+      "ramon/Pen": {
+        "a": 1.2222222222222223,
+        "b": 0.6666666666666661,
+        "ok": true,
+        "w1": 8,
+        "w2": 30
+      },
+      "ramon/PenBrush": {
+        "a": 1.3333333333333333,
+        "b": 0,
+        "ok": true,
+        "w1": 8,
+        "w2": 32
+      },
+      "ramon/Round": {
+        "a": 3.3333333333333335,
+        "b": 0,
+        "ok": true,
+        "w1": 20,
+        "w2": 80
+      },
+      "ramon/Round_Bl": {
+        "a": 1.7777777777777777,
+        "b": -0.6666666666666661,
+        "ok": true,
+        "w1": 10,
+        "w2": 42
+      },
+      "ramon/RS_blendOP": {
+        "a": 1.3333333333333333,
+        "b": 0,
+        "ok": true,
+        "w1": 8,
+        "w2": 32
+      },
+      "ramon/Sketch_1": {
+        "a": 1.5555555555555556,
+        "b": 0.6666666666666661,
+        "ok": true,
+        "w1": 10,
+        "w2": 38
+      },
+      "ramon/Smear": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "ramon/Soft_Eraser": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "ramon/Thin_Pen": {
+        "a": 0.7777777777777778,
+        "b": -0.666666666666667,
+        "ok": true,
+        "w1": 4,
+        "w2": 18
+      },
+      "ramon/Wet_Direction": {
+        "a": 3.111111111111111,
+        "b": 1.3333333333333321,
+        "ok": true,
+        "w1": 20,
+        "w2": 76
+      },
+      "ramon/wet_round": {
+        "a": 1.8888888888888888,
+        "b": 0.6666666666666679,
+        "ok": true,
+        "w1": 12,
+        "w2": 46
+      },
+      "experimental/1pixel": {
+        "a": 2,
+        "b": -1,
+        "ok": true,
+        "w1": 11,
+        "w2": 47
+      },
+      "experimental/basic": {
+        "a": 1.6666666666666667,
+        "b": 0,
+        "ok": true,
+        "w1": 10,
+        "w2": 40
+      },
+      "experimental/bubble": {
+        "a": 5.333333333333333,
+        "b": 64,
+        "ok": true,
+        "w1": 96,
+        "w2": 192
+      },
+      "experimental/DNA_brush": {
+        "a": 1.7777777777777777,
+        "b": 2.333333333333334,
+        "ok": true,
+        "w1": 13,
+        "w2": 45
+      },
+      "experimental/fur": {
+        "a": 0,
+        "b": 192,
+        "ok": true,
+        "w1": 192,
+        "w2": 192
+      },
+      "experimental/glow": {
+        "a": 1.2222222222222223,
+        "b": -1.333333333333334,
+        "ok": true,
+        "w1": 6,
+        "w2": 28
+      },
+      "experimental/hard_blot": {
+        "a": 2.2222222222222223,
+        "b": 0.6666666666666661,
+        "ok": true,
+        "w1": 14,
+        "w2": 54
+      },
+      "experimental/hard_sting": {
+        "a": 1.2222222222222223,
+        "b": -5.333333333333334,
+        "ok": true,
+        "w1": 2,
+        "w2": 24
+      },
+      "experimental/irregular_ink": {
+        "a": 1.6666666666666667,
+        "b": 0,
+        "ok": true,
+        "w1": 10,
+        "w2": 40
+      },
+      "experimental/leaves": {
+        "a": 0.8888888888888888,
+        "b": 2.666666666666667,
+        "ok": true,
+        "w1": 8,
+        "w2": 24
+      },
+      "experimental/particules_3": {
+        "a": 5.277777777777778,
+        "b": -4.666666666666664,
+        "ok": true,
+        "w1": 27,
+        "w2": 122
+      },
+      "experimental/particules_eraser": {
+        "a": 0.7222222222222222,
+        "b": 4.666666666666667,
+        "ok": true,
+        "w1": 9,
+        "w2": 22
+      },
+      "experimental/pick_and_drag": {
+        "a": 1.2222222222222223,
+        "b": 0.6666666666666661,
+        "ok": true,
+        "w1": 8,
+        "w2": 30
+      },
+      "experimental/pixel_hardink": {
+        "a": 2.3333333333333335,
+        "b": -1,
+        "ok": true,
+        "w1": 13,
+        "w2": 55
+      },
+      "experimental/pixelblocking": {
+        "a": 2,
+        "b": -1,
+        "ok": true,
+        "w1": 11,
+        "w2": 47
+      },
+      "experimental/sewing": {
+        "a": 3.2222222222222223,
+        "b": -3.3333333333333357,
+        "ok": true,
+        "w1": 16,
+        "w2": 74
+      },
+      "experimental/small_blot": {
+        "a": 0.8888888888888888,
+        "b": 0.666666666666667,
+        "ok": true,
+        "w1": 6,
+        "w2": 22
+      },
+      "experimental/soft": {
+        "a": 3.7777777777777777,
+        "b": 1.3333333333333357,
+        "ok": true,
+        "w1": 24,
+        "w2": 92
+      },
+      "experimental/soft_irregular": {
+        "a": 0,
+        "b": 192,
+        "ok": true,
+        "w1": 192,
+        "w2": 192
+      },
+      "experimental/spaced-blot": {
+        "a": 0.8888888888888888,
+        "b": -1.333333333333333,
+        "ok": true,
+        "w1": 4,
+        "w2": 20
+      },
+      "experimental/speed_blot": {
+        "a": 0.6666666666666666,
+        "b": 0,
+        "ok": true,
+        "w1": 4,
+        "w2": 16
+      },
+      "experimental/subtle_pencil": {
+        "a": 1.8888888888888888,
+        "b": 4.666666666666668,
+        "ok": true,
+        "w1": 16,
+        "w2": 50
+      },
+      "experimental/track": {
+        "a": 7.555555555555555,
+        "b": 8.666666666666671,
+        "ok": true,
+        "w1": 54,
+        "w2": 190
+      },
+      "tanda/acrylic-03-only-water": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "tanda/acrylic-03-paint": {
+        "a": 0.6111111111111112,
+        "b": 0.33333333333333304,
+        "ok": true,
+        "w1": 4,
+        "w2": 15
+      },
+      "tanda/acrylic-03-with-water": {
+        "a": 0.5555555555555556,
+        "b": 0.6666666666666665,
+        "ok": true,
+        "w1": 4,
+        "w2": 14
+      },
+      "tanda/acrylic-04-only-water": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "tanda/acrylic-04-paint": {
+        "a": 0.6666666666666666,
+        "b": 2,
+        "ok": true,
+        "w1": 6,
+        "w2": 18
+      },
+      "tanda/acrylic-04-with-water": {
+        "a": 0.4444444444444444,
+        "b": 1.3333333333333335,
+        "ok": true,
+        "w1": 4,
+        "w2": 12
+      },
+      "tanda/acrylic-05-only-water": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "tanda/acrylic-05-paint": {
+        "a": 2.2222222222222223,
+        "b": 0.6666666666666661,
+        "ok": true,
+        "w1": 14,
+        "w2": 54
+      },
+      "tanda/acrylic-05-with-water": {
+        "a": 1.2222222222222223,
+        "b": -1.333333333333334,
+        "ok": true,
+        "w1": 6,
+        "w2": 28
+      },
+      "tanda/charcoal-01": {
+        "a": 1.1111111111111112,
+        "b": -2.666666666666667,
+        "ok": true,
+        "w1": 4,
+        "w2": 24
+      },
+      "tanda/charcoal-03": {
+        "a": 3.388888888888889,
+        "b": -1.3333333333333321,
+        "ok": true,
+        "w1": 19,
+        "w2": 80
+      },
+      "tanda/charcoal-04": {
+        "a": 1.6666666666666667,
+        "b": 0,
+        "ok": true,
+        "w1": 10,
+        "w2": 40
+      },
+      "tanda/charcoal-blur1": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "tanda/marker-01": {
+        "a": 2.2777777777777777,
+        "b": -0.6666666666666661,
+        "ok": true,
+        "w1": 13,
+        "w2": 54
+      },
+      "tanda/marker-05": {
+        "a": 3.1666666666666665,
+        "b": -2,
+        "ok": true,
+        "w1": 17,
+        "w2": 74
+      },
+      "tanda/oil-01-clean": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "tanda/oil-01-paint": {
+        "a": 3.3333333333333335,
+        "b": -5,
+        "ok": true,
+        "w1": 15,
+        "w2": 75
+      },
+      "tanda/oil-03-clean": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "tanda/oil-03-paint": {
+        "a": 2.888888888888889,
+        "b": -6.333333333333332,
+        "ok": true,
+        "w1": 11,
+        "w2": 63
+      },
+      "tanda/oil-06-clean": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "tanda/oil-06-paint": {
+        "a": 2.111111111111111,
+        "b": 1.3333333333333321,
+        "ok": true,
+        "w1": 14,
+        "w2": 52
+      },
+      "tanda/oil-mop": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "tanda/pencil-2b": {
+        "a": 1.8333333333333333,
+        "b": 0,
+        "ok": true,
+        "w1": 11,
+        "w2": 44
+      },
+      "tanda/pencil-8b": {
+        "a": 0.7222222222222222,
+        "b": 3.666666666666667,
+        "ok": true,
+        "w1": 8,
+        "w2": 21
+      },
+      "tanda/splatter-02": {
+        "a": -0.5,
+        "b": 21,
+        "ok": true,
+        "w1": 18,
+        "w2": 9
+      },
+      "tanda/splatter-04": {
+        "a": 2,
+        "b": -1,
+        "ok": true,
+        "w1": 11,
+        "w2": 47
+      },
+      "tanda/texture-03": {
+        "a": 0.9444444444444444,
+        "b": 2.333333333333334,
+        "ok": true,
+        "w1": 8,
+        "w2": 25
+      },
+      "tanda/texture-06": {
+        "a": 0.5,
+        "b": 0,
+        "ok": true,
+        "w1": 3,
+        "w2": 12
+      },
+      "tanda/texture-12": {
+        "a": 1.6111111111111112,
+        "b": 1.3333333333333321,
+        "ok": true,
+        "w1": 11,
+        "w2": 40
+      },
+      "tanda/water-01": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "tanda/water-02": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "tanda/water-05": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "tanda/water-06": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "tanda/watercolor-02-paint": {
+        "a": 0.3888888888888889,
+        "b": 0.6666666666666665,
+        "ok": true,
+        "w1": 3,
+        "w2": 10
+      },
+      "tanda/watercolor-02-water": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "kaerhon_v1/airbruch_press_a": {
+        "a": 0.8888888888888888,
+        "b": 0.666666666666667,
+        "ok": true,
+        "w1": 6,
+        "w2": 22
+      },
+      "kaerhon_v1/Airbrush_a": {
+        "a": 0.8888888888888888,
+        "b": 0.666666666666667,
+        "ok": true,
+        "w1": 6,
+        "w2": 22
+      },
+      "kaerhon_v1/airsmudge_a": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "kaerhon_v1/airsmudgeultimate_sk": {
+        "a": 3.888888888888889,
+        "b": 0.6666666666666679,
+        "ok": true,
+        "w1": 24,
+        "w2": 94
+      },
+      "kaerhon_v1/classic_sk": {
+        "a": 1.2222222222222223,
+        "b": 0.6666666666666661,
+        "ok": true,
+        "w1": 8,
+        "w2": 30
+      },
+      "kaerhon_v1/classicroundblock_static_c": {
+        "a": 1.7777777777777777,
+        "b": 1.333333333333334,
+        "ok": true,
+        "w1": 12,
+        "w2": 44
+      },
+      "kaerhon_v1/Dirty_Transparent_sk": {
+        "a": 1.2222222222222223,
+        "b": -1.333333333333334,
+        "ok": true,
+        "w1": 6,
+        "w2": 28
+      },
+      "kaerhon_v1/extreme_round_l": {
+        "a": 1.2222222222222223,
+        "b": 0.6666666666666661,
+        "ok": true,
+        "w1": 8,
+        "w2": 30
+      },
+      "kaerhon_v1/fill_c": {
+        "a": 1.8888888888888888,
+        "b": 0.6666666666666679,
+        "ok": true,
+        "w1": 12,
+        "w2": 46
+      },
+      "kaerhon_v1/flat_bar_l": {
+        "a": 4.555555555555555,
+        "b": -1.3333333333333321,
+        "ok": true,
+        "w1": 26,
+        "w2": 108
+      },
+      "kaerhon_v1/ink_slow_s": {
+        "a": 1,
+        "b": 0,
+        "ok": true,
+        "w1": 6,
+        "w2": 24
+      },
+      "kaerhon_v1/ink-slowline_s": {
+        "a": 2.5555555555555554,
+        "b": 0.6666666666666679,
+        "ok": true,
+        "w1": 16,
+        "w2": 62
+      },
+      "kaerhon_v1/inkster_l": {
+        "a": 3.5555555555555554,
+        "b": -1.3333333333333321,
+        "ok": true,
+        "w1": 20,
+        "w2": 84
+      },
+      "kaerhon_v1/paint_barrr_sm": {
+        "a": 1.8888888888888888,
+        "b": 2.666666666666668,
+        "ok": true,
+        "w1": 14,
+        "w2": 48
+      },
+      "kaerhon_v1/paint_radius_2_sm": {
+        "a": 2.111111111111111,
+        "b": -0.6666666666666679,
+        "ok": true,
+        "w1": 12,
+        "w2": 50
+      },
+      "kaerhon_v1/paint_sm": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "kaerhon_v1/Sketcher2_sk": {
+        "a": 4.666666666666667,
+        "b": 0,
+        "ok": true,
+        "w1": 28,
+        "w2": 112
+      },
+      "kaerhon_v1/Smear_sm": {
+        "a": 0,
+        "b": 0,
+        "ok": false,
+        "w1": 0,
+        "w2": 0
+      },
+      "kaerhon_v1/smudge_ink(0.7)_sm": {
+        "a": 1.3333333333333333,
+        "b": 0,
+        "ok": true,
+        "w1": 8,
+        "w2": 32
+      },
+      "kaerhon_v1/wet_paint_sm": {
+        "a": 1.3333333333333333,
+        "b": 0,
+        "ok": true,
+        "w1": 8,
+        "w2": 32
+      }
+    },
+    "layers": {
+      "layers": 51,
+      "bytes": 100282880,
+      "budget": 100663296
+    },
+    "mapping": {
+      "presets": 196,
+      "settings": 2569,
+      "curves": 1602,
+      "unknownSettings": 0,
+      "unknownInputs": {},
+      "skipped": {
+        "surfacemap_x": 12,
+        "surfacemap_y": 12
+      }
+    },
+    "premul_violations": 0,
+    "speed_px_s": 300
+  }
+}

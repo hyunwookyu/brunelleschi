@@ -27068,3 +27068,165 @@ constants_snapshot «단일 범주» 플래그 = 스냅샷-라이트의 구성(�
 - **프레임 문 둘의 여유 < 요동**(#14 병기 — 간헐 빨강이 오면 단독 재실행이 가른다).
 - **grain61·paint59의 자를 62가 그대로 쓴다**(지시 62 「같은 자」) — pre가 아니라
   **이 회차의 post(@ac76441)가 62의 비교 기준**이다. 사진은 62-*.png + 62-vs-61.png.
+
+---
+
+# web2-62 — 칠은 «면 위에서 도는 그림 그리는 툴»이다: libmypaint(ISC) 이식 + 브러시 196(CC0) + 올바른 합성 (2026-09-04)
+
+> 사슬 5(CHAIN5 — 62 → 63 · Fable 한 세션). 지시문 `docs/instructions/web2-62.md`(사람이 2026-09-04에
+> 전면 개정 — «mypaint 엔진 이식»에서 «면 위 그림 툴»로) · `docs/PAINT-TIERS.md`(신규) · `CHAIN5.md`(신규).
+> 갈래 `web2-62`. 61의 이음매(`core/paintseam`) 뒤를 통째로 갈았다 — 부르는 쪽(facetex·render3d)은 무변.
+
+## 착수 시 PITFALLS 대조 (tail -40 실행 · 2026-09-04)
+
+| # | 이 라운드에 걸리나 |
+|---|---|
+| **#106** | **직결** — 새 엔진은 모듈 싱글턴 «없음»으로 세웠다(층은 대상 캔버스마다 · 브러시는 프리셋마다 · 표면은 층마다 — 소비자 둘이 한 상태를 나누는 자리가 없다). p5.brush 사본(61 alias)은 그대로 남아 62-vs-61 팔이 갈아끼워 쓴다 — «전환 경로»는 setPaintRenderer 한 줄뿐이고 두 엔진이 상태를 안 나눈다 |
+| **#105** | **직결** — 크기 자가 보정(프리셋마다 반지름 6·24의 반최대 폭 → 선형)에서 «빈 결과 폴백»을 값 1이 아니라 표식 `ok:false`로 둔다(보정표가 원장에 든다 · 기본 넷은 ok를 단언). 측정은 제 표면(calSurface)을 스스로 세운다 — 남의 변환 안에서 안 돈다 |
+| **#104** | **직결** — 밤·원장 실행 중 web2/ 편집 ⛔. 이 라운드의 NOTES 절은 실행 «사이»에 썼다(초안은 스크래치패드) |
+| **#103** | **직결** — 자 전부가 호출마다 새 캔버스(markSample/markMulti — scene 열쇠). ④의 반증(capOff)·비포화(.4)는 같은 도형을 조건만 바꿔 «다시 그은» 것이다(층이 호출마다 새것) |
+| **#102** | 걸림 — 새 스펙(paint62·shots62)은 test()마다 ?reset 한 번 |
+| 📌 **#42** | 상시 — ⑩: 61 마감 블록의 이월 여섯을 아래 착수 표에 옮겨 적었다 · ⑪ 공집합도 값 · ⑥ 원장 재실행 시 인용 문서 전부 재독 |
+
+## D 다섯 적용 (CLAUDE.md §2)
+
+- **D-1(표식 먼저)**: 흰 테의 원인 후보(지시가 ①~⑧로 서열까지 줬다)부터 고치지 않았다 — 자를 먼저 세웠다: 층 알파 2..70/255인 픽셀의 합성 RGB를 회색 바탕 위에서 전수로 세는 자(fringe) + 반증 팔(fringeBreak — 그 픽셀의 rgb를 흰색으로). 자가 반증을 실제로 잡은 뒤에 제품 값 0을 읽었다. 첫 실행이 «자국 없음(painted 0)»을 냈고 그 표식이 «초안 통로가 층을 되돌린 뒤 알파를 읽었다»(자의 결함 — 엔진 아님)를 가리켰다 — 되돌리기 «전» 알파를 떠 두는 캡처로 자를 고쳤다.
+- **D-2(재현 먼저)**: 흰 테는 61 엔진에서 «재현되지 않는» 증상(paint50 ①이 초록)이라 «옛 값»이 없다 — 대신 반증 팔이 증상을 만든다(fringeBreak · premulBreak · capOff · smudgeSelf · paintModeOff · smudgeOff — 여섯 스위치 전부가 팔에서 실제로 빨개진다). 획 안 캡의 «수리 전»은 capOff(libmypaint 원문 누적)다 — 반증 행이 그 기록이다.
+- **D-3(반증 조건)**: 게이트 여덟 전부에 실패 조건을 붙였다(paint62.spec 머리주석). ⑥(사상)은 단위 시험이 «원문 값 == 실린 값»을 196 전수로 대조한다 — 반증은 생성기가 걷은 입력(surfacemap_*)의 표가 «0이 아닌 값»으로 남는 것(누락 0의 예외를 숨기지 않는다).
+- **D-4(사람 근거도 확인)**: 지시의 두 자백(①libmypaint는 마른 매체까지 — 틀림 ②안료 혼합은 따로 — 틀림)을 소스에서 재확인했다(smudge_bucket 256 · paint_mode/rgb_to_spectral — helpers.c L521-594 그대로). ⚠ 지시의 «GL 2단계 버퍼(ONE_MINUS_DST_ALPHA, ONE) = 아직 안 덮인 곳만 채운다·알파가 1을 못 넘는다»는 반만 맞다: 그 블렌드의 알파는 a_d + a_s(1−a_d)로 over와 같아 «누적»이지 «캡»이 아니다 — 캡은 따로 세워야 했다(덮임 캡 · DECISIONS). 지시의 «스머지 전 1단계를 흘려보내라 — 안 그러면 제 자국을 문다»는 libmypaint 원문과 반대 방향(원문은 제 도장을 «보려고» flush한다)이라 지시 문면(자기 자국 오염 0)을 따르고 원문 거동을 반증 스위치로 남겼다(AS 기록). 라이선스는 원문에서 다시 읽었다(Licenses.dep5 · COPYING).
+- **D-5(픽스처 대역)**: ①은 도구 넷 + 분류 일곱을 가로지르는 프리셋 여덟 · ⑦은 196 전수 · ④는 도구 넷 × {캡·capOff·비포화 .4} · ⑧은 난수 쓰는 프리셋 일곱 + 도구 넷 · 크기는 grain61 ⑥(24 · 48 · 마커 100 · cp 50 · 붓 250/500) 그대로.
+
+## 착수 표 — 61 마감 블록에서 옮겨 적음 (#42 ⑩)
+
+- **#105 · #106**(위 대조 표 — 직결 둘).
+- **이음매 계약**: `setPaintRenderer` 한 줄만 갈아끼웠다 ✓. SeamMark에 선택 열 둘(`preset` · `over`)을 «더했다» — 고르개 견본·팔의 통로(제품 굽기는 안 넣는다 · 저장 무변). drawMarksSeam이 빈 목록도 drawMany에 넘기게 한 줄(층의 유령 방지). 작업대 표면·반증 스위치 넷은 그대로 산다.
+- **62의 첫 측정 물음(획 안 캡 ↔ AS-C183)**: 캡을 «구조»로 세웠다(덮임 캡) — paint62 ④ rows_unsaturated(.4)가 61이 못 가르던 비포화 판을 가른다(값은 검증 절).
+- **waitink37 ③ dpr2(⚑ 열림)**: 이 라운드 밤에서 다시 본다(검증 절).
+- **프레임 문 둘의 여유 < 요동(#14)**: paint59 ⑥ dpr2 문 18은 61 값 — 62 엔진(CPU 도장 + putImageData)에서 재실측 · 워커 1 단언.
+- **grain61·paint59의 자 그대로**(61 post@ac76441이 비교 기준) — 판갈이한 자리는 검증 절에 사유·값.
+
+**DIRECTION 착수 표**: 최소 판매선 **A행(자국·면)** — 축은 UX(Feather · 셋 중 제일 중요). 참조 갈림(REFERENCE-FEATHER §0): 칠의 질 → 프로크리에이트급 «전문 그림 툴» — 이 라운드는 그 자리에 «검증된 15년짜리 회화 엔진 + 화가들의 브러시 196»을 놓는다. PAINT-TIERS 0층(올바른 합성 · 획 안/사이 · 안료 혼합 · 필압 · 종이 결 · 미리보기==확정본) 전부가 이 라운드의 게이트다.
+
+**착수 시 실측(#70)**: 이 저장소 몫 개발 서버 **0**(node = Adobe CC 하나 · 5xxx 리스너 0) — 내릴 것이 없다. e2e 하네스가 스펙마다 띄우고 내린다. 갈래 `web2-62`를 먼저 땄다.
+
+**가져온 것(출처·라이선스 — 원문 확인)**:
+
+```
+libmypaint        github.com/mypaint/libmypaint  master d5a88fbe (2026-04-14)   ISC     COPYING 사본 → web2/src/mypaint/COPYING.libmypaint
+                  옮긴 것: mypaint-brush.c 전부 · brushmodes.c 전부 · helpers.c(색·스펙트럼·rand_gauss) ·
+                           mypaint-mapping.c 전부 · mypaint-tiled-surface.c의 render_dab_mask·calculate_rr(_antialiased)·get_color ·
+                           brushsettings.json(설정 65·입력 18·상태 44 — 생성기 tools/mypaint-gen.mjs)
+                  버린 것: operationqueue · tilemap · fifo · fixed-tiled-surface · symmetry · gegl/ · glib/ · rng-double(→ rng32)
+mypaint-brushes   github.com/mypaint/mypaint-brushes master 08da4a48 (2021-04-02)  CC0-1.0  brushes/* 196 .myb + order.conf → web2/brushes/ ·
+                  Licenses.dep5 사본 동봉(정본 — Licenses.md의 GPL 문구는 낡은 보일러플레이트) · 빌드 파일(GPL-2+)·*_prev.png 안 실음
+안 가져온 것      raphlinus/kubelka · spectral.js · dli/paint · pigments.json · 종이 결 CC0 텍스처 — 이 라운드의 게이트가 요구하지
+                  않았다(안료 혼합은 libmypaint paint_mode가 이미 했다) · 63(종이 결)·65(임파스토)의 몫
+```
+
+## 구현 — web2-62 (정본: DECISIONS 「web2-62 — 칠은 «면 위에서 도는 그림 그리는 툴»이다」)
+
+```
+web2/src/mypaint/          엔진(libmypaint ISC 이식 — 손대지 않고 옮겼다 · 갈아 끼운 것은 난수·리셋 못 박기 둘)
+  settings.gen.ts          설정 65 · 입력 18 · 상태 44 (생성기 tools/mypaint-gen.mjs ← brushes/brushsettings.json)
+  presets.gen.ts           브러시 196(압축 — 기본값·빈 곡선 생략 · 150KB)  ← brushes/<group>/*.myb · order.conf 차례
+  mapping.ts               조각선형 사상(원문 분기 그대로)
+  helpers.ts               HSV/HSL · 스펙트럼 10채널(T_MATRIX_SMALL) · mix_colors · spectral_blend_factor · sRGB↔선형
+  brush.ts                 상태기계(stroke_to · update_states… · prepare_and_draw_dab · 스머지 버킷 256) + primeAt(덧)
+  surface.ts               층(선형광 premultiplied Float32) · 도장 마스크(rr · AA) · 블렌드 9종 · get_color · 덮임 캡 ·
+                           종이 결 · 획 «전» 스냅숏 · rgb ≤ a 단언 · blit(un-premultiply → sRGB — 유일한 출구)
+  paper.ts                 결 타일(61의 그것 — 엔진 밖으로)
+web2/src/app/mypaintpaint.ts  렌더러(이음매 뒤): 슬롯↔프리셋 · 크기 자가 보정 · 층 LRU · 반증 스위치 · 진단
+web2/src/app/brushpicker.ts   고르개(196 · 분류 접힘 · 견본 실물 · 고르면 기기에 남는다)
+web2/brushes/                 mypaint-brushes brushes/* 196 + order.conf + Licenses.dep5 + brushsettings.json
+```
+
+**이음매 계약**: `setPaintRenderer(mypaintRenderer)` 한 줄(main). 61의 p5 판은 `setPaintEngineForTest`로 사진·반증 팔이 잠깐 되돌린다.
+SeamMark에 `preset?`·`over?` 둘을 «더했다»(고르개 견본·팔) · drawMarksSeam이 빈 목록도 drawMany에 넘긴다(층의 유령 방지).
+
+**이식에서 원문과 «다른» 곳 셋**(전부 D-4 기록 · 반증 스위치로 원문 거동을 되살릴 수 있다):
+1. **덮임 캡**(surface — capOff가 원문): 지시 ④의 «획 불투명도를 안 넘는다»를 구조로.
+2. **획 «전» 스냅숏 표집**(surface — smudgeSelfSample이 원문): 지시 ⑤의 «자기 자국 오염 0».
+3. **primeAt**(brush): 원문은 리셋 «전»에 느린 추적·추적 잡음이 앞 획의 끝과 새 첫 점을 섞어 같은 시드에서도 획이 달라졌다
+   (실측 deevad/spray 도장 364·387·341 — 첫 실행 ⑧ 빨강). 첫 점에 못 박아 항등으로 만들었다.
+   난수는 rng32(AS-C185). 이벤트 시각은 합성(AS-C184 — 반증 팔 setEventDtimeForTest).
+
+**자가 보정의 판갈이(같은 라운드 안 · 실측이 잡았다)**: 초판 «w = a·r + b» 선형 맞춤이 산포 큰 붓(chalk·spray2·
+coarse_bulk — 절편 10~97px)에서 작은 요청 폭의 반지름을 0 이하로 내어 «자국 없음»(⑦ unexplained 5)을 만들었다. 폭은
+반지름에 비례한다(마스크·산포가 base_radius 배)는 원문 구조대로 절편을 두지 않는 구간별 비례·로그 보간으로 바꿨다
+(#105의 형태 — 실패 표식 ok:false는 그대로 산다: 흰 판에 안 남기는 붓 49개).
+
+**슬롯 넷과 기본 브러시(⚑ 사람 눈 — AS-C186)**: 연필 classic/pencil(2H·H → deevad/4H_pencil · B·2B → deevad/2B_pencil) ·
+잉크펜 deevad/liner · 마커 ramon/100%_Opaque · 색연필 ramon/B-pencil. 캡: 마커 = .55(«목표» — 46의 한 획 알파 그 자체 ·
+61이 p5 마커를 되맞춘 자리) · 색연필 ≤ .7(«상한» · min). ⚠ 마커 첫 후보 tanda/marker-01(hardness .6)은 paint50 ④의
+원근 자에서 먼 끝을 잃었다(1.46~1.58 vs 기대 1.24 — 텍스처 안 띠는 20~24텍셀 균일 · 딱딱한 liner는 1.29): 자의 결이
+아니라 «부드러운 날»의 문제(축소 표집에서 옅은 가장자리가 색상 문턱 아래로) — 딱딱한 둥근 블록으로 바꿨다. 두 자
+(알파 반최대 · 색상 반최대) 다 같은 값을 냈다(자 판갈이는 색상 반최대로 남긴다 — 61 판갈이의 원리 그대로).
+
+**원문 리셋 «다음» 구간의 도장 없음**: libmypaint는 리셋 이벤트 다음 구간에 dabs_per_* 상태가 0이라 도장을 안 찍는다
+(MyPaint 앱은 이벤트가 촘촘해 안 보인다). 이 앱의 굽기 재생·팔은 점이 성겨(60px) 획 «머리»가 통째로 비었다(paint50 ④
+띠가 css 600부터). 반 픽셀짜리 이벤트를 하나 넣어 그 죽은 구간을 무시할 길이에 쓴다(원문 거동 그대로 · 잃는 것 .5px).
+같은 자리에서 속도 필터의 오르막(speed2_slowness .8s = 합성 속도 300px/s에서 240px)도 잡았다 — primeAt이 정상 상태에서 출발.
+칠통 「브러시…」 → 고르개. 작업대는 후보 196(짧은 이름 · 툴팁 전체 이름) · 손잡이 여섯(굵기·불투명·간격·산포·스머지·종이 결).
+
+## 검증 — web2-62 (원장: paint62 · grain61 · lab61 · paint59 · paint50 · mats46 — LEDGER=1 · 워커 1 · 2dpr)
+
+### paint62 — 게이트 여덟(두 dpr 값 동일 — 순수 px 판 · `paint62_web2_dpr{1,2}.json`)
+
+| 게이트 | 값 | 반증(D-3 — 실제로 빨개진다) |
+|---|---|---|
+| ① 흰 테 0 | 옅은 가장자리(층 알파 2..70/255) **135,451 px 전수** · 배경(140)보다 밝은 픽셀 **0** — 도구 넷 + 프리셋 8(classic/pen · deevad/airbrush · Dieterle/Round#1 · tanda/watercolor-02-paint · ramon/Pastel_1 · kaerhon/paint_sm · experimental/soft · classic/knife) | fringeBreak(그 픽셀 rgb를 흰색으로) → 밝은 픽셀 12,838 · 최대 +31 |
+| ② rgb ≤ a | 도구 넷 뒤 위반 0 · premulBreak(r = a + .5 한 픽셀) → **던진다**(«premultiplied 위반 — rgb > a 텍셀 1개») · 누적 1 · 그다음 정상 획 1(안 는다) | 그 자체 |
+| ③ 겹침 물성 | 파랑(#2040e0 · opaque 1) 위 노랑(#f0d020 · opaque .65 · 캡 .65) 굽기 통로 · 결 끔: 몸통 평균 rgb (119,155,94) **hue 95° · sat .40 = 초록** | paint_mode 강제 0(가산 over): (199,175,142) hue 35° · sat .29 — 초록 아님 |
+| ④ 획 안/사이 | cross_over_cap 연필 .88 · cp .90 · 마커 1.00 · 펜 1.00(문 1.02) · 비포화(.4) 연필 1.00 · cp .90 · 캡: 연필 .42 · cp .38 · 마커 .55 · 펜 1 · 교차÷몸통(기록) 연필 1.77 · **획 사이** 마커 1·2·3획 몸통 알파 .55 → .80 → .91(over) | capOff(원문 누적): 연필 1.06 · cp 1.43 · 마커 2.50(마커-01 판 — 최종 판은 원장) |
+| ⑤ 젖은 붓 | 빨강 라이너 위 classic/smudge(14px 아래): 아래 자리 rgb (251,237,237) · R−G **14** · 어둡기 13 · 표집 36,314 전부 스냅숏 · 제 자국(liveTouched) **0** | smudge 0 → R−G 0(제 색 회색 148) · 층 표집 → liveTouched 36,314 |
+| ⑥ 사상 | 196 · 설정 항목 2,569 · 곡선 1,602 · 65 밖 설정 **0** · 로더 미지 입력 0 · 생성기가 걷은 입력 surfacemap_x/y 각 12(Dieterle — 이 판의 18 밖) | 단위(mypaint62.test ③)가 원문 base·곡선 점 수를 196 전수 대조 |
+| ⑦ 넷을 넘어 | 직선 12px 견본 196: **칠해짐 154 · 고유 서명 145**(94%) · 빈 42 전부 사유 있음(eraser 8 · smudge≥.65 31 · posterize 1 · opaque≤.05 3 · dabs_sparse 1 — 겹침 포함) · unexplained **0** · 21s | 같은 붓 8회 → 서명 1 |
+| ⑧ 결정론 | 11/11 같은 시드 = 같은 해시 · 난수 쓰는 8(Round#1·charcoal·spray·Pastel_1·bubble·splatter-04·연필·cp) 시드 반응 · 난수 없는 셋(liner · ramon/100%_Opaque 마커 · kaerhon Dirty_Transparent)은 시드 무관(맞다) | — |
+
+**탐침**(probe · dpr1/dpr2 · 최종 실행): 실재 8,057 px · 결정론 ✓ · 시드 반응 ✓ · **면 20×획 40 굽기 1,531/1,528 ms** · 스트레스 800획 21.5/21.3 s ·
+획별 80획 1,892/1,878 ms · 층 51개 100.3 MB(예산 96 MB — 퇴거가 돈다) · premul 위반 0 · 합성 속도 300 px/s.
+⚠ **획당 ~20~35ms(CPU 도장 · dpr 무관)** — 61(p5 WebGL)의 378ms/40획보다 4배 느리다(DEFERRED). 그리는 중 프레임은 paint59 ⑥이 잰다.
+보정표: 기본 넷 ok(classic/pencil w 7/27 @ r 6/24 · liner 12/46 · marker-01 13/54 · B-pencil 6/26 · 2B 11/44) · ok:false 49(흰 판에 안 남기는 붓 — 4H_pencil 포함: 압력 .5에서 최대 알파 .013).
+
+**첫 실행이 «자국 없음»으로 빨갰다(D-1의 실행)**: 게이트 ①④⑦ painted 0 — 엔진이 아니라 자였다(초안 통로가 층을 되돌린 뒤
+알파를 읽었다 · #107 등재). 그 다음 빨강 셋도 전부 자·픽스처의 것: ③ 결이 캡을 깎아 노랑 몫이 .4로 내려 청록(173°)이
+됐다(결 끔 + 노랑 .65로) · ④ «교차 ÷ 몸통»은 59의 구성 자였다(캡 자로) · ⑦ 산포 붓 5개는 보정 절편이 잡아먹었다(보정 판갈이) ·
+⑧ 앞 획의 끝이 새 획의 첫 점을 끌었다(primeAt). 엔진 원문 블렌드·마스크·표집은 한 줄도 안 고쳤다.
+
+### 무회귀 — 61의 자를 새 엔진에 그대로(판갈이한 자리는 사유·값 · 전부 원장 dpr1 · 밤이 dpr2)
+
+| 스펙 | 결과 | 값(dpr1) | 판갈이(있으면) |
+|---|---|---|---|
+| **grain61** ①②③④⑥ | 초록 | ⑥ 크기 정직성 w24: 연필 .833 · cp 1.0 · 붓 1.0 · 마커 1.0 · 연필 2배 2.05 · 마커100 1.03 · cp50 1.0 · 붓250 .988 · 붓500 .988(61은 .67~.79 — 계통 편차가 사라졌다) · ④ p_ratio 1.94(⚠ 자가 잡은 것은 종이 결이 아니라 연필의 도장 산포 주기 — 반지름에 비례하는 것이 원문 설계 · 결의 면 고정은 paint59 ④가 잰다) · ③ 구멍 col .35(P 60)/row .53 | ① 반증 spacingK 120 → 6(mypaint의 간격은 dabs_per_*의 나눗수 — 도장 지름 대역) |
+| **grain61** ⑤ | 초록(2판) — minPair **z 5.50**(pencil~cp) · 영점(연필 시드 둘) 2.28 · 통계(평균 셋): 연필 p95 21.7 · 빈 .0067 · sd 3.97 / cp 34.5 · .0001 · 1.22 / 잉크펜 148 · .048 · 0 / 마커 90.3 · .048 · 0 | 61 자(시드 하나·상대 차)로는 영점(연필 시드만 다름) .88~.97 = 짝 갈림 — mypaint 연필의 도장 산포는 «자의 잡음»이 아니라 «도구의 시드 퍼짐»이다 | 시드 셋(61·4242·777) 평균·퍼짐의 z(|평균 차| ÷ max(바닥, 퍼짐)) · 바닥 p95 8 · 빈 몫 .02 · sd .5 · 문 minPair z ≥ 3 |
+| **lab61** ①②③④ | 초록 | 손잡이 6(sizeK·opacityK·spacingK·scatterK·smudgeK·paperK) · 연필 후보 196 · 불투명 .4 → 해시 갈림·기본값 복원 ✓ · 마커 ramon/100%_Opaque ↔ classic/marker_small 갈림 ✓ · JSON 왕복 ✓ | 후보 셋 → 196(툴팁 전체 이름) · marker46 → classic/marker_small |
+| **paint59** ① | 초록 | 미리보기 == 확정본(층 스냅숏-되돌림 구조 · 반증 벡터 미리보기) | — |
+| **paint59** ② | 초록 | cap_ratio(교차 ÷ 압력 1 몸통) 붓 1 · 마커 1 · cp .31 · 연필 .32 · 마커 셋 쌓임 1.573(문 1.08) · 비포화 .4 연필 교차 p95 19.3 · cp 20 | 연필·cp «같은 획 교차 ÷ 몸통»(1.31 · 1.00)은 **기록**(59 최대값 합집합의 자 — paint62 ④ cross_over_cap이 그 자리) · 비포화 잉크 바닥 20 → 10 |
+| **paint59** ③ | 초록 | 끝 창(마커 — 술어) 시작 1.023 · 끝 .972(문 1.04) · 붓 1.02/.97 · cp .94/.83 · 연필 .85/.83(기록) · 반증(마커-01 + capOff + 이벤트 8ms) 1.041 ⚠ 여유 .001 → 20ms로 (아래 재실행) | 반증 marker46 → «tanda/marker-01 슬롯 + capOff + 이벤트 고정 dtime»(AS-C184의 반증 팔) |
+| **paint59** ④ | 초록 | 붓 몸통 ↔ 결 타일 상관 **−.578**(시드 무리 둘 다 · 결정론) · 결 끔 −.019(문 .08) — 61의 −.30보다 2배 강하다(캡이 결을 «목표»에 새긴다) | 타일 진단 이름 p5grainTileForTest → paintGrainTileForTest |
+| **paint59** ⑤ | 초록 | coalesced 그대로 | — |
+| **paint59** ⑥ | 초록 | 면 17 · 획 30 · 유휴 16.8 · 그리는 중 18.1(p90 19.3 · 최대 20.1) → **+1.3ms**(문 12 · 최대 +3.3) · 텍스처 3.78MB · 워커 1 단언 | — (dpr2는 밤) |
+| **paint50** ①② | 초록 | 밝아진 픽셀 0 · 램프 ≤ 종이 · 띠 안 무늬 대비 > 30 · 선 잉크 > 20 (마커 캡 .55 «목표»로 되맞춘 뒤 — .4 판은 대비 2로 빨갰다) | — |
+| **paint50** ④⑤ | 초록 | near 18.6 · far 14.0 · **비 1.329**(기대 1.240 · 문 ±.12) · 경계 밖 0/0 | 띠 두께 자: 알파 반최대 ∧ b−r>30 → **색상 차의 열 반최대**(mypaint 마커-01의 부드러운 날이 먼 끝을 잃어 1.46~1.58 — 텍스처 안은 균일 20~24텍셀) · 마커 기본을 딱딱한 ramon/100%_Opaque로 |
+| **paint50** ③⑥·파생·성능·알림 | 초록 | — | — |
+| **mats46** ②③ | 초록 | 마커 1·2·3겹 안료 146,572 → 205,505 → 232,117(단조 · rel .40 · 평면 덮어쓰기 .05) · 솔기 가운데 5,330 > 위 2,534 · 아래 3,466 | 칠통 단추 수 16 → 17(브러시 고르개 추가) |
+| **bake61** | 초록 | p5 판 탐침 그대로(엔진 갈아끼움 팔이 산다 — 20×40 385ms) | — |
+| **shots62** | 초록 | 사진 12장(아래) | — |
+
+paint59 ③ 반증(최종 판 — 이벤트 20ms): 마커 시작 창 **1.072**(문 1.04 · 8ms 판은 1.041로 여유가 없었다) · 제품 마커 1.023/.972.
+
+### 사진 — `web2/shots/` (⛳ 사람 눈의 판정대 · CHAIN5 「사진이 나쁘면 그 라운드는 안 끝난 것」)
+
+```
+62-pencil.png · 62-cp.png · 62-marker.png · 62-brush.png   슬롯 넷 × 직선/물결/자기교차 (w20)
+62-overlap.png                                         파랑 위 노랑(paint_mode 켬 · 끔) + 빨강 위 스머지
+62-vs-61.png                                           슬롯 넷 물결 — 왼쪽 62 mypaint · 오른쪽 61 p5.brush
+62-catalog-{Dieterle,Classic,Deevad,Ramon,Experimental,Tanda,Kaerhon}.png   196 전수(분류별 · 이름 + 물결 견본)
+```
+
+**⚑ 사람 눈 판정(실기기 항목 — 사슬은 63으로 계속 간다)**:
+1. **연필 슬롯 기본(classic/pencil)이 너무 옅다** — 압력 .5(마우스)에서 p95 22/255 · 도장 산포(hardness .1). 사진 62-pencil.png. MyPaint의 «압력 .4가 보통»인 태블릿 전제다. 후보(고르개에서 바로 앉힌다 · 기기에 남는다): kaerhon_v1/Sketcher2_sk(hardness .8 · 방향 타원) · Dieterle/8B_Pencil#1(안료) · tanda/pencil-8b. 등급 4H(deevad)는 압력 .5에서 최대 알파 .013 — 사실상 안 보인다.
+2. **마커 슬롯 = ramon/100%_Opaque(딱딱한 둥근 블록 · 압력 무관)** — 61의 «균일 띠» 연속. 끌 마커(classic/marker_fat·marker_small · ramon/Marker — 방향에 따라 폭이 변한다)가 건축 마커 느낌에 더 가까우면 고르개에서.
+3. **부드러운 브러시의 자기교차 진해짐**(캡 안에서) — 62-pencil.png의 cross. «뭉침»으로 읽히면 DEFERRED 행(캡을 몸통 정상상태로).
+4. **196 전수 카탈로그**(62-catalog-*.png) — 분류마다 «건축에 쓸 것»을 고르는 일은 사람 몫(지시: 세션이 좁히지 않는다). 견본은 잉크펜 슬롯 색·w14·압력 프로필 하나라 젖은 붓·물만 붓(빈 층에서는 안 보이는 42개)은 카탈로그에서도 비어 보인다 — 실기기에서 칠 위에 그어 봐야 성격이 난다.
+5. **과슈** — 지시(tanda/acrylic에서 유량 줄이고 분필 결)는 이 라운드에 «안 만들었다»: 유량·분필 결 손잡이가 아직 없다(63의 종이 결·팁 뒤가 그 자리). 실기기 항목으로 올린다.

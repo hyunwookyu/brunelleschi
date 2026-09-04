@@ -161,19 +161,24 @@ const blueColumnThickness = (page: Page, x: number, y: number, w: number, h: num
     // web2-61 판갈이: 문턱을 «열 최대의 절반»으로 — 새 엔진(p5.brush)의 마커는 가장자리가
     // 부드러운 감쇠라, 고정 저문턱(α>16)이 옅은 치마까지 세어 원근 비를 부풀렸다(실측
     // 1.775 vs 기대 1.240). 반최대 폭은 옛 엔진의 딱딱한 띠에서는 같은 수를 내던 자다.
+    // web2-62 판갈이: 문턱을 «색상 차(b−r)의 열 최대 절반»으로 — 61 자(알파 반최대 ∧ b−r>30 고정)는 알파가 255로
+    // 포화한 #gl에서 사실상 «b−r>30 고정 문턱»이었다. mypaint 마커(tanda/marker-01 · hardness .6 · AA)는 가장자리가
+    // 부드러워 먼 끝(축소 표집 · 흐림)에서 고정 문턱이 띠를 더 많이 잘라 원근 비를 부풀렸다(실측 1.462 vs 기대
+    // 1.240 — 텍스처 안의 띠는 16±1px로 균일했다). 대칭 흐림은 반최대 폭을 보존한다 — 61 판갈이의 그 원리를 색상 축에.
     for (let c = 0; c < t.width; c++) {
-      let maxA = 0
+      let maxBR = 0
       for (let r = 0; r < t.height; r++) {
         const i = (r * t.width + c) * 4
-        if (d[i + 2]! - d[i]! > 30 && d[i + 3]! > maxA) maxA = d[i + 3]!
+        const br = d[i + 2]! - d[i]!
+        if (d[i + 3]! > 16 && br > maxBR) maxBR = br
       }
-      const th = Math.max(16, maxA / 2)
+      const th = Math.max(15, maxBR / 2)
       let rows = 0
       for (let r = 0; r < t.height; r++) {
         const i = (r * t.width + c) * 4
-        if (d[i + 3]! > th && d[i + 2]! - d[i]! > 30) rows++
+        if (d[i + 3]! > 16 && d[i + 2]! - d[i]! > th) rows++
       }
-      cols.push(rows)
+      cols.push(maxBR > 30 ? rows : 0)
     }
     return cols
   }, [x, y, w, h] as unknown[])

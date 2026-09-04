@@ -218,22 +218,61 @@ test('③ 구멍 규칙성 — 색연필 빈 픽셀의 자리', async ({ page })
 
 test('⑤ 넷이 갈린다 — 같은 압력·같은 도형의 통계', async ({ page }) => {
   await boot(page)
-  const stats: Record<string, { p95: number; bareShare: number; edgeSd: number; bandMean: number }> = {}
+  // web2-62 판갈이(2판): 도구마다 **시드 셋**(61·4242·777)을 재어 축마다 평균·퍼짐을 낸다. 짝 갈림 = 축별
+  // |평균 차| ÷ max(바닥, 두 도구 퍼짐의 제곱평균) 의 최대 — «신호 ÷ 잡음»(z). 61 자(시드 하나 · 상대 차)는 mypaint
+  // 연필(도장 산포 · 옅음)에서 «같은 도구·다른 시드»의 상대 차가 .88~.97로 짝 갈림과 같아져 영점을 못 세웠다 —
+  // 그것은 자의 잡음이 아니라 «도구 자체의 시드 퍼짐»이고, 그렇다면 갈림은 그 퍼짐에 대해 재야 한다.
+  // 바닥(p95 8/255 · 빈 몫 .02 · 가장자리 sd .5)은 0 근처 축의 나눗셈 폭발을 막는다.
+  const SEEDS = [61, 4242, 777]
+  const axes = ['p95', 'bareShare', 'edgeSd'] as const
+  type Ax = typeof axes[number]
+  const FLOOR: Record<Ax, number> = { p95: 8, bareShare: 0.02, edgeSd: 0.5 }
+  const bySeed: Record<string, Record<Ax, number>[]> = {}
+  const stats: Record<string, Record<Ax, number> & { bandMean: number; sd: Record<Ax, number> }> = {}
   for (const i of ['pencil', 'cp', 'brush', 'marker'] as Instr[]) {
-    const r = await measureLine(page, i, 20)
-    stats[i] = { p95: r.p95, bareShare: r.bareShare, edgeSd: r.edgeSd, bandMean: r.bandMean }
+    bySeed[i] = []
+    let bandMean = 0
+    for (const sd of SEEDS) {
+      const r = await page.evaluate(([tool, seed]) => {
+        const b2 = (window as any).__b2
+        b2.diag.markSampleForTest(tool, 'line', 20, seed)
+        const m = (window as any).__m61 as { v: number[]; w: number; h: number }
+        const W = m.w, H = m.h
+        const y0 = Math.round(H / 2 - 25), y1 = Math.round(H / 2 + 25)
+        const band: number[] = []
+        for (let y = y0; y <= y1; y++) for (let x = 50; x <= W - 50; x++) band.push(m.v[y * W + x]!)
+        const sorted = [...band].sort((a, b) => a - b)
+        const p95 = sorted[Math.floor(sorted.length * 0.95)]!
+        let core = 0, bare = 0
+        const cy0 = Math.round(H / 2 - 10), cy1 = Math.round(H / 2 + 10)
+        for (let y = cy0; y <= cy1; y++) for (let x = 50; x <= W - 50; x++) { core++; if (m.v[y * W + x]! < 0.15 * p95) bare++ }
+        const edges: number[] = []
+        for (let x = 50; x <= W - 50; x++) for (let y = y0; y <= y1; y++) if (m.v[y * W + x]! > 0.5 * p95) { edges.push(y); break }
+        const em = edges.reduce((a, b) => a + b, 0) / Math.max(1, edges.length)
+        const esd = Math.sqrt(edges.reduce((a, b) => a + (b - em) * (b - em), 0) / Math.max(1, edges.length))
+        const bm = band.reduce((a, b) => a + b, 0) / band.length
+        return { p95: +p95.toFixed(1), bareShare: +(bare / core).toFixed(4), edgeSd: +esd.toFixed(3), bandMean: +bm.toFixed(2) }
+      }, [i, sd] as const)
+      bySeed[i]!.push({ p95: r.p95, bareShare: r.bareShare, edgeSd: r.edgeSd })
+      bandMean += r.bandMean / SEEDS.length
+    }
+    const mean = {} as Record<Ax, number>, sdv = {} as Record<Ax, number>
+    for (const ax of axes) {
+      const vs = bySeed[i]!.map(v => v[ax])
+      const mu = vs.reduce((a, b) => a + b, 0) / vs.length
+      mean[ax] = +mu.toFixed(4)
+      sdv[ax] = +Math.sqrt(vs.reduce((a, b) => a + (b - mu) ** 2, 0) / vs.length).toFixed(4)
+    }
+    stats[i] = { ...mean, bandMean: +bandMean.toFixed(2), sd: sdv }
   }
   const keys = Object.keys(stats)
-  const axes = ['p95', 'bareShare', 'edgeSd'] as const
+  const zOf = (ax: Ax, a: string, b: string): number =>
+    Math.abs(stats[a]![ax] - stats[b]![ax]) / Math.max(FLOOR[ax], Math.sqrt((stats[a]!.sd[ax] ** 2 + stats[b]!.sd[ax] ** 2) / 2))
   const perPair: Record<string, number> = {}
   for (let a = 0; a < keys.length; a++) for (let b = a + 1; b < keys.length; b++) {
     let best = 0
-    for (const ax of axes) {
-      const va = stats[keys[a]!]![ax], vb = stats[keys[b]!]![ax]
-      const rel = Math.abs(va - vb) / Math.max(1e-6, Math.max(Math.abs(va), Math.abs(vb)))
-      if (rel > best) best = rel
-    }
-    perPair[`${keys[a]}~${keys[b]}`] = +best.toFixed(4)
+    for (const ax of axes) { const z = zOf(ax, keys[a]!, keys[b]!); if (z > best) best = z }
+    perPair[`${keys[a]}~${keys[b]}`] = +best.toFixed(3)
   }
   const minPair = Math.min(...Object.values(perPair))
   // **반증(D-3) — 자의 영점**: 같은 도구(연필)를 시드만 바꿔 두 번 재면 이 자가 0 대역을
@@ -242,38 +281,21 @@ test('⑤ 넷이 갈린다 — 같은 압력·같은 도형의 통계', async ({
   // ⚠ measureLine은 시드 고정(61)이라 그대로 두 번 재면 결정론 항등(0)일 뿐이다(2차 [30]) —
   // 영점은 **시드를 실제로 바꿔**(도장 배치 잡음만 다른 같은 도구) 잰다: 작지만 0이 아니어야
   // 자에 판별력이 있다.
-  const pA = await page.evaluate(() => {
-    const b2 = (window as any).__b2
-    b2.diag.markSampleForTest('pencil', 'line', 20, 4242)
-    const m = (window as any).__m61 as { v: number[]; w: number; h: number }
-    const W = m.w, H = m.h
-    const y0 = Math.round(H / 2 - 25), y1 = Math.round(H / 2 + 25)
-    const band: number[] = []
-    for (let y = y0; y <= y1; y++) for (let x = 50; x <= W - 50; x++) band.push(m.v[y * W + x]!)
-    const sorted = [...band].sort((a, b) => a - b)
-    const p95 = sorted[Math.floor(sorted.length * 0.95)]!
-    let core = 0, bare = 0
-    const cy0 = Math.round(H / 2 - 10), cy1 = Math.round(H / 2 + 10)
-    for (let y = cy0; y <= cy1; y++) for (let x = 50; x <= W - 50; x++) { core++; if (m.v[y * W + x]! < 0.15 * p95) bare++ }
-    const edges: number[] = []
-    for (let x = 50; x <= W - 50; x++) for (let y = y0; y <= y1; y++) if (m.v[y * W + x]! > 0.5 * p95) { edges.push(y); break }
-    const em = edges.reduce((a, b) => a + b, 0) / edges.length
-    const esd = Math.sqrt(edges.reduce((a, b) => a + (b - em) * (b - em), 0) / edges.length)
-    return { p95: +p95.toFixed(1), bareShare: +(bare / core).toFixed(4), edgeSd: +esd.toFixed(3) }
-  })
+  // 영점 = 같은 도구(연필) 안에서 시드 둘의 z(제 퍼짐에 대한 |차|) — 구성상 ~1 대역(0이 아니다 · 결정론 항등이 아님)
   const nullDiff = (() => {
-    const a = stats.pencil!, b = { p95: pA.p95, bareShare: pA.bareShare, edgeSd: pA.edgeSd }
+    const a = bySeed.pencil![0]!, b = bySeed.pencil![1]!
     let best = 0
-    for (const ax of ['p95', 'bareShare', 'edgeSd'] as const) {
-      const rel = Math.abs(a[ax] - b[ax]) / Math.max(1e-6, Math.max(Math.abs(a[ax]), Math.abs(b[ax])))
-      if (rel > best) best = rel
+    for (const ax of axes) {
+      const z = Math.abs(a[ax] - b[ax]) / Math.max(FLOOR[ax], stats.pencil!.sd[ax])
+      if (z > best) best = z
     }
-    return +best.toFixed(4)
+    return +best.toFixed(3)
   })()
-  OUT.four_differ = { stats, perPair, minPair: +minPair.toFixed(4), null_same_tool: nullDiff,
-    def: '짝별로 세 축(p95·빈 몫·가장자리 sd) 중 최대 상대 차 — 그 최소가 «가장 닮은 짝»의 갈림. ⚠ 마른 알갱이 매체 둘(cp↔붓)이 가장 닮은 짝이다 — 수치 갈림의 눈금은 이 표가, 성격의 갈림은 사진(shots61 — 눈)이 판정. ⚠ pre(옛 엔진)와 이 자는 같은 눈금이 아니다: pre의 cp·마커는 edgeSd·amp가 정확히 0(구성상 평탄)이라 상대 차가 1에 포화했다(0 나눗셈 형태 — 리뷰어 [11]). 반증 null_same_tool = 같은 도구(연필 · 시드 4242 — 도장 배치 잡음만 다름)의 같은 자 — 작지만 0이 아닌 값이어야 하고(0이면 결정론 항등을 잰 것) 제품 최소 짝과의 간격이 판별력이다',
+  OUT.four_differ = { stats, perPair, minPair: +minPair.toFixed(3), null_same_tool: nullDiff, seeds: SEEDS, floors: FLOOR, by_seed: bySeed,
+    def: '(62 판갈이 2판) 도구마다 시드 셋(61·4242·777)의 평균·퍼짐 — 짝별로 세 축(p95·빈 몫·가장자리 sd) 중 «|평균 차| ÷ max(바닥, 퍼짐 제곱평균)»(z)의 최대 — 그 최소가 «가장 닮은 짝»의 갈림(신호 ÷ 잡음). 영점 = 연필 시드 둘의 z(제 퍼짐 기준 ~1 대역). 61 자(시드 하나 · 상대 차)의 문면은 아래에 남긴다: 짝별로 세 축(p95·빈 몫·가장자리 sd) 중 최대 상대 차 — 그 최소가 «가장 닮은 짝»의 갈림. ⚠ 마른 알갱이 매체 둘(cp↔붓)이 가장 닮은 짝이다 — 수치 갈림의 눈금은 이 표가, 성격의 갈림은 사진(shots61 — 눈)이 판정. ⚠ pre(옛 엔진)와 이 자는 같은 눈금이 아니다: pre의 cp·마커는 edgeSd·amp가 정확히 0(구성상 평탄)이라 상대 차가 1에 포화했다(0 나눗셈 형태 — 리뷰어 [11]). 반증 null_same_tool = 같은 도구(연필 · 시드 4242 — 도장 배치 잡음만 다름)의 같은 자 — 작지만 0이 아닌 값이어야 하고(0이면 결정론 항등을 잰 것) 제품 최소 짝과의 간격이 판별력이다',
   }
   expect(minPair, '어떤 짝도 완전히 같지 않다(신호 실재)').toBeGreaterThan(0)
+  expect(minPair, '가장 닮은 짝의 갈림이 잡음의 3배를 넘는다(z ≥ 3)').toBeGreaterThanOrEqual(3)
   expect(nullDiff, '반증 — 같은 도구(시드만 다름)는 이 자에서 최소 짝보다 훨씬 아래다(자의 영점)').toBeLessThan(minPair / 2)
   expect(nullDiff, '영점이 결정론 항등이 아니다(시드가 실제로 갈렸다)').toBeGreaterThan(0)
 })
@@ -281,11 +303,12 @@ test('⑤ 넷이 갈린다 — 같은 압력·같은 도형의 통계', async ({
 test('① 반증 — 간격 배수 4(성긴 도장)에서 주기 진폭이 되살아난다(자의 이빨)', async ({ page }) => {
   await boot(page)
   const base = await measureLine(page, 'pencil', 20)
-  await page.evaluate(() => (window as any).__b2.diag.setPaintParamForTest('pencil', 'spacingK', 120))   // 0.1px 걸음 × 120 = 12px — 도장 지름(~19px) 대역: 점열이 실제로 보인다
+  // web2-62 판갈이: p5의 «0.1px 걸음 × 120»은 mypaint에 없다 — spacingK는 dabs_per_*의 나눗수(도장 걸음 ×6 ≈ 반지름 4개/걸음 → 1.5 반지름마다 하나 · 도장 지름 대역): 점열이 실제로 보인다
+  await page.evaluate(() => (window as any).__b2.diag.setPaintParamForTest('pencil', 'spacingK', 6))
   const sparse = await measureLine(page, 'pencil', 20)
   await page.evaluate(() => (window as any).__b2.diag.resetPaintTuneForTest('pencil'))
   OUT.falsification_period = {
-    def: '연필 간격 배수 120(걸음 12px — 도장 지름 대역) — 도장이 성겨지면 점열 주기가 자에 실려야 한다(D-3: ①②의 실패 조건 실행). 제품(base) 대비 진폭 비',
+    def: '연필 간격 배수 6(62: 도장 걸음 ×6 — 도장 지름 대역 · 61의 p5 판은 120) — 도장이 성겨지면 점열 주기가 자에 실려야 한다(D-3: ①②의 실패 조건 실행). 제품(base) 대비 진폭 비',
     base: { P: base.dominantP, amp: base.ampRatio, edgeAmpN: base.edgeAmpN },
     sparse: { P: sparse.dominantP, amp: sparse.ampRatio, edgeAmpN: sparse.edgeAmpN },
     amp_rise: base.ampRatio > 1e-9 ? +(sparse.ampRatio / base.ampRatio).toFixed(3) : null,

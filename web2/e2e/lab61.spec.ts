@@ -85,9 +85,11 @@ test('작업대 — 열림·손잡이·브러시 선택·값의 왕복', async (
   await page.click('#tunelab-pick-pencil')
   await page.waitForTimeout(100)
   const brushBtns = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('#tunelab-brushes button')).map(b => b.textContent))
-  expect(brushBtns, '연필의 브러시 후보 — 내장 연필 셋').toEqual(['2B', 'HB', '2H'])
-  OUT.structure = { knobs: shape.knobs, params: shape.params, pencil_brushes: brushBtns }
+    Array.from(document.querySelectorAll('#tunelab-brushes button')).map(b => (b as HTMLElement).title))
+  // web2-62 판갈이: 후보는 p5 내장 셋이 아니라 mypaint 프리셋 196 전부다(단추는 짧은 이름 · 툴팁에 전체 이름)
+  expect(brushBtns.length, '연필의 브러시 후보 — mypaint 196 전부').toBe(196)
+  expect(brushBtns.some(t => t?.includes('classic/pencil')), '현행 기본(classic/pencil)이 후보 안').toBe(true)
+  OUT.structure = { knobs: shape.knobs, params: shape.params, pencil_brush_candidates: brushBtns.length }
 
   // ② 손잡이 → 제품 자국(해시) · 「기본값」이 되돌린다(반증)
   const h0 = await markHash(page, 'pencil')
@@ -110,17 +112,17 @@ test('작업대 — 열림·손잡이·브러시 선택·값의 왕복', async (
   await page.click('#tunelab-pick-marker')
   await page.waitForTimeout(100)
   const m0 = await markHash(page, 'marker')
-  await page.click('#tunelab-b-marker46')
+  await page.click('#tunelab-b-classic\\/marker_small')       // 62: 끌 마커(elliptical 8)로 갈아 앉힌다
   await page.waitForTimeout(200)
   const m1 = await markHash(page, 'marker')
-  OUT.brush_pick = { marker61: m0, marker46: m1, changed: m0 !== m1 }
-  expect(m0 !== m1, 'marker46(팁 켬) — 자국이 갈린다').toBe(true)
+  OUT.brush_pick = { default_tanda_marker01: m0, classic_marker_small: m1, changed: m0 !== m1 }
+  expect(m0 !== m1, 'classic/marker_small(끌) — 자국이 갈린다').toBe(true)
 
   // ④ 값 꺼내기 → JSON · 굳힌다 → 기기 · 가져온다 → 왕복
   await page.click('#tunelab-export')
   const json = await page.evaluate(() => (document.getElementById('tunelab-json') as HTMLTextAreaElement).value)
   const parsed = JSON.parse(json) as Record<string, { base?: string }>
-  expect(parsed.marker?.base, '꺼낸 JSON에 마커 브러시 선택이 있다').toBe('marker46')
+  expect(parsed.marker?.base, '꺼낸 JSON에 마커 브러시 선택이 있다').toBe('classic/marker_small')
   await page.click('#tunelab-bake')
   const stored = await page.evaluate(() => localStorage.getItem('b2.paintTune61.v1'))
   expect(stored, '굳힌다 — 기기에 남는다').toBe(json)

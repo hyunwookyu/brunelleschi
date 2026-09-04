@@ -91,3 +91,10 @@ e2e:ledger   LEDGER=1 · 워커 1 · 스펙 하나씩       원장을 쓸 때만
 | **크기 사다리 (sizedBrush)** | 요청 굵기(px)를 √2 걸음의 파생 브러시(지름·산포 k배)로 싣는 길(web2-61) — 칸 폭은 등록한 그 붓을 직접 재고(반최대 폭 — 게이트와 같은 자) 잔차 u ≥ 1만 획 weight에 든다(u<1은 알파 역증폭 — p5의 opacity/min(w,1.3)) |
 | **marker61** | 칠 마커의 제품 브러시(web2-61) — marker46에서 markerTip(끝 강조)·굵기 테이퍼(min_max)를 끈 파생(58 사람 계약·균일 띠의 연속 — DECISIONS). marker46은 실험실 후보 + 반증 팔 |
 | **종이 결 (grain tile)** | 대상 px 고정 값-잡음 타일(256 · 칸 4px · 고정 시드)의 곱 감쇠(web2-61) — 획·시드·굵기와 무관한 «종이의 성질»(AS-C182 · D-W27 «결은 면 고정»의 새 몸). 마커는 결 없음 |
+| **mypaint 이식 (src/mypaint)** | libmypaint C(ISC)의 TS 이식(web2-62) — brush(상태기계 · 설정 65 · 입력 18 · 상태 44 · 스머지 버킷 256) · mapping(조각선형) · helpers(스펙트럼 10채널 WGM · HSV/HSL) · surface(도장 마스크 · 블렌드 9종 · get_color 표집 · 층). 타일·대칭·GEGL 없음. 브러시는 mypaint-brushes 196(CC0 · presets.gen.ts) |
+| **덮임 캡 (coverage cap)** | 획마다 덮임 버퍼를 두고 도장의 목표 불투명도(선형화 «전» opaque × 도구 캡 × 종이 결)를 픽셀의 상한으로 삼는 것(web2-62) — 직선은 목표에 수렴(원문 opaque_linearize)하고 자기 교차는 못 넘는다. 획 «사이»는 층 over로 쌓인다. 반증 capOff = 원문 누적 |
+| **획 «전» 스냅숏** | 도장이 닿기 전 64² 타일을 떠 두는 것(web2-62) — 스머지 표집(get_color)은 그 스냅숏에서 읽어 제 젖은 자국을 안 물고, 초안(draft)은 같은 스냅숏으로 층을 되돌린다(층 불변 · 미리보기==확정본) |
+| **슬롯 (도구 슬롯)** | 칠통의 넷(연필 · 잉크펜 · 마커 · 색연필 — paint.i 0..3의 자리). 어떤 브러시가 앉는가는 기기 조정(tune)이고 저장 형식은 안 바뀐다(web2-62). 잉크펜 = 옛 «붓» 슬롯(흑연 톤 그대로) |
+| **브러시 고르개 (brushpick)** | 196개를 분류(order.conf)로 접어 보이고 칸마다 실제 자국 견본(같은 drawMark)을 그 자리에서 내는 판(web2-62) — 고르면 지금 슬롯에 앉고 곧바로 기기에 남는다 |
+| **paint_mode (안료)** | libmypaint의 「Pigment: Subtractive spectral color mixing」 — 10채널 스펙트럼 가중기하평균(파랑 위 노랑 = 초록). 프리셋 19개(Dieterle)가 켠다. 저알파 보호막 spectral_blend_factor가 가산↔스펙트럼을 잇는다 |
+
