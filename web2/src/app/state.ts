@@ -439,7 +439,8 @@ export function createApp(W: number, H: number): App {
     nib: C.NIB_PX,
     // 기본 색은 46의 콘크리트 중간톤 그대로다 — 값이 바뀌면 46의 픽셀 팔이 이유 없이
     // 흔들린다(무회귀). 기본 굵기는 마커 촉 폭(C.MARKER_W_PX = 크기 트레이의 가운데 칸).
-    paintSel: { hex: '#a8a29a', i: 'brush', w: C.MARKER_W_PX, br: DEFAULT_BRUSH.brush, o: 1 },
+    // web2-64: 기본 색 = 등급 흑연색(MAT.HB — 45~63의 «붓 = 흑연»과 같은 픽셀 · 리뷰어 [H6]: 색 규약 변경이 옛 획·새 획의 색을 안 가른다)
+    paintSel: { hex: MAT.HB.color, i: 'brush', w: C.MARKER_W_PX, br: DEFAULT_BRUSH.brush, o: 1 },
     faceSel: [],
     paintOwnGate: true,
     frontBack: null,
@@ -1818,6 +1819,7 @@ import { borderGeoOf, borderHitAt } from '../core/border'
 import { uvFromScreen, paintGeoOf } from '../core/facetex'
 import { cycleMat, isMatId, materialOf, type MatId, type Instr } from '../core/palette'
 import { DEFAULT_BRUSH, defaultBrushOf } from '../core/paintseam'
+import { MAT } from '../core/material'
 import { cycleRep, isRepId, isMatRepId, REP_NAMES, repBasis } from '../core/matrep'
 
 /** 이 면 중심에서의 «화면 px / 세계 단위»(지금 포즈·줌) — gateRep의 pxPerMm와 같은 식.

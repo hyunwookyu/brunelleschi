@@ -68,7 +68,7 @@ test('사진 — 색연필 전후 · 젖은 카탈로그(색 위) (dpr1에서만
     const sg = sheet.getContext('2d')!
     sg.fillStyle = '#fffdf8'; sg.fillRect(0, 0, sheet.width, sheet.height)
     sg.fillStyle = '#3c3831'; sg.font = '15px system-ui'
-    sg.fillText('색연필 — 왼쪽: 63(ramon/B-pencil = 흑연) · 오른쪽: 64(brunelleschi/colored_pencil — 봉우리에만 · 압력이 문턱을 내린다) · cp 슬롯 · w20 · #8a3a2a', 12, 20)
+    sg.fillText('색연필 — 둘 다 «64의 cp 슬롯»(문턱 판 + 팁 눈금)에서: 왼쪽 옛 프리셋 ramon/B-pencil(흑연) · 오른쪽 앱 프리셋 brunelleschi/colored_pencil · w20 · #8a3a2a (63 판 cp는 web2/shots/63-cp.png 이력)', 12, 20)
     rows.forEach(([sh, p], i) => {
       for (const [k, preset] of [[0, 'ramon/B-pencil'], [1, 'brunelleschi/colored_pencil']] as const) {
         b2.diag.markMultiForTest([{ tool: 'cp', shape: sh, wPx: 20, seed: 64, preset, color: '#8a3a2a', press: p }], W, H, false)

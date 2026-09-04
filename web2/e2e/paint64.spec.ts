@@ -19,6 +19,7 @@ const OUT: Record<string, unknown> = {
   what: 'web2-64 — 칠의 화면 게이트: ①옛 획 불변(브러시 id) ⑧저장 왕복·이주',
   note_pitfalls: '#108(단언=반증 «같은 값»이면 자부터 — 반증 스위치가 해시를 실제로 바꾸는 것을 먼저 본다) · #107(확정본 캔버스) · #103(같은 장면을 두 번 읽는다 — ink 수가 장면 확인) · #99 · #101 · #12(슬롯 넷 × 브러시 쌍)',
   scene: 'paint50의 bigBox(오른쪽 벽 · 축척 2500) — 벽 한 면에 획 하나씩',
+  note_dpr: '③④⑤·⑦의 값은 고정 px 견본 판(dpr 무관)이라 dpr1·dpr2가 비트 동일하다 — 같음이 곧 그 사실의 확인이지 독립 표본이 아니다(리뷰어 [H2]·[M5] · 63 note_dpr 그대로). ①②⑥⑧은 화면 경로(굽기 텍스처 해시·elementFromPoint·탭)라 dpr마다 값이 다르다(잉크 수 등)',
 }
 const LEDGER_OF = (projectName: string) =>
   resolve(HERE, `../../stage0/out/paint64_web2_dpr${projectName === 'dpr2' ? 2 : 1}.json`)
@@ -79,6 +80,9 @@ const rebakeAndWait = async (page: Page) => {
 test('① D-2 재현·수리 · D-3 반증 — 브러시를 바꿔도 옛 획의 픽셀이 같다(슬롯 넷)', async ({ page }) => {
   test.setTimeout(180_000)
   await bigBox(page)
+  const cs0 = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
+  OUT.constants_snapshot = { PAINT64_DENSITY_TOL: cs0.PAINT64_DENSITY_TOL, PAINT64_WET_MIN_PX: cs0.PAINT64_WET_MIN_PX, PAINT64_TAP_MAX_PX: cs0.PAINT64_TAP_MAX_PX, PAINT63_DISTINCT_REL: cs0.PAINT63_DISTINCT_REL, PAINT62_PAINTED_ALPHA: cs0.PAINT62_PAINTED_ALPHA,
+    note: '스냅샷-라이트(web2 원장의 constantsSnapshot 기계 부재는 종전 유보 · 값은 constants.ts가 정본 — 리뷰어 [M5])' }
   const rows: Record<string, unknown> = {}
   // 슬롯 넷 × (A → B) — A로 긋고 «지금 브러시»를 B로 바꾼 뒤 재굽기
   const PAIRS: { i: string; a: string; b: string }[] = [
@@ -161,7 +165,25 @@ test('⑧ 저장 왕복 — br·o가 파일에 들고 되읽힌다 · 옛 문서
   expect(mig.migrated, '옛 획 전부가 이주됐다').toBe(paints.length)
   expect(mig.brs.every((b: string) => b === 'tanda/marker-01'), '이주 = 그 슬롯(마커)의 «지금» 브러시').toBe(true)
   expect(String(mig.notice), '조용히 하지 않는다 — 알림 한 줄').toContain('브러시')
-  OUT.roundtrip = { def: '획 → 직렬화(br·o 포함) → 되읽기 같음 · br을 지운 옛 파일 → migratedBrush = 칠 획 수 · 이주 값 = 슬롯의 지금 브러시 · reportNotice에 «브러시»', paints: paints.length, migrated: mig.migrated, notice: mig.notice }
+  // 리뷰어 [M6] — 이주 값은 «기기 상태»(슬롯의 지금 브러시 = 조정 tune.base → 기본 표): 슬롯 둘을 다른 브러시로 조정해 두고 옛 파일(br 없음 · 마커·연필 획)을 읽으면 그 값으로 굳는다
+  const migTuned = await page.evaluate((t) => {
+    const b2 = (window as any).__b2
+    b2.diag.setPaintBrushForTest('marker', 'classic/marker_fat'); b2.diag.setPaintBrushForTest('pencil', 'deevad/2B_pencil')
+    const r = b2.diag.readBrnlForTest(t)
+    const brs = r.data ? r.data.doc.strokes.filter((s: any) => s.paint).map((s: any) => [s.paint.i ?? 0, s.paint.br]) : []
+    b2.diag.setPaintBrushForTest('marker', 'ramon/100%_Opaque'); b2.diag.setPaintBrushForTest('pencil', 'classic/pencil')
+    return { migrated: r.report.migratedBrush, brs }
+  }, old)
+  expect(migTuned.brs.every((p: [number, string]) => p[0] !== 1 || p[1] === 'classic/marker_fat'), '이주 = 조정된 슬롯의 «지금» 브러시(기기 값 — 되돌릴 수 없다 · DEFERRED)').toBe(true)
+  // 리뷰어 [H6] — 잉크펜 기본 색 = 등급 흑연색(MAT.HB): 옛 잉크펜 획(c 없음 → 등급색)과 새 획(c = 그 색)이 같은 픽셀을 낸다
+  await page.evaluate(() => { const b2 = (window as any).__b2; b2.diag.setPaintInstrForTest('brush') })
+  const inkDefault = await page.evaluate(() => (window as any).__b2.diag.paintSelForTest().hex)
+  const hbColor = await page.evaluate(() => (window as any).__b2.diag.matColorForTest('HB'))
+  expect(inkDefault, '잉크펜 기본 색 = 등급 흑연색(옛 «붓 = 흑연»과 같은 픽셀)').toBe(hbColor)
+  OUT.roundtrip = {
+    migration_tuned: { def: '마커 슬롯 classic/marker_fat · 연필 슬롯 deevad/2B_pencil로 조정해 두고 옛 파일(br 없음)을 읽은 값 — 슬롯의 «지금» 브러시로 굳는다(기기마다 다를 수 있다 · 한 번 굳으면 되돌릴 수 없다 — DEFERRED 64)', ...migTuned },
+    ink_default_hex: inkDefault, mat_hb_color: hbColor,
+    note_old_ink_color: '63까지의 파서는 c를 슬롯 i∈{1,2,3}와 «같이» 성할 때만 받았고 buildPaintStrokes도 잉크펜(i 없음)에는 c를 안 실었다 — 저장된 잉크펜 획에 c가 없었으므로 이 라운드의 «잉크펜도 색을 든다»는 옛 획의 색을 안 바꾼다(굽기는 c 없으면 등급색 그대로) · 새 획의 기본 색은 그 등급색(MAT.HB)이라 같은 픽셀', def: '획 → 직렬화(br·o 포함) → 되읽기 같음 · br을 지운 옛 파일 → migratedBrush = 칠 획 수 · 이주 값 = 슬롯의 지금 브러시 · reportNotice에 «브러시»', paints: paints.length, migrated: mig.migrated, notice: mig.notice }
 })
 
 // ── ③④⑤ + 64-5 — 자국의 값(견본 판 · 문서 무관) ────────────────────────────────────────────────
@@ -206,21 +228,42 @@ test('③ 색연필이 갈린다 — cp(brunelleschi/colored_pencil) vs 연필(c
     const d = distinct(st.cp!, st.pencil!, FLOORS)
     const dOld = distinct(st.cp_old!, st.pencil!, FLOORS)
     const dSame = distinct(st.pencil!, st.pencil2!, FLOORS)
+    const dNewOld = distinct(st.cp!, st.cp_old!, FLOORS)
+    // 리뷰어 [H1] — 갈림의 «몫»을 가른다: 문턱 판을 끄면(cp 슬롯도 보통 결) 새 프리셋 vs 옛 B-pencil의 갈림이 문을 넘는가(프리셋의 몫) ·
+    // 새 프리셋 vs 연필 슬롯(문턱 없이 — 프리셋+팁만의 갈림)
+    await page.evaluate(() => (window as any).__b2.diag.setCpThresholdOffForTest(true))
+    const stOff = await drawStats(page, [
+      { key: 'cp', preset: 'brunelleschi/colored_pencil', seed, tool: 'cp' },
+      { key: 'cp_old', preset: 'ramon/B-pencil', seed, tool: 'cp' },
+      { key: 'pencil', preset: 'classic/pencil', seed, tool: 'pencil' },
+    ])
+    await page.evaluate(() => (window as any).__b2.diag.setCpThresholdOffForTest(false))
+    const dOffNewOld = distinct(stOff.cp!, stOff.cp_old!, FLOORS)
+    const dOffNewPencil = distinct(stOff.cp!, stOff.pencil!, FLOORS)
     minRel = Math.min(minRel, d.rel); minRelOld = Math.min(minRelOld, dOld.rel); maxSame = Math.max(maxSame, dSame.rel)
-    rows[String(seed)] = { stats: st, cp_vs_pencil: d, cp_old_vs_pencil: dOld, same_pencil: dSame }
+    rows[String(seed)] = { stats: st, cp_vs_pencil: d, cp_old_vs_pencil: dOld, same_pencil: dSame, new_vs_old_cp_threshold_on: dNewOld,
+      threshold_off: { stats: stOff, new_vs_old_cp: dOffNewOld, new_cp_vs_pencil: dOffNewPencil } }
     expect(st.cp!.ok && st.pencil!.ok, '자국 실재').toBe(true)
   }
   // 64-2의 뜻: 색연필은 «구멍»(빈 몫)이 흑연보다 크고 «한 번 지나가면 옅다»(평균) — 값으로
   const st63 = (rows['63'] as { stats: Record<string, Stat> }).stats
+  const offRows = Object.values(rows).map(r => (r as { threshold_off: { new_vs_old_cp: { rel: number }; new_cp_vs_pencil: { rel: number } } }).threshold_off)
+  const onRows = Object.values(rows).map(r => (r as { new_vs_old_cp_threshold_on: { rel: number } }).new_vs_old_cp_threshold_on)
   OUT.cp = {
-    def: '직선 w20 · 압력 .6 · 시드 셋 — cp(앱 프리셋 brunelleschi/colored_pencil + scratches2 팁 + 결 1.6 + 버니싱) vs classic/pencil(fine-grain 팁)의 갈림 rel(63 ①의 자 · 둘째 특징 · 문 C.PAINT63_DISTINCT_REL) · cp_old = ramon/B-pencil(63까지의 cp 슬롯 — 지시 「그것은 연필이다」) · 반증 = classic/pencil 시드 둘(같은 프리셋 → 문 아래)',
+    def: '직선 w20 · 압력 .6 · 시드 셋 — cp 슬롯(앱 프리셋 brunelleschi/colored_pencil + scratches2 팁 + 문턱 판 + 버니싱) vs 연필 슬롯(classic/pencil · fine-grain 팁)의 갈림 rel(63 ①의 자 · 둘째 특징 · 문 C.PAINT63_DISTINCT_REL) · cp_old = ramon/B-pencil을 «64의 cp 슬롯»에서(63까지의 cp 프리셋 — 지시 「그것은 연필이다») · 반증 = classic/pencil 시드 둘(같은 프리셋 → 문 아래). **갈림의 몫**(리뷰어 [H1]): threshold_off = 문턱 판을 끈 조건(cp 슬롯도 보통 결)에서 새 cp vs 옛 cp · 새 cp vs 연필 — 이 값이 문 아래면 갈림의 몫은 프리셋이 아니라 슬롯 매핑(문턱 판 + 팁)이다(값으로 적는다 · 결론은 «cp 슬롯이 연필 슬롯과 갈린다»로 좁힌다)',
     threshold: REL, min_rel: minRel, min_rel_old_cp: minRelOld, falsification_same_max_rel: maxSame,
+    share_of_distinctness: {
+      new_vs_old_cp_threshold_on_min_rel: Math.min(...onRows.map(r => r.rel)),
+      threshold_off_new_vs_old_cp_min_rel: Math.min(...offRows.map(r => r.new_vs_old_cp.rel)),
+      threshold_off_new_cp_vs_pencil_min_rel: Math.min(...offRows.map(r => r.new_cp_vs_pencil.rel)),
+      note: '프리셋의 몫 = threshold_off.new_vs_old_cp(문턱 없이 프리셋만 다름) · 슬롯 매핑의 몫 = cp_old_vs_pencil(옛 프리셋인데 문턱 판으로 갈림)',
+    },
     empty_share: { cp: st63.cp!.empty_share, pencil: st63.pencil!.empty_share, cp_old: st63.cp_old!.empty_share },
     roughness: { cp: st63.cp!.roughness, pencil: st63.pencil!.roughness, cp_old: st63.cp_old!.roughness },
     mean: { cp: st63.cp!.mean, pencil: st63.pencil!.mean, cp_old: st63.cp_old!.mean },
     rows,
   }
-  expect(minRel, 'cp가 pencil과 갈린다(시드 셋 전부 문 위)').toBeGreaterThan(REL)
+  expect(minRel, 'cp 슬롯이 연필 슬롯과 갈린다(시드 셋 전부 문 위)').toBeGreaterThan(REL)
   expect(st63.cp!.empty_share, '색연필의 빈 몫(구멍)이 흑연보다 크다').toBeGreaterThan(st63.pencil!.empty_share)
   expect(maxSame, '반증 — 같은 프리셋(시드만)은 문 아래').toBeLessThanOrEqual(REL)
 })
@@ -235,14 +278,15 @@ test('⑤ 농도 일치 — 팁 있음/없음이 같은 설정에서 같은 농�
     { key: 'drybrush', preset: 'classic/dry_brush' }, { key: 'cp_old', preset: 'ramon/B-pencil' }, { key: 'cp', preset: 'brunelleschi/colored_pencil' },
   ]
   const WS = [10, 20, 40]
+  const SEEDS = [63, 64, 65]   // 리뷰어 [H2] · #14 — 여유 .004는 시드 하나의 값이었다: 시드 셋 × 굵기 셋 × 매체 여섯 전부가 문 안이어야 통과
   const measure = async (): Promise<Record<string, { on: number; off: number; ratio: number }>> => {
     const out: Record<string, { on: number; off: number; ratio: number }> = {}
-    for (const w of WS) {
-      const on = await drawStats(page, DRY.map(d => ({ key: d.key, preset: d.preset, w })))
-      const off = await drawStats(page, DRY.map(d => ({ key: d.key, preset: d.preset, w, tip: 'none' })))
+    for (const seed of SEEDS) for (const w of WS) {
+      const on = await drawStats(page, DRY.map(d => ({ key: d.key, preset: d.preset, w, seed })))
+      const off = await drawStats(page, DRY.map(d => ({ key: d.key, preset: d.preset, w, seed, tip: 'none' })))
       for (const d of DRY) {
         const a = on[d.key]!, b = off[d.key]!
-        out[`${d.key}@${w}`] = { on: a.mean, off: b.mean, ratio: b.mean > 0 ? +(a.mean / b.mean).toFixed(3) : 0 }
+        out[`${d.key}@${w}#${seed}`] = { on: a.mean, off: b.mean, ratio: b.mean > 0 ? +(a.mean / b.mean).toFixed(3) : 0 }
       }
     }
     return out
@@ -253,14 +297,29 @@ test('⑤ 농도 일치 — 팁 있음/없음이 같은 설정에서 같은 농�
   await page.evaluate(() => (window as any).__b2.diag.setTipGainOffForTest(true))
   const raw = await measure()
   await page.evaluate(() => (window as any).__b2.diag.setTipGainOffForTest(false))
-  const gains = Object.fromEntries(Object.entries(calib).filter(([k]) => k.includes('|')).map(([k, v]) => [k, { gain: v.gain, ok: v.gainOk, meanTipRaw: v.meanTipRaw, meanTip: v.meanTip, meanProc: v.meanProc, iters: v.gainIters }]))
+  const gains = Object.fromEntries(Object.entries(calib).filter(([k]) => k.includes('|')).map(([k, v]) => [k, { gain20: v.gain, gain40: (v as { gain40?: number }).gain40, dabK20: (v as { dabK?: number }).dabK, dabK40: (v as { dabK40?: number }).dabK40, ok: v.gainOk, state20: (v as { gainState?: string }).gainState, state40: (v as { gainState40?: string }).gainState40, residual20: (v as { gainResidual?: number }).gainResidual, clipShare20: (v as { clipShare?: number }).clipShare, meanTipRaw20: v.meanTipRaw, meanTip20: v.meanTip, meanProc20: v.meanProc, meanTip40: (v as { meanTip40?: number }).meanTip40, meanProc40: (v as { meanProc40?: number }).meanProc40, iters: v.gainIters }]))
   const dev = (m: Record<string, { ratio: number }>) => Math.max(...Object.values(m).map(v => Math.abs(v.ratio - 1)))
-  OUT.density = {
-    def: '직선 · 압력 .6 · 굵기 10/20/40 · 마른 매체 여섯(63의 다섯 + 새 cp) — 몸통 평균 어둡기(63 ①의 자) 팁 켬 ÷ 팁 끔(tip none · 절차 타원) · 문 ±5%(지시 64-4). 보정 = 프리셋|팁 열쇠의 gain(반지름 12 직선 견본 · 절차 평균 ÷ 팁 평균 · 상한 3 · opacityK 경로 — 성격(구멍)은 그대로) · 반증 = setTipGainOffForTest → 63의 옅음(연필 .86)이 돌아온다',
-    tol: TOL, with_gain: fixed, with_gain_max_dev: +dev(fixed).toFixed(3), without_gain: raw, without_gain_max_dev: +dev(raw).toFixed(3), calib_gains: gains,
+  const perSeed = Object.fromEntries(SEEDS.map(s => [s, +dev(Object.fromEntries(Object.entries(fixed).filter(([k]) => k.endsWith('#' + s)))).toFixed(3)]))
+  const worst = Object.entries(fixed).sort((a, b) => Math.abs(b[1].ratio - 1) - Math.abs(a[1].ratio - 1)).slice(0, 5).map(([k, v]) => ({ key: k, ratio: v.ratio }))
+  // 판정은 «시드 셋의 평균 비»(63 ①이 #14로 세운 그 규약 — 시드 하나의 비는 w40에서 ±10%까지 요동한다(실측 pencil@40 시드 65 1.11) · 평균이 «같은 설정이면 같은 농도»의 뜻이다)
+  const avgOf = (m: Record<string, { on: number; off: number }>): Record<string, { on: number; off: number; ratio: number }> => {
+    const out: Record<string, { on: number; off: number; ratio: number }> = {}
+    for (const d of DRY) for (const w of WS) {
+      let on = 0, off = 0
+      for (const s of SEEDS) { on += m[`${d.key}@${w}#${s}`]!.on; off += m[`${d.key}@${w}#${s}`]!.off }
+      out[`${d.key}@${w}`] = { on: +(on / SEEDS.length).toFixed(4), off: +(off / SEEDS.length).toFixed(4), ratio: off > 0 ? +(on / off).toFixed(3) : 0 }
+    }
+    return out
   }
-  for (const [k, v] of Object.entries(fixed)) expect(Math.abs(v.ratio - 1), k + ' — 팁 켬/끔 농도 비 ' + v.ratio + ' (±' + TOL + ')').toBeLessThanOrEqual(TOL)
-  expect(dev(raw), '반증 — 보정을 끄면 어느 매체가 문 밖으로 나간다(63의 옅음)').toBeGreaterThan(TOL)
+  const fixedAvg = avgOf(fixed), rawAvg = avgOf(raw)
+  OUT.density = {
+    def: '직선 · 압력 .6 · 굵기 10/20/40 · 시드 셋(63·64·65 — #14) · 마른 매체 여섯(63의 다섯 + 새 cp) — 몸통 평균 어둡기(63 ①의 자) 팁 켬 ÷ 팁 끔(tip none · 절차 타원) · 문 ±5%(지시 64-4 · C.PAINT64_DENSITY_TOL). 보정 = 프리셋|팁 열쇠의 gain(**팁 판의 눈금** — 값 × g · 1로 자름 · 구멍 0은 그대로 · g ∈ [.25, 6] · 고정점 ≤ 10회 · 자 = 같은 견본(markShape line 480×240 · 압력 .6 · 결 켬)의 sRGB 어둡기 · state = converged/capped/maxiter(#105 — 비수렴은 표식) · clipShare = 1로 잘린 마스크 몫) · 통과의 근거는 «시드 셋 전부 문 안»이지 여유가 아니다 · 반증 = setTipGainOffForTest → 63의 옅음(연필 .86)이 돌아온다',
+    tol: TOL, gate: '시드 셋 평균 비(with_gain_avg) 18칸 전부 |비−1| ≤ 문 · 시드별 비(with_gain)는 기록(요동의 값 per_seed_max_dev · worst5)',
+    with_gain_avg: fixedAvg, with_gain_avg_max_dev: +dev(fixedAvg).toFixed(3), per_seed_max_dev: perSeed, worst5_single_seed: worst, single_seed_max_dev: +dev(fixed).toFixed(3),
+    without_gain_avg: rawAvg, without_gain_avg_max_dev: +dev(rawAvg).toFixed(3), calib_gains: gains, with_gain: fixed, without_gain: raw,
+  }
+  for (const [k, v] of Object.entries(fixedAvg)) expect(Math.abs(v.ratio - 1), k + ' — 팁 켬/끔 농도 비(시드 셋 평균) ' + v.ratio + ' (±' + TOL + ')').toBeLessThanOrEqual(TOL + 1e-9)
+  expect(dev(rawAvg), '반증 — 보정을 끄면 어느 매체가 문 밖으로 나간다(63의 옅음)').toBeGreaterThan(TOL)
 })
 
 test('④ 젖은 브러시 전수 — 흰 판에서 빈 프리셋 전부가 «색 위»에서는 돈다(빈 칸 0 — 아니면 그 이름을 값으로) · 64-5 탐침', async ({ page }) => {
@@ -293,6 +352,11 @@ test('④ 젖은 브러시 전수 — 흰 판에서 빈 프리셋 전부가 «�
       for (let i = 0; i < A.length; i += 4) if (Math.abs(A[i]! - B[i]!) + Math.abs(A[i + 1]! - B[i + 1]!) + Math.abs(A[i + 2]! - B[i + 2]!) > 12) changed++
       return changed
     }
+    const maxDiff = (A: Uint8ClampedArray, B: Uint8ClampedArray): number => {
+      let mx = 0
+      for (let i = 0; i < A.length; i += 4) mx = Math.max(mx, Math.abs(A[i]! - B[i]!) + Math.abs(A[i + 1]! - B[i + 1]!) + Math.abs(A[i + 2]! - B[i + 2]!))
+      return mx
+    }
     b2.diag.markMultiForTest(base, W, H, true)
     const A = pixels()
     const diffOf = (name: string): number => {
@@ -300,7 +364,12 @@ test('④ 젖은 브러시 전수 — 흰 판에서 빈 프리셋 전부가 «�
       return changedPx(A, pixels())
     }
     const onColor: Record<string, number> = {}
-    for (const n of empties) onColor[n] = diffOf(n)
+    const maxDiffOf: Record<string, number> = {}
+    for (const n of empties) {
+      onColor[n] = diffOf(n)
+      maxDiffOf[n] = maxDiff(A, pixels())
+    }
+    const share = Object.fromEntries(Object.entries(onColor).map(([k, v]) => [k, +(v / (W * H) * 100).toFixed(2)]))
     // 반증 — «아무것도 안 하는» 대조: 바탕만 두 번 = 차 0
     b2.diag.markMultiForTest(base, W, H, true)
     const nothing = changedPx(A, pixels())
@@ -322,7 +391,7 @@ test('④ 젖은 브러시 전수 — 흰 판에서 빈 프리셋 전부가 «�
     const waterStats = b2.diag.presetStatsForTest('tanda/watercolor-02-water')
     const opaqueOf: Record<string, number> = {}
     for (const n of empties) opaqueOf[n] = (b2.diag.presetStatsForTest(n) as { base: Record<string, number> }).base.opaque!
-    return { empties, onColor, nothing, opaqueOf, wc: { stats, mean_white_smudge_on: wcOn, mean_white_smudge_off: wcOff, changed_on_color: wcOnColor, water_variant: waterStats } }
+    return { empties, onColor, share, maxDiffOf, nothing, opaqueOf, wc: { stats, mean_white_smudge_on: wcOn, mean_white_smudge_off: wcOff, changed_on_color: wcOnColor, water_variant: waterStats } }
   })
   const MIN = (await page.evaluate(() => (window as any).__b2.diag.paint50Constants())).PAINT64_WET_MIN_PX as number
   const dead = Object.entries(r.onColor).filter(([, n]) => n < MIN).map(([k]) => k)
@@ -331,8 +400,11 @@ test('④ 젖은 브러시 전수 — 흰 판에서 빈 프리셋 전부가 «�
   const deadUnexplained = dead.filter(k => (r.opaqueOf[k] ?? 1) > 0.05)
   OUT.wet = {
     def: '흰 판 빈칸(62 ⑦의 판정 — 최대 층 알파 < C.PAINT62_PAINTED_ALPHA · 직선 12px) 전부를 «색 위»(100%_Opaque 빨강 w60 띠 + 파랑 w34 띠(dy 16 · 반쯤 겹침) · 굽기 통로)에 노랑 w14 물결로 긋고 바탕만 판과의 픽셀 차(RGB 합 > 12) ≥ 40px이면 돈다 · dead = 색 위에서도 안 도는 이름(지시: 「그것이 진짜 결함」) · 반증 = 바탕만 두 번(차 0)',
-    empties_on_white: r.empties.length, changed_px: r.onColor, min_changed_px: MIN, dead, dead_explained_opaque: Object.fromEntries(dead.map(k => [k, r.opaqueOf[k]])),
-    dead_unexplained: deadUnexplained, falsification_nothing_changed: r.nothing,
+    empties_on_white: r.empties.length, changed_px: r.onColor, changed_share_pct: r.share, max_px_diff: r.maxDiffOf, min_changed_px: MIN, dead,
+    dead_explained_opaque: Object.fromEntries(dead.map(k => [k, r.opaqueOf[k]])), dead_max_px_diff: Object.fromEntries(dead.map(k => [k, r.maxDiffOf[k]])),
+    dead_unexplained: deadUnexplained, dead_rule: '제 불투명(opaque 기준값) ≤ .05면 «값으로 설명됨»(62 ⑦의 empty_reasons와 같은 문) — 그 밖은 진짜 결함',
+    falsification_nothing_changed: r.nothing,
+    note_same_values: '반지름만 다른 변종 쌍(kneaded_eraser/_large · thin_hard_eraser/large_hard_eraser)이 같은 수를 내는 것은 자가 «요청 굵기 w14»를 보정(radiusFor)으로 앉히기 때문 — 프리셋의 제 반지름은 굽기에서 안 쓰인다(58 크기 정직성의 그 규약 · 리뷰어 [M2])',
   }
   OUT.watercolor = {
     def: '64-5 — tanda/watercolor-02-paint가 흐릿한 이유: 사상 통계(모르는 설정/입력 0이면 이식 밖) · smudge .95(스머지 버킷이 «빈 층»을 문다 — 흰 판 평균 알파 켬 vs 끔) · 색 위에서는 돈다(changed_on_color). 판정 = 프리셋 값(smudge .95 + 빈 층)이지 이식 결함이 아니다 — smudge 끔에서 평균이 «크게» 오르면 그 증거',
@@ -391,13 +463,25 @@ test('② 두 번 펼침 0 — 칠의 설정 전수(브러시·크기·불투명
   await page.waitForTimeout(120)
   const both = await page.evaluate(() => (window as any).__b2.diag.openBoxes() as string[])
   await page.click('#brushpick-close')
-  // 세로 예산(#97 짝 — 넘침 0)
-  const ov = await page.evaluate(() => { const t = document.getElementById('painttray')!; return { sw: t.scrollWidth, cw: t.clientWidth, sh: t.scrollHeight, ch: t.clientHeight, vh: window.innerHeight, bottom: Math.round(t.getBoundingClientRect().bottom) } })
+  // 세로 예산(#97 짝 — 넘침 0) · 리뷰어 [M7]: 뷰포트 높이 둘(800 · 700)에서 잰다 — 패널은 placeFlyout이 위로 밀어 화면 안에 둔다
+  const ovOf = () => page.evaluate(() => { const t = document.getElementById('painttray')!; return { sw: t.scrollWidth, cw: t.clientWidth, sh: t.scrollHeight, ch: t.clientHeight, vh: window.innerHeight, bottom: Math.round(t.getBoundingClientRect().bottom), top: Math.round(t.getBoundingClientRect().top) } })
+  const ov = await ovOf()
+  await page.setViewportSize({ width: 1200, height: 700 })
+  await page.waitForTimeout(150)
+  // 도구 전환은 DOM click으로(뷰포트를 줄인 직후 playwright의 가림 판정이 60s를 먹었다 — 재는 것은 패널의 자리이지 단추의 가림이 아니다)
+  await page.evaluate(() => { (document.getElementById('btn-pencil') as HTMLButtonElement).click(); (document.getElementById('btn-paint') as HTMLButtonElement).click() })
+  await page.waitForTimeout(150)
+  const ov700 = await ovOf()
+  const zero700 = await Promise.all(ZERO.map(id => hit(page, id)))
+  await page.setViewportSize({ width: 1200, height: 800 })
   OUT.depth = {
     def: '칠 도구를 든 상태에서 설정 요소의 «단계» = 닿기까지 누른 횟수. 0단계 = 패널(항상) — elementFromPoint로 실제로 눌린다 · 1단계 = 브러시 목록(견본 누름 → 첫 분류의 첫 칸이 눌린다) · 색상 휠(색 원 누름 → 휠 캔버스가 눌린다). 2단계 0. 반증 = 연필 도구에서는 0단계 요소가 0개 · 두 통은 배타(R7)',
     zero_stage: zero, zero_stage_missing: zeroBad.map(h => h.id), one_stage: { brush_list_open: pickOpen, brush_row: rowHit, wheel_open: wheelOpen, wheel: wheelHit }, exclusive_boxes: both,
-    overflow: ov, falsification_pencil: off.map(h => ({ id: h.id, hit: h.hit })),
+    overflow: ov, viewport700: { overflow: ov700, zero_stage_missing: zero700.filter(h => !h.hit).map(h => h.id) },
+    falsification_pencil: off.map(h => ({ id: h.id, hit: h.hit })),
   }
+  expect(ov700.bottom, '높이 700에서도 패널이 화면 안').toBeLessThanOrEqual(ov700.vh)
+  expect(zero700.filter(h => !h.hit), '높이 700에서도 0단계 전부 눌린다').toEqual([])
   expect(zeroBad, '0단계 — 패널의 설정 전부가 «지금» 눌린다').toEqual([])
   expect(pickOpen, '브러시 목록이 한 번에 열렸다').toContain('#brushpick')
   expect(rowHit.hit, '1단계 — 목록의 칸이 눌린다').toBe(true)
@@ -483,20 +567,28 @@ test('⑥ 면 탭 — 칠 도구의 탭이 면을 고른다 · 짧은 획(문턱
   await page.waitForTimeout(80)
   const selUnder = await page.evaluate(() => (window as any).__b2.app.faceSel.length)
   const strokesUnder = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
+  // 문턱 «바로 위»(dx 5 · dy 4 → 대각 6.4 — 리뷰어 [M10]) — 칠
+  await page.mouse.move(700, 480); await page.mouse.down(); await page.mouse.move(705, 484, { steps: 2 }); await page.mouse.up()
+  await page.waitForTimeout(200)
+  const strokesJust = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
+  const selJust = await page.evaluate(() => (window as any).__b2.app.faceSel.length)
   // 문턱 «위»의 짧은 획(대각 TAP+4) — 칠 · 고름 수 그대로
   const over = Math.round((TAP + 4) / Math.SQRT2)
   await page.mouse.move(700, 480); await page.mouse.down(); await page.mouse.move(700 + over, 480 + over, { steps: 3 }); await page.mouse.up()
   await page.waitForTimeout(200)
   const selOver = await page.evaluate(() => (window as any).__b2.app.faceSel.length)
   const strokesOver = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
+  const strokesOverDelta = strokesOver - strokesJust
   // 빈 곳 탭 — 고름이 풀린다
   await page.mouse.click(300, 200); await page.waitForTimeout(80)
   const selClear = await page.evaluate(() => (window as any).__b2.app.faceSel.length)
   OUT.face_tap = {
     def: `칠 도구의 한 붓이 raw bbox 대각 ≤ C.PAINT64_TAP_MAX_PX(${TAP} · 화면 px)이면 탭 = 면 고르기(+51 Injector) · 넘으면 칠. 경계 양쪽(문턱 −2 · +4)에서 잰다 · 빈 곳 탭 = 풀기 · 반증 = 연필 도구의 같은 탭은 안 고른다(작도 중에는 옛 뜻 그대로)`,
+    threshold: { registered: 'C.PAINT64_TAP_MAX_PX', value: TAP, origin: '세션이 정했다(2026-09-04 · 첫 실행 «전») — 아래 = 펜 끝 떨림의 탭 문 TAP_MAX_PX 2(AS-C79) · 위 = 쓸모 있는 최소 자국(점 하나 ≈ 굵기 · 기본 10px)의 절반 대역. 6px 아래의 «점 찍기»는 칠이 아니라 고르기다(대가 — AS-C189 · 실기기 손가락 떨림이 판정)' },
     threshold_px: TAP, sel_pencil_tap: selPencil, sel_after_tap: selTap, strokes_delta_tap: strokesTap - strokes0,
     under: { diag_px: +(under * Math.SQRT2).toFixed(1), sel: selUnder, strokes_delta: strokesUnder - strokesTap },
-    over: { diag_px: +(over * Math.SQRT2).toFixed(1), sel: selOver, strokes_delta: strokesOver - strokesUnder },
+    just_over: { diag_px: 6.4, sel: selJust, strokes_delta: strokesJust - strokesUnder },
+    over: { diag_px: +(over * Math.SQRT2).toFixed(1), sel: selOver, strokes_delta: strokesOverDelta },
     sel_after_empty_tap: selClear,
   }
   expect(selPencil, '반증 — 연필 도구의 탭은 면을 안 고른다').toBe(0)
@@ -504,7 +596,8 @@ test('⑥ 면 탭 — 칠 도구의 탭이 면을 고른다 · 짧은 획(문턱
   expect(strokesTap - strokes0, '탭은 칠이 아니다').toBe(0)
   expect(selUnder, '문턱 아래의 흔들린 탭도 고르기(수 그대로 — 같은 면)').toBe(1)
   expect(strokesUnder - strokesTap, '문턱 아래 — 칠 0').toBe(0)
-  expect(strokesOver - strokesUnder, '문턱 위의 짧은 획은 칠이다').toBeGreaterThan(0)
+  expect(strokesJust - strokesUnder, '문턱 바로 위(6.4px)의 획은 칠이다').toBeGreaterThan(0)
+  expect(strokesOverDelta, '문턱 위의 짧은 획은 칠이다').toBeGreaterThan(0)
   expect(selOver, '짧은 획은 고름을 안 바꾼다').toBe(1)
   expect(selClear, '빈 곳 탭이 고름을 푼다').toBe(0)
 })

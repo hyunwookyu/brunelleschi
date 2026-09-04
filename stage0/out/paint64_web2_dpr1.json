@@ -13,513 +13,1297 @@
       "marker": {
         "a": "ramon/100%_Opaque",
         "b": "tanda/marker-01",
-        "ink_a": 5927,
+        "ink_a": 5936,
         "same_after_b": true,
         "falsification_idoff_same": false,
         "back_same": true,
         "hashes": {
           "a": [
-            1668369760
+            -160297813
           ],
           "b": [
-            1668369760
+            -160297813
           ],
           "off": [
-            -1411027970
+            -684548287
           ]
         }
       },
       "pencil": {
         "a": "classic/pencil",
         "b": "deevad/2B_pencil",
-        "ink_a": 10221,
+        "ink_a": 11567,
         "same_after_b": true,
         "falsification_idoff_same": false,
         "back_same": true,
         "hashes": {
           "a": [
-            -1072093494
+            -235127981
           ],
           "b": [
-            -1072093494
+            -235127981
           ],
           "off": [
-            147061242
+            1071354903
           ]
         }
       },
       "cp": {
         "a": "ramon/B-pencil",
         "b": "classic/charcoal",
-        "ink_a": 14696,
+        "ink_a": 16589,
         "same_after_b": true,
         "falsification_idoff_same": false,
         "back_same": true,
         "hashes": {
           "a": [
-            -239485509
+            -70569332
           ],
           "b": [
-            -239485509
+            -70569332
           ],
           "off": [
-            21767084
+            -278864420
           ]
         }
       },
       "brush": {
         "a": "deevad/liner",
         "b": "classic/pen",
-        "ink_a": 20620,
+        "ink_a": 22541,
         "same_after_b": true,
         "falsification_idoff_same": false,
         "back_same": true,
         "hashes": {
           "a": [
-            -2114659797
+            1238912060
           ],
           "b": [
-            -2114659797
+            1238912060
           ],
           "off": [
-            -1498456967
+            627121798
           ]
         }
       }
     }
   },
   "roundtrip": {
+    "migration_tuned": {
+      "def": "마커 슬롯 classic/marker_fat · 연필 슬롯 deevad/2B_pencil로 조정해 두고 옛 파일(br 없음)을 읽은 값 — 슬롯의 «지금» 브러시로 굳는다(기기마다 다를 수 있다 · 한 번 굳으면 되돌릴 수 없다 — DEFERRED 64)",
+      "migrated": 1,
+      "brs": [
+        [
+          1,
+          "classic/marker_fat"
+        ]
+      ]
+    },
+    "ink_default_hex": "#5a5a5a",
+    "mat_hb_color": "#5a5a5a",
+    "note_old_ink_color": "63까지의 파서는 c를 슬롯 i∈{1,2,3}와 «같이» 성할 때만 받았고 buildPaintStrokes도 잉크펜(i 없음)에는 c를 안 실었다 — 저장된 잉크펜 획에 c가 없었으므로 이 라운드의 «잉크펜도 색을 든다»는 옛 획의 색을 안 바꾼다(굽기는 c 없으면 등급색 그대로) · 새 획의 기본 색은 그 등급색(MAT.HB)이라 같은 픽셀",
     "def": "획 → 직렬화(br·o 포함) → 되읽기 같음 · br을 지운 옛 파일 → migratedBrush = 칠 획 수 · 이주 값 = 슬롯의 지금 브러시 · reportNotice에 «브러시»",
     "paints": 1,
     "migrated": 1,
     "notice": "옛 칠 1획에 브러시 id를 붙였다 — 각 슬롯의 지금 브러시다(이제 브러시를 바꿔도 이 획들은 안 변한다)"
   },
   "cp": {
-    "def": "직선 w20 · 압력 .6 · 시드 셋 — cp(앱 프리셋 brunelleschi/colored_pencil + scratches2 팁 + 결 1.6 + 버니싱) vs classic/pencil(fine-grain 팁)의 갈림 rel(63 ①의 자 · 둘째 특징 · 문 C.PAINT63_DISTINCT_REL) · cp_old = ramon/B-pencil(63까지의 cp 슬롯 — 지시 「그것은 연필이다」) · 반증 = classic/pencil 시드 둘(같은 프리셋 → 문 아래)",
+    "def": "직선 w20 · 압력 .6 · 시드 셋 — cp 슬롯(앱 프리셋 brunelleschi/colored_pencil + scratches2 팁 + 문턱 판 + 버니싱) vs 연필 슬롯(classic/pencil · fine-grain 팁)의 갈림 rel(63 ①의 자 · 둘째 특징 · 문 C.PAINT63_DISTINCT_REL) · cp_old = ramon/B-pencil을 «64의 cp 슬롯»에서(63까지의 cp 프리셋 — 지시 「그것은 연필이다») · 반증 = classic/pencil 시드 둘(같은 프리셋 → 문 아래). **갈림의 몫**(리뷰어 [H1]): threshold_off = 문턱 판을 끈 조건(cp 슬롯도 보통 결)에서 새 cp vs 옛 cp · 새 cp vs 연필 — 이 값이 문 아래면 갈림의 몫은 프리셋이 아니라 슬롯 매핑(문턱 판 + 팁)이다(값으로 적는다 · 결론은 «cp 슬롯이 연필 슬롯과 갈린다»로 좁힌다)",
     "threshold": 0.25,
-    "min_rel": 0.554,
-    "min_rel_old_cp": 0.448,
+    "min_rel": 0.548,
+    "min_rel_old_cp": 0.45,
     "falsification_same_max_rel": 0.109,
+    "share_of_distinctness": {
+      "new_vs_old_cp_threshold_on_min_rel": 0.197,
+      "threshold_off_new_vs_old_cp_min_rel": 0.199,
+      "threshold_off_new_cp_vs_pencil_min_rel": 0.553,
+      "note": "프리셋의 몫 = threshold_off.new_vs_old_cp(문턱 없이 프리셋만 다름) · 슬롯 매핑의 몫 = cp_old_vs_pencil(옛 프리셋인데 문턱 판으로 갈림)"
+    },
     "empty_share": {
       "cp": 0.0798,
-      "pencil": 0.0191,
+      "pencil": 0.0184,
       "cp_old": 0.0801
     },
     "roughness": {
-      "cp": 0.59,
-      "pencil": 1.323,
-      "cp_old": 0.623
+      "cp": 0.554,
+      "pencil": 1.337,
+      "cp_old": 0.63
     },
     "mean": {
-      "cp": 0.248,
-      "pencil": 0.1115,
-      "cp_old": 0.1865
+      "cp": 0.246,
+      "pencil": 0.1131,
+      "cp_old": 0.1846
     },
     "rows": {
       "63": {
         "stats": {
           "cp": {
             "ok": true,
-            "roughness": 0.59,
+            "roughness": 0.554,
             "empty_share": 0.0798,
-            "mean": 0.248,
-            "p95": 0.319,
+            "mean": 0.246,
+            "p95": 0.315,
             "body_h": 17,
             "n": 5440
           },
           "pencil": {
             "ok": true,
-            "roughness": 1.323,
-            "empty_share": 0.0191,
-            "mean": 0.1115,
-            "p95": 0.1791,
+            "roughness": 1.337,
+            "empty_share": 0.0184,
+            "mean": 0.1131,
+            "p95": 0.1817,
             "body_h": 10,
             "n": 3200
           },
           "cp_old": {
             "ok": true,
-            "roughness": 0.623,
+            "roughness": 0.63,
             "empty_share": 0.0801,
-            "mean": 0.1865,
-            "p95": 0.2523,
+            "mean": 0.1846,
+            "p95": 0.2497,
             "body_h": 14,
             "n": 4480
           },
           "pencil2": {
             "ok": true,
-            "roughness": 1.245,
+            "roughness": 1.229,
             "empty_share": 0.0037,
-            "mean": 0.1137,
+            "mean": 0.1155,
             "p95": 0.1856,
             "body_h": 10,
             "n": 3200
           }
         },
         "cp_vs_pencil": {
-          "rel": 0.554,
+          "rel": 0.586,
           "by": "empty_share+roughness",
-          "top": 0.761
+          "top": 0.769
         },
         "cp_old_vs_pencil": {
           "rel": 0.529,
           "by": "empty_share+roughness",
-          "top": 0.762
+          "top": 0.77
         },
         "same_pencil": {
-          "rel": 0.059,
+          "rel": 0.081,
           "by": "empty_share+roughness",
-          "top": 0.308
+          "top": 0.294
+        },
+        "new_vs_old_cp_threshold_on": {
+          "rel": 0.207,
+          "by": "mean+p95",
+          "top": 0.25
+        },
+        "threshold_off": {
+          "stats": {
+            "cp": {
+              "ok": true,
+              "roughness": 0.477,
+              "empty_share": 0,
+              "mean": 0.2554,
+              "p95": 0.315,
+              "body_h": 16,
+              "n": 5120
+            },
+            "cp_old": {
+              "ok": true,
+              "roughness": 0.508,
+              "empty_share": 0,
+              "mean": 0.1939,
+              "p95": 0.2497,
+              "body_h": 13,
+              "n": 4160
+            },
+            "pencil": {
+              "ok": true,
+              "roughness": 1.337,
+              "empty_share": 0.0184,
+              "mean": 0.1131,
+              "p95": 0.1817,
+              "body_h": 10,
+              "n": 3200
+            }
+          },
+          "new_vs_old_cp": {
+            "rel": 0.207,
+            "by": "mean+p95",
+            "top": 0.241
+          },
+          "new_cp_vs_pencil": {
+            "rel": 0.557,
+            "by": "roughness+mean",
+            "top": 0.643
+          }
         }
       },
       "64": {
         "stats": {
           "cp": {
             "ok": true,
-            "roughness": 0.57,
+            "roughness": 0.576,
             "empty_share": 0.0816,
-            "mean": 0.25,
+            "mean": 0.2485,
             "p95": 0.319,
             "body_h": 16,
             "n": 5120
           },
           "pencil": {
             "ok": true,
-            "roughness": 1.284,
-            "empty_share": 0.0156,
-            "mean": 0.111,
-            "p95": 0.1817,
-            "body_h": 10,
-            "n": 3200
-          },
-          "cp_old": {
-            "ok": true,
-            "roughness": 0.643,
-            "empty_share": 0.076,
-            "mean": 0.1916,
-            "p95": 0.2562,
-            "body_h": 12,
-            "n": 3840
-          },
-          "pencil2": {
-            "ok": true,
-            "roughness": 1.28,
-            "empty_share": 0.0037,
-            "mean": 0.1085,
-            "p95": 0.1673,
-            "body_h": 11,
-            "n": 3520
-          }
-        },
-        "cp_vs_pencil": {
-          "rel": 0.556,
-          "by": "empty_share+roughness",
-          "top": 0.809
-        },
-        "cp_old_vs_pencil": {
-          "rel": 0.499,
-          "by": "empty_share+roughness",
-          "top": 0.795
-        },
-        "same_pencil": {
-          "rel": 0.079,
-          "by": "empty_share+p95",
-          "top": 0.238
-        }
-      },
-      "65": {
-        "stats": {
-          "cp": {
-            "ok": true,
-            "roughness": 0.578,
-            "empty_share": 0.0798,
-            "mean": 0.2473,
-            "p95": 0.319,
-            "body_h": 17,
-            "n": 5440
-          },
-          "pencil": {
-            "ok": true,
-            "roughness": 1.331,
-            "empty_share": 0.0141,
-            "mean": 0.1121,
+            "roughness": 1.274,
+            "empty_share": 0.0144,
+            "mean": 0.1128,
             "p95": 0.1856,
             "body_h": 10,
             "n": 3200
           },
           "cp_old": {
             "ok": true,
-            "roughness": 0.735,
+            "roughness": 0.622,
+            "empty_share": 0.076,
+            "mean": 0.1898,
+            "p95": 0.2562,
+            "body_h": 12,
+            "n": 3840
+          },
+          "pencil2": {
+            "ok": true,
+            "roughness": 1.269,
+            "empty_share": 0.0037,
+            "mean": 0.1102,
+            "p95": 0.1712,
+            "body_h": 11,
+            "n": 3520
+          }
+        },
+        "cp_vs_pencil": {
+          "rel": 0.548,
+          "by": "empty_share+roughness",
+          "top": 0.824
+        },
+        "cp_old_vs_pencil": {
+          "rel": 0.512,
+          "by": "empty_share+roughness",
+          "top": 0.811
+        },
+        "same_pencil": {
+          "rel": 0.078,
+          "by": "empty_share+p95",
+          "top": 0.214
+        },
+        "new_vs_old_cp_threshold_on": {
+          "rel": 0.197,
+          "by": "mean+p95",
+          "top": 0.236
+        },
+        "threshold_off": {
+          "stats": {
+            "cp": {
+              "ok": true,
+              "roughness": 0.487,
+              "empty_share": 0,
+              "mean": 0.2553,
+              "p95": 0.315,
+              "body_h": 16,
+              "n": 5120
+            },
+            "cp_old": {
+              "ok": true,
+              "roughness": 0.543,
+              "empty_share": 0,
+              "mean": 0.1948,
+              "p95": 0.2523,
+              "body_h": 12,
+              "n": 3840
+            },
+            "pencil": {
+              "ok": true,
+              "roughness": 1.274,
+              "empty_share": 0.0144,
+              "mean": 0.1128,
+              "p95": 0.1856,
+              "body_h": 10,
+              "n": 3200
+            }
+          },
+          "new_vs_old_cp": {
+            "rel": 0.199,
+            "by": "mean+p95",
+            "top": 0.237
+          },
+          "new_cp_vs_pencil": {
+            "rel": 0.558,
+            "by": "roughness+mean",
+            "top": 0.618
+          }
+        }
+      },
+      "65": {
+        "stats": {
+          "cp": {
+            "ok": true,
+            "roughness": 0.574,
+            "empty_share": 0.0816,
+            "mean": 0.2484,
+            "p95": 0.319,
+            "body_h": 16,
+            "n": 5120
+          },
+          "pencil": {
+            "ok": true,
+            "roughness": 1.33,
+            "empty_share": 0.0125,
+            "mean": 0.114,
+            "p95": 0.1869,
+            "body_h": 10,
+            "n": 3200
+          },
+          "cp_old": {
+            "ok": true,
+            "roughness": 0.732,
             "empty_share": 0.0801,
-            "mean": 0.1831,
-            "p95": 0.2523,
+            "mean": 0.1813,
+            "p95": 0.2497,
             "body_h": 14,
             "n": 4480
           },
           "pencil2": {
             "ok": true,
-            "roughness": 1.186,
-            "empty_share": 0.0069,
-            "mean": 0.1139,
-            "p95": 0.1817,
+            "roughness": 1.185,
+            "empty_share": 0.0066,
+            "mean": 0.1158,
+            "p95": 0.1856,
             "body_h": 10,
             "n": 3200
           }
         },
         "cp_vs_pencil": {
-          "rel": 0.566,
+          "rel": 0.568,
           "by": "empty_share+roughness",
-          "top": 0.823
+          "top": 0.847
         },
         "cp_old_vs_pencil": {
-          "rel": 0.448,
+          "rel": 0.45,
           "by": "empty_share+roughness",
-          "top": 0.824
+          "top": 0.844
         },
         "same_pencil": {
           "rel": 0.109,
           "by": "empty_share+roughness",
-          "top": 0.144
+          "top": 0.118
+        },
+        "new_vs_old_cp_threshold_on": {
+          "rel": 0.217,
+          "by": "mean+p95",
+          "top": 0.27
+        },
+        "threshold_off": {
+          "stats": {
+            "cp": {
+              "ok": true,
+              "roughness": 0.474,
+              "empty_share": 0,
+              "mean": 0.2552,
+              "p95": 0.315,
+              "body_h": 16,
+              "n": 5120
+            },
+            "cp_old": {
+              "ok": true,
+              "roughness": 0.622,
+              "empty_share": 0,
+              "mean": 0.1866,
+              "p95": 0.2458,
+              "body_h": 14,
+              "n": 4480
+            },
+            "pencil": {
+              "ok": true,
+              "roughness": 1.33,
+              "empty_share": 0.0125,
+              "mean": 0.114,
+              "p95": 0.1869,
+              "body_h": 10,
+              "n": 3200
+            }
+          },
+          "new_vs_old_cp": {
+            "rel": 0.238,
+            "by": "mean+roughness",
+            "top": 0.269
+          },
+          "new_cp_vs_pencil": {
+            "rel": 0.553,
+            "by": "roughness+mean",
+            "top": 0.644
+          }
         }
       }
     }
   },
   "density": {
-    "def": "직선 · 압력 .6 · 굵기 10/20/40 · 마른 매체 여섯(63의 다섯 + 새 cp) — 몸통 평균 어둡기(63 ①의 자) 팁 켬 ÷ 팁 끔(tip none · 절차 타원) · 문 ±5%(지시 64-4). 보정 = 프리셋|팁 열쇠의 gain(반지름 12 직선 견본 · 절차 평균 ÷ 팁 평균 · 상한 3 · opacityK 경로 — 성격(구멍)은 그대로) · 반증 = setTipGainOffForTest → 63의 옅음(연필 .86)이 돌아온다",
+    "def": "직선 · 압력 .6 · 굵기 10/20/40 · 시드 셋(63·64·65 — #14) · 마른 매체 여섯(63의 다섯 + 새 cp) — 몸통 평균 어둡기(63 ①의 자) 팁 켬 ÷ 팁 끔(tip none · 절차 타원) · 문 ±5%(지시 64-4 · C.PAINT64_DENSITY_TOL). 보정 = 프리셋|팁 열쇠의 gain(**팁 판의 눈금** — 값 × g · 1로 자름 · 구멍 0은 그대로 · g ∈ [.25, 6] · 고정점 ≤ 10회 · 자 = 같은 견본(markShape line 480×240 · 압력 .6 · 결 켬)의 sRGB 어둡기 · state = converged/capped/maxiter(#105 — 비수렴은 표식) · clipShare = 1로 잘린 마스크 몫) · 통과의 근거는 «시드 셋 전부 문 안»이지 여유가 아니다 · 반증 = setTipGainOffForTest → 63의 옅음(연필 .86)이 돌아온다",
     "tol": 0.05,
-    "with_gain": {
+    "gate": "시드 셋 평균 비(with_gain_avg) 18칸 전부 |비−1| ≤ 문 · 시드별 비(with_gain)는 기록(요동의 값 per_seed_max_dev · worst5)",
+    "with_gain_avg": {
       "pencil@10": {
-        "on": 0.1186,
-        "off": 0.1192,
-        "ratio": 0.995
+        "on": 0.1205,
+        "off": 0.119,
+        "ratio": 1.013
+      },
+      "pencil@20": {
+        "on": 0.1133,
+        "off": 0.1088,
+        "ratio": 1.041
+      },
+      "pencil@40": {
+        "on": 0.1091,
+        "off": 0.1046,
+        "ratio": 1.043
       },
       "charcoal@10": {
-        "on": 0.2155,
-        "off": 0.2122,
-        "ratio": 1.016
+        "on": 0.2181,
+        "off": 0.2113,
+        "ratio": 1.032
+      },
+      "charcoal@20": {
+        "on": 0.2006,
+        "off": 0.1968,
+        "ratio": 1.019
+      },
+      "charcoal@40": {
+        "on": 0.1841,
+        "off": 0.1842,
+        "ratio": 0.999
       },
       "pastel@10": {
-        "on": 0.4535,
-        "off": 0.4666,
-        "ratio": 0.972
+        "on": 0.4745,
+        "off": 0.4585,
+        "ratio": 1.035
+      },
+      "pastel@20": {
+        "on": 0.4078,
+        "off": 0.4032,
+        "ratio": 1.011
+      },
+      "pastel@40": {
+        "on": 0.3802,
+        "off": 0.3762,
+        "ratio": 1.011
       },
       "drybrush@10": {
-        "on": 0.3489,
-        "off": 0.3518,
-        "ratio": 0.992
+        "on": 0.3449,
+        "off": 0.3491,
+        "ratio": 0.988
+      },
+      "drybrush@20": {
+        "on": 0.3148,
+        "off": 0.3234,
+        "ratio": 0.973
+      },
+      "drybrush@40": {
+        "on": 0.2936,
+        "off": 0.3048,
+        "ratio": 0.963
       },
       "cp_old@10": {
-        "on": 0.208,
-        "off": 0.206,
-        "ratio": 1.01
+        "on": 0.2057,
+        "off": 0.2079,
+        "ratio": 0.989
+      },
+      "cp_old@20": {
+        "on": 0.1919,
+        "off": 0.1884,
+        "ratio": 1.018
+      },
+      "cp_old@40": {
+        "on": 0.1781,
+        "off": 0.1782,
+        "ratio": 0.999
       },
       "cp@10": {
-        "on": 0.2626,
+        "on": 0.2623,
+        "off": 0.2625,
+        "ratio": 0.999
+      },
+      "cp@20": {
+        "on": 0.2553,
+        "off": 0.2587,
+        "ratio": 0.987
+      },
+      "cp@40": {
+        "on": 0.2431,
+        "off": 0.2488,
+        "ratio": 0.977
+      }
+    },
+    "with_gain_avg_max_dev": 0.043,
+    "per_seed_max_dev": {
+      "63": 0.048,
+      "64": 0.049,
+      "65": 0.11
+    },
+    "worst5_single_seed": [
+      {
+        "key": "pencil@40#65",
+        "ratio": 1.11
+      },
+      {
+        "key": "pastel@10#64",
+        "ratio": 1.049
+      },
+      {
+        "key": "pastel@10#63",
+        "ratio": 1.048
+      },
+      {
+        "key": "pencil@20#64",
+        "ratio": 1.048
+      },
+      {
+        "key": "pencil@10#64",
+        "ratio": 1.047
+      }
+    ],
+    "single_seed_max_dev": 0.11,
+    "without_gain_avg": {
+      "pencil@10": {
+        "on": 0.097,
+        "off": 0.119,
+        "ratio": 0.816
+      },
+      "pencil@20": {
+        "on": 0.0935,
+        "off": 0.1088,
+        "ratio": 0.859
+      },
+      "pencil@40": {
+        "on": 0.0883,
+        "off": 0.1046,
+        "ratio": 0.844
+      },
+      "charcoal@10": {
+        "on": 0.2251,
+        "off": 0.2113,
+        "ratio": 1.066
+      },
+      "charcoal@20": {
+        "on": 0.2093,
+        "off": 0.1968,
+        "ratio": 1.064
+      },
+      "charcoal@40": {
+        "on": 0.1936,
+        "off": 0.1842,
+        "ratio": 1.051
+      },
+      "pastel@10": {
+        "on": 0.3519,
+        "off": 0.4585,
+        "ratio": 0.768
+      },
+      "pastel@20": {
+        "on": 0.289,
+        "off": 0.4032,
+        "ratio": 0.717
+      },
+      "pastel@40": {
+        "on": 0.2569,
+        "off": 0.3762,
+        "ratio": 0.683
+      },
+      "drybrush@10": {
+        "on": 0.3396,
+        "off": 0.3491,
+        "ratio": 0.973
+      },
+      "drybrush@20": {
+        "on": 0.3054,
+        "off": 0.3234,
+        "ratio": 0.944
+      },
+      "drybrush@40": {
+        "on": 0.2835,
+        "off": 0.3048,
+        "ratio": 0.93
+      },
+      "cp_old@10": {
+        "on": 0.1764,
+        "off": 0.2079,
+        "ratio": 0.848
+      },
+      "cp_old@20": {
+        "on": 0.1654,
+        "off": 0.1884,
+        "ratio": 0.878
+      },
+      "cp_old@40": {
+        "on": 0.152,
+        "off": 0.1782,
+        "ratio": 0.853
+      },
+      "cp@10": {
+        "on": 0.2602,
+        "off": 0.2625,
+        "ratio": 0.991
+      },
+      "cp@20": {
+        "on": 0.2488,
+        "off": 0.2587,
+        "ratio": 0.962
+      },
+      "cp@40": {
+        "on": 0.2343,
+        "off": 0.2488,
+        "ratio": 0.942
+      }
+    },
+    "without_gain_avg_max_dev": 0.317,
+    "calib_gains": {
+      "classic/pencil|fine-grain": {
+        "gain20": 1.3678720922935512,
+        "gain40": 1.4595142778924888,
+        "dabK20": 1,
+        "dabK40": 1,
+        "ok": true,
+        "state20": "converged",
+        "state40": "converged",
+        "residual20": -0.0091,
+        "clipShare20": 0.109,
+        "meanTipRaw20": 0.0499,
+        "meanTip20": 0.0612,
+        "meanProc20": 0.0617,
+        "meanTip40": 0.0586,
+        "meanProc40": 0.0589,
+        "iters": 7
+      },
+      "classic/charcoal|chalk-chisel": {
+        "gain20": 0.8522778015456874,
+        "gain40": 0.8728006144295488,
+        "dabK20": 1,
+        "dabK40": 1,
+        "ok": true,
+        "state20": "converged",
+        "state40": "converged",
+        "residual20": 0.0095,
+        "clipShare20": 0,
+        "meanTipRaw20": 0.1213,
+        "meanTip20": 0.1157,
+        "meanProc20": 0.1146,
+        "meanTip40": 0.1065,
+        "meanProc40": 0.1058,
+        "iters": 10
+      },
+      "ramon/Pastel_1|rock-pitted": {
+        "gain20": 4.036300982930915,
+        "gain40": 4.007064505025988,
+        "dabK20": 1.228,
+        "dabK40": 1.17,
+        "ok": true,
+        "state20": "maxiter",
+        "state40": "converged",
+        "residual20": -0.0209,
+        "clipShare20": 0.3693,
+        "meanTipRaw20": 0.1772,
+        "meanTip20": 0.267,
+        "meanProc20": 0.2727,
+        "meanTip40": 0.2515,
+        "meanProc40": 0.2519,
+        "iters": 24
+      },
+      "classic/dry_brush|scratches-rough": {
+        "gain20": 1.1985395923129,
+        "gain40": 1.2142904440323734,
+        "dabK20": 1,
+        "dabK40": 1.011,
+        "ok": true,
+        "state20": "converged",
+        "state40": "converged",
+        "residual20": -0.0089,
+        "clipShare20": 0.1181,
+        "meanTipRaw20": 0.1855,
+        "meanTip20": 0.1918,
+        "meanProc20": 0.1935,
+        "meanTip40": 0.1793,
+        "meanProc40": 0.1811,
+        "iters": 17
+      },
+      "ramon/B-pencil|scratches2": {
+        "gain20": 1.3535904246781048,
+        "gain40": 1.4256956690759077,
+        "dabK20": 1,
+        "dabK40": 1,
+        "ok": true,
+        "state20": "converged",
+        "state40": "converged",
+        "residual20": -0.0084,
+        "clipShare20": 0.205,
+        "meanTipRaw20": 0.093,
+        "meanTip20": 0.1084,
+        "meanProc20": 0.1093,
+        "meanTip40": 0.0987,
+        "meanProc40": 0.0993,
+        "iters": 12
+      },
+      "brunelleschi/colored_pencil|scratches2": {
+        "gain20": 1.2497397655357858,
+        "gain40": 1.3042431079293504,
+        "dabK20": 1.068,
+        "dabK40": 1.076,
+        "ok": true,
+        "state20": "maxiter",
+        "state40": "maxiter",
+        "residual20": -0.0155,
+        "clipShare20": 0.1583,
+        "meanTipRaw20": 0.1438,
+        "meanTip20": 0.1489,
+        "meanProc20": 0.1512,
+        "meanTip40": 0.1394,
+        "meanProc40": 0.142,
+        "iters": 24
+      }
+    },
+    "with_gain": {
+      "pencil@10#63": {
+        "on": 0.1194,
+        "off": 0.1192,
+        "ratio": 1.002
+      },
+      "charcoal@10#63": {
+        "on": 0.2173,
+        "off": 0.2122,
+        "ratio": 1.024
+      },
+      "pastel@10#63": {
+        "on": 0.4889,
+        "off": 0.4666,
+        "ratio": 1.048
+      },
+      "drybrush@10#63": {
+        "on": 0.3488,
+        "off": 0.3518,
+        "ratio": 0.991
+      },
+      "cp_old@10#63": {
+        "on": 0.2063,
+        "off": 0.206,
+        "ratio": 1.001
+      },
+      "cp@10#63": {
+        "on": 0.2625,
         "off": 0.2625,
         "ratio": 1
       },
-      "pencil@20": {
-        "on": 0.1115,
+      "pencil@20#63": {
+        "on": 0.1131,
         "off": 0.1093,
-        "ratio": 1.02
+        "ratio": 1.035
       },
-      "charcoal@20": {
-        "on": 0.196,
+      "charcoal@20#63": {
+        "on": 0.1979,
         "off": 0.1931,
-        "ratio": 1.015
+        "ratio": 1.025
       },
-      "pastel@20": {
-        "on": 0.3958,
+      "pastel@20#63": {
+        "on": 0.4072,
         "off": 0.4133,
-        "ratio": 0.958
+        "ratio": 0.985
       },
-      "drybrush@20": {
-        "on": 0.3095,
+      "drybrush@20#63": {
+        "on": 0.3094,
         "off": 0.318,
         "ratio": 0.973
       },
-      "cp_old@20": {
-        "on": 0.1922,
+      "cp_old@20#63": {
+        "on": 0.194,
         "off": 0.1894,
-        "ratio": 1.015
+        "ratio": 1.024
       },
-      "cp@20": {
-        "on": 0.2545,
+      "cp@20#63": {
+        "on": 0.2554,
         "off": 0.2587,
-        "ratio": 0.984
-      },
-      "pencil@40": {
-        "on": 0.1046,
-        "off": 0.106,
         "ratio": 0.987
       },
-      "charcoal@40": {
-        "on": 0.1803,
+      "pencil@40#63": {
+        "on": 0.1091,
+        "off": 0.106,
+        "ratio": 1.029
+      },
+      "charcoal@40#63": {
+        "on": 0.18,
         "off": 0.1822,
-        "ratio": 0.99
+        "ratio": 0.988
       },
-      "pastel@40": {
-        "on": 0.3723,
+      "pastel@40#63": {
+        "on": 0.3919,
         "off": 0.3904,
-        "ratio": 0.954
+        "ratio": 1.004
       },
-      "drybrush@40": {
-        "on": 0.2942,
+      "drybrush@40#63": {
+        "on": 0.2925,
         "off": 0.304,
-        "ratio": 0.968
+        "ratio": 0.962
       },
-      "cp_old@40": {
-        "on": 0.1754,
+      "cp_old@40#63": {
+        "on": 0.1762,
         "off": 0.1755,
+        "ratio": 1.004
+      },
+      "cp@40#63": {
+        "on": 0.2423,
+        "off": 0.2483,
+        "ratio": 0.976
+      },
+      "pencil@10#64": {
+        "on": 0.1189,
+        "off": 0.1136,
+        "ratio": 1.047
+      },
+      "charcoal@10#64": {
+        "on": 0.2179,
+        "off": 0.209,
+        "ratio": 1.043
+      },
+      "pastel@10#64": {
+        "on": 0.4699,
+        "off": 0.4478,
+        "ratio": 1.049
+      },
+      "drybrush@10#64": {
+        "on": 0.3358,
+        "off": 0.3472,
+        "ratio": 0.967
+      },
+      "cp_old@10#64": {
+        "on": 0.206,
+        "off": 0.2133,
+        "ratio": 0.966
+      },
+      "cp@10#64": {
+        "on": 0.2623,
+        "off": 0.2625,
         "ratio": 0.999
       },
-      "cp@40": {
-        "on": 0.2435,
-        "off": 0.2483,
+      "pencil@20#64": {
+        "on": 0.1128,
+        "off": 0.1076,
+        "ratio": 1.048
+      },
+      "charcoal@20#64": {
+        "on": 0.1979,
+        "off": 0.1937,
+        "ratio": 1.022
+      },
+      "pastel@20#64": {
+        "on": 0.4085,
+        "off": 0.4064,
+        "ratio": 1.005
+      },
+      "drybrush@20#64": {
+        "on": 0.3117,
+        "off": 0.3236,
+        "ratio": 0.963
+      },
+      "cp_old@20#64": {
+        "on": 0.1949,
+        "off": 0.1902,
+        "ratio": 1.025
+      },
+      "cp@20#64": {
+        "on": 0.2554,
+        "off": 0.2585,
+        "ratio": 0.988
+      },
+      "pencil@40#64": {
+        "on": 0.1092,
+        "off": 0.1096,
+        "ratio": 0.996
+      },
+      "charcoal@40#64": {
+        "on": 0.1819,
+        "off": 0.1824,
+        "ratio": 0.997
+      },
+      "pastel@40#64": {
+        "on": 0.379,
+        "off": 0.3823,
+        "ratio": 0.991
+      },
+      "drybrush@40#64": {
+        "on": 0.2908,
+        "off": 0.3029,
+        "ratio": 0.96
+      },
+      "cp_old@40#64": {
+        "on": 0.1812,
+        "off": 0.1809,
+        "ratio": 1.002
+      },
+      "cp@40#64": {
+        "on": 0.2444,
+        "off": 0.2492,
         "ratio": 0.981
+      },
+      "pencil@10#65": {
+        "on": 0.1233,
+        "off": 0.1241,
+        "ratio": 0.994
+      },
+      "charcoal@10#65": {
+        "on": 0.219,
+        "off": 0.2126,
+        "ratio": 1.03
+      },
+      "pastel@10#65": {
+        "on": 0.4647,
+        "off": 0.461,
+        "ratio": 1.008
+      },
+      "drybrush@10#65": {
+        "on": 0.3501,
+        "off": 0.3482,
+        "ratio": 1.005
+      },
+      "cp_old@10#65": {
+        "on": 0.2047,
+        "off": 0.2043,
+        "ratio": 1.002
+      },
+      "cp@10#65": {
+        "on": 0.2622,
+        "off": 0.2625,
+        "ratio": 0.999
+      },
+      "pencil@20#65": {
+        "on": 0.114,
+        "off": 0.1095,
+        "ratio": 1.041
+      },
+      "charcoal@20#65": {
+        "on": 0.2059,
+        "off": 0.2036,
+        "ratio": 1.011
+      },
+      "pastel@20#65": {
+        "on": 0.4077,
+        "off": 0.3899,
+        "ratio": 1.046
+      },
+      "drybrush@20#65": {
+        "on": 0.3232,
+        "off": 0.3285,
+        "ratio": 0.984
+      },
+      "cp_old@20#65": {
+        "on": 0.1867,
+        "off": 0.1857,
+        "ratio": 1.005
+      },
+      "cp@20#65": {
+        "on": 0.2552,
+        "off": 0.259,
+        "ratio": 0.985
+      },
+      "pencil@40#65": {
+        "on": 0.1091,
+        "off": 0.0983,
+        "ratio": 1.11
+      },
+      "charcoal@40#65": {
+        "on": 0.1904,
+        "off": 0.188,
+        "ratio": 1.013
+      },
+      "pastel@40#65": {
+        "on": 0.3696,
+        "off": 0.3558,
+        "ratio": 1.039
+      },
+      "drybrush@40#65": {
+        "on": 0.2975,
+        "off": 0.3075,
+        "ratio": 0.967
+      },
+      "cp_old@40#65": {
+        "on": 0.1769,
+        "off": 0.1783,
+        "ratio": 0.992
+      },
+      "cp@40#65": {
+        "on": 0.2427,
+        "off": 0.2488,
+        "ratio": 0.975
       }
     },
-    "with_gain_max_dev": 0.046,
     "without_gain": {
-      "pencil@10": {
+      "pencil@10#63": {
         "on": 0.0959,
         "off": 0.1192,
         "ratio": 0.805
       },
-      "charcoal@10": {
+      "charcoal@10#63": {
         "on": 0.2244,
         "off": 0.2122,
         "ratio": 1.057
       },
-      "pastel@10": {
+      "pastel@10#63": {
         "on": 0.3551,
         "off": 0.4666,
         "ratio": 0.761
       },
-      "drybrush@10": {
+      "drybrush@10#63": {
         "on": 0.343,
         "off": 0.3518,
         "ratio": 0.975
       },
-      "cp_old@10": {
+      "cp_old@10#63": {
         "on": 0.1771,
         "off": 0.206,
         "ratio": 0.86
       },
-      "cp@10": {
+      "cp@10#63": {
         "on": 0.2605,
         "off": 0.2625,
         "ratio": 0.992
       },
-      "pencil@20": {
+      "pencil@20#63": {
         "on": 0.0933,
         "off": 0.1093,
         "ratio": 0.854
       },
-      "charcoal@20": {
+      "charcoal@20#63": {
         "on": 0.2066,
         "off": 0.1931,
         "ratio": 1.07
       },
-      "pastel@20": {
+      "pastel@20#63": {
         "on": 0.2894,
         "off": 0.4133,
         "ratio": 0.7
       },
-      "drybrush@20": {
+      "drybrush@20#63": {
         "on": 0.2999,
         "off": 0.318,
         "ratio": 0.943
       },
-      "cp_old@20": {
+      "cp_old@20#63": {
         "on": 0.1663,
         "off": 0.1894,
         "ratio": 0.878
       },
-      "cp@20": {
+      "cp@20#63": {
         "on": 0.2507,
         "off": 0.2587,
         "ratio": 0.969
       },
-      "pencil@40": {
+      "pencil@40#63": {
         "on": 0.0885,
         "off": 0.106,
         "ratio": 0.835
       },
-      "charcoal@40": {
+      "charcoal@40#63": {
         "on": 0.1895,
         "off": 0.1822,
         "ratio": 1.04
       },
-      "pastel@40": {
+      "pastel@40#63": {
         "on": 0.2651,
         "off": 0.3904,
         "ratio": 0.679
       },
-      "drybrush@40": {
+      "drybrush@40#63": {
         "on": 0.2844,
         "off": 0.304,
         "ratio": 0.936
       },
-      "cp_old@40": {
+      "cp_old@40#63": {
         "on": 0.1479,
         "off": 0.1755,
         "ratio": 0.843
       },
-      "cp@40": {
+      "cp@40#63": {
         "on": 0.2347,
         "off": 0.2483,
         "ratio": 0.945
-      }
-    },
-    "without_gain_max_dev": 0.321,
-    "calib_gains": {
-      "classic/pencil|fine-grain": {
-        "gain": 1.3185190594918341,
-        "ok": true,
-        "meanTipRaw": 0.0505,
-        "meanTip": 0.0615,
-        "meanProc": 0.0617,
-        "iters": 3
       },
-      "classic/charcoal|chalk-chisel": {
-        "gain": 0.8223994756671457,
-        "ok": true,
-        "meanTipRaw": 0.1199,
-        "meanTip": 0.1155,
-        "meanProc": 0.1145,
-        "iters": 7
+      "pencil@10#64": {
+        "on": 0.0969,
+        "off": 0.1136,
+        "ratio": 0.853
       },
-      "ramon/Pastel_1|rock-pitted": {
-        "gain": 3.881089879869298,
-        "ok": true,
-        "meanTipRaw": 0.1762,
-        "meanTip": 0.2601,
-        "meanProc": 0.272,
-        "iters": 10
+      "charcoal@10#64": {
+        "on": 0.2252,
+        "off": 0.209,
+        "ratio": 1.078
       },
-      "classic/dry_brush|scratches-rough": {
-        "gain": 1.2006958794151188,
-        "ok": true,
-        "meanTipRaw": 0.1881,
-        "meanTip": 0.1943,
-        "meanProc": 0.1962,
-        "iters": 8
+      "pastel@10#64": {
+        "on": 0.3397,
+        "off": 0.4478,
+        "ratio": 0.759
       },
-      "ramon/B-pencil|scratches2": {
-        "gain": 1.387829724022196,
-        "ok": true,
-        "meanTipRaw": 0.0901,
-        "meanTip": 0.1056,
-        "meanProc": 0.1063,
-        "iters": 5
+      "drybrush@10#64": {
+        "on": 0.3311,
+        "off": 0.3472,
+        "ratio": 0.954
       },
-      "brunelleschi/colored_pencil|scratches2": {
-        "gain": 1.377424409224578,
-        "ok": true,
-        "meanTipRaw": 0.1431,
-        "meanTip": 0.1457,
-        "meanProc": 0.1509,
-        "iters": 10
+      "cp_old@10#64": {
+        "on": 0.1765,
+        "off": 0.2133,
+        "ratio": 0.827
+      },
+      "cp@10#64": {
+        "on": 0.2598,
+        "off": 0.2625,
+        "ratio": 0.99
+      },
+      "pencil@20#64": {
+        "on": 0.093,
+        "off": 0.1076,
+        "ratio": 0.864
+      },
+      "charcoal@20#64": {
+        "on": 0.2074,
+        "off": 0.1937,
+        "ratio": 1.071
+      },
+      "pastel@20#64": {
+        "on": 0.2822,
+        "off": 0.4064,
+        "ratio": 0.694
+      },
+      "drybrush@20#64": {
+        "on": 0.3023,
+        "off": 0.3236,
+        "ratio": 0.934
+      },
+      "cp_old@20#64": {
+        "on": 0.1673,
+        "off": 0.1902,
+        "ratio": 0.88
+      },
+      "cp@20#64": {
+        "on": 0.25,
+        "off": 0.2585,
+        "ratio": 0.967
+      },
+      "pencil@40#64": {
+        "on": 0.0889,
+        "off": 0.1096,
+        "ratio": 0.811
+      },
+      "charcoal@40#64": {
+        "on": 0.192,
+        "off": 0.1824,
+        "ratio": 1.053
+      },
+      "pastel@40#64": {
+        "on": 0.2522,
+        "off": 0.3823,
+        "ratio": 0.66
+      },
+      "drybrush@40#64": {
+        "on": 0.2789,
+        "off": 0.3029,
+        "ratio": 0.921
+      },
+      "cp_old@40#64": {
+        "on": 0.1561,
+        "off": 0.1809,
+        "ratio": 0.863
+      },
+      "cp@40#64": {
+        "on": 0.2334,
+        "off": 0.2492,
+        "ratio": 0.937
+      },
+      "pencil@10#65": {
+        "on": 0.0983,
+        "off": 0.1241,
+        "ratio": 0.792
+      },
+      "charcoal@10#65": {
+        "on": 0.2258,
+        "off": 0.2126,
+        "ratio": 1.062
+      },
+      "pastel@10#65": {
+        "on": 0.361,
+        "off": 0.461,
+        "ratio": 0.783
+      },
+      "drybrush@10#65": {
+        "on": 0.3448,
+        "off": 0.3482,
+        "ratio": 0.99
+      },
+      "cp_old@10#65": {
+        "on": 0.1755,
+        "off": 0.2043,
+        "ratio": 0.859
+      },
+      "cp@10#65": {
+        "on": 0.2604,
+        "off": 0.2625,
+        "ratio": 0.992
+      },
+      "pencil@20#65": {
+        "on": 0.0942,
+        "off": 0.1095,
+        "ratio": 0.86
+      },
+      "charcoal@20#65": {
+        "on": 0.2139,
+        "off": 0.2036,
+        "ratio": 1.051
+      },
+      "pastel@20#65": {
+        "on": 0.2953,
+        "off": 0.3899,
+        "ratio": 0.757
+      },
+      "drybrush@20#65": {
+        "on": 0.314,
+        "off": 0.3285,
+        "ratio": 0.956
+      },
+      "cp_old@20#65": {
+        "on": 0.1627,
+        "off": 0.1857,
+        "ratio": 0.876
+      },
+      "cp@20#65": {
+        "on": 0.2458,
+        "off": 0.259,
+        "ratio": 0.949
+      },
+      "pencil@40#65": {
+        "on": 0.0876,
+        "off": 0.0983,
+        "ratio": 0.891
+      },
+      "charcoal@40#65": {
+        "on": 0.1993,
+        "off": 0.188,
+        "ratio": 1.06
+      },
+      "pastel@40#65": {
+        "on": 0.2534,
+        "off": 0.3558,
+        "ratio": 0.712
+      },
+      "drybrush@40#65": {
+        "on": 0.2872,
+        "off": 0.3075,
+        "ratio": 0.934
+      },
+      "cp_old@40#65": {
+        "on": 0.1521,
+        "off": 0.1783,
+        "ratio": 0.853
+      },
+      "cp@40#65": {
+        "on": 0.2349,
+        "off": 0.2488,
+        "ratio": 0.944
       }
     }
   },
@@ -570,6 +1354,94 @@
       "kaerhon_v1/paint_sm": 4872,
       "kaerhon_v1/Smear_sm": 21264
     },
+    "changed_share_pct": {
+      "Dieterle/Blender": 14.06,
+      "Dieterle/Dissolver": 12.37,
+      "Dieterle/Eraser": 10.92,
+      "Dieterle/Posterizer": 7.99,
+      "classic/blending_knife": 28.55,
+      "classic/blur": 2.4,
+      "classic/imp_blending": 18.76,
+      "classic/ink_eraser": 12.17,
+      "classic/smudge": 1.39,
+      "classic/wet_knife": 2.6,
+      "deevad/blending": 1.17,
+      "deevad/grainy_blending": 30.74,
+      "deevad/kneaded_eraser": 8.92,
+      "deevad/kneaded_eraser_large": 8.92,
+      "deevad/large_hard_eraser": 12.79,
+      "deevad/only_water_fringe": 0.85,
+      "deevad/rough": 0,
+      "deevad/sponge_smudging": 1.48,
+      "deevad/thin_hard_eraser": 12.79,
+      "ramon/Blur_Fast": 0.25,
+      "ramon/Dirty_Noise": 0.17,
+      "ramon/Grain": 2.07,
+      "ramon/Hard_Eraser": 19.03,
+      "ramon/Knife": 46.64,
+      "ramon/Smear": 1.86,
+      "ramon/Soft_Eraser": 15.66,
+      "tanda/acrylic-03-only-water": 1.34,
+      "tanda/acrylic-04-only-water": 3.31,
+      "tanda/acrylic-05-only-water": 2.42,
+      "tanda/charcoal-blur1": 0.16,
+      "tanda/oil-01-clean": 8.7,
+      "tanda/oil-03-clean": 3.97,
+      "tanda/oil-06-clean": 12.92,
+      "tanda/oil-mop": 1.13,
+      "tanda/water-01": 35.82,
+      "tanda/water-02": 11.04,
+      "tanda/water-05": 7.59,
+      "tanda/water-06": 9.7,
+      "tanda/watercolor-02-water": 3.2,
+      "kaerhon_v1/airsmudge_a": 0.36,
+      "kaerhon_v1/paint_sm": 11.28,
+      "kaerhon_v1/Smear_sm": 49.22
+    },
+    "max_px_diff": {
+      "Dieterle/Blender": 365,
+      "Dieterle/Dissolver": 255,
+      "Dieterle/Eraser": 192,
+      "Dieterle/Posterizer": 71,
+      "classic/blending_knife": 337,
+      "classic/blur": 78,
+      "classic/imp_blending": 321,
+      "classic/ink_eraser": 386,
+      "classic/smudge": 158,
+      "classic/wet_knife": 225,
+      "deevad/blending": 85,
+      "deevad/grainy_blending": 272,
+      "deevad/kneaded_eraser": 31,
+      "deevad/kneaded_eraser_large": 31,
+      "deevad/large_hard_eraser": 386,
+      "deevad/only_water_fringe": 154,
+      "deevad/rough": 7,
+      "deevad/sponge_smudging": 36,
+      "deevad/thin_hard_eraser": 386,
+      "ramon/Blur_Fast": 28,
+      "ramon/Dirty_Noise": 87,
+      "ramon/Grain": 195,
+      "ramon/Hard_Eraser": 386,
+      "ramon/Knife": 295,
+      "ramon/Smear": 169,
+      "ramon/Soft_Eraser": 20,
+      "tanda/acrylic-03-only-water": 117,
+      "tanda/acrylic-04-only-water": 195,
+      "tanda/acrylic-05-only-water": 50,
+      "tanda/charcoal-blur1": 33,
+      "tanda/oil-01-clean": 335,
+      "tanda/oil-03-clean": 231,
+      "tanda/oil-06-clean": 235,
+      "tanda/oil-mop": 21,
+      "tanda/water-01": 262,
+      "tanda/water-02": 202,
+      "tanda/water-05": 121,
+      "tanda/water-06": 158,
+      "tanda/watercolor-02-water": 181,
+      "kaerhon_v1/airsmudge_a": 34,
+      "kaerhon_v1/paint_sm": 287,
+      "kaerhon_v1/Smear_sm": 332
+    },
     "min_changed_px": 40,
     "dead": [
       "deevad/rough"
@@ -577,8 +1449,13 @@
     "dead_explained_opaque": {
       "deevad/rough": 0.015432098880410194
     },
+    "dead_max_px_diff": {
+      "deevad/rough": 7
+    },
     "dead_unexplained": [],
-    "falsification_nothing_changed": 0
+    "dead_rule": "제 불투명(opaque 기준값) ≤ .05면 «값으로 설명됨»(62 ⑦의 empty_reasons와 같은 문) — 그 밖은 진짜 결함",
+    "falsification_nothing_changed": 0,
+    "note_same_values": "반지름만 다른 변종 쌍(kneaded_eraser/_large · thin_hard_eraser/large_hard_eraser)이 같은 수를 내는 것은 자가 «요청 굵기 w14»를 보정(radiusFor)으로 앉히기 때문 — 프리셋의 제 반지름은 굽기에서 안 쓰인다(58 크기 정직성의 그 규약 · 리뷰어 [M2])"
   },
   "watercolor": {
     "def": "64-5 — tanda/watercolor-02-paint가 흐릿한 이유: 사상 통계(모르는 설정/입력 0이면 이식 밖) · smudge .95(스머지 버킷이 «빈 층»을 문다 — 흰 판 평균 알파 켬 vs 끔) · 색 위에서는 돈다(changed_on_color). 판정 = 프리셋 값(smudge .95 + 빈 층)이지 이식 결함이 아니다 — smudge 끔에서 평균이 «크게» 오르면 그 증거",
@@ -850,7 +1727,20 @@
       "sh": 294,
       "ch": 294,
       "vh": 800,
-      "bottom": 794
+      "bottom": 794,
+      "top": 500
+    },
+    "viewport700": {
+      "overflow": {
+        "sw": 244,
+        "cw": 244,
+        "sh": 294,
+        "ch": 294,
+        "vh": 700,
+        "bottom": 694,
+        "top": 400
+      },
+      "zero_stage_missing": []
     },
     "falsification_pencil": [
       {
@@ -883,7 +1773,7 @@
       "paint-size-range": "자국 굵기(px) — 끌어서 조절한다",
       "paint-opacity": "불투명 — 획의 불투명(0.05~1). 브러시 자체의 불투명에 곱한다",
       "paint-opacity-range": "불투명 — 끌어서 조절한다",
-      "paint-color-btn": "지금 색 #a8a29a — 누르면 색상 휠이 열린다",
+      "paint-color-btn": "지금 색 #5a5a5a — 누르면 색상 휠이 열린다",
       "paint-recent-1": "최근 색 — 비어 있다(색을 고르면 여기 남는다)",
       "paint-fav-1": "즐겨찾기 1 — 연필 · classic/pencil. 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
       "paint-fav-6": "즐겨찾기 6 — 잉크펜 · deevad/watercolor_expressive. 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
@@ -895,14 +1785,14 @@
       "br": "ramon/100%_Opaque"
     },
     "sel_after_fav3": {
-      "hex": "#a8a29a",
+      "hex": "#5a5a5a",
       "i": "marker",
       "w": 10,
       "br": "ramon/100%_Opaque",
       "o": 1
     },
     "sel_after_pick": {
-      "hex": "#a8a29a",
+      "hex": "#5a5a5a",
       "i": "marker",
       "w": 10,
       "br": "tanda/marker-01",
@@ -970,6 +1860,11 @@
   },
   "face_tap": {
     "def": "칠 도구의 한 붓이 raw bbox 대각 ≤ C.PAINT64_TAP_MAX_PX(6 · 화면 px)이면 탭 = 면 고르기(+51 Injector) · 넘으면 칠. 경계 양쪽(문턱 −2 · +4)에서 잰다 · 빈 곳 탭 = 풀기 · 반증 = 연필 도구의 같은 탭은 안 고른다(작도 중에는 옛 뜻 그대로)",
+    "threshold": {
+      "registered": "C.PAINT64_TAP_MAX_PX",
+      "value": 6,
+      "origin": "세션이 정했다(2026-09-04 · 첫 실행 «전») — 아래 = 펜 끝 떨림의 탭 문 TAP_MAX_PX 2(AS-C79) · 위 = 쓸모 있는 최소 자국(점 하나 ≈ 굵기 · 기본 10px)의 절반 대역. 6px 아래의 «점 찍기»는 칠이 아니라 고르기다(대가 — AS-C189 · 실기기 손가락 떨림이 판정)"
+    },
     "threshold_px": 6,
     "sel_pencil_tap": 0,
     "sel_after_tap": 1,
@@ -979,11 +1874,25 @@
       "sel": 1,
       "strokes_delta": 0
     },
+    "just_over": {
+      "diag_px": 6.4,
+      "sel": 1,
+      "strokes_delta": 1
+    },
     "over": {
       "diag_px": 9.9,
       "sel": 1,
       "strokes_delta": 1
     },
     "sel_after_empty_tap": 0
+  },
+  "note_dpr": "③④⑤·⑦의 값은 고정 px 견본 판(dpr 무관)이라 dpr1·dpr2가 비트 동일하다 — 같음이 곧 그 사실의 확인이지 독립 표본이 아니다(리뷰어 [H2]·[M5] · 63 note_dpr 그대로). ①②⑥⑧은 화면 경로(굽기 텍스처 해시·elementFromPoint·탭)라 dpr마다 값이 다르다(잉크 수 등)",
+  "constants_snapshot": {
+    "PAINT64_DENSITY_TOL": 0.05,
+    "PAINT64_WET_MIN_PX": 40,
+    "PAINT64_TAP_MAX_PX": 6,
+    "PAINT63_DISTINCT_REL": 0.25,
+    "PAINT62_PAINTED_ALPHA": 0.008,
+    "note": "스냅샷-라이트(web2 원장의 constantsSnapshot 기계 부재는 종전 유보 · 값은 constants.ts가 정본 — 리뷰어 [M5])"
   }
 }

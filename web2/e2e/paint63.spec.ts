@@ -410,7 +410,7 @@ test('⑤ 무회귀 — 팁 없는 자국 + 61 결 = 62 기준 해시(ref63 원�
       no_tip_height_paper: noTipHeight[r.key], differs_with_height_paper: noTipHeight[r.key]!.hash !== ref.rows[r.key]!.hash }
   }
   OUT.noregress = {
-    def: 'ref63 원장(63 이전 트리 · 62 엔진)의 어둡기 지도 해시(FNV-1a 32) + 자국 픽셀 수와 같은 행을 이 트리에서 다시 그린 값. no_tip_paper61(팁 없음 + 61 값 잡음 결) = 62 경로 그대로 → 해시 «같음» 단언(행 여덟 전부). tip_default_paper61 = 슬롯 기본 팁 → 연필·색연필 슬롯만 갈린다(반증 · 팁 안 받는 여섯은 같다). no_tip_height_paper = 새 종이 결 → 결을 쓰는 행은 갈린다(기록 — 마커는 결 0이라 같다)',
+    def: 'ref63 원장(63 이전 트리 · 62 엔진)의 어둡기 지도 해시(FNV-1a 32) + 자국 픽셀 수와 같은 행을 이 트리에서 다시 그린 값. no_tip_paper61(팁 없음 + 61 값 잡음 결) = 62 경로 그대로 → 해시 «같음» 단언(행 여덟 중 일곱 — web2-64부터 cp_slot_wave는 64-2 문턱 판으로 «갈림»이 값 · cp_slot_changed_by_64). tip_default_paper61 = 슬롯 기본 팁 → 연필·색연필 슬롯만 갈린다(반증 · 팁 안 받는 여섯은 같다). no_tip_height_paper = 새 종이 결 → 결을 쓰는 행은 갈린다(기록 — 마커는 결 0이라 같다)',
     ref_tree: ref.tree_note,
     paper_switch_seen: paper61,
     rows,

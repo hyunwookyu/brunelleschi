@@ -88,12 +88,12 @@
     "threshold_ratio_record_only": 1.08,
     "rows": {
       "pencil": {
-        "cross": 0.4095,
-        "body_l": 0.2454,
-        "body_r": 0.2511,
-        "ratio": 1.6498,
+        "cross": 0.4145,
+        "body_l": 0.2478,
+        "body_r": 0.256,
+        "ratio": 1.6458,
         "cap": 0.42,
-        "cross_over_cap": 0.9751,
+        "cross_over_cap": 0.987,
         "at": [
           224,
           127
@@ -138,24 +138,24 @@
     },
     "rows_capoff": {
       "pencil": {
-        "cross": 0.4095,
-        "body_l": 0.2454,
-        "body_r": 0.2511,
-        "ratio": 1.6498,
+        "cross": 0.4145,
+        "body_l": 0.2478,
+        "body_r": 0.256,
+        "ratio": 1.6458,
         "cap": 0.42,
-        "cross_over_cap": 0.9751,
+        "cross_over_cap": 0.987,
         "at": [
           224,
           127
         ]
       },
       "cp": {
-        "cross": 0.7949,
-        "body_l": 0.5858,
-        "body_r": 0.566,
-        "ratio": 1.3802,
+        "cross": 0.7599,
+        "body_l": 0.5791,
+        "body_r": 0.5401,
+        "ratio": 1.358,
         "cap": 0.3999,
-        "cross_over_cap": 1.9875,
+        "cross_over_cap": 1.9002,
         "at": [
           224,
           127
@@ -189,9 +189,9 @@
     "rows_unsaturated": {
       "pencil": {
         "cross": 0.168,
-        "body_l": 0.1048,
-        "body_r": 0.1077,
-        "ratio": 1.5808,
+        "body_l": 0.1059,
+        "body_r": 0.11,
+        "ratio": 1.5561,
         "cap": 0.168,
         "cross_over_cap": 1,
         "at": [
@@ -214,24 +214,24 @@
     },
     "rows_unsaturated_capoff": {
       "pencil": {
-        "cross": 0.1872,
-        "body_l": 0.1048,
-        "body_r": 0.1077,
-        "ratio": 1.7616,
+        "cross": 0.1901,
+        "body_l": 0.1059,
+        "body_r": 0.11,
+        "ratio": 1.7608,
         "cap": 0.168,
-        "cross_over_cap": 1.1143,
+        "cross_over_cap": 1.1316,
         "at": [
           224,
           127
         ]
       },
       "cp": {
-        "cross": 0.4633,
-        "body_l": 0.2924,
-        "body_r": 0.2795,
-        "ratio": 1.6203,
+        "cross": 0.4298,
+        "body_l": 0.2883,
+        "body_r": 0.2633,
+        "ratio": 1.5584,
         "cap": 0.16,
-        "cross_over_cap": 2.8961,
+        "cross_over_cap": 2.6867,
         "at": [
           224,
           127
@@ -394,20 +394,20 @@
       "opaque≤.05": 2
     },
     "unexplained": [],
-    "ms": 25674,
+    "ms": 57134,
     "falsification_same_brush_distinct": 1,
     "sample": {
       "brunelleschi/colored_pencil": {
-        "mean": 0.1026,
-        "p95": 0.2891,
-        "bare": 0.0298,
-        "edgeSd": 0.597
+        "mean": 0.1015,
+        "p95": 0.288,
+        "bare": 0.0308,
+        "edgeSd": 0.695
       },
       "Dieterle/8B_Pencil#1": {
-        "mean": 0.0379,
-        "p95": 0.1393,
-        "bare": 0.2865,
-        "edgeSd": 3.054
+        "mean": 0.0385,
+        "p95": 0.1286,
+        "bare": 0.1756,
+        "edgeSd": 2.64
       },
       "Dieterle/arrow#1": {
         "mean": 0.3069,
@@ -466,20 +466,20 @@
     "def": "조합 ① 회색 바탕(140) 위 어두운 안료(#2a2a30) · 조합 ② 어두운 바탕(48) 위 밝은 안료(#d8d0c0) — 물결 22px. 층 알파 창(C.PAINT62_EDGE_ALPHA_LO..HI /255)의 픽셀(edge)에서 brighter = 배경+C.PAINT62_FRINGE_TOL보다 밝은 수(흰 테의 정의 · 조합 ①의 술어) · brighter0 = 관용 0으로 센 수(기록 — 8비트 반올림의 몫) · outside = 배경·안료 사이 창 밖(어느 쪽이든 · 조합 ②의 술어 — 안료보다 밝은 것이 흰 테) · maxOver = 창 위로 벗어난 최대. 도구 넷 + 프리셋 8(①) / 넷 + 4(②). 반증 fringeBreak = 그 픽셀의 rgb를 흰색(조합 ①)/검정(조합 ② — 어두운 쪽으로 새는 병)으로 — 두 조합 다 실제로 걸린다",
     "rows": {
       "pencil": {
-        "edge": 11720,
+        "edge": 11731,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 13288
+        "painted": 13310
       },
       "cp": {
-        "edge": 7185,
+        "edge": 7272,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 13621
+        "painted": 13659
       },
       "marker": {
         "edge": 93,
@@ -530,12 +530,12 @@
         "painted": 49806
       },
       "ramon/Pastel_1": {
-        "edge": 22580,
+        "edge": 23346,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 41146
+        "painted": 48400
       },
       "kaerhon_v1/paint_sm": {
         "edge": 3185,
@@ -562,26 +562,26 @@
         "painted": 11129
       }
     },
-    "edge_total": 114484,
+    "edge_total": 115348,
     "brighter_total": 0,
     "brighter0_total": 0,
     "outside_total": 0,
     "rows_light": {
       "pencil": {
-        "edge": 11720,
-        "brighter": 10461,
-        "brighter0": 11720,
+        "edge": 11731,
+        "brighter": 10497,
+        "brighter0": 11731,
         "outside": 0,
         "maxOver": 0,
-        "painted": 13288
+        "painted": 13310
       },
       "cp": {
-        "edge": 7185,
-        "brighter": 6463,
-        "brighter0": 7185,
+        "edge": 7272,
+        "brighter": 6486,
+        "brighter0": 7272,
         "outside": 0,
         "maxOver": 0,
-        "painted": 13621
+        "painted": 13659
       },
       "marker": {
         "edge": 93,
@@ -624,31 +624,31 @@
         "painted": 12813
       },
       "ramon/Pastel_1": {
-        "edge": 22580,
-        "brighter": 15567,
-        "brighter0": 22580,
+        "edge": 23346,
+        "brighter": 16802,
+        "brighter0": 23346,
         "outside": 0,
         "maxOver": 0,
-        "painted": 41146
+        "painted": 48400
       }
     },
-    "edge_total_light": 61865,
+    "edge_total_light": 62729,
     "outside_total_light": 0,
     "falsification_fringe_break": {
-      "edge": 11720,
-      "brighter": 9678,
-      "brighter0": 11437,
-      "outside": 9678,
+      "edge": 11731,
+      "brighter": 9731,
+      "brighter0": 11441,
+      "outside": 9731,
       "maxOver": 31,
-      "painted": 13288
+      "painted": 13310
     },
     "falsification_fringe_break_light": {
-      "edge": 11720,
+      "edge": 11731,
       "brighter": 0,
       "brighter0": 0,
-      "outside": 8239,
+      "outside": 8330,
       "maxOver": 0,
-      "painted": 13288
+      "painted": 13310
     },
     "threshold": {
       "fringe_tol": 2,
@@ -756,12 +756,12 @@
         "n": 20
       }
     ],
-    "markPx": 6937,
+    "markPx": 7004,
     "deterministic": true,
     "seed_differs": true,
-    "bake_stress_20faces_x40strokes_ms": 16671.1,
-    "bake_20faces_40strokes_total_ms": 1262.6,
-    "bake_perstroke_2x40_ms": 1607,
+    "bake_stress_20faces_x40strokes_ms": 17280.5,
+    "bake_20faces_40strokes_total_ms": 1308.9,
+    "bake_perstroke_2x40_ms": 1654,
     "calib": {
       "brunelleschi/colored_pencil|scratches2": {
         "a": 1.7222222222222223,
@@ -770,11 +770,20 @@
         "w1": 10,
         "w2": 41,
         "gainOk": true,
-        "gain": 1.3767539547535157,
-        "meanProc": 0.1509,
-        "meanTipRaw": 0.1431,
-        "meanTip": 0.1457,
-        "gainIters": 10
+        "gain": 1.2495863321749736,
+        "gain40": 1.3042523267034776,
+        "dabK": 1.068,
+        "dabK40": 1.079,
+        "meanProc": 0.1512,
+        "meanTipRaw": 0.1438,
+        "meanTip": 0.1488,
+        "gainIters": 24,
+        "meanProc40": 0.142,
+        "meanTip40": 0.1405,
+        "gainState40": "maxiter",
+        "gainResidual": -0.0155,
+        "gainState": "maxiter",
+        "clipShare": 0.1583
       },
       "Dieterle/8B_Pencil#1|fine-grain": {
         "a": 0.2222222222222222,
@@ -784,10 +793,19 @@
         "w2": 7,
         "gainOk": true,
         "gain": 6,
-        "meanProc": 0.0391,
-        "meanTipRaw": 0.0123,
-        "meanTip": 0.0256,
-        "gainIters": 3
+        "gain40": 6,
+        "dabK": 2,
+        "dabK40": 2,
+        "meanProc": 0.0386,
+        "meanTipRaw": 0.0119,
+        "meanTip": 0.0282,
+        "gainIters": 13,
+        "meanProc40": 0.0256,
+        "meanTip40": 0.0178,
+        "gainState40": "capped",
+        "gainResidual": -0.2689,
+        "gainState": "capped",
+        "clipShare": 0.5872
       },
       "Dieterle/arrow#1": {
         "a": 7.888888888888889,
@@ -874,10 +892,19 @@
         "w2": 3,
         "gainOk": true,
         "gain": 6,
+        "gain40": 6,
+        "dabK": 2,
+        "dabK40": 2,
         "meanProc": 0.0039,
-        "meanTipRaw": 0.0007,
-        "meanTip": 0.0017,
-        "gainIters": 2
+        "meanTipRaw": 0.0008,
+        "meanTip": 0.0025,
+        "gainIters": 12,
+        "meanProc40": 0.0025,
+        "meanTip40": 0.0017,
+        "gainState40": "capped",
+        "gainResidual": -0.3583,
+        "gainState": "capped",
+        "clipShare": 0.5872
       },
       "Dieterle/Posterizer": {
         "a": 0,
@@ -970,11 +997,20 @@
         "w1": 19,
         "w2": 74,
         "gainOk": true,
-        "gain": 0.8223994756671457,
-        "meanProc": 0.1145,
-        "meanTipRaw": 0.1199,
-        "meanTip": 0.1155,
-        "gainIters": 7
+        "gain": 0.8522778015456874,
+        "gain40": 0.8728006144295488,
+        "dabK": 1,
+        "dabK40": 1,
+        "meanProc": 0.1146,
+        "meanTipRaw": 0.1213,
+        "meanTip": 0.1157,
+        "gainIters": 10,
+        "meanProc40": 0.1058,
+        "meanTip40": 0.1065,
+        "gainState40": "converged",
+        "gainResidual": 0.0095,
+        "gainState": "converged",
+        "clipShare": 0
       },
       "classic/coarse_bulk_1": {
         "a": 1.5555555555555556,
@@ -1004,11 +1040,20 @@
         "w1": 17,
         "w2": 69,
         "gainOk": true,
-        "gain": 1.2006958794151188,
-        "meanProc": 0.1962,
-        "meanTipRaw": 0.1881,
-        "meanTip": 0.1943,
-        "gainIters": 8
+        "gain": 1.1985395923129,
+        "gain40": 1.2142904440323734,
+        "dabK": 1,
+        "dabK40": 1.011,
+        "meanProc": 0.1935,
+        "meanTipRaw": 0.1855,
+        "meanTip": 0.1918,
+        "gainIters": 17,
+        "meanProc40": 0.1811,
+        "meanTip40": 0.1793,
+        "gainState40": "converged",
+        "gainResidual": -0.0089,
+        "gainState": "converged",
+        "clipShare": 0.1181
       },
       "classic/imp_blending": {
         "a": 0,
@@ -1108,11 +1153,20 @@
         "w1": 10,
         "w2": 39,
         "gainOk": true,
-        "gain": 1.3185190594918341,
+        "gain": 1.3678720922935512,
+        "gain40": 1.4595142778924888,
+        "dabK": 1,
+        "dabK40": 1,
         "meanProc": 0.0617,
-        "meanTipRaw": 0.0505,
-        "meanTip": 0.0615,
-        "gainIters": 3
+        "meanTipRaw": 0.0499,
+        "meanTip": 0.0612,
+        "gainIters": 7,
+        "meanProc40": 0.0589,
+        "meanTip40": 0.0586,
+        "gainState40": "converged",
+        "gainResidual": -0.0091,
+        "gainState": "converged",
+        "clipShare": 0.109
       },
       "classic/pointy_ink": {
         "a": 7.111111111111111,
@@ -1191,11 +1245,20 @@
         "w1": 11,
         "w2": 45,
         "gainOk": true,
-        "gain": 1,
-        "meanProc": 0.0318,
-        "meanTipRaw": 0.0315,
-        "meanTip": 0.0315,
-        "gainIters": 0
+        "gain": 1.1841403434275473,
+        "gain40": 1.3865667402492332,
+        "dabK": 1.074,
+        "dabK40": 1.126,
+        "meanProc": 0.0319,
+        "meanTipRaw": 0.0312,
+        "meanTip": 0.0313,
+        "gainIters": 24,
+        "meanProc40": 0.0315,
+        "meanTip40": 0.0307,
+        "gainState40": "maxiter",
+        "gainResidual": -0.0174,
+        "gainState": "maxiter",
+        "clipShare": 0.0744
       },
       "deevad/4H_pencil|fine-grain": {
         "a": 0,
@@ -1205,10 +1268,19 @@
         "w2": 0,
         "gainOk": false,
         "gain": 1,
+        "gain40": 1,
+        "dabK": 1,
+        "dabK40": 1,
         "meanProc": 0,
         "meanTipRaw": 0,
         "meanTip": 0,
-        "gainIters": 0
+        "gainIters": 0,
+        "meanProc40": 0,
+        "meanTip40": 0,
+        "gainState40": "converged",
+        "gainResidual": 0,
+        "gainState": "converged",
+        "clipShare": 0.0427
       },
       "deevad/airbrush": {
         "a": 1.1111111111111112,
@@ -1273,11 +1345,20 @@
         "w1": 36,
         "w2": 134,
         "gainOk": true,
-        "gain": 4.393486232579256,
-        "meanProc": 0.0847,
-        "meanTipRaw": 0.0589,
-        "meanTip": 0.0803,
-        "gainIters": 10
+        "gain": 3.535672174477331,
+        "gain40": 3.870006602486159,
+        "dabK": 1.192,
+        "dabK40": 1.19,
+        "meanProc": 0.0854,
+        "meanTipRaw": 0.061,
+        "meanTip": 0.0828,
+        "gainIters": 24,
+        "meanProc40": 0.0823,
+        "meanTip40": 0.0806,
+        "gainState40": "maxiter",
+        "gainResidual": -0.0299,
+        "gainState": "maxiter",
+        "clipShare": 0.3364
       },
       "deevad/detail_brush_large": {
         "a": 3,
@@ -1468,11 +1549,20 @@
         "w1": 15,
         "w2": 60,
         "gainOk": true,
-        "gain": 0.5599677679665713,
-        "meanProc": 0.1119,
-        "meanTipRaw": 0.1321,
-        "meanTip": 0.1119,
-        "gainIters": 8
+        "gain": 0.5664170892280906,
+        "gain40": 0.5595596648868044,
+        "dabK": 1,
+        "dabK40": 1,
+        "meanProc": 0.106,
+        "meanTipRaw": 0.1279,
+        "meanTip": 0.1069,
+        "gainIters": 13,
+        "meanProc40": 0.0977,
+        "meanTip40": 0.0983,
+        "gainState40": "converged",
+        "gainResidual": 0.009,
+        "gainState": "converged",
+        "clipShare": 0
       },
       "ramon/B-pencil|scratches2": {
         "a": 1.2222222222222223,
@@ -1481,11 +1571,20 @@
         "w1": 8,
         "w2": 30,
         "gainOk": true,
-        "gain": 1.387829724022196,
-        "meanProc": 0.1063,
-        "meanTipRaw": 0.0901,
-        "meanTip": 0.1056,
-        "gainIters": 5
+        "gain": 1.3535904246781048,
+        "gain40": 1.4256956690759077,
+        "dabK": 1,
+        "dabK40": 1,
+        "meanProc": 0.1093,
+        "meanTipRaw": 0.093,
+        "meanTip": 0.1084,
+        "gainIters": 12,
+        "meanProc40": 0.0993,
+        "meanTip40": 0.0987,
+        "gainState40": "converged",
+        "gainResidual": -0.0084,
+        "gainState": "converged",
+        "clipShare": 0.205
       },
       "ramon/Beamlight": {
         "a": 0.6666666666666666,
@@ -1585,11 +1684,20 @@
         "w1": 20,
         "w2": 67,
         "gainOk": true,
-        "gain": 3.881089879869298,
-        "meanProc": 0.272,
-        "meanTipRaw": 0.1762,
-        "meanTip": 0.2601,
-        "gainIters": 10
+        "gain": 4.036300982930915,
+        "gain40": 4.007064505025988,
+        "dabK": 1.228,
+        "dabK40": 1.17,
+        "meanProc": 0.2727,
+        "meanTipRaw": 0.1772,
+        "meanTip": 0.267,
+        "gainIters": 24,
+        "meanProc40": 0.2519,
+        "meanTip40": 0.2515,
+        "gainState40": "converged",
+        "gainResidual": -0.0209,
+        "gainState": "maxiter",
+        "clipShare": 0.3693
       },
       "ramon/Pen": {
         "a": 1.2222222222222223,
@@ -1822,11 +1930,20 @@
         "w1": 14,
         "w2": 47,
         "gainOk": true,
-        "gain": 1.288341499599125,
+        "gain": 1.2585519085435772,
+        "gain40": 1.405043185163945,
+        "dabK": 1,
+        "dabK40": 1.029,
         "meanProc": 0.2256,
-        "meanTipRaw": 0.2067,
+        "meanTipRaw": 0.2091,
         "meanTip": 0.2237,
-        "gainIters": 7
+        "gainIters": 17,
+        "meanProc40": 0.2085,
+        "meanTip40": 0.2076,
+        "gainState40": "converged",
+        "gainResidual": -0.0081,
+        "gainState": "converged",
+        "clipShare": 0.0884
       },
       "experimental/track": {
         "a": 7.555555555555555,
@@ -1906,10 +2023,19 @@
         "w2": 22,
         "gainOk": true,
         "gain": 6,
-        "meanProc": 0.1007,
-        "meanTipRaw": 0.0342,
-        "meanTip": 0.0475,
-        "gainIters": 2
+        "gain40": 6,
+        "dabK": 2,
+        "dabK40": 2,
+        "meanProc": 0.1266,
+        "meanTipRaw": 0.0514,
+        "meanTip": 0.0941,
+        "gainIters": 14,
+        "meanProc40": 0.1454,
+        "meanTip40": 0.094,
+        "gainState40": "capped",
+        "gainResidual": -0.2564,
+        "gainState": "capped",
+        "clipShare": 0.7762
       },
       "tanda/charcoal-03|chalk-chisel": {
         "a": 2.5,
@@ -1919,10 +2045,19 @@
         "w2": 61,
         "gainOk": true,
         "gain": 6,
-        "meanProc": 0.2344,
-        "meanTipRaw": 0.0928,
-        "meanTip": 0.1242,
-        "gainIters": 3
+        "gain40": 6,
+        "dabK": 2,
+        "dabK40": 2,
+        "meanProc": 0.2401,
+        "meanTipRaw": 0.0932,
+        "meanTip": 0.1217,
+        "gainIters": 14,
+        "meanProc40": 0.2247,
+        "meanTip40": 0.1083,
+        "gainState40": "capped",
+        "gainResidual": -0.493,
+        "gainState": "capped",
+        "clipShare": 0.7762
       },
       "tanda/charcoal-04|chalk-chisel": {
         "a": 1.7777777777777777,
@@ -1932,10 +2067,19 @@
         "w2": 44,
         "gainOk": true,
         "gain": 6,
-        "meanProc": 0.0752,
-        "meanTipRaw": 0.0271,
-        "meanTip": 0.0354,
-        "gainIters": 2
+        "gain40": 6,
+        "dabK": 2,
+        "dabK40": 2,
+        "meanProc": 0.0797,
+        "meanTipRaw": 0.0281,
+        "meanTip": 0.041,
+        "gainIters": 12,
+        "meanProc40": 0.0735,
+        "meanTip40": 0.0378,
+        "gainState40": "capped",
+        "gainResidual": -0.4853,
+        "gainState": "capped",
+        "clipShare": 0.7762
       },
       "tanda/charcoal-blur1": {
         "a": 0,
@@ -2014,11 +2158,20 @@
         "w1": 12,
         "w2": 45,
         "gainOk": true,
-        "gain": 1.0610499064626737,
+        "gain": 1.1580166098918687,
+        "gain40": 1.3592288075998633,
+        "dabK": 1.066,
+        "dabK40": 1.129,
         "meanProc": 0.0319,
-        "meanTipRaw": 0.0314,
-        "meanTip": 0.0316,
-        "gainIters": 5
+        "meanTipRaw": 0.0313,
+        "meanTip": 0.0315,
+        "gainIters": 24,
+        "meanProc40": 0.0315,
+        "meanTip40": 0.0308,
+        "gainState40": "maxiter",
+        "gainResidual": -0.0117,
+        "gainState": "maxiter",
+        "clipShare": 0.0693
       },
       "tanda/pencil-8b|fine-grain": {
         "a": 0.2777777777777778,
@@ -2028,10 +2181,19 @@
         "w2": 7,
         "gainOk": true,
         "gain": 6,
-        "meanProc": 0.0341,
-        "meanTipRaw": 0.0111,
-        "meanTip": 0.0234,
-        "gainIters": 3
+        "gain40": 6,
+        "dabK": 1.917,
+        "dabK40": 1.899,
+        "meanProc": 0.0345,
+        "meanTipRaw": 0.0113,
+        "meanTip": 0.0345,
+        "gainIters": 13,
+        "meanProc40": 0.0375,
+        "meanTip40": 0.0372,
+        "gainState40": "converged",
+        "gainResidual": -0.0013,
+        "gainState": "converged",
+        "clipShare": 0.5872
       },
       "tanda/splatter-02": {
         "a": -0.5,

@@ -84,6 +84,9 @@ function cpGrainTile(th: number): Float32Array {
 }
 /** 진단·반증 — 결 판이 바뀌면(paper61 스위치 등) 캐시를 비운다 */
 export function resetCpTilesForTest(): void { cpTiles.clear() }
+/** 64-2 반증(리뷰어 [H1]) — 문턱 판 끔: cp 슬롯도 보통 결(깊이 .42)로 → «갈림의 몫»이 프리셋인지 문턱 판인지 가른다 */
+let cpThresholdOff = false
+export function setCpThresholdOffForTest(v: boolean): void { cpThresholdOff = v }
 
 // ── 사람 조정(작업대·고르개 — 기기 저장) ────────────────────────────────────────
 interface Tune {
@@ -244,7 +247,13 @@ export const layerStatsForTest = (): { layers: number; bytes: number; budget: nu
  *  마스크 눈금이면 성격(구멍 = 0인 자리)은 그대로다. ⚠ 첫 판(불투명 곱 opacityK)은 포화 프리셋(파스텔 opaque 1)에서 아무것도 못 했다(실측
  *  gain 2.15 · 비 .87 그대로) — 그래서 눈금을 «판»에 건다. 값은 고정점 반복(≤ 4회 · 비 → g × 절차/팁)으로 찾고 ok:false = 못 쟀다(#105 표식).
  *  잰 값(meanTip·meanProc·반복 수)을 표에 남긴다 — 게이트 ⑤(±5%)가 굵기 셋에서 다시 잰다. */
-interface Calib { a: number; b: number; ok: boolean; w1: number; w2: number; gain?: number; gainOk?: boolean; meanTip?: number; meanProc?: number; gainIters?: number; meanTipRaw?: number }
+interface Calib { a: number; b: number; ok: boolean; w1: number; w2: number; gain?: number; gainOk?: boolean; meanTip?: number; meanProc?: number; gainIters?: number; meanTipRaw?: number
+  /** [M3] 수렴 표식(#105 — «못 맞췄다»는 실패 종류): converged = 비 ±1% 안에서 멈춤 · capped = 상한/하한에 닿음 · maxiter = 열 번 다 돌고도 밖 · residual = 마지막 비 − 1 · clipShare = 눈금 뒤 1로 잘린 마스크 픽셀 몫(0 아닌 픽셀 중) */
+  gainState?: 'converged' | 'capped' | 'maxiter'; gainResidual?: number; clipShare?: number
+  /** [H2] 굵기 축 — 눈금은 굵기의 함수다(w40이 w20보다 옅다 · 실측 ~10%): 두 점(20·40)의 g를 로그 보간한다(크기 보정과 같은 꼴). gain = g20 · gain40 = g40 */
+  gain40?: number; meanTip40?: number; meanProc40?: number; gainState40?: 'converged' | 'capped' | 'maxiter'
+  /** 둘째 지렛대(파스텔 — 판이 희소해 눈금이 상한에 닿아도 −4%): 도장 밀도 배수(dabs_per_* × dabK · [1, 2]) — 성격을 조금 바꾼다(더 촘촘) · 값으로 남긴다(AS-C190) */
+  dabK?: number; dabK40?: number }
 const TIP_GAIN_MAX = 6
 const TIP_GAIN_MIN = 0.25
 let tipGainOff = false
@@ -302,8 +311,14 @@ function measureHalfMaxWidth(name: string, radius: number, tip: TipAtlas | null)
 /** 64-4 — 몸통 평균 알파(직선 견본 · 반지름 r · 압력 .5): 열마다 «열 최대의 25% 위» 대역의 알파 평균(팁 자·절차 자에 같은 대역 정의 —
  *  두 판을 같은 자로 잰다 #103). 빈 판(열 최대 < .02 전부)이면 0. */
 const GAIN_W = 480, GAIN_H = 240
+/** 도장 밀도 배수 — dabs_per_actual_radius·basic_radius·second에 곱한다(spacingK의 역과 같은 자리) */
+function applyDabK(b: Brush, k: number): void {
+  b.setBaseValue(S.DABS_PER_ACTUAL_RADIUS, b.getBaseValue(S.DABS_PER_ACTUAL_RADIUS) * k)
+  b.setBaseValue(S.DABS_PER_BASIC_RADIUS, b.getBaseValue(S.DABS_PER_BASIC_RADIUS) * k)
+  b.setBaseValue(S.DABS_PER_SECOND, b.getBaseValue(S.DABS_PER_SECOND) * k)
+}
 let gainSurface: StrokeSurface | null = null
-function measureBodyMean(name: string, radius: number, tip: TipAtlas | null): number {
+function measureBodyMean(name: string, radius: number, tip: TipAtlas | null, seed = 63, dabK = 1): number {
   // 견본 = 게이트 ⑤의 그것과 같은 함수(core/markshapes line · 480×240 · 압력 .6 상수) — 자가 갈리면 계통 편차가 난다(첫 판 실측 +6%)
   if (!gainSurface) gainSurface = new StrokeSurface(new Layer(GAIN_W, GAIN_H))
   const surf = gainSurface
@@ -313,9 +328,10 @@ function measureBodyMean(name: string, radius: number, tip: TipAtlas | null): nu
   restoreBase(l)
   l.brush.setBaseValue(S.RADIUS_LOGARITHMIC, Math.log(radius))
   l.brush.setBaseValue(S.COLOR_H, 0); l.brush.setBaseValue(S.COLOR_S, 0); l.brush.setBaseValue(S.COLOR_V, 0)
-  l.brush.setRng(rng32(62))
+  if (dabK !== 1) applyDabK(l.brush, dabK)
+  l.brush.setRng(rng32(seed))
   // 결 켬(제품 기본 깊이 GRAIN_DEPTH — 팁과 결이 곱해지는 그 자리에서 잰다 · 결 없이 재면 게이트 ⑤와 계통이 어긋났다: 실측 .94~.98)
-  surf.beginStroke({ cap: 1, capExact: false, opacityK: 1, capOff: false, grain: grainTile(), grainN: grainTileN(), grainDepth: GRAIN_DEPTH, snapshotAll: false, smudgeSnapshot: true, rng: rng32(63 ^ 0x5bd1e995), tip, tipFrameLock: -1 })
+  surf.beginStroke({ cap: 1, capExact: false, opacityK: 1, capOff: false, grain: grainTile(), grainN: grainTileN(), grainDepth: GRAIN_DEPTH, snapshotAll: false, smudgeSnapshot: true, rng: rng32(seed ^ 0x5bd1e995), tip, tipFrameLock: -1 })
   runStroke(l.brush, surf, markShape('line', GAIN_W, GAIN_H).pts, null, 0.6)
   surf.endStroke()
   restoreBase(l)
@@ -355,29 +371,67 @@ function calib(name: string, tipName: string | null = null): Calib {
   // 64-4 — 팁이 든 열쇠는 농도 계수도 잰다: 절차 판(팁 없음)의 몸통 평균을 목표로 판 눈금 g를 고정점 반복(같은 프리셋 · 반지름 = 요청 폭 20의
   // 그것 · 압력 .6 — 게이트 ⑤의 가운데 점). 비가 ±1% 안이면 멈춘다.
   if (tip && !tipGainOff) {
-    const r20 = radiusFor(c, 20)
-    const meanProc = measureBodyMean(name, r20, null)
-    const meanRaw = measureBodyMean(name, r20, tip)
-    let g = 1, meanTip = meanRaw, iters = 0
-    if (meanProc > 1e-4 && meanRaw > 1e-4) {
-      for (; iters < 10; iters++) {
-        const ratio = meanTip / meanProc
-        if (Math.abs(ratio - 1) < 0.01 || (g >= TIP_GAIN_MAX && ratio < 1) || (g <= TIP_GAIN_MIN && ratio > 1)) break
-        g = Math.min(TIP_GAIN_MAX, Math.max(TIP_GAIN_MIN, g * (meanProc / Math.max(1e-4, meanTip))))
-        meanTip = measureBodyMean(name, r20, scaledTip(tip, g))
+    // 자 = 굵기마다(20·40) 시드 둘(63·64)의 평균 — 한 점(w20 · 시드 하나)에서 맞추면 w40·다른 시드에서 −5~−7%가 났고(리뷰어 [H2] 실측 · #12·#14),
+    // 두 굵기의 «평균» 하나로는 w20 +5% · w40 −5%로 갈렸다(굵기 축의 기울기 ~10%). 그래서 눈금을 굵기의 함수로 — 두 점의 g를 로그 보간(tipFor).
+    const seeds = [63, 64]
+    const fit = (wReq: number): { g: number; dabK: number; meanProc: number; meanRaw: number; meanTip: number; iters: number; state: 'converged' | 'capped' | 'maxiter' } => {
+      const r = radiusFor(c, wReq)
+      const meanOf = (t: TipAtlas | null, dk = 1): number => { let s = 0; for (const sd of seeds) s += measureBodyMean(name, r, t, sd, dk); return s / seeds.length }
+      const meanProc = meanOf(null), meanRaw = meanOf(tip)
+      let g = 1, dabK = 1, meanTip = meanRaw, iters = 0
+      if (meanProc > 1e-4 && meanRaw > 1e-4) {
+        for (; iters < 8; iters++) {
+          const ratio = meanTip / meanProc
+          if (Math.abs(ratio - 1) < 0.01 || (g >= TIP_GAIN_MAX && ratio < 1) || (g <= TIP_GAIN_MIN && ratio > 1)) break
+          g = Math.min(TIP_GAIN_MAX, Math.max(TIP_GAIN_MIN, g * (meanProc / Math.max(1e-4, meanTip))))
+          meanTip = meanOf(scaledTip(tip, g))
+        }
+        // 둘째 지렛대 — 눈금이 다 돌고도 옅으면(희소 판 · 잘림) 도장 밀도로 잔차를 메운다([1, 2] · ≤ 4회)
+        for (let k = 0; k < 4 && meanTip / meanProc < 0.99; k++) {
+          dabK = Math.min(2, Math.max(1, dabK * (meanProc / Math.max(1e-4, meanTip))))
+          meanTip = meanOf(scaledTip(tip, g), dabK)
+          iters++
+        }
       }
+      const resid = meanProc > 1e-4 ? meanTip / meanProc - 1 : 0
+      const state = Math.abs(resid) < 0.01 ? 'converged' : (g >= TIP_GAIN_MAX || g <= TIP_GAIN_MIN || dabK >= 2) ? 'capped' : 'maxiter'
+      return { g, dabK, meanProc, meanRaw, meanTip, iters, state }
     }
-    c.gainOk = meanProc > 1e-4 && meanRaw > 1e-4
-    c.gain = c.gainOk ? g : 1                                   // ok:false면 1이되 표식이 남는다(#105)
-    c.meanProc = +meanProc.toFixed(4); c.meanTipRaw = +meanRaw.toFixed(4); c.meanTip = +meanTip.toFixed(4); c.gainIters = iters
+    const f20 = fit(20), f40 = fit(40)
+    c.gainOk = f20.meanProc > 1e-4 && f20.meanRaw > 1e-4 && f40.meanProc > 1e-4 && f40.meanRaw > 1e-4
+    c.gain = c.gainOk ? f20.g : 1                               // ok:false면 1이되 표식이 남는다(#105)
+    c.gain40 = c.gainOk ? f40.g : 1
+    c.dabK = c.gainOk ? +f20.dabK.toFixed(3) : 1; c.dabK40 = c.gainOk ? +f40.dabK.toFixed(3) : 1
+    c.meanProc = +f20.meanProc.toFixed(4); c.meanTipRaw = +f20.meanRaw.toFixed(4); c.meanTip = +f20.meanTip.toFixed(4); c.gainIters = f20.iters + f40.iters
+    c.meanProc40 = +f40.meanProc.toFixed(4); c.meanTip40 = +f40.meanTip.toFixed(4); c.gainState40 = f40.state
+    const resid = f20.meanProc > 1e-4 ? f20.meanTip / f20.meanProc - 1 : 0
+    c.gainResidual = +resid.toFixed(4)
+    c.gainState = f20.state
+    const g = f20.g
+    // 잘린 몫 — 눈금 뒤 1에 닿은 마스크 픽셀 ÷ 0 아닌 픽셀(판 전부)
+    let nz = 0, clip = 0
+    for (let i = 0; i < tip.data.length; i++) { const v = tip.data[i]!; if (v > 0) { nz++; if (v * g >= 1) clip++ } }
+    c.clipShare = nz > 0 ? +(clip / nz).toFixed(4) : 0
   }
   calibs.set(key, c)
   return c
 }
-/** 64-4 — 자국의 팁(눈금 판): 보정 끔이면 원본 · 켬이면 계수 g의 판 */
-function tipFor(name: string, tipName: string, t: TipAtlas): TipAtlas {
+/** 굵기 wPx의 자리(0..1 — 20↔40 로그 축 · 밖은 가까운 점) */
+const wPos = (wPx: number): number => Math.max(0, Math.min(1, (Math.log(Math.max(1, wPx)) - Math.log(20)) / (Math.log(40) - Math.log(20))))
+/** 64-4 — 자국의 팁(눈금 판): 보정 끔이면 원본 · 켬이면 굵기 wPx의 계수(두 점 20·40의 로그 보간 — 판 눈금은 .05 단위로 캐시) */
+function tipFor(name: string, tipName: string, t: TipAtlas, wPx: number): TipAtlas {
   if (tipGainOff || calibOff) return t
-  return scaledTip(t, calib(name, tipName).gain ?? 1)
+  const c = calib(name, tipName)
+  const g20 = c.gain ?? 1, g40 = c.gain40 ?? g20
+  const g = Math.exp(Math.log(g20) + wPos(wPx) * (Math.log(g40) - Math.log(g20)))
+  return scaledTip(t, Math.round(g * 20) / 20)
+}
+/** 64-4 둘째 지렛대 — 굵기 wPx의 도장 밀도 배수(두 점의 로그 보간 · 팁 없음·보정 끔이면 1) */
+function dabKFor(name: string, tipName: string | null, wPx: number): number {
+  if (!tipName || tipGainOff || calibOff) return 1
+  const c = calib(name, tipName)
+  const k20 = c.dabK ?? 1, k40 = c.dabK40 ?? k20
+  return Math.exp(Math.log(k20) + wPos(wPx) * (Math.log(k40) - Math.log(k20)))
 }
 /** 요청 폭(px) → 반지름: 두 점 사이는 로그 보간 · 밖은 가까운 점에서 비례(절편 없음) */
 function radiusFor(c: Calib, wPx: number): number {
@@ -475,7 +529,9 @@ function paintOne(surf: StrokeSurface, m: SeamMark, draft: boolean): Bbox {
   const tipRaw = tipName ? tipAtlas(tipName) : null
   if (tipName && !tipRaw) tipMissing++                    // 아틀라스 미로드 — 절차 타원으로(값으로 남는다 · #105)
   b.setBaseValue(S.RADIUS_LOGARITHMIC, radiusLogFor(name, Math.max(0.5, m.wPx * (t.sizeK ?? 1)), tipRaw ? tipName : null))
-  const tip = tipRaw && tipName ? tipFor(name, tipName, tipRaw) : null   // 64-4 — 농도 눈금 판(보정 열쇠와 같은 프리셋|팁)
+  const tip = tipRaw && tipName ? tipFor(name, tipName, tipRaw, Math.max(0.5, m.wPx * (t.sizeK ?? 1))) : null   // 64-4 — 농도 눈금 판(굵기의 함수 · 보정 열쇠와 같은 프리셋|팁)
+  const dabK = tip && tipName ? dabKFor(name, tipName, Math.max(0.5, m.wPx * (t.sizeK ?? 1))) : 1
+  if (dabK !== 1) applyDabK(b, dabK)                                   // 64-4 둘째 지렛대(희소 판만 — 값은 calib.dabK)
   const [lr, lg, lb] = hexToLinear(m.color)
   const [h, s, v] = rgbToHsv(lr, lg, lb)
   b.setBaseValue(S.COLOR_H, h); b.setBaseValue(S.COLOR_S, s); b.setBaseValue(S.COLOR_V, v)
@@ -496,7 +552,7 @@ function paintOne(surf: StrokeSurface, m: SeamMark, draft: boolean): Bbox {
   b.setRng(rng32(m.seed))
   const paperK = grainOffForTest() || flat ? 0 : (t.paperK ?? TOOL_PAPER[m.tool])
   // 64-2 — 색연필 슬롯: 문턱 판(구멍) · 깊이 1(골 = 알파 0). 슬롯 조정 paperK 0이면 결 없음 그대로.
-  const cpTh = m.tool === 'cp' && paperK > 0 ? cpThresholdOf(pressFlatForTest() ? null : m.press) : null
+  const cpTh = m.tool === 'cp' && paperK > 0 && !cpThresholdOff ? cpThresholdOf(pressFlatForTest() ? null : m.press) : null
   const opts: StrokeOpts = {
     cap: flat ? 1 : TOOL_CAP[m.tool],
     capExact: !flat && m.tool === 'marker',          // 마커 한 획 알파 = C.PAINT_MARKER_ALPHA(46 계약 · 61 그대로)

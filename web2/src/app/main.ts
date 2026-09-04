@@ -2875,7 +2875,7 @@ import {
   setCapOffForTest, setSmudgeSelfSampleForTest, setPremulBreakForTest, setFringeBreakForTest,
   setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET,
   setTipsOffForTest, setTipFrameLockForTest, tipsReadyForTest, tipStatsForTest, resetTipStatsForTest, tipDefaultOfForTest, onTipAssetsLoaded,
-  unknownBrushIdsForTest, setTipGainOffForTest, presetStatsForTest, resetCpTilesForTest,
+  unknownBrushIdsForTest, setTipGainOffForTest, presetStatsForTest, resetCpTilesForTest, setCpThresholdOffForTest,
 } from './mypaintpaint'
 import { setBrushIdOffForTest } from '../core/facetex'
 import { setBrushOfSlot } from '../core/file'
@@ -3004,6 +3004,8 @@ const diag = {
   unknownBrushIdsForTest: () => unknownBrushIdsForTest(),
   /** web2-64 64-4 반증(D-3) — 팁 농도 보정 끔(63의 옅음이 돌아온다) · 보정표는 mypaintCalibForTest(gain·meanTip·meanProc) */
   setTipGainOffForTest: (v: boolean) => { setTipGainOffForTest(v); rebakePaintTexForTest(); invalidate() },
+  /** web2-64 64-2 반증(리뷰어 [H1]) — cp 슬롯의 문턱 판 끔(보통 결로) */
+  setCpThresholdOffForTest: (v: boolean) => { setCpThresholdOffForTest(v); rebakePaintTexForTest(); invalidate() },
   /** web2-64 64-5 — 프리셋 하나의 사상 통계(설정 수 · 곡선 수 · 모르는 설정/입력)와 기준값 몇 */
   presetStatsForTest: (name: string) => presetStatsForTest(name),
   /** 지금 도구 슬롯(칠통) — 고르개·사진 팔이 읽는다 */
@@ -3013,6 +3015,8 @@ const diag = {
   paintSelForTest: () => ({ ...app.paintSel }),
   /** web2-64 — 색을 고른다(패널의 setPaintHex — 견본 줄이 지워진 자리의 팔 통로 · 최근 색에 남는다) */
   setPaintHexForTest: (hex: string) => setPaintHex(hex, ' — 팔'),
+  /** web2-64 — 등급 흑연색(MAT — 잉크펜 기본 색의 대조 · 리뷰어 [H6]) */
+  matColorForTest: (g: string): string => MAT[g as keyof typeof MAT]?.color ?? '',
   /** web2-64 — 재료의 톤 색(palette 그대로 — 46의 (재료, 톤) 사상 · 견본 줄이 지워진 자리의 팔 통로) */
   materialToneForTest: (mat: string, tone: number): string => materialOf(mat as MatId)?.tones[tone] ?? '#000000',
   /** web2-64 — 즐겨찾기·최근 색 읽기(기기 저장 — 값으로) */
