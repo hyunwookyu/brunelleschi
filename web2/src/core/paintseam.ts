@@ -39,6 +39,8 @@ export interface SeamMark {
   preset?: string
   /** web2-62 — 엔진 설정 기준값 덮개(팔·실험실 전용 — 키는 엔진의 설정 이름). 제품 경로는 안 넣는다. */
   over?: Record<string, number>
+  /** web2-63 — 팁 이름('none' = 팁 없음 · 절차 타원). 팔·고르개 견본의 통로 — 제품 굽기는 안 넣는다(슬롯의 팁은 기기 조정 tune). */
+  tip?: string
 }
 
 /** 실험실 손잡이 서술 — 엔진이 제 매개변수를 «데이터»로 내놓는다(작업대가 이것만 읽는다).
@@ -67,6 +69,10 @@ export interface PaintRenderer {
   resetTune?(tool: Instr58): void
   tuneJson?(): string
   loadTune?(json: string | null): void
+  /** web2-63 — 슬롯의 팁(비트맵 도장): 후보 목록 · 지금 값('none' | 이름 | null = 프리셋 기본) · 앉히기 */
+  tipChoices?(): readonly string[]
+  tipOf?(tool: Instr58): string | null
+  setTip?(tool: Instr58, name: string | null): void
 }
 
 let renderer: PaintRenderer | null = null

@@ -21,7 +21,7 @@
 
 import { clamp, rgbToSpectral, spectralToRgb, spectralBlendFactor, LIN2SRGB8 } from './helpers'
 import type { DabSurface } from './brush'
-import { GRAIN_TILE } from './paper'
+import type { TipAtlas } from './tips'
 
 const TILE = 64
 const TILE_SHIFT = 6
@@ -35,10 +35,16 @@ export interface StrokeOpts {
   opacityK: number
   /** 반증 — 캡 끔(libmypaint 원문의 도장 누적) */
   capOff: boolean
-  /** 종이 결 타일(0..1 · 256²) — null이면 결 없음 */
+  /** 종이 결 타일(0..1 · grainN²) — null이면 결 없음 */
   grain: Float32Array | null
+  /** 결 타일의 변(px) — 대상 px를 이것으로 접는다(63: 높이맵 1024 · 61 타일 256) */
+  grainN: number
   /** 결 깊이(0..1) */
   grainDepth: number
+  /** 63 — 팁 아틀라스(null이면 절차 타원 = 62 경로 그대로) */
+  tip: TipAtlas | null
+  /** 63 반증(② 도장 반복) — 판을 하나로 고정(≥ 0) · −1이면 도장마다 난수로 돌려 쓴다 */
+  tipFrameLock: number
   /** 초안 — 닿는 타일 전부를 스냅숏해 끝에 되돌린다 */
   snapshotAll: boolean
   /** 스머지 표집을 획 «전» 스냅숏에서(제품 true · 반증 false = 제 자국을 문다) */
@@ -68,6 +74,9 @@ export class StrokeSurface implements DabSurface {
   private lastStrokeBox: Bbox = emptyBox()
   private readonly snapshot = new Map<number, Float32Array>()
   private readonly touched = new Set<number>()
+  /** 63 진단 — 이 표면이 찍은 팁 도장 수 · 판 히스토그램(길이 = 최대 판 수 8) */
+  tipDabs = 0
+  tipFrames: number[] = [0, 0, 0, 0, 0, 0, 0, 0]
   private mask = new Float32Array(0)
   private maskW = 0
   /** 진단 — 스머지 표집 통계(획 누적) */
@@ -209,6 +218,52 @@ export class StrokeSurface implements DabSurface {
     return { x0, y0, x1, y1 }
   }
 
+  // ── 63 팁 마스크(비트맵) — 절차 타원의 «자리»에 아틀라스 판 하나를 회전·비율·축척으로 표집한다 ──────
+  //   원문 render_dab_mask의 좌표 변환(yyr = (yy·cs − xx·sn)·aspect · xxr = yy·sn + xx·cs)을 그대로 쓰므로
+  //   dab_angle·elliptical_dab_ratio·방향 입력이 팁에도 같은 뜻이다(게이트 ④). 판 좌표 u,v = (xxr/r + 1)/2·S.
+  //   hardness·softness는 팁이 제 알파로 대신한다(팁 판의 값이 곧 감쇠). 판 밖(정사각 밖)은 0.
+  private renderTipMask(x: number, y: number, radius: number, aspectRatio: number, angle: number,
+    tip: TipAtlas, frame: number): Bbox | null {
+    if (aspectRatio < 1) aspectRatio = 1
+    const angleRad = (angle / 360) * 2 * Math.PI
+    const cs = Math.cos(angleRad), sn = Math.sin(angleRad)
+    // 판 대각이 회전하면 반지름 밖으로 나간다 — 상자는 r·√2 + 1
+    const rFringe = radius * 1.4143 + 1.0
+    let x0 = Math.floor(x - rFringe), y0 = Math.floor(y - rFringe)
+    let x1 = Math.floor(x + rFringe), y1 = Math.floor(y + rFringe)
+    const W = this.layer.w, H = this.layer.h
+    if (x0 < 0) x0 = 0
+    if (y0 < 0) y0 = 0
+    if (x1 > W - 1) x1 = W - 1
+    if (y1 > H - 1) y1 = H - 1
+    if (x1 < x0 || y1 < y0) return null
+    const bw = x1 - x0 + 1, bh = y1 - y0 + 1
+    if (this.mask.length < bw * bh) this.mask = new Float32Array(bw * bh)
+    this.maskW = bw
+    const m = this.mask
+    const S = tip.size, fo = frame * S * S, d = tip.data
+    const half = 0.5 * S, oneOverR = 1 / radius
+    for (let yp = y0; yp <= y1; yp++) {
+      for (let xp = x0; xp <= x1; xp++) {
+        const yy = yp + 0.5 - y, xx = xp + 0.5 - x
+        const yyr = (yy * cs - xx * sn) * aspectRatio
+        const xxr = yy * sn + xx * cs
+        const u = (xxr * oneOverR + 1) * half - 0.5
+        const v = (yyr * oneOverR + 1) * half - 0.5
+        let opa = 0
+        if (u > -1 && v > -1 && u < S && v < S) {
+          // 쌍선형(가장자리 밖은 0으로 본다 — 판이 가운데 패드라 실제 값도 0이다)
+          const ui = Math.floor(u), vi = Math.floor(v)
+          const fu = u - ui, fv = v - vi
+          const at = (i: number, j: number): number => (i < 0 || j < 0 || i >= S || j >= S) ? 0 : d[fo + j * S + i]!
+          opa = at(ui, vi) * (1 - fu) * (1 - fv) + at(ui + 1, vi) * fu * (1 - fv) + at(ui, vi + 1) * (1 - fu) * fv + at(ui + 1, vi + 1) * fu * fv
+        }
+        m[(yp - y0) * bw + (xp - x0)] = opa
+      }
+    }
+    return { x0, y0, x1, y1 }
+  }
+
   // ── 도장(draw_dab_internal + process_op 원문 — 블렌드 선택·불투명 몫 그대로) ────────
 
   drawDab(
@@ -238,7 +293,15 @@ export class StrokeSurface implements DabSurface {
     const normal = (1 - lockAlpha) * (1 - colorize) * (1 - posterize)
     if (aspectRatio < 1) aspectRatio = 1
 
-    const box = this.renderDabMask(x, y, radius, hardness, softness, aspectRatio, angle)
+    let box: Bbox | null
+    if (o.tip) {
+      const n = o.tip.n
+      const frame = o.tipFrameLock >= 0 ? Math.min(n - 1, o.tipFrameLock) : Math.min(n - 1, Math.floor(o.rng() * n))
+      box = this.renderTipMask(x, y, radius, aspectRatio, angle, o.tip, frame)
+      if (box) { this.tipDabs++; this.tipFrames[frame] = (this.tipFrames[frame] ?? 0) + 1 }
+    } else {
+      box = this.renderDabMask(x, y, radius, hardness, softness, aspectRatio, angle)
+    }
     if (!box) return false
     this.dabs++
     // 스냅숏(닿는 타일) — 초안이거나 스머지 표집이 켜진 획
@@ -261,7 +324,7 @@ export class StrokeSurface implements DabSurface {
     const capBase = o.capExact ? clamp(o.cap * o.opacityK, 0, 1) : Math.min(clamp(capTarget * o.opacityK, 0, 1), o.cap)
     if (capBase > this.maxCap) this.maxCap = capBase
     const capOff = o.capOff
-    const grain = o.grain, depth = o.grainDepth
+    const grain = o.grain, depth = o.grainDepth, gN = o.grainN
     const d = this.layer.data, cov = this.coverage, mask = this.mask, mw = this.maskW
 
     // 스펙트럼(paint) 경로의 도장 색 — 한 번만(원문: 루프 밖)
@@ -271,12 +334,12 @@ export class StrokeSurface implements DabSurface {
     const PAINT_MIN_OPA = 150 / 32768
 
     for (let yp = box.y0; yp <= box.y1; yp++) {
-      const gRow = grain ? (yp % GRAIN_TILE) * GRAIN_TILE : 0
+      const gRow = grain ? (yp % gN) * gN : 0
       for (let xp = box.x0; xp <= box.x1; xp++) {
         const m = mask[(yp - box.y0) * mw + (xp - box.x0)]!
         if (m <= 0) continue
         const pi = yp * W + xp
-        const g = grain ? 1 - depth * grain[gRow + (xp % GRAIN_TILE)]! : 1
+        const g = grain ? 1 - depth * grain[gRow + (xp % gN)]! : 1
         // 도장 알파(정규 모드 기준) — 덮임의 걸음
         const aDab = m * opaque * g
         let k: number            // 이 픽셀에서 실제로 얹는 몫(0..1) — 캡이 깎는다

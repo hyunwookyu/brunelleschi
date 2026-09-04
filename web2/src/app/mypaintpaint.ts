@@ -26,7 +26,8 @@ import { Layer, StrokeSurface, type Bbox, type StrokeOpts } from '../mypaint/sur
 import { PRESETS, PRESET_GROUPS, PRESET_SKIPPED_INPUTS, type Preset } from '../mypaint/presets.gen'
 import { SETTINGS, INPUTS, S } from '../mypaint/settings.gen'
 import { hexToLinear, rgbToHsv } from '../mypaint/helpers'
-import { grainTile, GRAIN_DEPTH } from '../mypaint/paper'
+import { grainTile, grainTileN, grainSource, GRAIN_DEPTH, setPaperHeightTile, paperHeightLoaded } from '../mypaint/paper'
+import { tipAtlas, tipsReady, tipsLoadError, paperHeightTile, TIP_CHOICES, type TipAtlas } from '../mypaint/tips'
 
 /** 엔진(brush.ts·surface.ts)이 읽는 설정 수 — 65 중 64(restore_color는 원문 mypaint-brush.c도 안 읽는다 · 앱의 것).
  *  단위(mypaint62b.test)가 소스를 훑어 이 수와 대조한다 — 게이트 ⑥ «사상»의 값(원장 probe.mapping.engine_reads). */
@@ -71,6 +72,28 @@ interface Tune {
   scatterK?: number      // 산포 배수(offset_by_random ×)
   smudgeK?: number       // 스머지 배수(smudge ×)
   paperK?: number        // 종이 결 깊이 배수(0 = 없음)
+  tip?: string           // web2-63 — 슬롯의 팁('none' = 절차 타원 · 이름 = 아틀라스 · 없으면 프리셋 기본 표)
+}
+
+// ── web2-63 팁 기본 표(프리셋 → 팁) — 마른 매체만. 잉크·마커·에어브러시·둥근 붓은 팁 없음(62 경로 = ⑤ 무회귀 대상) ──
+//   정확 이름이 먼저, 없으면 이름 무늬. 슬롯 조정(tune.tip)이 있으면 그것이 이긴다.
+const TIP_EXACT: Record<string, string> = {
+  'classic/charcoal': 'chalk-chisel', 'tanda/charcoal-01': 'chalk-chisel', 'tanda/charcoal-03': 'chalk-chisel', 'tanda/charcoal-04': 'chalk-chisel',
+  'ramon/Pastel_1': 'rock-pitted', 'deevad/chalk': 'rock-pitted',
+  'classic/dry_brush': 'scratches-rough',
+  'ramon/B-pencil': 'scratches2',            // 색연필 슬롯 기본(빗금 이빨)
+}
+export function tipDefaultOf(preset: string): string | null {
+  const e = TIP_EXACT[preset]
+  if (e) return e
+  if (/pencil/i.test(preset)) return 'fine-grain'
+  return null
+}
+/** 자국의 팁 이름을 푼다(값으로 — 진단·보정 열쇠): mark.tip > 슬롯 조정 > 프리셋 기본 · 'none'/null = 없음 */
+function tipNameFor(m: { tool: Instr58; tip?: string }, preset: string): string | null {
+  if (tipsOff) return null
+  const pick = m.tip !== undefined ? m.tip : (tune[m.tool]?.tip !== undefined ? tune[m.tool]!.tip! : tipDefaultOf(preset))
+  return pick === null || pick === 'none' || pick === undefined ? null : pick
 }
 const MUL_KEYS = ['sizeK', 'opacityK', 'spacingK', 'scatterK', 'smudgeK', 'paperK'] as const
 const tune: Partial<Record<Instr58, Tune>> = {}
@@ -99,6 +122,14 @@ export function setEventDtimeForTest(ms: number | null): void { eventDtimeMs = m
  *  프리셋의 마스크·산포에 따라 반최대 폭이 요청에서 벗어나야 한다(벗어나면 보정이 «무엇인가를 한다»는 실증). */
 let calibOff = false
 export function setCalibOffForTest(v: boolean): void { calibOff = v }
+/** 63 반증 — 팁 전부 끔(절차 타원 = 62 경로) */
+let tipsOff = false
+export function setTipsOffForTest(v: boolean): void { tipsOff = v }
+/** 63 반증(② 도장 반복) — 판 고정(≥ 0) · −1 = 돌려 쓴다 */
+let tipFrameLock = -1
+export function setTipFrameLockForTest(v: number): void { tipFrameLock = v }
+/** 63 진단 — 팁 로드 상태·계수기(#105: 폴백은 값으로 보인다) */
+let tipMissing = 0
 /** 층 추적(진단) — 마지막으로 그린 캔버스의 표면 */
 let lastSurface: StrokeSurface | null = null
 /** 진단 — draw(초안 통로)는 층을 되돌리므로, 팔이 켜면 되돌리기 «전» 알파 지도를 떠 둔다 */
@@ -182,7 +213,7 @@ const calibs = new Map<string, Calib>()
 const CAL_W = 512, CAL_H = 192, CAL_R1 = 6, CAL_R2 = 24
 let calSurface: StrokeSurface | null = null
 
-function measureHalfMaxWidth(name: string, radius: number): number {
+function measureHalfMaxWidth(name: string, radius: number, tip: TipAtlas | null): number {
   if (!calSurface) calSurface = new StrokeSurface(new Layer(CAL_W, CAL_H))
   const surf = calSurface
   surf.layer.clear()
@@ -192,17 +223,20 @@ function measureHalfMaxWidth(name: string, radius: number): number {
   // 색은 검정 — 폭은 알파로 잰다
   l.brush.setBaseValue(S.COLOR_H, 0); l.brush.setBaseValue(S.COLOR_S, 0); l.brush.setBaseValue(S.COLOR_V, 0)
   l.brush.setRng(rng32(62))
-  surf.beginStroke({ cap: 1, capExact: false, opacityK: 1, capOff: false, grain: null, grainDepth: 0, snapshotAll: false, smudgeSnapshot: true, rng: rng32(63) })
+  surf.beginStroke({ cap: 1, capExact: false, opacityK: 1, capOff: false, grain: null, grainN: 1, grainDepth: 0, snapshotAll: false, smudgeSnapshot: true, rng: rng32(63), tip, tipFrameLock: -1 })
   runStroke(l.brush, surf, Array.from({ length: 61 }, (_, k) => ({ x: 40 + (k / 60) * 432, y: CAL_H / 2 })), null, 0.5)
   surf.endStroke()
   restoreBase(l)
   const a = surf.alphaMap()
   const widths: number[] = []
+  // 63: 팁 판은 희소(구멍·점열)라 «반최대 폭»이 판의 몇 픽셀만 세어 반지름을 부풀린다(파스텔 실측 — 폭 20 요청이 판 폭 3배로) →
+  //   팁이면 «범위 폭»(열 최대의 25% 위 — 10%는 부드러운 판의 발치까지 세어 요청 폭 20이 반최대 10으로 보였다 · 실측)을 잰다. 절차 타원은 62의 반최대 그대로(⑤ 무회귀). 어느 자였는지는 calib_def에.
+  const frac = tip ? 0.25 : 0.5
   for (let x = 120; x < 392; x += 2) {
     let mx = 0
     for (let y = 0; y < CAL_H; y++) mx = Math.max(mx, a[y * CAL_W + x]!)
     if (mx < 0.02) continue
-    const th = mx / 2
+    const th = mx * frac
     let n = 0
     for (let y = 0; y < CAL_H; y++) if (a[y * CAL_W + x]! > th) n++
     widths.push(n)
@@ -210,17 +244,20 @@ function measureHalfMaxWidth(name: string, radius: number): number {
   widths.sort((p, q) => p - q)
   return widths.length ? widths[Math.floor(widths.length / 2)]! : 0
 }
-function calib(name: string): Calib {
-  const hit = calibs.get(name)
+function calib(name: string, tipName: string | null = null): Calib {
+  // 63: 열쇠에 팁이 든다(같은 프리셋도 팁이 다르면 반최대 폭이 다르다 — #105) · 아틀라스가 아직 없으면 절차 판의 열쇠
+  const tip = tipName ? tipAtlas(tipName) : null
+  const key = tip ? name + '|' + tipName : name
+  const hit = calibs.get(key)
   if (hit) return hit
-  const w1 = measureHalfMaxWidth(name, CAL_R1), w2 = measureHalfMaxWidth(name, CAL_R2)
+  const w1 = measureHalfMaxWidth(name, CAL_R1, tip), w2 = measureHalfMaxWidth(name, CAL_R2, tip)
   const ok = w1 > 0 && w2 > 0
   // a·b는 기록(두 점의 기울기·절편 — 산포 붓의 절편이 얼마나 큰지 원장이 본다) · 되풀이는 아래 radiusFor
   const a = (w2 - w1) / (CAL_R2 - CAL_R1)
   const b = w1 - a * CAL_R1
   // ⚠ #105 — 실패는 그럴듯한 값이 아니라 표식이다: ok:false면 반지름 = 폭/2(기하 그대로)를 쓰되 표에 남긴다
   const c: Calib = { a, b, ok, w1, w2 }
-  calibs.set(name, c)
+  calibs.set(key, c)
   return c
 }
 /** 요청 폭(px) → 반지름: 두 점 사이는 로그 보간 · 밖은 가까운 점에서 비례(절편 없음) */
@@ -232,11 +269,32 @@ function radiusFor(c: Calib, wPx: number): number {
   return Math.exp(Math.log(CAL_R1) + t * (Math.log(CAL_R2) - Math.log(CAL_R1)))
 }
 /** 요청 폭(px) → radius_logarithmic 기준값 */
-function radiusLogFor(name: string, wPx: number): number {
+function radiusLogFor(name: string, wPx: number, tipName: string | null = null): number {
   if (calibOff) return Math.log(Math.max(0.15, wPx / 2))
-  return Math.log(radiusFor(calib(name), wPx))
+  return Math.log(radiusFor(calib(name, tipName), wPx))
 }
 export const calibForTest = (): Record<string, Calib> => Object.fromEntries(calibs)
+
+// ── web2-63 팁·종이 진단·배선 ─────────────────────────────────────────────────────
+/** 부팅 로드 뒤 한 번(main) — 종이 높이맵을 paper.ts에 꽂고 보정표를 비운다(팁이 있는 열쇠가 새로 선다) */
+export function onTipAssetsLoaded(): void {
+  const p = paperHeightTile()
+  if (p && !paperHeightLoaded()) setPaperHeightTile(p.data, p.n)
+  calibs.clear()
+}
+export function tipsReadyForTest(): { ready: boolean; error: string | null; paper: string; missing: number } {
+  return { ready: tipsReady(), error: tipsLoadError(), paper: grainSource(), missing: tipMissing }
+}
+/** 마지막 표면의 팁 계수기(도장 수 · 판 히스토그램) + 푼 팁 이름(도구별 기본) */
+export function tipStatsForTest(): { dabs: number; frames: number[]; missing: number; defaults: Record<string, string | null> } {
+  const s = lastSurface
+  const defaults: Record<string, string | null> = {}
+  for (const tl of ['pencil', 'cp', 'marker', 'brush'] as Instr58[]) defaults[tl] = tipNameFor({ tool: tl }, tune[tl]?.base ?? DEFAULT_PRESET[tl])
+  return { dabs: s?.tipDabs ?? 0, frames: s ? [...s.tipFrames] : [], missing: tipMissing, defaults }
+}
+export function resetTipStatsForTest(): void { const s = lastSurface; if (s) { s.tipDabs = 0; s.tipFrames.fill(0) } }
+/** 프리셋의 팁 이름(기본 표 · 슬롯 조정 무시) — 팔이 «누가 팁을 받는가»를 값으로 본다 */
+export const tipDefaultOfForTest = (preset: string): string | null => tipDefaultOf(preset)
 
 function restoreBase(l: Loaded): void {
   for (let i = 0; i < SETTINGS.length; i++) l.brush.settings[i]!.baseValue = l.base[i]!
@@ -288,7 +346,10 @@ function paintOne(surf: StrokeSurface, m: SeamMark, draft: boolean): Bbox {
   restoreBase(l)
   const b = l.brush
   // 크기(자가 보정 위에 배수) · 색(선형광 → HSV 기준값)
-  b.setBaseValue(S.RADIUS_LOGARITHMIC, radiusLogFor(name, Math.max(0.5, m.wPx * (t.sizeK ?? 1))))
+  const tipName = flat ? null : tipNameFor(m, name)
+  const tip = tipName ? tipAtlas(tipName) : null
+  if (tipName && !tip) tipMissing++                       // 아틀라스 미로드 — 절차 타원으로(값으로 남는다 · #105)
+  b.setBaseValue(S.RADIUS_LOGARITHMIC, radiusLogFor(name, Math.max(0.5, m.wPx * (t.sizeK ?? 1)), tip ? tipName : null))
   const [lr, lg, lb] = hexToLinear(m.color)
   const [h, s, v] = rgbToHsv(lr, lg, lb)
   b.setBaseValue(S.COLOR_H, h); b.setBaseValue(S.COLOR_S, s); b.setBaseValue(S.COLOR_V, v)
@@ -301,7 +362,8 @@ function paintOne(surf: StrokeSurface, m: SeamMark, draft: boolean): Bbox {
   if (t.scatterK !== undefined && t.scatterK !== 1) b.setBaseValue(S.OFFSET_BY_RANDOM, b.getBaseValue(S.OFFSET_BY_RANDOM) * t.scatterK)
   if (t.smudgeK !== undefined && t.smudgeK !== 1) b.setBaseValue(S.SMUDGE, b.getBaseValue(S.SMUDGE) * t.smudgeK)
   // 반증·팔 덮개(설정 기준값 — 이름은 brushsettings의 internal_name)
-  if (m.over) for (const [k, val] of Object.entries(m.over)) { const si = SETTING_IDX.get(k); if (si !== undefined) b.setBaseValue(si, val) }
+  // #108(web2-63): 팔·실험실 전용 통로라 관용이 필요 없다 — 모르는 키는 던진다(dab_angle 오타가 조용히 무시돼 게이트 ④가 항등이 됐다)
+  if (m.over) for (const [k, val] of Object.entries(m.over)) { const si = SETTING_IDX.get(k); if (si === undefined) throw new Error(`mypaint over: 모르는 설정 키 ${k}(원문 이름은 settings.gen.ts)`); b.setBaseValue(si, val) }
   if (paintModeOff) b.setBaseValue(S.PAINT_MODE, 0)
   if (smudgeOff) b.setBaseValue(S.SMUDGE, 0)
   if (flat) { b.setBaseValue(S.OPAQUE, 1); b.setBaseValue(S.HARDNESS, 1); b.setBaseValue(S.OPAQUE_LINEARIZE, 0) }
@@ -313,7 +375,10 @@ function paintOne(surf: StrokeSurface, m: SeamMark, draft: boolean): Bbox {
     opacityK: flat ? 1 : (t.opacityK ?? 1),
     capOff: capOffOverride,
     grain: paperK > 0 ? grainTile() : null,
+    grainN: grainTileN(),
     grainDepth: Math.min(1, GRAIN_DEPTH * paperK),
+    tip,
+    tipFrameLock,
     snapshotAll: draft,
     smudgeSnapshot: !smudgeSelfOverride,
     rng: rng32(m.seed ^ 0x5bd1e995),
@@ -398,6 +463,12 @@ export const mypaintRenderer: PaintRenderer = {
   setParam: (tool, key, value) => { tune[tool] = { ...tune[tool], [key]: value } },
   resetTune: (tool) => { delete tune[tool] },
   tuneJson: () => JSON.stringify(tune),
+  tipChoices: () => TIP_CHOICES,
+  tipOf: (tool) => tune[tool]?.tip ?? null,
+  setTip: (tool, name) => {
+    if (name === null) { const t = { ...tune[tool] }; delete t.tip; tune[tool] = t }
+    else if (name === 'none' || TIP_CHOICES.includes(name)) tune[tool] = { ...tune[tool], tip: name }
+  },
   loadTune: (json) => {
     for (const k of Object.keys(tune)) delete tune[k as Instr58]
     if (!json) return
@@ -410,6 +481,7 @@ export const mypaintRenderer: PaintRenderer = {
         const out: Tune = {}
         for (const [key, val] of Object.entries(v)) {
           if (key === 'base' && typeof val === 'string' && PRESET_BY_NAME.has(val)) out.base = val
+          else if (key === 'tip' && typeof val === 'string' && (val === 'none' || TIP_CHOICES.includes(val))) out.tip = val
           else if ((MUL_KEYS as readonly string[]).includes(key) && typeof val === 'number' && Number.isFinite(val))
             (out as Record<string, number>)[key] = val
         }
