@@ -20,7 +20,8 @@ import { paintSideAt } from '../core/paint'
 import { borderQuads } from '../core/border'
 import { vkey } from '../core/joint'
 import { norm3, add3, mul3, type V3 } from '../core/vec'
-import { uvBoxOf, texLevel, bakeFaceTex, drawDraftOnTex, type UvBox, type RepBake } from '../core/facetex'
+import { uvBoxOf, texLevel, bakeFaceTex, drawDraftOnTex, appendMarkOnTex, type UvBox, type RepBake } from '../core/facetex'
+import { paintLayerAlive, releasePaintLayer, type MarkBox } from '../core/paintseam'
 import { faceHatchSpacingWorld } from '../core/hatch'
 import type { Grade, Stroke, Face } from '../core/types'
 
@@ -470,9 +471,171 @@ interface PaintTexEntry {
    *  밀도 하한(REP_MIN_PX)이 계열을 갈랐으면 다시 굽는다(49 gateRep의 매 프레임 판정을
    *  굽기 세계로 옮긴 것). */
   famBits: number
+  // ── web2-65 — «언제 굽는가»의 상태(굽는 «방법»은 한 줄도 안 바뀐다) ──────────────
+  /** 이 텍스처가 **구워 든** 확정 획의 서명(차례 = 굽힌 차례). 다음 목록이 이것의 앞자리
+   *  그대로 + 뒤에 더면 «새 것만 얹는다»(누적). 아니면 전량 재굽기다. */
+  sigs: string[]
+  /** 굽기 **조건**의 서명(단계·계열·해칭·재료·uv 상자). 갈리면 전량 재굽기다.
+   *  ⚠ 여기 안 든 것이 굽기를 바꾸면 «낡은 그림»이 남는다 — 게이트 ⑤가 전수로 지킨다. */
+  bakeSig: string
+  /** 마지막으로 획 목록을 읽은 문서 열쇠(paintKey). 같으면 다시 안 읽는다 — 매 프레임 O(N) 금지 */
+  docKey: string
+  /** 획 **없는** 바탕(흰 + 재료 + 해칭)의 사본. 누적 얹기가 더티 사각을 여기서 되깐다.
+   *  없으면 누적을 못 한다(전량 재굽기로 떨어진다). */
+  bg: HTMLCanvasElement | null
+  /** ⑤ LRU — 마지막으로 «보인» 프레임 눈금 */
+  tick: number
+  /** ⑤ 상한에서 버려진 상태(캔버스 0 · 층 놓음). 다시 «보이면» 그때 다시 굽는다 */
+  evicted: boolean
 }
 let paintTexes = new Map<string, PaintTexEntry>()
 let paintKey = ''
+
+// ── web2-65 굽기 계수기(D-1 표식) — «언제 몇 획을 다시 굽는가»를 값으로 낸다 ───────────
+// 왜 여기인가: 지시 65의 진단이 「N번째 획 = N개 재굽기」이고, 그 주장은 **재굽힌 획 수**로만
+// 확인·반증된다(수리 전 판 = pre 원장 · 게이트 ③이 같은 자를 쓴다). 시간(ms)은 기기마다
+// 다르므로 «획 수»가 정본이고 ms는 곁값이다(#12 — 동작점 하나로 주장하지 않는다).
+export interface PaintBakeStat {
+  /** 전량 재굽기 횟수(bakeFaceTex 호출) */ bakes: number
+  /** 그 재굽기들이 다시 그린 획의 합 */ bakedStrokes: number
+  /** 누적 얹기(65) 횟수 — 수리 전에는 0이다 */ appends: number
+  /** 얹기로 그린 획 수 */ appendStrokes: number
+  /** 텍스처 업로드 횟수 */ uploads: number
+  /** 텍스처 업로드 바이트(전량 = w·h·4 · 부분 = 더티 사각) */ uploadBytes: number
+  /** 굽기·얹기에 든 시간(ms — 곁값) */ ms: number
+  /** 항목(메시·기하·재질·텍스처)을 버린 횟수 */ drops: number
+  /** 항목의 기하를 다시 세운 횟수 */ rebuilds: number
+  /** syncPaintTex가 실제로 일한 횟수(열쇠가 갈린 프레임) */ syncs: number
+  /** ⑤ 상한에서 «안 보이는 면»을 버린 횟수 */ evicts: number
+  /** 캔버스 크기가 바뀌어 GPU 텍스처를 다시 할당시킨 횟수(아래 ⚠⚠ — 0이면 옛 그림이 늘어난다) */ texReallocs: number
+}
+const zeroBakeStat = (): PaintBakeStat => ({
+  bakes: 0, bakedStrokes: 0, appends: 0, appendStrokes: 0,
+  uploads: 0, uploadBytes: 0, ms: 0, drops: 0, rebuilds: 0, syncs: 0, evicts: 0, texReallocs: 0,
+})
+let bakeStat: PaintBakeStat = zeroBakeStat()
+export function paintBakeStats(): PaintBakeStat & { entries: number; bytes: number; budget: number; accum: boolean; partial: boolean } {
+  return {
+    ...bakeStat, ms: Math.round(bakeStat.ms * 100) / 100, entries: paintTexes.size,
+    bytes: paintTexBytes(), budget: texBudget, accum: !paintAccumOff, partial: !paintPartialOff,
+  }
+}
+export function resetPaintBakeStats(): void { bakeStat = zeroBakeStat() }
+
+// ── web2-65 ⑥ 반증 스위치(D-3 · e2e 전용 — 제품 경로는 안 부른다) ────────────────────
+/** 누적을 끈다 → pre의 O(N)이 돌아온다(재굽힌 «획 수»가 그 반증의 값이다) */
+let paintAccumOff = false
+export function setPaintAccumOffForTest(v: boolean): void {
+  paintAccumOff = v
+  for (const e of paintTexes.values()) { e.bakeSig = ''; e.level = 0; if (v) e.bg = null }
+}
+export const paintAccumOffForTest = (): boolean => paintAccumOff
+/** 부분 업로드를 끈다 → 업로드 바이트가 전량으로 돌아간다(픽셀은 같아야 한다 — ④의 반증) */
+let paintPartialOff = false
+export function setPaintPartialOffForTest(v: boolean): void { paintPartialOff = v }
+
+// ── web2-65 ⑤ 메모리 상한과 LRU ──────────────────────────────────────────────────
+let texBudget = C.PAINT65_TEX_BUDGET_BYTES
+let paintTick = 0
+/** 팔 전용 — 상한을 낮춰 축출을 «실제로» 일으킨다(게이트 ⑦) */
+export function setPaintTexBudgetForTest(bytes: number): void { texBudget = bytes }
+/** 지금 서 있는 칠 텍스처 캔버스의 바이트(표시 캔버스 + 바탕 사본) */
+function paintTexBytes(): number {
+  let n = 0
+  for (const e of paintTexes.values()) {
+    n += e.canvas.width * e.canvas.height * 4
+    if (e.bg) n += e.bg.width * e.bg.height * 4
+  }
+  return n
+}
+
+// ── web2-65 — 획 하나의 서명(굽기에 드는 것 전부). 값을 «비트»로 센다: 반올림하면 작은
+// 편집이 서명에 안 남아 낡은 그림이 산다. 문서가 갈릴 때만 돈다(매 프레임 아니다).
+const SIG_F64 = new Float64Array(1)
+const SIG_I32 = new Int32Array(SIG_F64.buffer)
+function sigHashNum(h: number, v: number): number {
+  SIG_F64[0] = v
+  h = (Math.imul(h, 0x01000193) ^ SIG_I32[0]!) | 0
+  return (Math.imul(h, 0x01000193) ^ SIG_I32[1]!) | 0
+}
+function sigOfPaintStroke(s: Stroke): string {
+  const p = s.paint!
+  const uv = p.uv!
+  let h = 0x811c9dc5 | 0
+  for (let i = 0; i < uv.length; i++) h = sigHashNum(h, uv[i]!)
+  if (p.press) for (let i = 0; i < p.press.length; i++) h = sigHashNum(h, p.press[i]!)
+  return `${s.id}.${h}.${uv.length}.${p.press?.length ?? -1}.${p.w ?? ''}.${p.c ?? ''}.${p.o ?? ''}.${p.br ?? ''}.${p.i ?? ''}.${s.mat?.grade ?? ''}`
+}
+/** a가 b의 «앞자리 그대로»인가(누적의 전제 — 앞을 고쳤으면 전량이다) */
+function sigsArePrefix(a: string[], b: string[]): boolean {
+  if (a.length > b.length) return false
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false
+  return true
+}
+const boxSig = (b: UvBox): string =>
+  `${b.u0},${b.u1},${b.v0},${b.v1},${b.basis.origin.x},${b.basis.origin.y},${b.basis.origin.z},${b.basis.u.x},${b.basis.u.y},${b.basis.u.z},${b.basis.v.x},${b.basis.v.y},${b.basis.v.z}`
+const sameF32 = (a: ArrayLike<number>, b: ArrayLike<number>): boolean => {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false
+  return true
+}
+
+/** 항목 하나를 **버린다**(없어진 (면,쪽) · 축출) — 메시·기하·재질·텍스처·층까지 */
+function dropPaintTex(r: R3D, e: PaintTexEntry): void {
+  r.paintGroup.remove(e.mesh)
+  e.mesh.geometry.dispose()
+  ;(e.mesh.material as THREE.Material).dispose()
+  e.tex.dispose()
+  releasePaintLayer(e.canvas)
+  bakeStat.drops++
+}
+
+/** web2-65 ② — 항목을 세우거나 **그 자리에서 고친다**. 캔버스·텍스처·구운 상태는 산다.
+ *  기하(정점·uv)가 갈리면 속성만 갈아 끼우고, uv 상자가 갈리면 굽기 서명을 지워 전량으로 보낸다. */
+function putPaintTex(
+  r: R3D, key: string, faceId: number, side: 1 | -1 | 0 | 'e',
+  pos: Float32Array, uv: Float32Array, box: UvBox, centroid: { x: number; y: number; z: number },
+): void {
+  const old = paintTexes.get(key)
+  if (old) {
+    const g0 = old.mesh.geometry
+    const ap = g0.getAttribute('position') as THREE.BufferAttribute
+    const au = g0.getAttribute('uv') as THREE.BufferAttribute
+    if (!sameF32(ap.array as Float32Array, pos) || !sameF32(au.array as Float32Array, uv)) {
+      g0.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+      g0.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
+      g0.computeBoundingSphere()
+      bakeStat.rebuilds++
+    }
+    old.mesh.userData.centroid = centroid
+    if (boxSig(old.box) !== boxSig(box)) { old.box = box; old.bakeSig = ''; old.level = 0 }
+    return
+  }
+  const g = new THREE.BufferGeometry()
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
+  const canvas = document.createElement('canvas')     // 화면 밖 — DOM에 안 붙는다(#97)
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.colorSpace = THREE.SRGBColorSpace
+  // ⚠⚠ three r185: MultiplyBlending은 **premultipliedAlpha: true를 요구한다** — 없으면
+  // WebGLState가 blend 상태를 안 세팅하고 조용히 over로 그려진다(콘솔 error 한 줄뿐).
+  // 실측으로 잡았다: 곱/보통 스위치가 픽셀에 안 실렸고 벽 패치가 두 모드 다 순백이었다.
+  // premultiplied 규약의 곱은 blendFuncSeparate(DST_COLOR, 1-SRC_A, ZERO, ONE) —
+  // 불투명 텍셀(a=1)에서 정확히 dst×src이고 알파는 dst 그대로다.
+  const mat = new THREE.MeshBasicMaterial({
+    map: tex, premultipliedAlpha: true,
+    blending: paintBlendNormalForTest ? THREE.NormalBlending : THREE.MultiplyBlending,
+    transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide,
+  })
+  const mesh = new THREE.Mesh(g, mat)
+  mesh.userData.faceId = faceId
+  mesh.userData.centroid = centroid
+  r.paintGroup.add(mesh)
+  paintTexes.set(key, {
+    canvas, tex, mesh, box, faceId, side, level: 0, base: null, famBits: -1,
+    sigs: [], bakeSig: '', docKey: '', bg: null, tick: 0, evicted: false,
+  })
+}
 
 /** 이 (면, 쪽)의 칠 획들 — 굽기 입력. 차례는 문서 차례(그린 차례 = 쌓인 차례)다. */
 function paintStrokesOf(app: App, faceId: number, side: 1 | -1): Stroke[] {
@@ -511,13 +674,11 @@ function syncPaintTex(r: R3D, app: App) {
   const key = `${app.docVersion}|${getHatchMode()}|${draftOnlyTargets(app)}`
   if (key === paintKey) return
   paintKey = key
-  for (const e of paintTexes.values()) {
-    r.paintGroup.remove(e.mesh)
-    e.mesh.geometry.dispose()
-    ;(e.mesh.material as THREE.Material).dispose()
-    e.tex.dispose()
-  }
-  paintTexes = new Map()
+  bakeStat.syncs++
+  // web2-65 ② — **항목을 폐기하지 않는다.** 여기서 하는 일은 «어느 (면,쪽)이 서는가»와
+  // 메시의 «형태»뿐이고, 캔버스·텍스처·구운 획은 그대로 산다. 무엇을 다시 구울지는
+  // gatePaintTex가 «그 (면,쪽)의 조건과 획 목록»으로 정한다(#110 — docVersion은 무효화
+  // 신호이지 캐시 열쇠가 아니다).
   // 어느 (면, 쪽)에 텍스처가 서는가 — ① 칠 획이 있는 쪽 ② 면 고정 해칭(fill=1 ·
   // hatchMode 'face')은 칠이 있으면 그 쪽 텍스처들에 깔리고, 칠이 없으면 쪽 0 하나.
   const hatchFaceMode = getHatchMode() === 'face'
@@ -546,6 +707,18 @@ function syncPaintTex(r: R3D, app: App) {
   for (const st of [...app.doc.strokes, ...(app.paintDraft ?? [])]) {
     if (st.paint?.e !== 1 || st.paint.uv === undefined || st.paint.uv.length < 4) continue
     wants.set(`${st.paint.f}:e`, { faceId: st.paint.f, side: 'e' })
+  }
+  // 없어진 (면, 쪽)만 뺀다 — 남는 것은 아래에서 «그 자리에서» 고친다(putPaintTex).
+  // 못 풀린 면(tris < 3)도 여기서 빠진다: 아래 만들기 고리가 그 면을 건너뛰기 때문이다.
+  const live = new Set<string>()
+  for (const [k, w] of wants) {
+    const rf0 = app.faces.find(x => x.id === w.faceId)
+    if (rf0 && rf0.tris.length >= 3) live.add(k)
+  }
+  for (const [k, e] of [...paintTexes]) {
+    if (live.has(k)) continue
+    dropPaintTex(r, e)
+    paintTexes.delete(k)
   }
   for (const w of wants.values()) {
     const rf = app.faces.find(x => x.id === w.faceId)
@@ -585,24 +758,7 @@ function syncPaintTex(r: R3D, app: App) {
         put(af, q.s0, tW); put(bf, q.s0 + q.len, tW); put(bb, q.s0 + q.len, 0)
         put(af, q.s0, tW); put(bb, q.s0 + q.len, 0); put(ab, q.s0, 0)
       }
-      const g = new THREE.BufferGeometry()
-      g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-      g.setAttribute('uv', new THREE.BufferAttribute(uvA, 2))
-      const canvas = document.createElement('canvas')
-      const tex = new THREE.CanvasTexture(canvas)
-      tex.colorSpace = THREE.SRGBColorSpace
-      const mat = new THREE.MeshBasicMaterial({
-        map: tex, premultipliedAlpha: true,
-        blending: paintBlendNormalForTest ? THREE.NormalBlending : THREE.MultiplyBlending,
-        transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide,
-      })
-      const mesh = new THREE.Mesh(g, mat)
-      mesh.userData.faceId = w.faceId
-      mesh.userData.centroid = { x: cx / k, y: cy / k, z: cz / k }
-      r.paintGroup.add(mesh)
-      paintTexes.set(`${w.faceId}:e`, {
-        canvas, tex, mesh, box, faceId: w.faceId, side: 'e', level: 0, base: null, famBits: -1,
-      })
+      putPaintTex(r, `${w.faceId}:e`, w.faceId, 'e', pos, uvA, box, { x: cx / k, y: cy / k, z: cz / k })
       continue
     }
     const off55 = slots ? (w.side === -1 ? slots.backW : w.side === 1 ? slots.frontW : 0) : 0
@@ -622,29 +778,8 @@ function syncPaintTex(r: R3D, app: App) {
       uv[i * 2] = (uu - box.u0) / su
       uv[i * 2 + 1] = (vv - box.v0) / sv
     })
-    const g = new THREE.BufferGeometry()
-    g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-    g.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
-    const canvas = document.createElement('canvas')     // 화면 밖 — DOM에 안 붙는다(#97)
-    const tex = new THREE.CanvasTexture(canvas)
-    tex.colorSpace = THREE.SRGBColorSpace
-    // ⚠⚠ three r185: MultiplyBlending은 **premultipliedAlpha: true를 요구한다** — 없으면
-    // WebGLState가 blend 상태를 안 세팅하고 조용히 over로 그려진다(콘솔 error 한 줄뿐).
-    // 실측으로 잡았다: 곱/보통 스위치가 픽셀에 안 실렸고 벽 패치가 두 모드 다 순백이었다.
-    // premultiplied 규약의 곱은 blendFuncSeparate(DST_COLOR, 1-SRC_A, ZERO, ONE) —
-    // 불투명 텍셀(a=1)에서 정확히 dst×src이고 알파는 dst 그대로다.
-    const mat = new THREE.MeshBasicMaterial({
-      map: tex, premultipliedAlpha: true,
-      blending: paintBlendNormalForTest ? THREE.NormalBlending : THREE.MultiplyBlending,
-      transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide,
-    })
-    const mesh = new THREE.Mesh(g, mat)
-    mesh.userData.faceId = w.faceId
-    mesh.userData.centroid = { x: cx / rf.tris.length, y: cy / rf.tris.length, z: cz / rf.tris.length }
-    r.paintGroup.add(mesh)
-    paintTexes.set(`${w.faceId}:${w.side}`, {
-      canvas, tex, mesh, box, faceId: w.faceId, side: w.side, level: 0, base: null, famBits: -1,
-    })
+    putPaintTex(r, `${w.faceId}:${w.side}`, w.faceId, w.side, pos, uv, box,
+      { x: cx / rf.tris.length, y: cy / rf.tris.length, z: cz / rf.tris.length })
   }
 }
 
@@ -660,6 +795,10 @@ function gatePaintTex(r: R3D, app: App) {
     const face = app.doc.faces.find(f => f.id === e.faceId)
     if (!rf) { e.mesh.visible = false; continue }
     const sideOk = e.side === 0 || e.side === 'e' ? true : paintSideAt(rf, app.pose) === e.side
+    // web2-65 ⑤ — 상한에서 «버려진» 항목은 안 보이는 동안 쉰다(다시 보이면 그때 다시 굽는다)
+    if (e.evicted && !sideOk) { e.mesh.visible = false; continue }
+    e.evicted = false
+    if (sideOk) e.tick = ++paintTick
     // 투영 크기 — 외곽 정점의 화면 bbox(문서 px) × 줌 × dpr. 사영 안 되는 정점은 뺀다.
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, n = 0
     for (const P of rf.outer) {
@@ -695,22 +834,169 @@ function gatePaintTex(r: R3D, app: App) {
         famBits = (fams.major ? 2 : 0) | (fams.minor ? 1 : 0)
       } else famBits = 4                                   // 단색(유리·금속) — 계열 없음
     }
-    if (lv !== e.level || famBits !== e.famBits) {
-      // web2-55 — 테두리('e')는 띠의 몸만 굽는다: 해칭·무늬는 면의 것이라 띠에 없다.
-      const hatch = e.side !== 'e' && hatchFaceMode && face?.fill === 1 && face
-        ? { face, spacingWorld: faceHatchSpacingWorld(app.lift.an, rf, hatchSpecOf(face).spacingPx) } : null
+    // web2-55 — 테두리('e')는 띠의 몸만 굽는다: 해칭·무늬는 면의 것이라 띠에 없다.
+    const hatch = e.side !== 'e' && hatchFaceMode && face?.fill === 1 && face
+      ? { face, spacingWorld: faceHatchSpacingWorld(app.lift.an, rf, hatchSpecOf(face).spacingPx) } : null
+    // ── web2-65 ① — 굽기 **조건**의 서명. 이 (면, 쪽)이 «실제로 의존하는 것»만 든다
+    // (#110 — 문서 전체의 판 번호가 아니다). 여기 안 든 것이 굽기를 바꾸면 낡은 그림이
+    // 남으므로, 새 입력을 굽기에 더하는 라운드는 **이 줄도 같이 고친다**(게이트 ⑤가 지킨다).
+    // ⚠ rep의 texelPerPx·pxPerMm은 «줌의 연속값»이라 안 넣는다 — 넣으면 매 프레임 재굽기다.
+    //   그 둘의 실제 효과(계열 보임)는 famBits가 들고, 굵기 몫은 종전대로 단계에 붙는다(49 규약).
+    const hs = hatch && face ? hatchSpecOf(face) : null
+    const bakeSig = `${lv}|${famBits}|`
+      + (hatch && hs && face ? `${hs.angleDeg}:${hs.cross ? 1 : 0}:${hatchHexOf(face)}:${hatch.spacingWorld.toFixed(9)}` : '')
+      + '|' + (e.side !== 'e' && rep ? `${rep.m}:${rep.seed}:${rep.mm}` : '')
+      + '|' + boxSig(e.box)
+    if (bakeSig !== e.bakeSig || e.docKey !== paintKey) {
       const strokes = e.side === 'e' ? borderStrokesOf(app, e.faceId)
         : e.side === 0 ? [] : paintStrokesOf(app, e.faceId, e.side)
-      bakeFaceTex(e.canvas, rf, e.box, lv, strokes, e.side === 0 ? 1 : e.side, hatch, e.side === 'e' ? null : rep)
-      e.tex.needsUpdate = true
+      const sigs = strokes.map(sigOfPaintStroke)
+      e.docKey = paintKey
+      // ③ 누적 — 굽기 조건이 그대로이고, 획 목록이 «앞자리 그대로 + 뒤에 더»이고,
+      // 바탕 사본과 엔진의 층이 살아 있을 때만. 하나라도 어긋나면 전량 재굽기다.
+      const canAppend = !paintAccumOff && bakeSig === e.bakeSig && e.bg !== null
+        && e.side !== 0 && sigs.length > e.sigs.length && sigsArePrefix(e.sigs, sigs)
+        && paintLayerAlive(e.canvas)
+      let done = false
+      if (canAppend) {
+        // 초안 사본이 얹혀 있으면 확정본으로 되돌리고 버린다(59 — 기준 상태는 하나 · #100)
+        if (e.base) {
+          const gb = e.canvas.getContext('2d')!
+          gb.setTransform(1, 0, 0, 1, 0, 0)
+          gb.globalCompositeOperation = 'source-over'
+          gb.globalAlpha = 1
+          gb.drawImage(e.base, 0, 0)
+          e.base = null
+        }
+        const t0 = performance.now()
+        let dirty: MarkBox | null = null
+        let ok = true
+        for (let i = e.sigs.length; i < strokes.length; i++) {
+          const b = appendMarkOnTex(e.canvas, e.bg!, rf, e.box, lv, strokes[i]!, e.side as 1 | -1 | 'e')
+          if (!b) { ok = false; break }
+          bakeStat.appendStrokes++
+          if (b.x1 >= b.x0) {
+            dirty = dirty ? { x0: Math.min(dirty.x0, b.x0), y0: Math.min(dirty.y0, b.y0), x1: Math.max(dirty.x1, b.x1), y1: Math.max(dirty.y1, b.y1) } : b
+          }
+        }
+        bakeStat.ms += performance.now() - t0
+        if (ok) {
+          bakeStat.appends++
+          e.sigs = sigs
+          if (dirty) uploadPaintRect(r, e, dirty)      // ④ 부분 업로드 — 더티 사각만
+          done = true
+        }
+        // ok가 false면 층이 도중에 죽은 것이다 — 아래 전량 재굽기가 받는다(조용한 갈림 ⛔)
+      }
+      if (!done && (bakeSig !== e.bakeSig || !sigsArePrefix(sigs, e.sigs) || sigs.length !== e.sigs.length)) {
+        if (!e.bg && !paintAccumOff) e.bg = document.createElement('canvas')
+        if (paintAccumOff) e.bg = null
+        const t0 = performance.now()
+        const w0 = e.canvas.width, h0 = e.canvas.height
+        bakeFaceTex(e.canvas, rf, e.box, lv, strokes, e.side === 0 ? 1 : e.side, hatch, e.side === 'e' ? null : rep, e.bg)
+        bakeStat.ms += performance.now() - t0
+        // ⚠⚠ **GPU 저장은 «첫 크기»로 굳는다** — three r185는 WebGL2에서 `texStorage2D`로 한 번
+        // 할당하고 그 뒤는 `texSubImage2D`로만 올린다(불변 저장). 65가 항목을 살려 쓰면서(②)
+        // 텍스처도 살아남았고, **캔버스가 커져도 GPU는 옛 크기 그대로**여서 화면에는 «옛 그림이
+        // 늘어난» 것이 나왔다 — CPU 캔버스는 정확했으므로 굽힌 캔버스 해시로는 안 잡힌다.
+        // 잡은 것은 무회귀 팔 `thick55 ④`(테두리 띠 t 200→500 · 질량이 t에 비례 · 500/400 1.255)다.
+        // 크기가 바뀌면 텍스처를 «놓아» 다시 할당시킨다(dispose → properties 비움 → texStorage2D 재실행).
+        if (e.canvas.width !== w0 || e.canvas.height !== h0) { e.tex.dispose(); bakeStat.texReallocs++ }
+        bakeStat.bakes++
+        bakeStat.bakedStrokes += strokes.length
+        bakeStat.uploads++
+        bakeStat.uploadBytes += e.canvas.width * e.canvas.height * 4
+        e.tex.needsUpdate = true
+        e.sigs = sigs
+        e.base = null                                // 기준 상태가 새로 섰다(59 — 미리보기 사본 폐기)
+      }
+      e.bakeSig = bakeSig
       e.level = lv
       e.famBits = famBits
-      e.base = null                                  // 기준 상태가 새로 섰다(59 — 미리보기 사본 폐기)
     }
     e.mesh.visible = sideOk
     // screenPx(양자화 «전» 값)와 포화 여부를 기록한다(2차 [8] — 상한 포화와 «비슷한
     // 크기»를 팔이 가르는 재료. 같은 계산의 기록이지 두 벌 계산이 아니다 #54).
     e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
+  }
+  evictPaintTex(r)
+}
+
+// web2-65 ④ — 부분 업로드의 «원본»: 더티 사각만 담는 작은 캔버스와 그것을 감싼 텍스처.
+// **재질에 절대 안 쓴다** — three의 copyTextureToTexture가 CPU 경로(texSubImage2D)를 타는
+// 조건이 «renderer properties에 없는 원본 텍스처»이기 때문이다.
+let partialCv: HTMLCanvasElement | null = null
+let partialTex: THREE.CanvasTexture | null = null
+
+/** web2-65 ④ — **부분 업로드**. 더티 사각만 GPU에 올린다(1024² 전체를 매번 안 올린다).
+ *
+ *  ⚠⚠ **왜 사각을 작은 캔버스에 옮겨 담는가**(D-1 표식이 가른 실측): 큰 캔버스를 그대로
+ *  원본으로 주고 `srcRegion`으로 잘라내면 three가 `UNPACK_SKIP_PIXELS/SKIP_ROWS`를 세우는데,
+ *  그것이 `UNPACK_FLIP_Y_WEBGL`(CanvasTexture의 flipY = 참)과 **함께 걸릴 때의 자리**가
+ *  구현에 따라 갈린다. 실측: 그 길로 올리면 화면 픽셀이 전량 업로드와 달랐다(잉크 7066 vs
+ *  7401 — 게이트 ①이 잡았다). 사각을 «그 크기 그대로의» 캔버스에 옮겨 담으면 SKIP은 0이고
+ *  FLIP_Y만 남아 자리가 하나로 정해진다 — 끔(partialOff) 판과 화면이 비트로 같아진다.
+ *
+ *  ⚠ `flipY`가 참이라 전량 업로드에서 캔버스 행 y는 GL 행 H−1−y에 앉는다. 부분도 같은 자리에
+ *  앉히려면 도착 y는 `H − (y0 + h)`다(FLIP_Y가 사각 «안»을 다시 뒤집는다).
+ *  못 하는 조건(반증 스위치·사각이 전량만 하다·던짐)에서는 전량으로 올린다 — 조용히 안 올리지 않는다. */
+function uploadPaintRect(r: R3D, e: PaintTexEntry, b: MarkBox): void {
+  const W = e.canvas.width, H = e.canvas.height
+  const x0 = Math.max(0, b.x0), y0 = Math.max(0, b.y0)
+  const x1 = Math.min(W - 1, b.x1), y1 = Math.min(H - 1, b.y1)
+  const w = x1 - x0 + 1, h = y1 - y0 + 1
+  const full = () => {
+    e.tex.needsUpdate = true
+    bakeStat.uploads++
+    bakeStat.uploadBytes += W * H * 4
+  }
+  if (w <= 0 || h <= 0) return
+  if (paintPartialOff || W === 0 || H === 0 || w * h >= W * H) { full(); return }
+  try {
+    if (!partialCv) partialCv = document.createElement('canvas')
+    if (partialCv.width !== w || partialCv.height !== h) {
+      partialCv.width = w; partialCv.height = h
+      partialTex?.dispose()
+      partialTex = null
+    }
+    if (!partialTex) { partialTex = new THREE.CanvasTexture(partialCv); partialTex.colorSpace = THREE.SRGBColorSpace }
+    const pg = partialCv.getContext('2d')!
+    pg.setTransform(1, 0, 0, 1, 0, 0)
+    pg.globalCompositeOperation = 'copy'
+    pg.globalAlpha = 1
+    pg.drawImage(e.canvas, x0, y0, w, h, 0, 0, w, h)
+    r.renderer.copyTextureToTexture(partialTex, e.tex, null, new THREE.Vector2(x0, H - (y0 + h)))
+    bakeStat.uploads++
+    bakeStat.uploadBytes += w * h * 4
+  } catch {
+    // 부분 업로드가 안 서는 환경 — 전량으로 떨어진다(값으로 보인다: uploadBytes가 전량이다)
+    full()
+  }
+}
+
+/** web2-65 ⑤ — 상한을 넘으면 **안 보이는 면부터** 버린다(가장 오래 안 보인 것부터).
+ *  버린 것은 파생이라 안전하다: 다시 «보이면» 그 프레임에 정본(획 목록)에서 다시 굽는다. */
+function evictPaintTex(r: R3D): void {
+  let bytes = paintTexBytes()
+  if (bytes <= texBudget) return
+  const cands = [...paintTexes.values()]
+    .filter(e => !e.mesh.visible && !e.evicted && e.canvas.width > 0)
+    .sort((a, b) => a.tick - b.tick)
+  for (const e of cands) {
+    if (bytes <= texBudget) break
+    bytes -= e.canvas.width * e.canvas.height * 4 + (e.bg ? e.bg.width * e.bg.height * 4 : 0)
+    releasePaintLayer(e.canvas)
+    e.canvas.width = 0; e.canvas.height = 0
+    e.bg = null
+    e.base = null
+    e.level = 0
+    e.bakeSig = ''
+    e.docKey = ''
+    e.sigs = []
+    e.tex.dispose()
+    e.evicted = true
+    e.mesh.visible = false
+    bakeStat.evicts++
   }
 }
 
@@ -836,7 +1122,9 @@ export function corruptPaintTexForTest(): number {
   return n
 }
 export function rebakePaintTexForTest(): void {
-  for (const e of paintTexes.values()) e.level = 0
+  // web2-65 — 단계뿐 아니라 **굽기 서명**도 지운다. 65부터 재굽기의 판정자가 서명이라
+  // level만 0으로 두면 조건이 같다고 읽혀 «안 굽는다»(게이트 ⑤의 그 결함).
+  for (const e of paintTexes.values()) { e.level = 0; e.bakeSig = ''; e.docKey = '' }
 }
 
 

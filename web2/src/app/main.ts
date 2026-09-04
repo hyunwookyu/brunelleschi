@@ -17,7 +17,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintDraftClamped, paintDraftStats } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintDraftClamped, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -29,6 +29,7 @@ import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
 import { type Instr, materialOf, type MatId } from '../core/palette'   // (MATERIALS·TONE_NAMES의 견본 줄은 web2-64 64-7이 지웠다 — 재료 자체는 matrep·facetex가 쓴다)
 // 색상 휠(web2-48 48-7) — 기하·색 변환은 순수 모듈이 든다(이 파일은 DOM만).
 import { hsvOf, hexOfHsv, svRect, svPoint, huePoint, hueAt, svAt, partAt, markerInk, type Hsv, type WheelGeom, type WheelPart } from '../core/colorwheel'
+import { brushLabel, brushOrigin } from '../core/brushnames'
 import type { Grade, Layer, Sheet, Stroke, CamPose } from '../core/types'
 import { parseDim, formatMm, lenMm, formatScale, formatUnits, dimSkew, skewOff, UNITS, type Unit } from '../core/dim'
 import { measureMm, measureUnits } from '../core/measure'
@@ -751,6 +752,21 @@ const penBtn = document.getElementById('btn-pen')!
  *  펼침은 **왼쪽으로 겹쳐 뜬다**. 세로 위치는 누른 버튼의 줄에 맞추되, 화면 위아래로
  *  넘치면 **안쪽으로 민다**(리본은 안 건드린다). 연필통·펜 촉통 둘 다 이 한 함수를 쓰고
  *  앞으로 생기는 펼침도 같다(#54). */
+/** **칠 패널의 자리**(web2-65 §2 ①) — 화면 **왼쪽 가장자리**에 세로 가운데로 세운다.
+ *  왜 자리를 옮겼나(사람 판정 64-panel.png): 작도 세로바(오른쪽)와 칠 패널이 둘 다 오른쪽이라
+ *  답답하고, 폭이 눌려 브러시 이름이 「잉크펜 · dee…」로 끊겼다. 칠 패널은 «잠깐 얹히는 통»이
+ *  아니라 **도구를 든 동안의 화면**이라(64 R8 정정) 리본 곁에 붙어 있을 이유가 없다.
+ *  선례(A-3): 프로크리에이트·크리타·포토샵 전부 «그리는 도구의 상시 패널»은 반대쪽 가장자리다.
+ *  ⚠ R2(리본 길이 불변)는 그대로다 — 이것도 겹쳐 뜨지 아무것도 밀지 않는다. */
+function placeLeftPanel(el: HTMLElement) {
+  el.style.right = 'auto'
+  el.style.left = `${C.FLYOUT_EDGE_PX}px`
+  el.style.top = '0px'                       // 크기를 재기 전에 자리를 비운다
+  const h = el.offsetHeight
+  const mid = Math.round((window.innerHeight - h) / 2)
+  el.style.top = `${Math.max(C.FLYOUT_EDGE_PX, Math.min(mid, window.innerHeight - h - C.FLYOUT_EDGE_PX))}px`
+}
+
 function placeFlyout(el: HTMLElement, anchor: HTMLElement) {
   const a = anchor.getBoundingClientRect()
   el.style.right = `${Math.round(window.innerWidth - a.left + C.FLYOUT_GAP_PX)}px`
@@ -801,7 +817,7 @@ window.addEventListener('resize', () => {
   if (etrayOpen && etrayAnchor) placeFlyout(etrayEl, etrayAnchor)   // 크기통도 같다(34-3)
   if (rolltrayOpen) placeFlyout(rolltrayEl, rollBtn)                // 롤통도 같다(34-6)
   if (griptrayOpen) placeFlyout(griptrayEl, gripBtn)                // 손통도 같다(web2-44)
-  if (painttrayOpen) placeFlyout(painttrayEl, toolBtn['paint'])     // 칠통도 같다(web2-46)
+  if (painttrayOpen) placeLeftPanel(painttrayEl)                    // 칠 패널은 왼쪽 가장자리다(65 §2 ①)
 })
 if (!TRAY) {   // 되돌리기(A-4) — 옛 세로 버튼·슬라이더로
   trayEl.hidden = true
@@ -2117,8 +2133,9 @@ const SLOT_SVG: Record<Instr, string> = {
   pencil: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 24 L24 12 l-4 -4 L8 20 l-1 5 z"/><path d="M18 10 l4 4"/></svg>',
 }
 const SLOT_NAME: Record<Instr, string> = { brush: '잉크펜', marker: '마커', cp: '색연필', pencil: '연필' }
-/** 브러시 id → 짧은 이름(group/name의 name · 밑줄은 띄어쓰기) */
-const brushShort = (br: string): string => (br.split('/')[1] ?? br).replace(/_/g, ' ')
+/** 브러시 id → **사람이 읽는 이름**(web2-65 §2 ③ — `ramon/100%_Opaque`가 아니라 「불투명 마커」).
+ *  원 이름은 안 없어진다: 부제(#paint-brush-name의 둘째 줄)와 도움말이 그대로 든다(core/brushnames 규칙 ①). */
+const brushShort = brushLabel
 
 // ── 색상 휠(48-7) — 기하·색 변환은 `core/colorwheel.ts`가 든다(이 파일은 DOM만) ──
 // 64: 휠은 **색 원을 누르면 얹히는 통**(#paint-wheelbox)에 산다 — 한 단계.
@@ -2230,7 +2247,7 @@ let closePaintWheel: () => void = () => {}
   brushBtn.title = '지금 브러시 — 누르면 브러시 목록이 열린다(196 + 앱 · 분류별 · 견본 실물)'
   const sampleCv = document.createElement('canvas')
   sampleCv.id = 'paint-brush-sample'
-  const SAMPLE_W = 150, SAMPLE_H = 26
+  const SAMPLE_W = 120, SAMPLE_H = 26      // 65 §2 ④ — 이름 자리를 준다(150이면 부제가 잘렸다)
   sampleCv.width = SAMPLE_W * 2; sampleCv.height = SAMPLE_H * 2
   sampleCv.style.cssText = `width:${SAMPLE_W}px;height:${SAMPLE_H}px;position:static;inset:auto;flex-shrink:0;border:1px solid #d8d2c4;border-radius:3px;background:#fffdf8`
   const brushName = document.createElement('span')
@@ -2352,7 +2369,10 @@ let closePaintWheel: () => void = () => {}
       closeOtherBoxes('#paint-wheelbox')
       // 자리 — 색 원의 왼쪽(패널 곁 · R5 새 모서리 없음)
       const r = colorBtn.getBoundingClientRect()
-      wheelBox.style.right = `${Math.round(window.innerWidth - r.left + C.FLYOUT_GAP_PX)}px`
+      // 65 §2 ① — 패널이 왼쪽 가장자리이므로 휠은 **패널의 오른쪽**에 얹힌다(밖으로 안 나간다)
+      const pr = painttrayEl.getBoundingClientRect()
+      wheelBox.style.right = 'auto'
+      wheelBox.style.left = `${Math.round(pr.right + C.FLYOUT_GAP_PX)}px`
       wheelBox.style.top = `${Math.round(Math.max(C.FLYOUT_EDGE_PX, Math.min(r.top, window.innerHeight - 150)))}px`
     }
   }
@@ -2389,12 +2409,25 @@ let closePaintWheel: () => void = () => {}
   favWrap.id = 'paint-favs'
   favWrap.className = 'rrow prow'
   const favBtns: HTMLButtonElement[] = []
+  const favCv: HTMLCanvasElement[] = []
+  const favKey: string[] = []
+  const FAV_W = 72, FAV_H = 18
   for (let k = 0; k < FAV_N; k++) {
     const b = document.createElement('button')
     b.id = `paint-fav-${k + 1}`
     b.className = 'favbtn'
     b.dataset.act = 'state'
     b.title = `즐겨찾기 ${k + 1} — 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기)`   // 48-10: 패널이 뜨기 전에도 설명이 있다(동기화가 값을 채운다)
+    // 자국 견본(65 §2 ②) — #97: position:static 명시 · flex-shrink 0
+    const fcv = document.createElement('canvas')
+    fcv.id = `paint-fav-${k + 1}-sample`
+    fcv.width = FAV_W * 2; fcv.height = FAV_H * 2
+    fcv.style.cssText = `width:${FAV_W}px;height:${FAV_H}px;position:static;inset:auto;flex-shrink:0;border-radius:2px;background:#fffdf8;pointer-events:none`
+    const fnm = document.createElement('span')
+    fnm.className = 'favname'
+    b.append(fcv, fnm)
+    favCv.push(fcv)
+    favKey.push('')
     let holdT: number | null = null
     let held = false
     b.addEventListener('pointerdown', () => {
@@ -2449,8 +2482,9 @@ let closePaintWheel: () => void = () => {}
       sampleKey = key
       drawBrushSample(sampleCv, ps.i, ps.br, ps.hex)
     }
-    brushName.innerHTML = `<b>${brushShort(ps.br)}</b><span style="color:#8d8880">${SLOT_NAME[ps.i]} · ${ps.br.split('/')[0]}</span>`
-    brushBtn.title = `지금 브러시 ${ps.br}(${SLOT_NAME[ps.i]} 족) — 누르면 브러시 목록이 열린다`
+    // 65 §2 ③④ — 이름은 사람 쪽 사상, 부제는 **원 이름 그대로**(줄바꿈 허용 — 안 잘린다)
+    brushName.innerHTML = `<b>${brushLabel(ps.br)}</b><span style="color:#8d8880">${SLOT_NAME[ps.i]} · ${brushOrigin(ps.br)}</span>`
+    brushBtn.title = `지금 브러시 «${brushLabel(ps.br)}» — 원 이름 ${ps.br}(${SLOT_NAME[ps.i]} 족). 누르면 브러시 목록이 열린다`
     syncSizeRow(); syncOpRow()
     colorBtn.style.background = ps.hex
     colorBtn.title = `지금 색 ${ps.hex} — 누르면 색상 휠이 열린다`
@@ -2466,8 +2500,15 @@ let closePaintWheel: () => void = () => {}
     const fs = readFavs()
     favBtns.forEach((b, k) => {
       const f = fs[k]!
-      b.innerHTML = `${SLOT_SVG[f.i]}<span class="favname">${brushShort(f.br)}</span>`
-      b.title = `즐겨찾기 ${k + 1} — ${SLOT_NAME[f.i]} · ${f.br}. 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)`
+      // web2-65 §2 ② — 그림(SLOT_SVG)이 아니라 **그 브러시의 실제 자국**이다. 64 §2 규칙 ①
+      // 「자국 견본으로. 이름만으로는 안 된다」가 여기만 안 지켜졌었다 — 여섯이 다 비슷한
+      // 연필 그림이라 구분이 안 됐다(사람 판정 64-panel.png).
+      const cv = favCv[k]!
+      const key = `${f.i}|${f.br}|${ps.hex}`
+      if (favKey[k] !== key) { favKey[k] = key; drawBrushSample(cv, f.i, f.br, ps.hex) }
+      const nm = b.querySelector('.favname')!
+      nm.textContent = brushLabel(f.br)
+      b.title = `즐겨찾기 ${k + 1} — ${SLOT_NAME[f.i]} · ${brushLabel(f.br)}(원 이름 ${f.br}). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)`
       b.classList.toggle('on', f.i === ps.i && f.br === ps.br)
     })
     if (wheelOpen) { drawWheel(wheelHsv()); wheelHex.textContent = ps.hex }
@@ -2498,7 +2539,7 @@ let painttrayOpen = false
 function setPainttrayOpen(v: boolean) {
   painttrayOpen = v
   painttrayEl.classList.toggle('open', v)
-  if (v) { syncPainttray(); placeFlyout(painttrayEl, toolBtn['paint']) }
+  if (v) { syncPainttray(); placeLeftPanel(painttrayEl) }
   else { if (paintPanelReady && brushPicker.isOpen()) brushPicker.setOpen(false); closePaintWheel() }
 }
 
@@ -2875,6 +2916,7 @@ import {
   setCapOffForTest, setSmudgeSelfSampleForTest, setPremulBreakForTest, setFringeBreakForTest,
   setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET,
   setTipsOffForTest, setTipFrameLockForTest, tipsReadyForTest, tipStatsForTest, resetTipStatsForTest, tipDefaultOfForTest, onTipAssetsLoaded,
+  setPaintAppendBreakForTest,
   unknownBrushIdsForTest, setTipGainOffForTest, presetStatsForTest, resetCpTilesForTest, setCpThresholdOffForTest,
 } from './mypaintpaint'
 import { setBrushIdOffForTest } from '../core/facetex'
@@ -3604,6 +3646,16 @@ const diag = {
   paintTex: () => paintTexStats(),
   /** web2-64 게이트 ① — 굽힌 텍스처의 픽셀 해시(면·쪽별) */
   paintTexHash: () => paintTexHashForTest(),
+  /** web2-65 — 굽기 계수기(D-1 표식 · 게이트 ②③④의 자): 재굽기 수·재굽힌 획 수·업로드 바이트·ms */
+  paintBake: () => paintBakeStats(),
+  paintBakeReset: () => { resetPaintBakeStats() },
+  /** web2-65 ⑥ 반증 — 누적을 끈다(pre의 O(N)이 돌아온다) · 부분 업로드를 끈다(픽셀은 같아야 한다) */
+  setPaintAccumOffForTest: (v: boolean) => { setPaintAccumOffForTest(v); invalidate() },
+  setPaintPartialOffForTest: (v: boolean) => { setPaintPartialOffForTest(v); invalidate() },
+  /** web2-65 ⑤ — 텍스처 바이트 상한을 낮춰 축출을 «실제로» 일으킨다(게이트 ⑦) */
+  setPaintTexBudgetForTest: (bytes: number) => { setPaintTexBudgetForTest(bytes); invalidate() },
+  /** web2-65 ① 반증 — 누적 얹기의 «바탕 되깔기»를 끈다: 켜면 중심 게이트(픽셀 항등)가 «빨개져야» 한다 */
+  setPaintAppendBreakForTest: (v: boolean) => { setPaintAppendBreakForTest(v); rebakePaintTexForTest(); invalidate() },
   paint50Constants: () => ({ FACETEX_MIN_PX: C.FACETEX_MIN_PX, FACETEX_MAX_PX: C.FACETEX_MAX_PX,
     PAINT_MARKER_ALPHA: C.PAINT_MARKER_ALPHA, PAINT_CP_ALPHA: C.PAINT_CP_ALPHA,
     PAINT_W_FALLBACK_UNITS: C.PAINT_W_FALLBACK_UNITS,
@@ -3619,7 +3671,8 @@ const diag = {
     PAINT59_PREVIEW_DIFF_MAX: C.PAINT59_PREVIEW_DIFF_MAX, PAINT59_CROSS_TOL: C.PAINT59_CROSS_TOL, PAINT59_DRAFT_FRAME_EXTRA_MS: C.PAINT59_DRAFT_FRAME_EXTRA_MS,
     PAINT61_END_TOL: C.PAINT61_END_TOL, PAINT61_PAPER_CORR_MIN: C.PAINT61_PAPER_CORR_MIN,
     PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS: C.PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS, PAINT61_SIZE_TOL: C.PAINT61_SIZE_TOL,
-    PAINT64_DENSITY_TOL: C.PAINT64_DENSITY_TOL, PAINT64_WET_MIN_PX: C.PAINT64_WET_MIN_PX, PAINT64_TAP_MAX_PX: C.PAINT64_TAP_MAX_PX }),
+    PAINT64_DENSITY_TOL: C.PAINT64_DENSITY_TOL, PAINT64_WET_MIN_PX: C.PAINT64_WET_MIN_PX, PAINT64_TAP_MAX_PX: C.PAINT64_TAP_MAX_PX,
+    PAINT65_TEX_BUDGET_BYTES: C.PAINT65_TEX_BUDGET_BYTES, PAINT65_COMMIT_MS_SPREAD_MAX: C.PAINT65_COMMIT_MS_SPREAD_MAX }),
   /** 저장물 원문(파일 저장과 같은 함수 — #54) — paint50 팔이 «텍스처가 파일에 없다»를 잰다 */
   serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
   corruptPaintTex: () => { const n = corruptPaintTexForTest(); invalidate(); return n },

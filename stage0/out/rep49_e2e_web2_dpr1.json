@@ -139,20 +139,20 @@
     "rep_tex_entries": 17,
     "texel_total": 944128,
     "before_ms": {
-      "median": 16.799999713897705,
-      "p90": 19.09999990463257
+      "median": 16.900000005960464,
+      "p90": 19.799999982118607
     },
     "before2_ms": {
-      "median": 16.800000190734863,
-      "p90": 18
+      "median": 16.899999976158142,
+      "p90": 17.400000005960464
     },
     "noise_floor_ms": 0,
     "after_ms": {
-      "median": 16.899999618530273,
-      "p90": 17.300000190734863
+      "median": 16.799999982118607,
+      "p90": 17.19999998807907
     },
-    "delta_median_ms": 0.1,
-    "delta_p90_ms": -0.7,
+    "delta_median_ms": -0.1,
+    "delta_p90_ms": -0.2,
     "gate": {
       "registered": "C.REP_FRAME_BUDGET_MS",
       "value": 8,

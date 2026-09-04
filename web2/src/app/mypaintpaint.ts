@@ -17,7 +17,7 @@
 
 import {
   markerFlatForTest, paintOpaqueForTest, pressFlatForTest, grainOffForTest,
-  type PaintRenderer, type SeamMark, type ParamDesc, type Instr58,
+  type PaintRenderer, type SeamMark, type ParamDesc, type Instr58, type MarkBox,
 } from '../core/paintseam'
 import { rng32 } from '../core/material'
 import { markShape } from '../core/markshapes'
@@ -236,6 +236,20 @@ function surfaceFor(canvas: HTMLCanvasElement, fresh: boolean): StrokeSurface {
 }
 /** 진단 — 층 현황 */
 export const layerStatsForTest = (): { layers: number; bytes: number; budget: number } => ({ layers: entries.size, bytes: bytesTotal, budget: LAYER_BUDGET })
+/** web2-65 — 이 캔버스의 층이 «굽기가 세운 그대로» 살아 있는가(크기도 맞는가).
+ *  예산 축출(LRU)·캔버스 크기 변화가 이 답을 false로 만든다 — 그때 누적은 못 쓰고 전량 재굽기다. */
+function hasLayer(canvas: HTMLCanvasElement): boolean {
+  const e = entries.get(canvas)
+  return !!e && e.surface.layer.w === canvas.width && e.surface.layer.h === canvas.height
+}
+/** web2-65 — 층을 놓는다(⑤ 메모리 — 안 보이는 면을 버릴 때) */
+function releaseLayer(canvas: HTMLCanvasElement): void {
+  const e = entries.get(canvas)
+  if (!e) return
+  entries.delete(canvas)
+  bytesTotal -= e.bytes
+  if (lastSurface === e.surface) lastSurface = null
+}
 
 // ── 크기 자가 보정(프리셋마다 «반지름 → 반최대 폭» 두 점 — 구간별 비례·로그 보간) ────────
 // ⚠ 초판의 선형 맞춤(w = a·r + b)은 산포가 큰 붓(chalk·spray2·coarse_bulk — 절편 b가 10~97px)에서
@@ -628,10 +642,44 @@ function drawMany(g: CanvasRenderingContext2D, marks: SeamMark[]): void {
   if (box) blit(g, surf, box)
 }
 
+/** web2-65 ① 반증 스위치 — 누적 얹기의 «바탕 되깔기»를 끈다(그러면 그림이 갈린다) */
+let appendBreak = false
+export function setPaintAppendBreakForTest(v: boolean): void { appendBreak = v }
+
+/** web2-65 — **누적 얹기**. 굽기(drawMany)가 세운 층 위에 자국 하나를 «더» 얹고(층에 남긴다 —
+ *  초안과 다르다: 스냅숏 되돌림이 없다) 그 자국의 상자만 다시 합성한다.
+ *
+ *  합성이 전량 재굽기와 **같은 식**인 이유: 굽기의 결과는 `over(층, 바탕)`이고, 얹기는 더티
+ *  사각에서 바탕을 되깐 뒤 같은 `over`를 다시 한다 — 사각 밖은 층이 안 바뀌었으므로 그대로다.
+ *  (바탕은 불투명 흰 바탕 위에 재료·해칭이라 `source-over`로 되까는 것이 곧 «대입»이다.) */
+function appendMark(g: CanvasRenderingContext2D, m: SeamMark, bg: HTMLCanvasElement): MarkBox | null {
+  if (!hasLayer(g.canvas)) return null
+  if (bg.width !== g.canvas.width || bg.height !== g.canvas.height) return null
+  const surf = surfaceFor(g.canvas, false)
+  lastSurface = surf
+  capturedAlpha = null
+  const box = paintOne(surf, m, false)          // draft=false — 층에 «남는다»(굽기와 같은 통로)
+  if (box.x1 < box.x0) return { x0: 0, y0: 0, x1: -1, y1: -1 }
+  const bw = box.x1 - box.x0 + 1, bh = box.y1 - box.y0 + 1
+  g.save()
+  g.setTransform(1, 0, 0, 1, 0, 0)
+  g.globalCompositeOperation = 'source-over'
+  g.globalAlpha = 1
+  // web2-65 ① 반증(D-3): 바탕 되깔기를 «건너뛰면» 층이 두 번 얹혀 옅은 자국이 진해진다 —
+  // 「빠른데 다른 그림」이 실제로 어떤 모양인지가 이것이고, 중심 게이트가 그것을 잡아야 한다.
+  if (!appendBreak) g.drawImage(bg, box.x0, box.y0, bw, bh, box.x0, box.y0, bw, bh)   // 더티 사각 ← 바탕(불투명 = 대입)
+  g.restore()
+  blit(g, surf, box)                                                 // 그 위에 층 전체를 over
+  return box
+}
+
 export const mypaintRenderer: PaintRenderer = {
   id: 'mypaint',
   draw: drawOne,
   drawMany,
+  appendMark,
+  hasLayer,
+  releaseLayer,
   brushChoices: () => PRESETS.map(p => p.name),
   brushOf: (tool) => tune[tool]?.base ?? DEFAULT_PRESET[tool],
   setBrush: (tool, name) => { if (PRESET_BY_NAME.has(name)) tune[tool] = { ...tune[tool], base: name } },

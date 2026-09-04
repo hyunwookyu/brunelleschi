@@ -1,0 +1,206 @@
+{
+  "conditions": {
+    "project": "dpr1",
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/panel65.spec.ts (워커 1 — #99)"
+  },
+  "what": "web2-65 §2 — 칠 패널: ①자리(세로바와 안 겹침) ②즐겨찾기 여섯이 픽셀로 다름 ③원 이름 사상 ④잘린 글자 0(폭 800·1200)",
+  "note_pitfalls": "#96(손잡이가 늘면 34-0 표를 그 라운드 안에서 다시 — paint64 ⑦이 그 자리) · #97(견본 캔버스는 position:static·flex-shrink 0) · #87(펼침은 화면에서 눌러 센다) · #12(폭 둘 · 칸 여섯 — 동작점 하나로 주장하지 않는다) · #99 · #101",
+  "note_meter": "「잘렸다」 = ① 제 상자가 hidden·clip으로 자르는데 내용이 더 크다 ② 조상 중 hidden·clip 상자 밖으로 사각이 나갔다. overflow:visible의 넘침(글자는 다 보인다)과 auto·scroll(굴려서 닿는다)은 «잘린 것이 아니다» — 초판이 그 둘을 세어 거짓 양성을 냈고 실측이 고쳤다",
+  "p1_place": {
+    "note": "패널은 화면 «왼쪽 가장자리»다 — 작도 세로바(오른쪽)와 겹치는 넓이 0. ⚠ 그 대신 «캔버스»를 그만큼 덮는다(covered_frac_of_viewport) — 그것이 이 자리의 대가이고, 사람이 그 자리에 못 긋는다는 뜻이다(리뷰어 [H6] · DEFERRED 65)",
+    "rows": [
+      {
+        "vw": 1200,
+        "vh": 800,
+        "panel": {
+          "left": 6,
+          "top": 257,
+          "right": 278,
+          "bottom": 543,
+          "w": 272,
+          "h": 286,
+          "vw": 1200,
+          "vh": 800
+        },
+        "sidebar": {
+          "left": 1125,
+          "top": 12,
+          "right": 1198,
+          "bottom": 779,
+          "w": 73,
+          "h": 767,
+          "vw": 1200,
+          "vh": 800
+        },
+        "overlap_px2": 0,
+        "covered_px2": 77792,
+        "covered_frac_of_viewport": 0.081
+      },
+      {
+        "vw": 800,
+        "vh": 800,
+        "panel": {
+          "left": 6,
+          "top": 257,
+          "right": 278,
+          "bottom": 543,
+          "w": 272,
+          "h": 286,
+          "vw": 800,
+          "vh": 800
+        },
+        "sidebar": {
+          "left": 725,
+          "top": 12,
+          "right": 798,
+          "bottom": 779,
+          "w": 73,
+          "h": 767,
+          "vw": 800,
+          "vh": 800
+        },
+        "overlap_px2": 0,
+        "covered_px2": 77792,
+        "covered_frac_of_viewport": 0.1216
+      }
+    ]
+  },
+  "p2_favs": {
+    "note": "여섯 칸의 견본 캔버스 픽셀 해시 · 잉크 픽셀 수 · 이름",
+    "shots": [
+      {
+        "id": "paint-fav-1-sample",
+        "hash": 1556796905,
+        "ink": 1735,
+        "w": 144,
+        "h": 36
+      },
+      {
+        "id": "paint-fav-2-sample",
+        "hash": 273098547,
+        "ink": 2023,
+        "w": 144,
+        "h": 36
+      },
+      {
+        "id": "paint-fav-3-sample",
+        "hash": 965768833,
+        "ink": 2039,
+        "w": 144,
+        "h": 36
+      },
+      {
+        "id": "paint-fav-4-sample",
+        "hash": -1726617490,
+        "ink": 2413,
+        "w": 144,
+        "h": 36
+      },
+      {
+        "id": "paint-fav-5-sample",
+        "hash": -584466810,
+        "ink": 1513,
+        "w": 144,
+        "h": 36
+      },
+      {
+        "id": "paint-fav-6-sample",
+        "hash": -27434035,
+        "ink": 5031,
+        "w": 144,
+        "h": 36
+      }
+    ],
+    "names": [
+      "연필",
+      "제도 라이너",
+      "불투명 마커",
+      "색연필",
+      "목탄",
+      "수채"
+    ],
+    "distinct": 6
+  },
+  "p3_names": {
+    "note": "표시는 사람 쪽 이름, 원 이름은 부제와 도움말에 그대로",
+    "sel": {
+      "hex": "#5a5a5a",
+      "i": "marker",
+      "w": 10,
+      "br": "ramon/100%_Opaque",
+      "o": 1
+    },
+    "shown": {
+      "label": "불투명 마커",
+      "sub": "마커 · ramon · 100%_Opaque",
+      "title": "지금 브러시 «불투명 마커» — 원 이름 ramon/100%_Opaque(마커 족). 누르면 브러시 목록이 열린다"
+    }
+  },
+  "p4_clip": {
+    "note": "잘림 = 「제 상자가 자르는데 내용이 더 크다」 또는 「조상이 자르는데 사각이 밖으로 나갔다」. overflow: visible의 넘침은 «잘린 것이 아니다»(글자가 다 보인다)",
+    "rows": [
+      {
+        "vw": 1200,
+        "vh": 800,
+        "panel": {
+          "root": "#painttray",
+          "exists": true,
+          "checked": 13,
+          "rows": []
+        },
+        "pick": {
+          "root": "#brushpick",
+          "exists": true,
+          "checked": 413,
+          "rows": []
+        }
+      },
+      {
+        "vw": 800,
+        "vh": 800,
+        "panel": {
+          "root": "#painttray",
+          "exists": true,
+          "checked": 13,
+          "rows": []
+        },
+        "pick": {
+          "root": "#brushpick",
+          "exists": true,
+          "checked": 413,
+          "rows": []
+        }
+      }
+    ],
+    "falsify": {
+      "rows": [
+        {
+          "id": "B",
+          "text": "제도 라이너",
+          "why": "제 상자가 자른다",
+          "sw": 64,
+          "cw": 18,
+          "sh": 15,
+          "ch": 15
+        }
+      ],
+      "healed": 0
+    }
+  },
+  "no_constants_snapshot": true,
+  "constants_used": {
+    "note": "web2 라인은 constantsSnapshot 기계가 없다(라인 유보 — lens31·paint50의 no_constants_snapshot이 정본 · 그 기계는 web/test/constants.ts에만 있다)"
+  },
+  "pitfall_citations": [
+    12,
+    87,
+    96,
+    97,
+    99,
+    101
+  ],
+  "selfcheck_notes": {
+    "zero_counters": "p4의 잘린 칸 0이 게이트 ④의 «통과»다 — 자가 산다는 증거는 같은 원장의 falsify(자르는 CSS를 주입하면 1건, 걷으면 0)다"
+  }
+}

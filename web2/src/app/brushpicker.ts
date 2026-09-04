@@ -7,6 +7,7 @@
 // 작업대의 그 열쇠)). 자리: 칠통의 「브러시…」 단추 → 이 판. R7(한 번에 통 하나)은 registerBox.
 
 import { drawMark, paintRenderer, type Instr58 } from '../core/paintseam'
+import { brushLabel, brushRawExact } from '../core/brushnames'
 import { PRESET_CATALOG, PRESET_BY_NAME } from './mypaintpaint'
 import { C } from '../core/constants'
 import { TUNE_STORE_KEY } from './tunelab'
@@ -123,14 +124,23 @@ export function initBrushPicker(opts: {
         row.dataset.name = name
         row.dataset.act = 'state'
         row.classList.toggle('on', name === cur)
-        row.title = `${name} — ${PRESET_BY_NAME.get(name)?.desc || '설명 없음'}. 누르면 ${INSTR_NAME[tool]} 자리에 앉는다`
+        row.title = `${brushLabel(name)} — 원 이름 ${name}. ${PRESET_BY_NAME.get(name)?.desc || '설명 없음'}. 누르면 ${INSTR_NAME[tool]} 자리에 앉는다`
         row.style.cssText = 'display:flex;align-items:center;gap:8px;text-align:left;padding:2px 4px'
         const cv = document.createElement('canvas')
         cv.width = CV_W * 2; cv.height = CV_H * 2
         cv.style.cssText = `width:${CV_W}px;height:${CV_H}px;position:static;inset:auto;flex-shrink:0;border:1px solid #d8d2c4;border-radius:3px;background:#fffdf8`
+        // web2-65 §2 ③④ — 사람이 읽는 이름이 먼저, 원 이름은 **부제로 남는다**(안 없앤다).
+        // 자르지 않는다: 줄바꿈을 허용해 「이름이 잘리는 칸 0」을 지킨다(게이트 ④).
         const lab = document.createElement('span')
-        lab.textContent = name.split('/')[1] ?? name
-        lab.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'
+        lab.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;white-space:normal;overflow-wrap:anywhere'
+        const labMain = document.createElement('span')
+        labMain.className = 'brushpick-name'
+        labMain.textContent = brushLabel(name)
+        const labRaw = document.createElement('span')
+        labRaw.className = 'brushpick-raw'
+        labRaw.style.cssText = 'font-size:10px;color:#8d8880'
+        labRaw.textContent = brushRawExact(name)
+        lab.append(labMain, labRaw)
         row.append(cv, lab)
         row.addEventListener('click', () => {
           opts.onPick(tool, name)

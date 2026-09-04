@@ -73,12 +73,26 @@ export interface ParamDesc {
   value: number
 }
 
+/** 자국 하나가 캔버스에 실제로 닿은 사각(대상 캔버스 px · 닫힌 구간). x1 < x0이면 «안 그렸다». */
+export interface MarkBox { x0: number; y0: number; x1: number; y1: number }
+
 export interface PaintRenderer {
   /** 'mypaint'(62) — 원장·진단이 어느 엔진이 그렸는지 값으로 남긴다(61의 'p5brush'는 64-6이 지웠다 — 렌더러는 하나다) */
   id: string
   draw(g: CanvasRenderingContext2D, m: SeamMark): void
   /** 묶음(굽기 최적화의 통로 — 없으면 이음매가 draw를 돈다). 그리는 차례는 목록 차례다. */
   drawMany?(g: CanvasRenderingContext2D, marks: SeamMark[]): void
+  /** web2-65 — **누적 얹기**: 굽기(drawMany)가 세운 «살아 있는 층» 위에 자국 하나를 더 얹고
+   *  그 자국의 사각만 다시 합성한다(`bg` = 획 없는 바탕 — 더티 사각을 여기서 되깐다).
+   *  결과는 «전량 재굽기와 픽셀로 같다» — 층의 상태가 같고 자국 생성이 획마다 독립이기 때문이다
+   *  (획마다 primeAt·newStroke·setRng로 리셋 · 덮임은 beginStroke가 앞 획의 상자를 지운다 —
+   *  「0 아닌 덮임 ⊆ 마지막 획 상자」가 층의 불변식이다).
+   *  층이 없으면(예산 축출·크기 변화) **null** — 부르는 쪽은 전량 재굽기로 떨어진다. */
+  appendMark?(g: CanvasRenderingContext2D, m: SeamMark, bg: HTMLCanvasElement): MarkBox | null
+  /** 이 캔버스의 층이 살아 있는가(굽기가 세운 그대로 · 크기도 맞는가) */
+  hasLayer?(canvas: HTMLCanvasElement): boolean
+  /** 이 캔버스의 층을 놓는다(⑤ 메모리 — 안 보이는 면을 버릴 때 딸린 층도 같이) */
+  releaseLayer?(canvas: HTMLCanvasElement): void
   /** 작업대 몫(선택) — 도구별 브러시 후보·손잡이·조정 저장 */
   brushChoices?(tool: Instr58): string[]
   brushOf?(tool: Instr58): string
@@ -116,6 +130,22 @@ export function drawMarksSeam(g: CanvasRenderingContext2D, marks: SeamMark[]): v
   if (renderer.drawMany) { renderer.drawMany(g, list); return }
   for (const m of list) renderer.draw(g, m)
 }
+
+/** web2-65 — 자국 하나를 **얹는다**(굽기가 세운 층 위에). 못 얹으면 null(전량 재굽기로 떨어진다). */
+export function appendMarkSeam(
+  g: CanvasRenderingContext2D, m: SeamMark, bg: HTMLCanvasElement,
+): MarkBox | null {
+  if (!renderer) throw new Error('칠 렌더러가 등록되지 않았다 — main이 부팅에서 setPaintRenderer를 부른다')
+  if (!renderer.appendMark || !renderer.hasLayer) return null
+  if (!renderer.hasLayer(g.canvas)) return null
+  if (m.pts.length < 2) return { x0: 0, y0: 0, x1: -1, y1: -1 }   // 점 하나 — 층도 화면도 안 바뀐다
+  return renderer.appendMark(g, m, bg)
+}
+/** 이 캔버스에 굽기가 세운 층이 살아 있는가 — 누적의 전제(값으로 보인다) */
+export const paintLayerAlive = (canvas: HTMLCanvasElement): boolean =>
+  renderer?.hasLayer?.(canvas) ?? false
+/** 이 캔버스의 층을 놓는다(⑤ 메모리) */
+export const releasePaintLayer = (canvas: HTMLCanvasElement): void => { renderer?.releaseLayer?.(canvas) }
 
 // ── 반증 스위치(D-3 · #30 — e2e 전용 · 제품 경로는 안 부른다) — **엔진 중립**이라 이음매가
 // 든다: 어느 엔진이 등록돼 있든 같은 뜻으로 걸린다(62 이월).

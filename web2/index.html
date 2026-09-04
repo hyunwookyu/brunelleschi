@@ -451,15 +451,18 @@
     /* ── 칠 패널(web2-64 §2) — 칠 도구를 든 «동안» 항상 뜬다(R8 정정 — DECISIONS). 통(tray)의 겹침 규칙(R2 · 왼쪽으로 겹쳐 뜬다)은
        그대로 쓰되 등록부 밖이다(바깥 누름으로 안 접힌다 · 도구를 놓아야 사라진다). 폭은 치수 리본의 내용 폭(208)에 맞춘다.
        #97: 줄은 flex-shrink 0(위 #painttray > * 규칙) · 견본 캔버스는 인라인 position:static. */
-    #painttray { width: 232px; padding: 6px; background: rgba(252,251,248,.96); box-shadow: 0 1px 10px rgba(0,0,0,.09);
+    /* web2-65 §2 ①④ — 폭 232 → 260: 이름이 안 잘릴 만큼이다(232에서는 「잉크펜 · dee…」로 끊겼다).
+       자리는 **화면 왼쪽 가장자리**다(main.ts placeLeftPanel) — 작도 세로바와 안 겹친다. */
+    #painttray { width: 260px; padding: 6px; background: rgba(252,251,248,.96); box-shadow: 0 1px 10px rgba(0,0,0,.09);
                  border-radius: 6px; gap: 3px; align-items: stretch; }
     #painttray .rrow { box-shadow: none; background: transparent; }
     #painttray .rrow.on { background: rgba(60, 56, 49, .10); }
     #painttray .prow { padding-top: 4px; padding-bottom: 4px; }
     #paint-brush-btn { align-items: center; gap: 8px; padding: 6px; border-radius: 4px; background: rgba(255,255,255,.6); }
-    #paint-brush-name { font: 12px/1.25 system-ui, sans-serif; text-align: left; min-width: 0; }
-    #paint-brush-name b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
-    #paint-brush-name span { font-size: 10.5px; }
+    /* web2-65 §2 ④ — **자르지 않는다**(잘리면 이름이 아니다): 말줄임 대신 줄바꿈이다. */
+    #paint-brush-name { font: 12px/1.25 system-ui, sans-serif; text-align: left; min-width: 0; white-space: normal; }
+    #paint-brush-name b { font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
+    #paint-brush-name span { font-size: 10.5px; white-space: normal; overflow-wrap: anywhere; }
     #paint-color { gap: 8px; }
     .colordot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(60,56,49,.35); padding: 0; cursor: pointer;
                 touch-action: none; flex-shrink: 0; box-shadow: inset 0 0 0 2px rgba(255,255,255,.7); }
@@ -468,12 +471,14 @@
     #paint-wheelbox[hidden] { display: none; }
     #paint-wheel-cv { position: static; inset: auto; display: block; touch-action: none; cursor: crosshair; }
     #paint-hex { min-width: 0; font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #4a463f; }
-    /* 즐겨찾기 여섯(64 — 옛 도구 넷의 자리) — 3×2 격자 · 그림 + 짧은 이름 */
+    /* 즐겨찾기 여섯(64 — 옛 도구 넷의 자리) — 3×2 격자 · **그 브러시의 실제 자국** + 이름(65 §2 ②).
+       그림(SLOT_SVG)이 아니라 자국인 이유: 여섯이 다 비슷한 연필 그림이라 구분이 안 됐다(사람 판정). */
     #paint-favs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 4px 6px; }
     .favbtn { display: flex; flex-direction: column; align-items: center; gap: 2px; background: rgba(255,255,255,.55); border: 1px solid rgba(60,56,49,.12);
               border-radius: 4px; padding: 3px 2px; margin: 0; color: #4a463f; cursor: pointer; touch-action: none; min-width: 0; }
     .favbtn svg { height: 22px; width: auto; }
-    .favbtn .favname { font: 10px/1.1 system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    /* 65 §2 ④ — 말줄임 ⛔. 두 줄까지 흐르고 그래도 넘치면 패널 폭이 틀린 것이다(게이트가 잡는다). */
+    .favbtn .favname { font: 10px/1.15 system-ui, sans-serif; white-space: normal; overflow-wrap: anywhere; max-width: 100%; text-align: center; }
     .favbtn.on { background: rgba(60, 56, 49, .14); border-color: rgba(60,56,49,.4); }
     .rrow { display: flex; flex-direction: row; align-items: center; gap: 7px;
             font: 12px/1 system-ui, sans-serif; color: #4a463f; white-space: nowrap;

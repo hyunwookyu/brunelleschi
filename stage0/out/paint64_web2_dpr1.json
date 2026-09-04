@@ -63,7 +63,7 @@
             -70569332
           ],
           "off": [
-            -278864420
+            697280513
           ]
         }
       },
@@ -82,7 +82,7 @@
             1238912060
           ],
           "off": [
-            627121798
+            1603266731
           ]
         }
       }
@@ -1509,21 +1509,21 @@
         "exists": true,
         "hit": true,
         "rect": [
-          907,
-          506,
-          232,
+          12,
+          263,
+          260,
           42
         ],
-        "top": "paint-brush-sample"
+        "top": "paint-brush-btn"
       },
       {
         "id": "paint-brush-sample",
         "exists": true,
         "hit": true,
         "rect": [
-          913,
-          513,
-          152,
+          18,
+          270,
+          122,
           28
         ],
         "top": "paint-brush-sample"
@@ -1533,8 +1533,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          977,
-          557,
+          82,
+          314,
           96,
           16
         ],
@@ -1545,8 +1545,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          1082,
-          559,
+          187,
+          316,
           38,
           12
         ],
@@ -1557,8 +1557,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          977,
-          588,
+          82,
+          345,
           96,
           16
         ],
@@ -1569,8 +1569,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          1082,
-          590,
+          187,
+          347,
           38,
           12
         ],
@@ -1581,8 +1581,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          916,
-          617,
+          21,
+          374,
           30,
           30
         ],
@@ -1593,8 +1593,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          954,
-          624,
+          59,
+          381,
           16,
           16
         ],
@@ -1605,81 +1605,81 @@
         "exists": true,
         "hit": true,
         "rect": [
-          913,
-          658,
-          71,
-          44
+          18,
+          415,
+          81,
+          40
         ],
-        "top": "svg"
+        "top": "paint-fav-1"
       },
       {
         "id": "paint-fav-2",
         "exists": true,
         "hit": true,
         "rect": [
-          987,
-          658,
-          71,
-          44
+          102,
+          415,
+          81,
+          40
         ],
-        "top": "svg"
+        "top": "paint-fav-2"
       },
       {
         "id": "paint-fav-3",
         "exists": true,
         "hit": true,
         "rect": [
-          1062,
-          658,
-          71,
-          44
+          185,
+          415,
+          81,
+          40
         ],
-        "top": "svg"
+        "top": "paint-fav-3"
       },
       {
         "id": "paint-fav-4",
         "exists": true,
         "hit": true,
         "rect": [
-          913,
-          705,
-          71,
-          44
+          18,
+          458,
+          81,
+          40
         ],
-        "top": "svg"
+        "top": "paint-fav-4"
       },
       {
         "id": "paint-fav-5",
         "exists": true,
         "hit": true,
         "rect": [
-          987,
-          705,
-          71,
-          44
+          102,
+          458,
+          81,
+          40
         ],
-        "top": "svg"
+        "top": "paint-fav-5"
       },
       {
         "id": "paint-fav-6",
         "exists": true,
         "hit": true,
         "rect": [
-          1062,
-          705,
-          71,
-          44
+          185,
+          458,
+          81,
+          40
         ],
-        "top": "svg"
+        "top": "paint-fav-6"
       },
       {
         "id": "btn-paint-front",
         "exists": true,
         "hit": true,
         "rect": [
-          907,
-          755,
-          232,
+          12,
+          504,
+          260,
           33
         ],
         "top": "btn-paint-front"
@@ -1710,8 +1710,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          767,
-          624,
+          295,
+          381,
           132,
           132
         ],
@@ -1722,23 +1722,23 @@
       "#brushpick"
     ],
     "overflow": {
-      "sw": 244,
-      "cw": 244,
-      "sh": 294,
-      "ch": 294,
+      "sw": 272,
+      "cw": 272,
+      "sh": 286,
+      "ch": 286,
       "vh": 800,
-      "bottom": 794,
-      "top": 500
+      "bottom": 543,
+      "top": 257
     },
     "viewport700": {
       "overflow": {
-        "sw": 244,
-        "cw": 244,
-        "sh": 294,
-        "ch": 294,
+        "sw": 272,
+        "cw": 272,
+        "sh": 286,
+        "ch": 286,
         "vh": 700,
-        "bottom": 694,
-        "top": 400
+        "bottom": 493,
+        "top": 207
       },
       "zero_stage_missing": []
     },
@@ -1768,15 +1768,15 @@
   "panel": {
     "def": "34-0(#96) — 손잡이 전수 툴팁 · R1(슬라이더 = 연속값 · 58 정정) · R3(전부 data-act state — 패널은 접히지 않는다) · R6(값 표찰 · 견본 · 이름) · R7(브러시 목록·휠은 통) · R8 정정(패널은 도구를 든 동안 항상 — 통 밖) · 즐겨찾기 탭=적용 · 길게=저장(기기) · 목록 고르기 = br만",
     "titles": {
-      "paint-brush-btn": "지금 브러시 deevad/liner(잉크펜 족) — 누르면 브러시 목록이 열린다",
+      "paint-brush-btn": "지금 브러시 «제도 라이너» — 원 이름 deevad/liner(잉크펜 족). 누르면 브러시 목록이 열린다",
       "paint-sizes": "자국 굵기 — 슬롯별 최대: 잉크펜 500 · 마커 100 · 색연필 50 · 연필 50",
       "paint-size-range": "자국 굵기(px) — 끌어서 조절한다",
       "paint-opacity": "불투명 — 획의 불투명(0.05~1). 브러시 자체의 불투명에 곱한다",
       "paint-opacity-range": "불투명 — 끌어서 조절한다",
       "paint-color-btn": "지금 색 #5a5a5a — 누르면 색상 휠이 열린다",
       "paint-recent-1": "최근 색 — 비어 있다(색을 고르면 여기 남는다)",
-      "paint-fav-1": "즐겨찾기 1 — 연필 · classic/pencil. 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
-      "paint-fav-6": "즐겨찾기 6 — 잉크펜 · deevad/watercolor_expressive. 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
+      "paint-fav-1": "즐겨찾기 1 — 연필 · 연필(원 이름 classic/pencil). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
+      "paint-fav-6": "즐겨찾기 6 — 잉크펜 · 수채(원 이름 deevad/watercolor_expressive). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
       "btn-paint-front": "정면은 면을 골라야 한다 — 칠 도구로 면을 탭해 고른 뒤 누른다"
     },
     "no_title": [],
@@ -1798,7 +1798,7 @@
       "br": "tanda/marker-01",
       "o": 1
     },
-    "name_shown": "marker-01\n마커 · tanda",
+    "name_shown": "마커 01\n마커 · tanda · marker-01",
     "favs_after_hold": [
       {
         "i": "pencil",
