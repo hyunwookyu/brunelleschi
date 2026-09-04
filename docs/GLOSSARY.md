@@ -101,5 +101,5 @@ e2e:ledger   LEDGER=1 · 워커 1 · 스펙 하나씩       원장을 쓸 때만
 | **판 (frame)** | 팁 아틀라스의 한 장(GIH의 cell). 도장마다 획의 결정론 난수로 고른다 — 판 고정(tipFrameLock)은 ②의 반증 스위치 |
 | **종이 높이맵 (paper height tile)** | ambientCG Paper001 변위 1024²를 1·99 백분위로 펴고 뒤집은 결 타일(골 = 1 · web2-63) — 61 값 잡음(256²)을 «값»만 갈아 끼웠다(엔진의 곱하는 자리는 그대로 · StrokeOpts.grainN이 접기 변) · setPaper61ForTest가 61 타일로 되돌린다(⑤의 대조 판) |
 | **범위 폭 자 (extent width)** | 팁이 든 프리셋의 크기 보정 자(web2-63) — 직선 견본의 열별 «열 최대의 25% 위» 픽셀 수 중앙값. 62의 반최대 자는 희소 판에서 반지름을 부풀렸다. 보정 열쇠는 프리셋|팁 |
-| **ref63(62 기준 해시)** | 63 갈래 첫 커밋 4470fa7(엔진 = main 1f912bf의 62 그대로 — 원장 tree_check가 diff를 값으로)에서 뜬 팁 없는 자국 8행의 어둡기 지도 해시(FNV-1a 32) + 자국 픽셀 수(stage0/out/ref63_web2_dpr1.json · REF63=1로만 다시 뜬다) — paint63 ⑤가 «팁 없음 + 61 결 = 62 픽셀»을 이것과 대조한다 |
+| **ref63(62 기준 해시)** | 63 갈래 첫 커밋 4470fa7(엔진 = main 1f912bf의 62 그대로 — 원장 tree_check가 diff를 값으로)에서 뜬 팁 없는 자국 8행의 어둡기 지도 해시(FNV-1a 32) + 자국 픽셀 수(stage0/out/ref63_web2_dpr1.json · REF63=1 스위치가 없으면 안 쓴다 — 이후 트리는 연필·색연필 슬롯에 팁이 들어 같은 해시가 «안» 나오므로 다시 뜰 수 없는 얼어붙은 기준이다 · 2차 리뷰어 [9]) — paint63 ⑤가 «팁 없음 + 61 결 = 62 픽셀»을 이것과 대조한다 |
 | **기본 팁 표 (TIP_EXACT / tipDefaultOf)** | 프리셋 → 팁(마른 매체만: 연필 계열 fine-grain · 목탄 chalk-chisel · 파스텔 rock-pitted · 마른붓 scratches-rough · 색연필 슬롯 scratches2 · 그 밖은 없음). 슬롯 조정 tune.tip('none' | 이름)이 표를 이긴다 — 고르개의 «팁 줄» |

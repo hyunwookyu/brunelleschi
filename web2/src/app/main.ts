@@ -2823,7 +2823,7 @@ import {
   setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET,
   setTipsOffForTest, setTipFrameLockForTest, tipsReadyForTest, tipStatsForTest, resetTipStatsForTest, tipDefaultOfForTest, onTipAssetsLoaded,
 } from './mypaintpaint'
-import { grainTileForTest, setPaper61ForTest, paper61ForTest } from '../mypaint/paper'
+import { grainTileForTest, setPaper61ForTest, paper61ForTest, setPaperSeamBreakForTest } from '../mypaint/paper'
 import { loadTipAssets, tipAtlasesForTest } from '../mypaint/tips'
 import { initTuneLab } from './tunelab'
 import { initBrushPicker, persistTune } from './brushpicker'
@@ -2914,6 +2914,7 @@ const diag = {
   setTipFrameLockForTest: (v: number) => setTipFrameLockForTest(v),
   setPaper61ForTest: (v: boolean) => { setPaper61ForTest(v); rebakePaintTexForTest(); invalidate() },
   paper61ForTest: () => paper61ForTest(),
+  setPaperSeamBreakForTest: (v: boolean) => setPaperSeamBreakForTest(v),
   tipsReadyForTest: () => tipsReadyForTest(),
   tipStatsForTest: () => tipStatsForTest(),
   resetTipStatsForTest: () => resetTipStatsForTest(),

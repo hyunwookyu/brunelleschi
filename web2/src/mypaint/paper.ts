@@ -20,6 +20,10 @@ export const GRAIN_DEPTH = 0.42          // 61의 기본 깊이(paperK 1) 그대
 let tile61: Float32Array | null = null
 let height: { data: Float32Array; n: number } | null = null
 let paper61Override = false
+/** 63 반증(paint63 ③ 이음매 자 — 2차 리뷰어 [3]): 타일의 첫 열을 깊은 골(1)로 덮은 사본 — 1024 경계에 «인공 이음매»가 선다 */
+let seamBreak = false
+let brokenTile: Float32Array | null = null
+export function setPaperSeamBreakForTest(v: boolean): void { seamBreak = v; brokenTile = null }
 
 /** 61 결 타일(0..1 · 256²) — 고정 시드 61: 실행·획·시드 무관한 «같은 종이». */
 export function grainTile61(): Float32Array {
@@ -56,7 +60,11 @@ export const paper61ForTest = (): boolean => paper61Override
 
 /** 지금 쓰는 결 타일(0..1) — 높이맵(로드됐고 대조 스위치가 꺼졌을 때) · 아니면 61 타일. */
 export function grainTile(): Float32Array {
-  if (height && !paper61Override) return height.data
+  if (height && !paper61Override) {
+    if (!seamBreak) return height.data
+    if (!brokenTile) { brokenTile = new Float32Array(height.data); const n = height.n; for (let y = 0; y < n; y++) brokenTile[y * n] = 1 }
+    return brokenTile
+  }
   return grainTile61()
 }
 /** 지금 타일의 변(px) — 엔진이 대상 px를 이것으로 접는다(yp % n) */

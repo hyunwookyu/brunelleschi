@@ -147,9 +147,10 @@ test('① 마른 매체 다섯이 갈린다 — 열 쌍 전부 · 팁 끔(62 판
   }
   const onSeeds: Record<string, Stat>[] = [], offSeeds: Record<string, Stat>[] = []
   for (const seed of SEEDS) onSeeds.push(await drawStats(page, DRY.map(d => ({ key: d.key, preset: d.preset, seed }))))
-  await page.evaluate(() => (window as any).__b2.diag.setTipsOffForTest(true))
+  // 2차 [1]: «62 판»은 팁 끔 + 61 값 잡음 결 — 결을 안 되돌리면 «63 결 + 팁 끔»이지 62가 아니다(⑤의 no_tip_paper61이 그 정의)
+  await page.evaluate(() => { const b2 = (window as any).__b2; b2.diag.setTipsOffForTest(true); b2.diag.setPaper61ForTest(true) })
   for (const seed of SEEDS) offSeeds.push(await drawStats(page, DRY.map(d => ({ key: d.key, preset: d.preset, seed }))))
-  await page.evaluate(() => (window as any).__b2.diag.setTipsOffForTest(false))
+  await page.evaluate(() => { const b2 = (window as any).__b2; b2.diag.setTipsOffForTest(false); b2.diag.setPaper61ForTest(false) })
   const on = avg(onSeeds), off = avg(offSeeds)
   // 반증: 같은 프리셋(classic/pencil) · 같은 팁(fine-grain) · 시드만 다른 다섯
   const same = await drawStats(page, [1, 2, 3, 4, 5].map(k => ({ key: `s${k}`, preset: 'classic/pencil', tip: 'fine-grain', seed: 100 + k })))
@@ -163,8 +164,8 @@ test('① 마른 매체 다섯이 갈린다 — 열 쌍 전부 · 팁 끔(62 판
   const minRel = (p: Record<string, { rel: number }>) => Math.min(...Object.values(p).map(x => x.rel))
   const perSeed = (rows: Record<string, Stat>[]) => rows.map((r, i) => ({ seed: SEEDS[i], distinct_pairs: count(pairs(r)), min_rel: minRel(pairs(r)) }))
   OUT.dry = {
-    def: `직선 w20 · 압력 .6 상수 · 시드 셋(63·64·65)의 통계 평균(1차 [H1] · #14 — 시드 하나는 여유 .041 < 요동 .07이었다 · per_seed가 시드별 값) · 몸통 띠(열별 가장자리 중앙값 안쪽 3px)의 통계 넷: roughness = 위/아래 가장자리 − 9열 이동평균의 sd(px) · empty_share = 띠 안 어둡기 < 8 몫 · mean · p95(어둡기/255). 쌍의 갈림 rel = 특징 넷의 상대 차(바닥 ${JSON.stringify(FLOORS)})의 **둘째로 큰 값**(특징 둘이 함께 갈려야 — top은 첫째 · 기록) · 문 > ${REL}. tips_on = 63 · tips_off = 62 판(D-2 재현 — 62의 프리셋 다섯도 이 자로는 이미 갈린다면 그 사실을 그대로 적는다: 지시의 «다 비슷해 보인다»는 사람 눈의 말이고 이 자는 통계다 · 팁이 더한 것은 min_rel의 차) · same = 반증(classic/pencil + fine-grain × 시드 다섯)`,
-    threshold: { distinct_rel: REL },
+    def: `직선 w20 · 압력 .6 상수 · 시드 셋(63·64·65)의 통계 평균(1차 [H1] · #14 — 시드 하나는 여유 .041 < 요동 .07이었다 · per_seed가 시드별 값) · 몸통 띠(열별 가장자리 중앙값 안쪽 3px)의 통계 넷: roughness = 위/아래 가장자리 − 9열 이동평균의 sd(px) · empty_share = 띠 안 어둡기 < 8 몫 · mean · p95(어둡기/255). 쌍의 갈림 rel = 특징 넷의 상대 차(바닥 ${JSON.stringify(FLOORS)})의 **둘째로 큰 값**(특징 둘이 함께 갈려야 — top은 첫째 · 기록) · 문 > ${REL}. tips_on = 63 · tips_off = 62 판(팁 끔 + 61 값 잡음 결 — ⑤의 no_tip_paper61과 같은 조건 · 2차 [1]) (D-2 재현 — 62의 프리셋 다섯도 이 자로는 이미 갈린다면 그 사실을 그대로 적는다: 지시의 «다 비슷해 보인다»는 사람 눈의 말이고 이 자는 통계다 · 팁이 더한 것은 min_rel의 차) · same = 반증(classic/pencil + fine-grain × 시드 다섯)`,
+    threshold: { distinct_rel: REL, origin: '문 .25는 첫 실행 «전»에 정했다(constants.ts 첫 등재 · 첫 실행 팁 켬 최소 .291 · 팁 끔 .230) · «둘째 특징» 규칙과 바닥은 첫 실행의 반증 실패(같은 프리셋·같은 팁 6/10 갈림)를 보고 바꿨다 — 그 뒤 문은 안 움직였다(2차 [8])' },
     seeds: SEEDS,
     tips_on: { stats: on, pairs: pOn, distinct_pairs: count(pOn), of: Object.keys(pOn).length, min_rel: minRel(pOn), per_seed: perSeed(onSeeds) },
     tips_off: { stats: off, pairs: pOff, distinct_pairs: count(pOff), of: Object.keys(pOff).length, min_rel: minRel(pOff), per_seed: perSeed(offSeeds) },
@@ -300,7 +301,7 @@ test('③ 결이 종이다 — 굵기 2배에서 타일 상관 불변 · 같은 
   const w26 = await grainCorr(page, 'brush', 26), w52 = await grainCorr(page, 'brush', 52)
   // 1차 [M6] — 타일 이음매(1024 경계): 넓은 포화 자국(잉크펜 w120 · 판 1400×300)의 어둡기 열 차 |v(x) − v(x−1)|의 몸통 평균을 x = 1024에서와
   // 그 밖(x 200..1300 · 경계 ±3 제외)에서 비교 — 이음매가 있으면 경계 열의 차가 튄다(비 > 문). 크롭(비정사각 원본의 1024²)이라 값으로 지킨다.
-  const seam = await page.evaluate(() => {
+  const seamOf = () => page.evaluate(() => {
     const b2 = (window as any).__b2
     const W = 1400, H = 300
     b2.diag.markMultiForTest([{ tool: 'brush', shape: 'line', wPx: 120, seed: 21, press: 0.9, color: '#2a2a30' }], W, H, false)
@@ -312,6 +313,11 @@ test('③ 결이 종이다 — 굵기 2배에서 타일 상관 불변 · 같은 
     const elsewhere = s / n
     return { boundary_x: 1024, diff_at_boundary: +at1024.toFixed(3), diff_elsewhere_mean: +elsewhere.toFixed(3), ratio: +(at1024 / elsewhere).toFixed(3), cols: n }
   })
+  const seam = await seamOf()
+  // 반증(2차 [3] · D-3): 타일 첫 열을 깊은 골로 덮은 사본(인공 이음매) — 경계 열 차가 튀어야 자가 산다
+  await page.evaluate(() => (window as any).__b2.diag.setPaperSeamBreakForTest(true))
+  const seamBroken = await seamOf()
+  await page.evaluate(() => (window as any).__b2.diag.setPaperSeamBreakForTest(false))
   // 팁 매체(몸통 문턱 20 — 옅은 매체): 같은 타일이 팁 자국의 어둡기도 깎는가(«같은 봉우리에 얹힌다»의 값 — 타일이 둘의 공통 원인)
   const tipped: Record<string, unknown> = {}
   for (const [key, preset] of [['charcoal', 'classic/charcoal'], ['pencil', 'classic/pencil'], ['cp', 'ramon/B-pencil']] as const)
@@ -330,6 +336,7 @@ test('③ 결이 종이다 — 굵기 2배에서 타일 상관 불변 · 같은 
     note_structure: '포화 몸통의 절대 상관(−.86/−.92)은 «곱하는 자리»(1 − 깊이×타일)의 구조적 귀결이라 임계를 안 건다(§5.1 유형 3 · 1차 [M4]) — 이 게이트가 실제로 재는 비자명한 양은 ① w26 vs w52의 상관 비(대상 px 고정 = 굵기 무관 · 문 |비 − 1| ≤ tile_ratio_tol) ② 팁 매체의 상관(팁 판이 결 위에 «얹힌다» — 문 ≤ tile_corr_tip_max) ③ 타일 이음매(seam) 셋이다',
     tile_corr: { w26, w52, ratio: w26.corr && w52.corr ? +(w52.corr / w26.corr).toFixed(3) : null, tipped },
     seam,
+    falsification_seam_break: { def: '타일 첫 열(x ≡ 0 mod 1024)을 골 1로 덮은 사본 — 1024 경계에 인공 이음매 · 같은 자로 잰 비가 문을 넘어야 한다', ...seamBroken },
     same_spot_record: { charcoal: spotCharcoal },
     falsification_grain_off: { w26: w26off, tipped: tippedOff, same_spot_charcoal: spotOff },
   }
@@ -337,6 +344,7 @@ test('③ 결이 종이다 — 굵기 2배에서 타일 상관 불변 · 같은 
   expect(w26.corr!, '26px — 결과 음의 상관(구조 — 기록 · 부호만 단언)').toBeLessThan(0)
   expect(Math.abs((w52.corr! / w26.corr!) - 1), '굵기 2배 — 같은 결(상관 비 ≈ 1 · 대상 px 고정)').toBeLessThanOrEqual(RATIO_TOL)
   expect(seam.ratio, '타일 이음매(1024 경계)가 안 튄다').toBeLessThanOrEqual(SEAM_MAX)
+  expect(seamBroken.ratio, '반증 — 인공 이음매는 튄다(자가 경계를 짚는다)').toBeGreaterThan(SEAM_MAX)
   for (const key of ['charcoal', 'pencil', 'cp']) {
     const t = tipped[key] as { corr: number | null; n: number }
     expect(t.corr, `${key} — 팁 자국도 같은 타일에 깎인다`).not.toBeNull()
@@ -364,7 +372,7 @@ test('④ 회전·비율 — elliptical_dab_angle 0/90 × elliptical_dab_ratio 3
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const MIN = cs.PAINT63_ASPECT_WIDTH_RATIO_MIN as number
   const rows: Record<string, unknown> = {}
-  for (const [key, preset] of [['charcoal', 'classic/charcoal'], ['drybrush', 'classic/dry_brush']] as const) {
+  for (const [key, preset] of [['charcoal', 'classic/charcoal'], ['drybrush', 'classic/dry_brush'], ['pencil', 'classic/pencil'], ['pastel', 'ramon/Pastel_1'], ['cp', 'ramon/B-pencil']] as const) {
     // 도장 방향 추적을 끄고(direction 입력 없음) 각을 고정해야 «각»의 효과가 순수하다: dab_angle 기준값 덮개
     // 설정 이름은 libmypaint의 것: elliptical_dab_ratio · elliptical_dab_angle(첫 실행이 dab_angle을 넣어 무시됐다 — 폭 비 1 · D-3이 잡았다)
     const a0 = await bodyWidth(page, preset, { elliptical_dab_ratio: 3, elliptical_dab_angle: 0 })
@@ -375,11 +383,11 @@ test('④ 회전·비율 — elliptical_dab_angle 0/90 × elliptical_dab_ratio 3
       ratio1: { angle0: r1a0, angle90: r1a90, width_ratio: +(Math.max(r1a0.width, r1a90.width) / Math.max(1, Math.min(r1a0.width, r1a90.width))).toFixed(3) } }
   }
   OUT.rotation = {
-    def: `직선 w20 몸통 폭(열별 어둡기 > 16 픽셀 수 중앙값). 비율 3에서 각 0과 90의 폭 비 ≥ ${MIN}(타원의 긴 축이 경로에 가로/세로) · 반증 = 비율 1이면 폭 비 < ${MIN}(각이 뜻이 없다). 기제(합성 막대 판의 2차 모멘트)는 단위 시험 mypaint63 ②`,
+    def: `팁 다섯 전부(목탄·마른붓·연필·파스텔·색연필 — 2차 [14]: 첫 판은 둘) · 직선 w20 몸통 폭(열별 어둡기 > 16 픽셀 수 중앙값). 비율 3에서 각 0과 90의 폭 비 ≥ ${MIN}(타원의 긴 축이 경로에 가로/세로) · 반증 = 비율 1이면 폭 비 < ${MIN}(각이 뜻이 없다). 기제(합성 막대 판의 2차 모멘트)는 단위 시험 mypaint63 ②`,
     threshold: { width_ratio_min: MIN },
     rows,
   }
-  for (const key of ['charcoal', 'drybrush']) {
+  for (const key of ['charcoal', 'drybrush', 'pencil', 'pastel', 'cp']) {
     const r = rows[key] as { ratio3: { width_ratio: number }; ratio1: { width_ratio: number } }
     expect(r.ratio3.width_ratio, `${key} 비율 3 — 각이 폭을 바꾼다`).toBeGreaterThanOrEqual(MIN)
     expect(r.ratio1.width_ratio, `${key} 반증 — 비율 1이면 각이 뜻이 없다`).toBeLessThan(MIN)
