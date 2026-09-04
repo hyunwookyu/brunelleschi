@@ -260,8 +260,11 @@ Feather가 점마다 **법선**을 저장하는 이유가 여기 있다.
   Open Brush (Apache-2.0)   Tilt Brush의 후속. 리본 기하 생성의 공개 최고 참조
                             QuadStripBrush가 그 원형
   perfect-freehand (MIT)    획을 닫힌 폴리곤 하나로. 겹침 없음. 펜·마커용
-  p5.brush (MIT)            이미 우리 의존성. 스트로크 버퍼 구조를 이미 쓴다
-                            ⚠ 압력이 실시간이 아니라 라이브러리로는 못 쓴다
+  p5.brush (MIT)            이미 우리 의존성 — web2-61부터 «칠 렌더러»가 이것이다
+                            (이음매 core/paintseam 뒤 · 표준 빌드 두 사본: 선 겹 + 칠).
+                            ⚠ «압력이 실시간이 아니라 못 쓴다»는 틀린 말이었다(AS-C180) —
+                            spline이 점별 압력을 받는다. ⚠ 크기는 scaleBrushes가 아니라
+                            파생 브러시(지름·산포만 k배 — spacing은 절대 걸음 · AS-C181)
   mypaint-brushes (CC0)     의무 없음. 값을 그대로 실어도 된다
   libmypaint (ISC)          안전. WASM 빌드는 죽었다(2015 asm.js)
   google/ink (Apache-2.0)   Jetpack Ink의 핵심. 메쉬 기반. 연필 브러시는 없다

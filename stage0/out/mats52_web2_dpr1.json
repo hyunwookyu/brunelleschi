@@ -51,20 +51,20 @@
     "paint_box": {
       "withPaint": {
         "mean": [
-          169,
-          131,
-          116
+          175,
+          137,
+          119
         ],
-        "pigment": 1467235,
+        "pigment": 1403066,
         "n": 4200
       },
       "afterMat": {
         "mean": [
-          163,
           170,
-          166
+          179,
+          169
         ],
-        "pigment": 1115972,
+        "pigment": 1039981,
         "n": 4200
       },
       "afterUndo": {

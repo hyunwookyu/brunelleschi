@@ -1,5 +1,5 @@
 {
-  "n_flags": 6417,
+  "n_flags": 6419,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -350,6 +350,20 @@
       "path": "axis_warn.json:by_order[1].cases[9].misfit_min",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "bake61_web2_dpr1.json:constants_snapshot",
+      "val": {
+        "PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS": 18
+      },
+      "flag": "단일 범주 분포(n=18) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "bake61_web2_dpr2.json:constants_snapshot",
+      "val": {
+        "PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS": 18
+      },
+      "flag": "단일 범주 분포(n=18) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "basic_flow.json:thresholds.console_errors_max",
@@ -4573,6 +4587,16 @@
       "path": "glyph35_web2.json:traj_on_accepted.1·위 세리프 + 밑줄 (2획).agree",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "grain61_pre_web2_dpr1.json:period_line_w20.marker.ampRatio",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "grain61_pre_web2_dpr2.json:period_line_w20.marker.ampRatio",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "graphite_web2.json:horizontal.byErr.0",
@@ -21598,9 +21622,9 @@
     {
       "path": "paint45_e2e_web2_dpr1.json:orbit",
       "val": {
-        "ink_after_orbit": 1076
+        "ink_after_orbit": 1943
       },
-      "flag": "단일 범주 분포(n=1076) → 변별력 없음/단위 불일치 의심"
+      "flag": "단일 범주 분포(n=1943) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "paint45_e2e_web2_dpr1.json:front_paint.adjacent_face_thin_px",
@@ -21610,12 +21634,17 @@
     {
       "path": "paint45_e2e_web2_dpr2.json:orbit",
       "val": {
-        "ink_after_orbit": 4087
+        "ink_after_orbit": 8267
       },
-      "flag": "단일 범주 분포(n=4087) → 변별력 없음/단위 불일치 의심"
+      "flag": "단일 범주 분포(n=8267) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "paint45_e2e_web2_dpr2.json:front_paint.adjacent_face_thin_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint50_web2_dpr1.json:multiply.under_pattern_opaque.bandPx",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -21646,11 +21675,6 @@
     },
     {
       "path": "paint50_web2_dpr2.json:multiply.under_pattern_opaque.contrastPx",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "paint50_web2_dpr2.json:multiply.under_pattern_norep.bandPx",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -21710,82 +21734,17 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint59_web2_dpr1.json:self_cross.rows_press.pencil.p0.25.p95_ratio",
+      "path": "paint59_web2_dpr1.json:self_cross.rows.cp.cap_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "paint59_web2_dpr1.json:self_cross.rows_press.pencil.p0.5.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:self_cross.rows_press.pencil.p0.75.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:self_cross.rows_press.cp.p0.25.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:self_cross.rows_press.cp.p0.5.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:self_cross.rows_press.cp.p0.75.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:self_cross.falsification_press.pencil.p0.75.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:self_cross.rows.marker.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:self_cross.rows.marker.cap_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:self_cross.rows.cp.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:self_cross.rows.pencil.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:self_cross.rows_grain.marker.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:self_cross.falsification.marker.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:self_cross.falsification.marker.cap_ratio",
+      "path": "paint59_web2_dpr1.json:self_cross.rows.pencil.cap_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "paint59_web2_dpr1.json:ends.grain_phase_spread.rows[0].off",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:grain_phase.scene.paint_at_end",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -21820,7 +21779,22 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint59_web2_dpr2.json:self_cross.rows_press.pencil.p0.25.p95_ratio",
+      "path": "paint59_web2_dpr2.json:self_cross.rows.cp.p95_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "paint59_web2_dpr2.json:self_cross.rows.cp.cap_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "paint59_web2_dpr2.json:self_cross.rows.pencil.p95_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "paint59_web2_dpr2.json:self_cross.rows.pencil.cap_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -21835,11 +21809,6 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "paint59_web2_dpr2.json:self_cross.rows_press.cp.p0.25.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
       "path": "paint59_web2_dpr2.json:self_cross.rows_press.cp.p0.5.p95_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -21850,47 +21819,7 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "paint59_web2_dpr2.json:self_cross.rows.marker.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:self_cross.rows.marker.cap_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:self_cross.rows.cp.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:self_cross.rows.pencil.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:self_cross.rows_grain.marker.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:self_cross.falsification.marker.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:self_cross.falsification.marker.cap_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
       "path": "paint59_web2_dpr2.json:ends.grain_phase_spread.rows[0].off",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:grain_phase.scene.paint_at_end",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -25819,11 +25748,6 @@
       "path": "thick55_unit_web2.json:in_plane_disp_world",
       "val": 1.3283950133694437e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "thick55_web2_dpr2.json:border_meter.ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
@@ -30580,7 +30504,22 @@
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
     {
+      "path": "_vitest_timing.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
       "path": "autosave_web2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "bake61_web2_dpr1.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "bake61_web2_dpr2.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
@@ -30800,6 +30739,26 @@
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
     {
+      "path": "grain61_pre_web2_dpr1.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "grain61_pre_web2_dpr2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "grain61_web2_dpr1.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "grain61_web2_dpr2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
       "path": "graphite_web2.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
@@ -30911,6 +30870,16 @@
     },
     {
       "path": "join56_web2_pre_dpr2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "lab61_web2_dpr1.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "lab61_web2_dpr2.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
@@ -31405,7 +31374,22 @@
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
     {
+      "path": "_vitest_timing.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
       "path": "autosave_web2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "bake61_web2_dpr1.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "bake61_web2_dpr2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
@@ -31620,6 +31604,26 @@
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
     {
+      "path": "grain61_pre_web2_dpr1.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "grain61_pre_web2_dpr2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "grain61_web2_dpr1.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "grain61_web2_dpr2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
       "path": "graphite_web2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
@@ -31721,6 +31725,16 @@
     },
     {
       "path": "join56_web2_pre_dpr2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "lab61_web2_dpr1.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "lab61_web2_dpr2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
@@ -32220,37 +32234,37 @@
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
-      "path": "web/e2e/fixture.ts:92:wiringGapPx",
+      "path": "web\\e2e\\fixture.ts:92:wiringGapPx",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/e2e/restore_pose.spec.ts:230:diff",
+      "path": "web\\e2e\\restore_pose.spec.ts:230:diff",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/e2e/stage.spec.ts:57:pixelGap",
+      "path": "web\\e2e\\stage.spec.ts:57:pixelGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/src/s3d/lift.ts:467:transitionGap",
+      "path": "web\\src\\s3d\\lift.ts:467:transitionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/src/s3d/stroke.ts:313:reprojectionGap",
+      "path": "web\\src\\s3d\\stroke.ts:313:reprojectionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web2/test/level.test.ts:82:foldAfterRelease",
+      "path": "web2\\test\\level.test.ts:82:foldAfterRelease",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web2/test/xint41.test.ts:61:placementError",
+      "path": "web2\\test\\xint41.test.ts:61:placementError",
       "val": "raythrough(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
@@ -32277,9 +32291,9 @@
     {
       "path": "scan_citation_hashes",
       "val": [
+        "assumptions.md:199 test_cost.json",
         "DECISIONS.md:3637 mats46_web2.json",
         "DEFERRED.md:946 test_cost.json",
-        "assumptions.md:199 test_cost.json",
         "progress.md:11820 test_cost.json",
         "progress.md:13857 test_cost.json"
       ],
@@ -32455,57 +32469,57 @@
       "flag": "**출처 경로가 이 원장에서 안 풀린다**(#40) — 값 대조를 못 한다"
     },
     {
-      "path": "web/test/axis_live.test.ts",
+      "path": "web\\test\\axis_live.test.ts",
       "val": "18건 (줄 [111, 119, 137, 142, 145])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/lift_grade.test.ts",
+      "path": "web\\test\\lift_grade.test.ts",
       "val": "1건 (줄 [104])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/metrics.ts",
+      "path": "web\\test\\metrics.ts",
       "val": "1건 (줄 [135])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/order_promote.test.ts",
+      "path": "web\\test\\order_promote.test.ts",
       "val": "3건 (줄 [127, 252, 260])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/order_signal.test.ts",
+      "path": "web\\test\\order_signal.test.ts",
       "val": "3건 (줄 [322, 323, 346])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/order_undo.test.ts",
+      "path": "web\\test\\order_undo.test.ts",
       "val": "1건 (줄 [251])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/persist.test.ts",
+      "path": "web\\test\\persist.test.ts",
       "val": "1건 (줄 [363])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/promote.test.ts",
+      "path": "web\\test\\promote.test.ts",
       "val": "35건 (줄 [161, 189, 211, 212, 217])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/snap_measure.test.ts",
+      "path": "web\\test\\snap_measure.test.ts",
       "val": "3건 (줄 [92, 93, 537])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/stage_measure.test.ts",
+      "path": "web\\test\\stage_measure.test.ts",
       "val": "2건 (줄 [179, 221])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/tube_measure.test.ts",
+      "path": "web\\test\\tube_measure.test.ts",
       "val": "1건 (줄 [176])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     }
@@ -32568,7 +32582,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 638,
+      "files_scanned": 643,
       "exts_declared": [
         ".md",
         ".py",
@@ -32576,8 +32590,8 @@
       ],
       "hits_by_ext": {
         ".md": 12,
-        ".ts": 12,
-        ".py": 2
+        ".py": 2,
+        ".ts": 12
       }
     },
     {
@@ -32592,7 +32606,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 638,
+      "files_scanned": 643,
       "exts_declared": [
         ".md",
         ".py",
@@ -32601,8 +32615,8 @@
       "hits_by_ext": {
         ".md": 43,
         ".py": 4,
-        ".ts": 115,
-        ".html": 1
+        ".html": 1,
+        ".ts": 115
       }
     },
     {
@@ -32634,7 +32648,7 @@
     {
       "scan": "scan_dead_ledger",
       "unit": "원장",
-      "targets": 260,
+      "targets": 268,
       "hits": 3,
       "note": null
     },
@@ -32655,7 +32669,7 @@
     {
       "scan": "scan_unbounded_wait",
       "unit": "마감 블록·도구 파일",
-      "targets": 13,
+      "targets": 14,
       "hits": 0,
       "note": "⚠ **세션 안에서 즉석으로 만든 대기는 안 보인다** — 저장소에 없기 때문이다. 그 자리를 지키는 것은 **마감 보고의 「도는 백그라운드 없음」 한 줄**이다"
     },
@@ -32676,7 +32690,7 @@
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 227,
+      "targets": 236,
       "hits": 3,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
@@ -32685,7 +32699,7 @@
       "unit": "게이트 블록",
       "targets": 105,
       "hits": 19,
-      "note": "값 대조를 **지난 것 61** · **픽스처가 정한 값 13** · **면제 28**(`reachability_absent`) · 원장 260개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, glyph35_web2.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lay_slide40_web2.json:gate, ledger_gate24_web2.json:gate, lens31_web2_dpr1.json:gate, lens31_web2_dpr2.json:gate, lens_roll_osnap.json:gate, mats52_web2_dpr1.json:scale_pass.gate, mats52_web2_dpr1.json:two_layers.gate, mats52_web2_dpr2.json:scale_pass.gate, mats52_web2_dpr2.json:two_layers.gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, paper_grain26_web2.json:gate, paper_grain30_web2.json:gate, paper_grain40_web2.json:gate, papericon31_web2_dpr1.json:gate, papericon31_web2_dpr2.json:gate, passthru24_web2.json:gate, place34_web2_dpr1.json:gate, place34_web2_dpr2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, read42_web2.json:gate, rep49_e2e_web2_dpr1.json:frame20.gate, rep49_e2e_web2_dpr2.json:frame20.gate, restore_pose.json:gate, scale32_web2.json:gate, shutter25_web2.json:gate, shutter25_web2_dpr2.json:gate, skew34_web2.json:gate, snap_cache.json:gate, snap_stage.json:gate, turn31_web2.json:gate, view42_web2.json:gate, view42_web2_dpr1.json:gate, view42_web2_dpr2.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate, xint41_web2.json:gate, zoom31_web2.json:gate, zoom31_web2_dpr1.json:gate, zoom31_web2_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, lens31_web2.json:gate, measure34_web2.json:gate, osnap_kinds.json:gate, osnappull37_web2.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 61** · **픽스처가 정한 값 13** · **면제 28**(`reachability_absent`) · 원장 269개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, glyph35_web2.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lay_slide40_web2.json:gate, ledger_gate24_web2.json:gate, lens31_web2_dpr1.json:gate, lens31_web2_dpr2.json:gate, lens_roll_osnap.json:gate, mats52_web2_dpr1.json:scale_pass.gate, mats52_web2_dpr1.json:two_layers.gate, mats52_web2_dpr2.json:scale_pass.gate, mats52_web2_dpr2.json:two_layers.gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, paper_grain26_web2.json:gate, paper_grain30_web2.json:gate, paper_grain40_web2.json:gate, papericon31_web2_dpr1.json:gate, papericon31_web2_dpr2.json:gate, passthru24_web2.json:gate, place34_web2_dpr1.json:gate, place34_web2_dpr2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, read42_web2.json:gate, rep49_e2e_web2_dpr1.json:frame20.gate, rep49_e2e_web2_dpr2.json:frame20.gate, restore_pose.json:gate, scale32_web2.json:gate, shutter25_web2.json:gate, shutter25_web2_dpr2.json:gate, skew34_web2.json:gate, snap_cache.json:gate, snap_stage.json:gate, turn31_web2.json:gate, view42_web2.json:gate, view42_web2_dpr1.json:gate, view42_web2_dpr2.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate, xint41_web2.json:gate, zoom31_web2.json:gate, zoom31_web2_dpr1.json:gate, zoom31_web2_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, lens31_web2.json:gate, measure34_web2.json:gate, osnap_kinds.json:gate, osnappull37_web2.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -32698,6 +32712,25 @@
   "pitfall_citations": {
     "_e2e_timing.json": [
       21
+    ],
+    "_vitest_timing.json": [
+      5,
+      6,
+      11,
+      12,
+      13,
+      14,
+      17,
+      24,
+      26,
+      30,
+      32,
+      33,
+      35,
+      38,
+      40,
+      49,
+      51
     ],
     "aux_tap.json": [
       12,
@@ -32753,6 +32786,18 @@
       46,
       47,
       57
+    ],
+    "bake61_web2_dpr1.json": [
+      12,
+      99,
+      101,
+      105
+    ],
+    "bake61_web2_dpr2.json": [
+      12,
+      99,
+      101,
+      105
     ],
     "basic_flow.json": [
       21,
@@ -33106,6 +33151,40 @@
       77,
       83
     ],
+    "grain61_pre_web2_dpr1.json": [
+      12,
+      16,
+      99,
+      101,
+      102,
+      103
+    ],
+    "grain61_pre_web2_dpr2.json": [
+      12,
+      16,
+      99,
+      101,
+      102,
+      103
+    ],
+    "grain61_web2_dpr1.json": [
+      12,
+      16,
+      42,
+      99,
+      101,
+      102,
+      103
+    ],
+    "grain61_web2_dpr2.json": [
+      12,
+      16,
+      42,
+      99,
+      101,
+      102,
+      103
+    ],
     "graphite_web2.json": [
       40,
       68
@@ -33282,6 +33361,18 @@
     ],
     "join56_web2_pre_dpr2.json": [
       42
+    ],
+    "lab61_web2_dpr1.json": [
+      99,
+      101,
+      102,
+      103
+    ],
+    "lab61_web2_dpr2.json": [
+      99,
+      101,
+      102,
+      103
     ],
     "lay_slide40_web2.json": [
       8,
@@ -34360,6 +34451,7 @@
   "metrics_hash": "a45078a5",
   "scanned": [
     "_e2e_timing.json",
+    "_vitest_timing.json",
     "autosave_web2.json",
     "aux_tap.json",
     "aux_vp.json",
@@ -34367,6 +34459,8 @@
     "axis_live.json",
     "axis_snap.json",
     "axis_warn.json",
+    "bake61_web2_dpr1.json",
+    "bake61_web2_dpr2.json",
     "basic_flow.json",
     "bend_share.json",
     "brush51_web2_dpr1.json",
@@ -34434,6 +34528,10 @@
     "glyph30_web2.json",
     "glyph32_web2.json",
     "glyph35_web2.json",
+    "grain61_pre_web2_dpr1.json",
+    "grain61_pre_web2_dpr2.json",
+    "grain61_web2_dpr1.json",
+    "grain61_web2_dpr2.json",
     "graphite_web2.json",
     "grip44_e2e_web2.json",
     "grip44_web2.json",
@@ -34465,6 +34563,8 @@
     "join56_web2_dpr2.json",
     "join56_web2_pre_dpr1.json",
     "join56_web2_pre_dpr2.json",
+    "lab61_web2_dpr1.json",
+    "lab61_web2_dpr2.json",
     "lay_slide40_web2.json",
     "ledger_gate24_web2.json",
     "lens31_web2.json",

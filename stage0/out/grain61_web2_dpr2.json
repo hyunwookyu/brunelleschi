@@ -1,0 +1,190 @@
+{
+  "conditions": {
+    "workers": 1,
+    "project": "dpr2",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/grain61.spec.ts (워커 1 — #99)"
+  },
+  "what": "web2-61 — 자국 게이트 자: ①격자 주기 ②도장 주기 ③구멍 규칙성 ④굵기 무관 ⑤넷 갈림 ⑥크기 정직성 (흰 판 · 이음매 drawMark 직접 · 원근 무관)",
+  "note_pitfalls": "#103(호출마다 새 캔버스 — 구성 · scene 열쇠) · #102(?reset 시험당 1회) · #101(web2 러너) · #99(병합-쓰기) · #16(순수 px 판 — 원근 정규화 불요) · #12(주기 탐색은 3..60 스윕 — 동작점 하나가 아니다)",
+  "scene": "호출마다 markSampleForTest가 새 480×240 캔버스를 만든다(문서·뷰 무관 · 잔류 없음)",
+  "period_line_w20": {
+    "pencil": {
+      "edgeP": 26,
+      "edgeAmpN": 0.1042,
+      "mean": 47.912,
+      "dominantP": 52,
+      "ampRatio": 0.066,
+      "p95": 167.7,
+      "bandMean": 47.91,
+      "bareShare": 0.1467,
+      "coreN": 8001,
+      "edgeSd": 3.187,
+      "edgeN": 381
+    },
+    "cp": {
+      "edgeP": 36.5,
+      "edgeAmpN": 0.0462,
+      "mean": 47.851,
+      "dominantP": 42.5,
+      "ampRatio": 0.034,
+      "p95": 169.3,
+      "bandMean": 47.85,
+      "bareShare": 0.1121,
+      "coreN": 8001,
+      "edgeSd": 1.17,
+      "edgeN": 381
+    },
+    "brush": {
+      "edgeP": 8.5,
+      "edgeAmpN": 0.0395,
+      "mean": 45.038,
+      "dominantP": 37,
+      "ampRatio": 0.0358,
+      "p95": 168,
+      "bandMean": 45.04,
+      "bareShare": 0.137,
+      "coreN": 8001,
+      "edgeSd": 1.61,
+      "edgeN": 381
+    },
+    "marker": {
+      "edgeP": 23,
+      "edgeAmpN": 0.003,
+      "mean": 16.264,
+      "dominantP": 40,
+      "ampRatio": 0.0099,
+      "p95": 60,
+      "bandMean": 16.26,
+      "bareShare": 0.1429,
+      "coreN": 8001,
+      "edgeSd": 0.124,
+      "edgeN": 381
+    },
+    "def": "띠(굵기+30px) 열 프로파일의 지배 주기 P(3..60 스윕)와 진폭비(DFT 2/N ÷ 평균). ①연필·색연필 격자 ②붓 도장 열 — pre 값이 반증의 기록(D-3)"
+  },
+  "width_follow": {
+    "w20": {
+      "P": 52,
+      "amp": 0.066
+    },
+    "w40": {
+      "P": 51.5,
+      "amp": 0.0615
+    },
+    "p_ratio": 0.99,
+    "def": "굵기 2배에서 지배 주기의 비 — 결이 굵기에 실리면 ≈2(옛 엔진 · grainWpx×grainK), 종이 성질이면 ≈1"
+  },
+  "holes_cp": {
+    "col": {
+      "P": 17,
+      "ratio": 0.1156
+    },
+    "row": {
+      "P": 9.5,
+      "ratio": 1.3952
+    },
+    "holeShare": 0.2125,
+    "p95": 177.7,
+    "def": "몸통(±10px) 구멍(<0.35·p95) 지시자의 열·행 프로파일 지배 주기 — 격자에 실리면 두 축 다 봉우리(pre), 안 실리면 진폭이 낮다(post)"
+  },
+  "four_differ": {
+    "stats": {
+      "pencil": {
+        "p95": 167.7,
+        "bareShare": 0.1467,
+        "edgeSd": 3.187,
+        "bandMean": 47.91
+      },
+      "cp": {
+        "p95": 169.3,
+        "bareShare": 0.1121,
+        "edgeSd": 1.17,
+        "bandMean": 47.85
+      },
+      "brush": {
+        "p95": 168,
+        "bareShare": 0.137,
+        "edgeSd": 1.61,
+        "bandMean": 45.04
+      },
+      "marker": {
+        "p95": 60,
+        "bareShare": 0.1429,
+        "edgeSd": 0.124,
+        "bandMean": 16.26
+      }
+    },
+    "perPair": {
+      "pencil~cp": 0.6329,
+      "pencil~brush": 0.4948,
+      "pencil~marker": 0.9611,
+      "cp~brush": 0.2733,
+      "cp~marker": 0.894,
+      "brush~marker": 0.923
+    },
+    "minPair": 0.2733,
+    "null_same_tool": 0.0923,
+    "def": "짝별로 세 축(p95·빈 몫·가장자리 sd) 중 최대 상대 차 — 그 최소가 «가장 닮은 짝»의 갈림. ⚠ 마른 알갱이 매체 둘(cp↔붓)이 가장 닮은 짝이다 — 수치 갈림의 눈금은 이 표가, 성격의 갈림은 사진(shots61 — 눈)이 판정. ⚠ pre(옛 엔진)와 이 자는 같은 눈금이 아니다: pre의 cp·마커는 edgeSd·amp가 정확히 0(구성상 평탄)이라 상대 차가 1에 포화했다(0 나눗셈 형태 — 리뷰어 [11]). 반증 null_same_tool = 같은 도구(연필 · 시드 4242 — 도장 배치 잡음만 다름)의 같은 자 — 작지만 0이 아닌 값이어야 하고(0이면 결정론 항등을 잰 것) 제품 최소 짝과의 간격이 판별력이다"
+  },
+  "size_honesty": {
+    "rows": {
+      "pencil": {
+        "w24": 17,
+        "ratio": 0.708
+      },
+      "cp": {
+        "w24": 19,
+        "ratio": 0.792
+      },
+      "brush": {
+        "w24": 18,
+        "ratio": 0.75
+      },
+      "marker": {
+        "w24": 16,
+        "ratio": 0.667
+      }
+    },
+    "pencil_w48": 40,
+    "doubling": 2.353,
+    "marker_w100": {
+      "w": 87,
+      "ratio": 0.87
+    },
+    "cp_w50": {
+      "w": 42,
+      "ratio": 0.84
+    },
+    "brush_w250": {
+      "w": 218,
+      "ratio": 0.872
+    },
+    "brush_w500": {
+      "w": 445,
+      "ratio": 0.89,
+      "note": "기록 — 견본 판·굽기 캔버스(1024)의 상한 대역. 대형 자국의 눈 판정은 실기기 몫"
+    },
+    "def": "직선 견본(압력 0.5 상수)의 열별 반최대 폭 중앙값 ÷ 요청 굵기(px). 58 ⛔ 「크기 슬라이더·도구별 최대」의 정직성 — 사다리(√2 파생)와 칸별 실측 보정이 실제로 px를 낸다. doubling = 연필 48 ÷ 24의 폭 비(기대 ~2) · 상한 대역은 marker_w100·cp_w50·brush_w250(단언)·brush_w500(기록) — 연필 최대(50)는 w48이 대리",
+    "threshold": 0.35
+  },
+  "falsification_period": {
+    "def": "연필 간격 배수 120(걸음 12px — 도장 지름 대역) — 도장이 성겨지면 점열 주기가 자에 실려야 한다(D-3: ①②의 실패 조건 실행). 제품(base) 대비 진폭 비",
+    "base": {
+      "P": 52,
+      "amp": 0.066,
+      "edgeAmpN": 0.1042
+    },
+    "sparse": {
+      "P": 60,
+      "amp": 0.4976,
+      "edgeAmpN": 0.562
+    },
+    "amp_rise": 7.539
+  },
+  "constants_snapshot": {
+    "PAINT61_SIZE_TOL": 0.35,
+    "PAINT61_END_TOL": 0.04,
+    "PAINT61_PAPER_CORR_MIN": 0.08,
+    "note": "스냅샷-라이트(#42 ⑥의 최소 고리 — web2 원장의 constantsSnapshot 기계 부재는 종전 유보)"
+  }
+}

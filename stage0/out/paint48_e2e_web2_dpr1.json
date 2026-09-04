@@ -18,11 +18,11 @@
     },
     "shipped": {
       "px": 4500,
-      "lumaMean": 236,
+      "lumaMean": 239,
       "lighterThanPaper": 0
     },
     "warm_on_gl": {
-      "warm": 2569,
+      "warm": 2418,
       "any": 13109
     },
     "note_50": "48-1의 장막(p5.brush가 흰 종이 전제로 불투명하게 쓰는 것 — AS-C158)은 수리된 것이 아니라 **병소가 구조에서 빠진 것**이다. 곱의 반증 스위치는 paint50_web2_*.json의 falsify_over가 든다"
@@ -40,7 +40,7 @@
       }
     ],
     "near_box": {
-      "warm": 2569,
+      "warm": 2418,
       "any": 13109
     },
     "far_whole_screen": {
@@ -55,8 +55,8 @@
   },
   "sizes": {
     "rows_w2_5": 5,
-    "rows_w20": 23,
-    "ratio": 4.6
+    "rows_w20": 21,
+    "ratio": 4.2
   },
   "reveal": {
     "withPencil": {
@@ -85,7 +85,7 @@
       "touched": 1200,
       "opaque": 1200,
       "opaqueLighter": 0,
-      "lumaMean": 226
+      "lumaMean": 233
     },
     "box": {
       "x": 530,
@@ -126,36 +126,36 @@
   },
   "orbit": {
     "before": {
-      "warm": 843,
+      "warm": 709,
       "any": 11370
     },
     "during": [
-      791,
-      744,
-      694,
-      638,
-      586
+      675,
+      629,
+      578,
+      537,
+      495
     ],
     "after": {
-      "warm": 586,
+      "warm": 495,
       "any": 7899
     },
     "tileStats": {
       "active": true,
       "tiles": 7,
       "frames": 5,
-      "bakeMs": 31.3,
+      "bakeMs": 5.1,
       "bakePasses": 1,
       "bakeClamped": 0,
-      "frameMsMedian": 0.2,
-      "frameMsMax": 0.7,
+      "frameMsMedian": 0.1,
+      "frameMsMax": 1.2,
       "paintFrames": 0,
       "paintMsMedian": 0,
       "paintMsMax": 0
     }
   },
   "tooltips": {
-    "total": 30,
+    "total": 26,
     "rows": [
       {
         "id": "btn-grip",
@@ -196,7 +196,7 @@
       {
         "id": "btn-grip-cls",
         "present": true,
-        "tip": "분류 — 잡은 면의 분류를 돌린다(자동·슬라브·벽·경사)",
+        "tip": "분류 — 잡은 면의 분류를 돌린다(자동·슬라브·벽·외벽·내벽·경사)",
         "targetable": true
       },
       {
@@ -308,33 +308,9 @@
         "targetable": true
       },
       {
-        "id": "btn-paint-w-2_5",
+        "id": "paint-size-range",
         "present": true,
-        "tip": "자국 굵기 2.5px",
-        "targetable": true
-      },
-      {
-        "id": "btn-paint-w-5",
-        "present": true,
-        "tip": "자국 굵기 5px",
-        "targetable": true
-      },
-      {
-        "id": "btn-paint-w-10",
-        "present": true,
-        "tip": "자국 굵기 10px",
-        "targetable": true
-      },
-      {
-        "id": "btn-paint-w-20",
-        "present": true,
-        "tip": "자국 굵기 20px",
-        "targetable": true
-      },
-      {
-        "id": "btn-paint-w-40",
-        "present": true,
-        "tip": "자국 굵기 40px",
+        "tip": "자국 굵기(px) — 끌어서 조절한다",
         "targetable": true
       }
     ],

@@ -1,0 +1,41 @@
+{
+  "conditions": {
+    "workers": 1,
+    "project": "dpr2",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/bake61.spec.ts (워커 1 — #99)"
+  },
+  "what": "web2-61 ⚑ 굽는 길 — 오프스크린 p5.brush(1024 캔버스 · claim 전환): 자국 실재 · 결정론 · 전환 ms · 면 20×획 40 ms · 획별 옮김 ms · 자가 보정표",
+  "note_pitfalls": "#101(web2 러너) · #99(병합-쓰기) · #12(비용은 두 꼴(면당 1회·획당 1회) 다 잰다 — 동작점 하나가 아니다) · 프레임류 시간은 부하 조건부(59 이월 — 이 원장의 ms는 워커 1의 값)",
+  "probe": {
+    "box": [
+      "pen",
+      "rotring",
+      "2B",
+      "HB",
+      "2H",
+      "cpencil",
+      "pastel",
+      "crayon",
+      "charcoal",
+      "spray",
+      "marker",
+      "marker46"
+    ],
+    "markPx": 9242,
+    "deterministic": true,
+    "instances": "separate (p5.brush-paint alias)",
+    "bake_stress_20faces_x40strokes_ms": 8904.6,
+    "bake_20faces_40strokes_total_ms": 381.9,
+    "bake_perstroke_2x40_ms": 1260.8,
+    "calib": {
+      "HB": 2,
+      "cpencil": 2,
+      "marker61": 2,
+      "charcoal": 4
+    },
+    "calib_note": "기준 브러시 weight 1의 반최대 폭(px 행 수 — 정수 자 · 가는 대역 1~5px라 정수가 정상). #105의 «폴백 1» 판별과 다르다: 값이 도구별로 갈리고(charcoal ≠ 연필류) 사다리 칸 폭(sizedW — 실수 아님·칸별 상이)이 그 위에서 실측된다"
+  },
+  "constants_snapshot": {
+    "PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS": 18
+  }
+}

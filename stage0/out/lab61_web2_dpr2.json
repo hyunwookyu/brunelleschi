@@ -1,0 +1,47 @@
+{
+  "conditions": {
+    "workers": 1,
+    "project": "dpr2",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/lab61.spec.ts (워커 1 — #99)"
+  },
+  "what": "web2-61 — 작업대(엔진 매개변수 판): 열림 · 손잡이→자국 · 브러시 선택 · 꺼내기/가져오기/굳힌다",
+  "note_pitfalls": "#103(자국 해시는 markSample — 호출마다 새 캔버스) · #102(?reset 시험당 1회) · #99(병합-쓰기) · #101(web2 러너)",
+  "structure": {
+    "knobs": 7,
+    "params": [
+      "weightK",
+      "opacityK",
+      "scatterK",
+      "grainK",
+      "sharpK",
+      "spacingK",
+      "paperK"
+    ],
+    "pencil_brushes": [
+      "2B",
+      "HB",
+      "2H"
+    ]
+  },
+  "knob_effect": {
+    "h0": -2138357669,
+    "tuned": 1079032356,
+    "reset": -2138357669,
+    "changed": true,
+    "restored": true
+  },
+  "brush_pick": {
+    "marker61": -1371846723,
+    "marker46": 1151013325,
+    "changed": true
+  },
+  "roundtrip": {
+    "json_len": 30,
+    "stored_equal": true,
+    "reimported": 1151013325,
+    "matches_tuned": true
+  },
+  "constants_snapshot": {
+    "PAINT61_SIZE_TOL": 0.35
+  }
+}

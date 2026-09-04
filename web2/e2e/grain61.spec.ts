@@ -1,0 +1,349 @@
+// web2-61 — 「눈으로 갈리는 것을 값으로」: 칠 자국 게이트 다섯의 자.
+//
+//   ① 격자 주기   직선 획의 띠 안 어둡기 열 프로파일에서 «지배 주기»의 진폭(DFT 한 칸 ÷ 평균).
+//                 지금 연필의 모자이크가 그 주기다(수리 전 값이 pre 원장 — grain61_pre_*).
+//   ② 도장 주기   같은 자 — 지금 붓의 점열(도장 간격 주기).
+//   ③ 구멍 규칙성 색연필 빈 픽셀의 «위치»가 격자에 실리는가 — 구멍 지시자의 열·행 프로파일
+//                 지배 주기 진폭(격자에 실리면 두 축 다 봉우리가 선다).
+//   ④ 굵기 무관   굵기 2배에서 ①의 지배 주기가 따라 커지는가(결은 종이의 성질 — 굵기와 무관).
+//   ⑤ 넷 갈림     같은 압력·같은 도형의 넷: 알파 분포(평균·p95) · 덮임률(빈 몫) · 가장자리
+//                 거칠기의 짝별 최대 상대 차.
+//
+// 자의 자리: diag.markSampleForTest — 흰 판(면 텍스처 규약)에 제품과 같은 함수(paintMark —
+// 이음매)로 긋는다. 화면·문서·원근·dpr과 무관한 순수 px 판(#16 — 원근 정규화 불요).
+// 호출마다 새 캔버스라 두 측정 사이 장면 문제(#103)가 구성으로 없다(scene 열쇠가 그 자백).
+//
+// 수리 «전» 실행은 grain61_pre_web2_dpr{1,2}.json으로 동결한다(paint59_pre 선례) — 옛 엔진이
+// 지워진 뒤에는 그 원장이 반증의 기록이다(D-3 · 60 마감 [10]의 «재현 불가» 규약).
+// 이 스펙 자체는 측정과 «신호 실재» 단언만 든다 — 통과선(임계)은 post 값이 나온 뒤 constants에
+// 등재한다(60 이월 「원장 def의 문장은 값이 나온 뒤에 쓴다」의 게이트판).
+//
+// 원장: stage0/out/grain61_web2_dpr{1,2}.json (LEDGER=1 · 병합-쓰기 #99)
+
+import { test, expect, type Page } from '@playwright/test'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const HERE = dirname(fileURLToPath(import.meta.url))
+const OUT: Record<string, unknown> = {
+  what: 'web2-61 — 자국 게이트 자: ①격자 주기 ②도장 주기 ③구멍 규칙성 ④굵기 무관 ⑤넷 갈림 ⑥크기 정직성 (흰 판 · 이음매 drawMark 직접 · 원근 무관)',
+  note_pitfalls: '#103(호출마다 새 캔버스 — 구성 · scene 열쇠) · #102(?reset 시험당 1회) · #101(web2 러너) · #99(병합-쓰기) · #16(순수 px 판 — 원근 정규화 불요) · #12(주기 탐색은 3..60 스윕 — 동작점 하나가 아니다)',
+  scene: '호출마다 markSampleForTest가 새 480×240 캔버스를 만든다(문서·뷰 무관 · 잔류 없음)',
+}
+const LEDGER_OF = (projectName: string) =>
+  resolve(HERE, `../../stage0/out/grain61_web2_dpr${projectName === 'dpr2' ? 2 : 1}.json`)
+test.afterEach(async ({}, info) => {
+  const f = LEDGER_OF(info.project.name)
+  let prev: Record<string, unknown> = {}
+  try { prev = JSON.parse(readFileSync(f, 'utf8')) } catch { /* 첫 실행 */ }
+  mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
+  writeFileSync(f, JSON.stringify({
+    ...prev,
+    conditions: { workers: info.config.workers, project: info.project.name,
+      canonical: 'LEDGER=1 node tools/e2e.mjs ledger e2e/grain61.spec.ts (워커 1 — #99)' },
+    ...OUT,
+  }, null, 2))
+})
+
+async function boot(page: Page) {
+  await page.goto('/?reset')
+  await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(150)
+}
+
+type Instr = 'brush' | 'marker' | 'cp' | 'pencil'
+
+/** 견본을 긋고(w px · 직선) 띠 프로파일·주기·통계를 계산한다 — 계산 전부가 페이지 안이다. */
+const measureLine = (page: Page, instr: Instr, wPx: number) =>
+  page.evaluate(([i, w]) => {
+    const b2 = (window as any).__b2
+    b2.diag.markSampleForTest(i, 'line', w)
+    const m = (window as any).__m61 as { v: number[]; w: number; h: number }
+    const W = m.w, H = m.h
+    const y0 = Math.max(0, Math.round(H / 2 - (w as number) / 2 - 15))
+    const y1 = Math.min(H - 1, Math.round(H / 2 + (w as number) / 2 + 15))
+    const x0 = 50, x1 = W - 50
+    // 열 프로파일(띠 안 평균 어둡기)
+    const prof: number[] = []
+    for (let x = x0; x <= x1; x++) {
+      let s = 0
+      for (let y = y0; y <= y1; y++) s += m.v[y * W + x]!
+      prof.push(s / (y1 - y0 + 1))
+    }
+    const N = prof.length
+    const mean = prof.reduce((a, b) => a + b, 0) / N
+    // 지배 주기 — P 3..60(0.5 걸음) DFT 진폭 ÷ 평균 (#12: 스윕이지 동작점이 아니다)
+    let bestP = 0, bestRatio = 0
+    const ratioAt = (P: number): number => {
+      let re = 0, im = 0
+      for (let k = 0; k < N; k++) {
+        const ph = (2 * Math.PI * k) / P
+        const d = prof[k]! - mean
+        re += d * Math.cos(ph); im -= d * Math.sin(ph)
+      }
+      return mean > 1e-6 ? (2 * Math.hypot(re, im)) / N / mean : 0
+    }
+    for (let P = 3; P <= 60; P += 0.5) {
+      const r = ratioAt(P)
+      if (r > bestRatio) { bestRatio = r; bestP = P }
+    }
+    // 띠 픽셀 통계 — 알파 분포·덮임률·가장자리 거칠기(⑤의 자)
+    const band: number[] = []
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) band.push(m.v[y * W + x]!)
+    const sorted = [...band].sort((a, b) => a - b)
+    const p95 = sorted[Math.floor(sorted.length * 0.95)]!
+    const bmean = band.reduce((a, b) => a + b, 0) / band.length
+    // 덮임률의 분모는 «몸통»(굵기 안 — 프로파일이 산 열의 ±w/2)이다 — 띠 여백을 세면 전부가 «빈» 것이 된다
+    let core = 0, coreBare = 0
+    const cy0 = Math.round(H / 2 - (w as number) / 2), cy1 = Math.round(H / 2 + (w as number) / 2)
+    for (let y = cy0; y <= cy1; y++) for (let x = x0; x <= x1; x++) {
+      core++
+      if (m.v[y * W + x]! < 0.15 * p95) coreBare++
+    }
+    // 가장자리 거칠기 — 열마다 위에서 내려오며 처음 0.5·p95를 넘는 y(잉크 경계)의 표준편차
+    const edges: number[] = []
+    for (let x = x0; x <= x1; x++) {
+      for (let y = y0; y <= y1; y++) {
+        if (m.v[y * W + x]! > 0.5 * p95) { edges.push(y); break }
+      }
+    }
+    const eMean = edges.length ? edges.reduce((a, b) => a + b, 0) / edges.length : 0
+    const eSd = edges.length
+      ? Math.sqrt(edges.reduce((a, b) => a + (b - eMean) * (b - eMean), 0) / edges.length) : 0
+    // 가장자리 물결(② 도장 주기의 눈 증상 — 붓 점열의 조가비 경계): 경계 y 열의 지배 주기와
+    // 그 진폭(px — 굵기 절반으로 정규화). 띠 평균은 겹침이 뭉개서 이 축이 따로 필요하다.
+    let edgeP = 0, edgeAmp = 0
+    if (edges.length > 60) {
+      const N2 = edges.length
+      for (let P = 3; P <= 60; P += 0.5) {
+        let re = 0, im = 0
+        for (let k = 0; k < N2; k++) {
+          const ph = (2 * Math.PI * k) / P
+          const d = edges[k]! - eMean
+          re += d * Math.cos(ph); im -= d * Math.sin(ph)
+        }
+        const a2 = (2 * Math.hypot(re, im)) / N2
+        if (a2 > edgeAmp) { edgeAmp = a2; edgeP = P }
+      }
+    }
+    return {
+      edgeP, edgeAmpN: +(edgeAmp / ((w as number) / 2)).toFixed(4),
+      mean: +mean.toFixed(3), dominantP: bestP, ampRatio: +bestRatio.toFixed(4),
+      p95: +p95.toFixed(1), bandMean: +bmean.toFixed(2),
+      bareShare: core > 0 ? +(coreBare / core).toFixed(4) : 0, coreN: core,
+      edgeSd: +eSd.toFixed(3), edgeN: edges.length,
+    }
+  }, [instr, wPx] as const)
+
+test('①② 격자·도장 주기 — 넷의 직선(굵기 20)', async ({ page }, info) => {
+  await boot(page)
+  const out: Record<string, unknown> = {}
+  for (const i of ['pencil', 'cp', 'brush', 'marker'] as Instr[]) {
+    const r = await measureLine(page, i, 20)
+    out[i] = r
+    expect(r.mean, `${i} 자국이 실재한다(빈 판이 아니다)`).toBeGreaterThan(2)
+    expect(r.edgeN, `${i} 잉크 경계가 열 전부에 있다`).toBeGreaterThan(300)
+  }
+  OUT.period_line_w20 = {
+    ...out,
+    def: '띠(굵기+30px) 열 프로파일의 지배 주기 P(3..60 스윕)와 진폭비(DFT 2/N ÷ 평균). ①연필·색연필 격자 ②붓 도장 열 — pre 값이 반증의 기록(D-3)',
+  }
+})
+
+test('④ 굵기 무관 — 연필 20 vs 40', async ({ page }) => {
+  await boot(page)
+  const a = await measureLine(page, 'pencil', 20)
+  const b = await measureLine(page, 'pencil', 40)
+  expect(a.mean, '20px 자국 실재').toBeGreaterThan(2)
+  expect(b.mean, '40px 자국 실재').toBeGreaterThan(2)
+  OUT.width_follow = {
+    w20: { P: a.dominantP, amp: a.ampRatio },
+    w40: { P: b.dominantP, amp: b.ampRatio },
+    p_ratio: a.dominantP > 0 ? +(b.dominantP / a.dominantP).toFixed(3) : 0,
+    def: '굵기 2배에서 지배 주기의 비 — 결이 굵기에 실리면 ≈2(옛 엔진 · grainWpx×grainK), 종이 성질이면 ≈1',
+  }
+})
+
+test('③ 구멍 규칙성 — 색연필 빈 픽셀의 자리', async ({ page }) => {
+  await boot(page)
+  const r = await page.evaluate(() => {
+    const b2 = (window as any).__b2
+    b2.diag.markSampleForTest('cp', 'line', 20)
+    const m = (window as any).__m61 as { v: number[]; w: number; h: number }
+    const W = m.w, H = m.h
+    const y0 = Math.round(H / 2 - 10), y1 = Math.round(H / 2 + 10)   // 몸통만(굵기 20의 안쪽)
+    const x0 = 50, x1 = W - 50
+    const body: number[] = []
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) body.push(m.v[y * W + x]!)
+    const sorted = [...body].sort((a, b) => a - b)
+    const p95 = sorted[Math.floor(sorted.length * 0.95)]!
+    const th = 0.35 * p95
+    // 구멍 지시자의 열·행 프로파일 — 격자에 실리면 두 축 다 주기가 선다
+    const colProf: number[] = [], rowProf: number[] = []
+    for (let x = x0; x <= x1; x++) {
+      let c = 0
+      for (let y = y0; y <= y1; y++) if (m.v[y * W + x]! < th) c++
+      colProf.push(c)
+    }
+    for (let y = y0; y <= y1; y++) {
+      let c = 0
+      for (let x = x0; x <= x1; x++) if (m.v[y * W + x]! < th) c++
+      rowProf.push(c)
+    }
+    const domOf = (prof: number[]): { P: number; ratio: number } => {
+      const N = prof.length
+      const mean = prof.reduce((a, b) => a + b, 0) / N
+      let bestP = 0, best = 0
+      for (let P = 3; P <= Math.min(60, N / 2); P += 0.5) {
+        let re = 0, im = 0
+        for (let k = 0; k < N; k++) {
+          const ph = (2 * Math.PI * k) / P
+          const d = prof[k]! - mean
+          re += d * Math.cos(ph); im -= d * Math.sin(ph)
+        }
+        const r2 = mean > 1e-6 ? (2 * Math.hypot(re, im)) / N / mean : 0
+        if (r2 > best) { best = r2; bestP = P }
+      }
+      return { P: bestP, ratio: +best.toFixed(4) }
+    }
+    const holeShare = body.filter(v => v < th).length / body.length
+    return { col: domOf(colProf), row: domOf(rowProf), holeShare: +holeShare.toFixed(4), p95: +p95.toFixed(1) }
+  })
+  expect(r.holeShare, '구멍이 실재한다(색연필 — 완전히 덮이지 않는다)').toBeGreaterThan(0.005)
+  OUT.holes_cp = { ...r, def: '몸통(±10px) 구멍(<0.35·p95) 지시자의 열·행 프로파일 지배 주기 — 격자에 실리면 두 축 다 봉우리(pre), 안 실리면 진폭이 낮다(post)' }
+})
+
+test('⑤ 넷이 갈린다 — 같은 압력·같은 도형의 통계', async ({ page }) => {
+  await boot(page)
+  const stats: Record<string, { p95: number; bareShare: number; edgeSd: number; bandMean: number }> = {}
+  for (const i of ['pencil', 'cp', 'brush', 'marker'] as Instr[]) {
+    const r = await measureLine(page, i, 20)
+    stats[i] = { p95: r.p95, bareShare: r.bareShare, edgeSd: r.edgeSd, bandMean: r.bandMean }
+  }
+  const keys = Object.keys(stats)
+  const axes = ['p95', 'bareShare', 'edgeSd'] as const
+  const perPair: Record<string, number> = {}
+  for (let a = 0; a < keys.length; a++) for (let b = a + 1; b < keys.length; b++) {
+    let best = 0
+    for (const ax of axes) {
+      const va = stats[keys[a]!]![ax], vb = stats[keys[b]!]![ax]
+      const rel = Math.abs(va - vb) / Math.max(1e-6, Math.max(Math.abs(va), Math.abs(vb)))
+      if (rel > best) best = rel
+    }
+    perPair[`${keys[a]}~${keys[b]}`] = +best.toFixed(4)
+  }
+  const minPair = Math.min(...Object.values(perPair))
+  // **반증(D-3) — 자의 영점**: 같은 도구(연필)를 시드만 바꿔 두 번 재면 이 자가 0 대역을
+  // 내야 한다(도구가 같은데 «갈린다»고 읽으면 자가 잡음을 재는 것). 제품 최소 짝과의 간격이
+  // 이 자의 판별력이다.
+  // ⚠ measureLine은 시드 고정(61)이라 그대로 두 번 재면 결정론 항등(0)일 뿐이다(2차 [30]) —
+  // 영점은 **시드를 실제로 바꿔**(도장 배치 잡음만 다른 같은 도구) 잰다: 작지만 0이 아니어야
+  // 자에 판별력이 있다.
+  const pA = await page.evaluate(() => {
+    const b2 = (window as any).__b2
+    b2.diag.markSampleForTest('pencil', 'line', 20, 4242)
+    const m = (window as any).__m61 as { v: number[]; w: number; h: number }
+    const W = m.w, H = m.h
+    const y0 = Math.round(H / 2 - 25), y1 = Math.round(H / 2 + 25)
+    const band: number[] = []
+    for (let y = y0; y <= y1; y++) for (let x = 50; x <= W - 50; x++) band.push(m.v[y * W + x]!)
+    const sorted = [...band].sort((a, b) => a - b)
+    const p95 = sorted[Math.floor(sorted.length * 0.95)]!
+    let core = 0, bare = 0
+    const cy0 = Math.round(H / 2 - 10), cy1 = Math.round(H / 2 + 10)
+    for (let y = cy0; y <= cy1; y++) for (let x = 50; x <= W - 50; x++) { core++; if (m.v[y * W + x]! < 0.15 * p95) bare++ }
+    const edges: number[] = []
+    for (let x = 50; x <= W - 50; x++) for (let y = y0; y <= y1; y++) if (m.v[y * W + x]! > 0.5 * p95) { edges.push(y); break }
+    const em = edges.reduce((a, b) => a + b, 0) / edges.length
+    const esd = Math.sqrt(edges.reduce((a, b) => a + (b - em) * (b - em), 0) / edges.length)
+    return { p95: +p95.toFixed(1), bareShare: +(bare / core).toFixed(4), edgeSd: +esd.toFixed(3) }
+  })
+  const nullDiff = (() => {
+    const a = stats.pencil!, b = { p95: pA.p95, bareShare: pA.bareShare, edgeSd: pA.edgeSd }
+    let best = 0
+    for (const ax of ['p95', 'bareShare', 'edgeSd'] as const) {
+      const rel = Math.abs(a[ax] - b[ax]) / Math.max(1e-6, Math.max(Math.abs(a[ax]), Math.abs(b[ax])))
+      if (rel > best) best = rel
+    }
+    return +best.toFixed(4)
+  })()
+  OUT.four_differ = { stats, perPair, minPair: +minPair.toFixed(4), null_same_tool: nullDiff,
+    def: '짝별로 세 축(p95·빈 몫·가장자리 sd) 중 최대 상대 차 — 그 최소가 «가장 닮은 짝»의 갈림. ⚠ 마른 알갱이 매체 둘(cp↔붓)이 가장 닮은 짝이다 — 수치 갈림의 눈금은 이 표가, 성격의 갈림은 사진(shots61 — 눈)이 판정. ⚠ pre(옛 엔진)와 이 자는 같은 눈금이 아니다: pre의 cp·마커는 edgeSd·amp가 정확히 0(구성상 평탄)이라 상대 차가 1에 포화했다(0 나눗셈 형태 — 리뷰어 [11]). 반증 null_same_tool = 같은 도구(연필 · 시드 4242 — 도장 배치 잡음만 다름)의 같은 자 — 작지만 0이 아닌 값이어야 하고(0이면 결정론 항등을 잰 것) 제품 최소 짝과의 간격이 판별력이다',
+  }
+  expect(minPair, '어떤 짝도 완전히 같지 않다(신호 실재)').toBeGreaterThan(0)
+  expect(nullDiff, '반증 — 같은 도구(시드만 다름)는 이 자에서 최소 짝보다 훨씬 아래다(자의 영점)').toBeLessThan(minPair / 2)
+  expect(nullDiff, '영점이 결정론 항등이 아니다(시드가 실제로 갈렸다)').toBeGreaterThan(0)
+})
+
+test('① 반증 — 간격 배수 4(성긴 도장)에서 주기 진폭이 되살아난다(자의 이빨)', async ({ page }) => {
+  await boot(page)
+  const base = await measureLine(page, 'pencil', 20)
+  await page.evaluate(() => (window as any).__b2.diag.setPaintParamForTest('pencil', 'spacingK', 120))   // 0.1px 걸음 × 120 = 12px — 도장 지름(~19px) 대역: 점열이 실제로 보인다
+  const sparse = await measureLine(page, 'pencil', 20)
+  await page.evaluate(() => (window as any).__b2.diag.resetPaintTuneForTest('pencil'))
+  OUT.falsification_period = {
+    def: '연필 간격 배수 120(걸음 12px — 도장 지름 대역) — 도장이 성겨지면 점열 주기가 자에 실려야 한다(D-3: ①②의 실패 조건 실행). 제품(base) 대비 진폭 비',
+    base: { P: base.dominantP, amp: base.ampRatio, edgeAmpN: base.edgeAmpN },
+    sparse: { P: sparse.dominantP, amp: sparse.ampRatio, edgeAmpN: sparse.edgeAmpN },
+    amp_rise: base.ampRatio > 1e-9 ? +(sparse.ampRatio / base.ampRatio).toFixed(3) : null,
+  }
+  expect(sparse.ampRatio, '반증 — 성긴 도장의 주기 진폭이 제품의 2배를 넘는다').toBeGreaterThan(base.ampRatio * 2)
+})
+test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 · 2배는 2배', async ({ page }) => {
+  await boot(page)
+  const widthOf = (i: Instr, wPx: number) =>
+    page.evaluate(([tool, w]) => {
+      const b2 = (window as any).__b2
+      // 큰 붓(58 ⛔ 도구별 최대 대역)은 판을 키운다 — 획 산포가 판을 넘으면 폭이 잘려 거짓 통과
+      const bh = Math.max(240, Math.ceil((w as number) * 2.6)), bw2 = bh > 240 ? 900 : 480
+      b2.diag.markSampleForTest(tool, 'line', w, 61, bw2, bh)
+      const m = (window as any).__m61 as { v: number[]; w: number; h: number }
+      const W = m.w, H = m.h
+      const widths: number[] = []
+      for (let x = 60; x < W - 60; x += 2) {
+        let mx = 0
+        for (let y = 0; y < H; y++) mx = Math.max(mx, m.v[y * W + x]!)
+        if (mx < 20) continue
+        const th = mx / 2
+        let n = 0
+        for (let y = 0; y < H; y++) if (m.v[y * W + x]! > th) n++
+        widths.push(n)
+      }
+      widths.sort((a, b) => a - b)
+      return widths.length ? widths[Math.floor(widths.length / 2)]! : 0
+    }, [i, wPx] as const)
+  const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
+  const rows: Record<string, unknown> = {}
+  OUT.constants_snapshot = { PAINT61_SIZE_TOL: cs.PAINT61_SIZE_TOL, PAINT61_END_TOL: cs.PAINT61_END_TOL, PAINT61_PAPER_CORR_MIN: cs.PAINT61_PAPER_CORR_MIN, note: '스냅샷-라이트(#42 ⑥의 최소 고리 — web2 원장의 constantsSnapshot 기계 부재는 종전 유보)' }
+  for (const i of ['pencil', 'cp', 'brush', 'marker'] as Instr[]) {
+    const w24 = await widthOf(i, 24)
+    const r = +(w24 / 24).toFixed(3)
+    rows[i] = { w24, ratio: r }
+    expect(Math.abs(r - 1), `${i} — 반최대 폭 ÷ 요청 24px이 허용 안`).toBeLessThanOrEqual(cs.PAINT61_SIZE_TOL)
+  }
+  const p48 = await widthOf('pencil', 48)
+  const doubling = +(p48 / (rows.pencil as { w24: number }).w24).toFixed(3)
+  // 58 ⛔의 «도구별 최대» 대역(붓 500·마커 100·색연필/연필 50) — 상한 쪽도 잰다(리뷰어 [6]):
+  // 마커 100·붓 250은 문 안을 단언하고, 붓 500은 견본 판(1024 캔버스)의 물리 한계 안에서
+  // 실측 기록(레벨 상한과 같은 자리 — 대형은 실기기 눈 판정 몫 · DEFERRED).
+  const m100 = await widthOf('marker', 100)
+  const c50 = await widthOf('cp', 50)
+  const b250 = await widthOf('brush', 250)
+  const b500 = await widthOf('brush', 500)
+  const rm = +(m100 / 100).toFixed(3), rb = +(b250 / 250).toFixed(3), rc = +(c50 / 50).toFixed(3)
+  OUT.size_honesty = {
+    rows, pencil_w48: p48, doubling,
+    marker_w100: { w: m100, ratio: rm }, cp_w50: { w: c50, ratio: rc }, brush_w250: { w: b250, ratio: rb },
+    brush_w500: { w: b500, ratio: +(b500 / 500).toFixed(3), note: '기록 — 견본 판·굽기 캔버스(1024)의 상한 대역. 대형 자국의 눈 판정은 실기기 몫' },
+    def: '직선 견본(압력 0.5 상수)의 열별 반최대 폭 중앙값 ÷ 요청 굵기(px). 58 ⛔ 「크기 슬라이더·도구별 최대」의 정직성 — 사다리(√2 파생)와 칸별 실측 보정이 실제로 px를 낸다. doubling = 연필 48 ÷ 24의 폭 비(기대 ~2) · 상한 대역은 marker_w100·cp_w50·brush_w250(단언)·brush_w500(기록) — 연필 최대(50)는 w48이 대리',
+    threshold: cs.PAINT61_SIZE_TOL,
+  }
+  expect(doubling, '연필 — 굵기 2배는 폭도 2배 대역').toBeGreaterThan(1.6)
+  expect(doubling, '연필 — 굵기 2배는 폭도 2배 대역').toBeLessThan(2.4)
+  expect(Math.abs(rm - 1), '마커 100(도구 최대) — 반최대 폭이 허용 안').toBeLessThanOrEqual(cs.PAINT61_SIZE_TOL)
+  expect(Math.abs(rc - 1), '색연필 50(도구 최대) — 반최대 폭이 허용 안').toBeLessThanOrEqual(cs.PAINT61_SIZE_TOL)
+  expect(Math.abs(rb - 1), '붓 250 — 반최대 폭이 허용 안').toBeLessThanOrEqual(cs.PAINT61_SIZE_TOL)
+})

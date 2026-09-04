@@ -28,3 +28,9 @@ declare module 'p5.brush/standalone' {
   /** 합성 플러시 — 프레임마다 한 번 */
   export function render(): void
 }
+
+// **칠 전용 두 번째 사본**(web2-61 — vite.config resolve.alias가 같은 파일을 다른 모듈 id로
+// 싣는다: 모듈 싱글턴 상태를 선 겹과 나누지 않기 위해서다. 표면은 위와 동일).
+declare module 'p5.brush-paint' {
+  export * from 'p5.brush/standalone'
+}
