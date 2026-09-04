@@ -1,6 +1,6 @@
 {
   "conditions": {
-    "project": "dpr1",
+    "project": "dpr2",
     "workers": 1,
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/panel65.spec.ts (워커 1 — #99)"
   },

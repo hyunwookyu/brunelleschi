@@ -1,6 +1,6 @@
 {
   "conditions": {
-    "project": "dpr1",
+    "project": "dpr2",
     "workers": 1,
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/paint65.spec.ts (워커 1 — #99)"
   },
@@ -8,6 +8,85 @@
   "note_pitfalls": "#110(파생의 캐시 열쇠는 «그 파생이 의존하는 것»으로 — docVersion은 무효화 신호다) · #107(해시는 확정본 캔버스 — 되돌림 무관) · #103(같은 장면을 두 번 읽는다 — ink가 장면 확인) · #12(도구 넷 · 트리거 여섯 — 동작점 하나로 주장하지 않는다) · #102(한 test 안에서 ?reset을 다시 안 부른다) · #99 · #101",
   "note_meter": "캔버스 해시(paintTexHash)만으로는 ④ 부분 업로드의 결함이 «안 잡힌다» — 그 자는 CPU 캔버스를 읽는다. 그래서 ①은 화면(#gl) 픽셀도 같이 본다",
   "scene": "paint50의 bigBox(오른쪽 벽 · 축척 2500)",
+  "g1_identity": {
+    "note": "누적(얹기)으로 그린 텍스처·화면이 전량 재굽기와 «같은 픽셀»인가 — 도구 넷 전수",
+    "rows": [
+      {
+        "instr": "pencil",
+        "appended": 6,
+        "appends": 6,
+        "bakes": 1,
+        "baked_strokes": 0,
+        "tex_hash": [
+          -1158253257
+        ],
+        "tex_ink": [
+          41053
+        ],
+        "screen_hash": -1494022024,
+        "screen_ink": 28483,
+        "identical": true
+      },
+      {
+        "instr": "brush",
+        "appended": 6,
+        "appends": 6,
+        "bakes": 0,
+        "baked_strokes": 0,
+        "tex_hash": [
+          1966102161
+        ],
+        "tex_ink": [
+          84215
+        ],
+        "screen_hash": -544139702,
+        "screen_ink": 53520,
+        "identical": true
+      },
+      {
+        "instr": "marker",
+        "appended": 6,
+        "appends": 6,
+        "bakes": 0,
+        "baked_strokes": 0,
+        "tex_hash": [
+          -634130666
+        ],
+        "tex_ink": [
+          125168
+        ],
+        "screen_hash": -1429510241,
+        "screen_ink": 77827,
+        "identical": true
+      },
+      {
+        "instr": "cp",
+        "appended": 6,
+        "appends": 6,
+        "bakes": 0,
+        "baked_strokes": 0,
+        "tex_hash": [
+          -404747977
+        ],
+        "tex_ink": [
+          167944
+        ],
+        "screen_hash": 727053086,
+        "screen_ink": 97200,
+        "identical": true
+      }
+    ],
+    "falsify_append_break": {
+      "tex_differs": true,
+      "screen_differs": true,
+      "broke_hash": [
+        -1235293588
+      ],
+      "ref_hash": [
+        -736172219
+      ]
+    }
+  },
   "g3_baked_count": {
     "note": "커밋마다 «다시 그린 획 수»(전량 재굽기 몫)와 «얹은 획 수». 정본은 이 수다",
     "rows_at": [
@@ -17,7 +96,7 @@
         "baked": 0,
         "appends": 1,
         "appended": 1,
-        "bytes": 957248
+        "bytes": 3826296
       },
       {
         "n": 2,
@@ -25,7 +104,7 @@
         "baked": 0,
         "appends": 1,
         "appended": 1,
-        "bytes": 23552
+        "bytes": 92964
       },
       {
         "n": 10,
@@ -33,7 +112,7 @@
         "baked": 0,
         "appends": 1,
         "appended": 1,
-        "bytes": 26260
+        "bytes": 103716
       },
       {
         "n": 20,
@@ -41,7 +120,7 @@
         "baked": 0,
         "appends": 1,
         "appended": 1,
-        "bytes": 17760
+        "bytes": 68912
       },
       {
         "n": 30,
@@ -49,13 +128,13 @@
         "baked": 0,
         "appends": 1,
         "appended": 1,
-        "bytes": 35728
+        "bytes": 140448
       }
     ],
     "baked_after_first_max": 0,
     "appended_all_one": true,
-    "upload_full_bytes": 937984,
-    "upload_bytes_median_after_first": 26260
+    "upload_full_bytes": 3751936,
+    "upload_bytes_median_after_first": 103716
   },
   "g4_untouched": {
     "note": "문서가 바뀌어도 칠은 안 굽는다 — 「그 파생이 의존하는 것」만 열쇠다(#110)",
@@ -87,115 +166,41 @@
     ],
     "tex_hash_same": true,
     "tex_ink": [
-      7393
+      30712
     ]
+  },
+  "g5_face_boundary": {
+    "faces_after_erase": 0,
+    "faces_after_undo": 1
   },
   "g6_falsify_accum": {
     "note": "같은 장면·같은 몸짓에서 누적만 껐다 — 재굽힌 획 수가 1(얹기)에서 «전부»로 돌아간다",
     "accum_on": {
       "baked_strokes": 0,
       "appended": 1,
-      "upload_bytes": 18144
+      "upload_bytes": 70596
     },
     "accum_off": {
       "baked_strokes": 14,
       "appended": 0,
-      "upload_bytes": 937984
+      "upload_bytes": 3751936
     }
   },
   "g7_memory": {
     "note": "상한(팔이 1024로 내림) · 안 보이는 것부터 축출 · 다시 보면 정본 굽기와 같은 픽셀",
-    "bytes_before": 1875968,
+    "bytes_before": 7503872,
     "budget_default": 134217728,
     "evicts": 1,
     "bytes_after": 0,
     "restored_same": true,
     "tex_ink": [
-      12208
+      50504
     ]
   },
-  "g1_identity": {
-    "note": "누적(얹기)으로 그린 텍스처·화면이 전량 재굽기와 «같은 픽셀»인가 — 도구 넷 전수",
-    "rows": [
-      {
-        "instr": "pencil",
-        "appended": 6,
-        "appends": 6,
-        "bakes": 1,
-        "baked_strokes": 0,
-        "tex_hash": [
-          -958803275
-        ],
-        "tex_ink": [
-          9898
-        ],
-        "screen_hash": 417122069,
-        "screen_ink": 7401,
-        "identical": true
-      },
-      {
-        "instr": "brush",
-        "appended": 6,
-        "appends": 6,
-        "bakes": 0,
-        "baked_strokes": 0,
-        "tex_hash": [
-          1618458454
-        ],
-        "tex_ink": [
-          20334
-        ],
-        "screen_hash": -1563164379,
-        "screen_ink": 13614,
-        "identical": true
-      },
-      {
-        "instr": "marker",
-        "appended": 6,
-        "appends": 6,
-        "bakes": 0,
-        "baked_strokes": 0,
-        "tex_hash": [
-          -771935121
-        ],
-        "tex_ink": [
-          30703
-        ],
-        "screen_hash": 1729855982,
-        "screen_ink": 19928,
-        "identical": true
-      },
-      {
-        "instr": "cp",
-        "appended": 6,
-        "appends": 6,
-        "bakes": 0,
-        "baked_strokes": 0,
-        "tex_hash": [
-          -1794188141
-        ],
-        "tex_ink": [
-          41391
-        ],
-        "screen_hash": 605308531,
-        "screen_ink": 24728,
-        "identical": true
-      }
-    ],
-    "falsify_append_break": {
-      "tex_differs": true,
-      "screen_differs": true,
-      "broke_hash": [
-        985981478
-      ],
-      "ref_hash": [
-        -1527441473
-      ]
-    }
-  },
-  "g5_face_boundary": {
-    "faces_after_erase": 0,
-    "faces_after_undo": 1
+  "g5_zoom_level": {
+    "before": 1024,
+    "after": 512,
+    "tex_reallocs": 1
   },
   "g5_triggers": {
     "note": "무회귀 트리거 전수 — 「다시 굽는다」와 「낡은 그림 0」을 값으로",
@@ -266,11 +271,6 @@
     ],
     "all_rebaked": true,
     "all_match_full_bake": true
-  },
-  "g5_zoom_level": {
-    "before": 512,
-    "after": 256,
-    "tex_reallocs": 1
   },
   "no_constants_snapshot": true,
   "constants_used": {
