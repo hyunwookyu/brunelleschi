@@ -1,5 +1,5 @@
 {
-  "n_flags": 6418,
+  "n_flags": 6419,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -350,6 +350,20 @@
       "path": "axis_warn.json:by_order[1].cases[9].misfit_min",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "bake61_web2_dpr1.json:constants_snapshot",
+      "val": {
+        "PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS": 18
+      },
+      "flag": "단일 범주 분포(n=18) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "bake61_web2_dpr2.json:constants_snapshot",
+      "val": {
+        "PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS": 18
+      },
+      "flag": "단일 범주 분포(n=18) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "basic_flow.json:thresholds.console_errors_max",
@@ -21608,9 +21622,9 @@
     {
       "path": "paint45_e2e_web2_dpr1.json:orbit",
       "val": {
-        "ink_after_orbit": 1076
+        "ink_after_orbit": 1943
       },
-      "flag": "단일 범주 분포(n=1076) → 변별력 없음/단위 불일치 의심"
+      "flag": "단일 범주 분포(n=1943) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "paint45_e2e_web2_dpr1.json:front_paint.adjacent_face_thin_px",
@@ -21620,9 +21634,9 @@
     {
       "path": "paint45_e2e_web2_dpr2.json:orbit",
       "val": {
-        "ink_after_orbit": 4087
+        "ink_after_orbit": 8267
       },
-      "flag": "단일 범주 분포(n=4087) → 변별력 없음/단위 불일치 의심"
+      "flag": "단일 범주 분포(n=8267) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "paint45_e2e_web2_dpr2.json:front_paint.adjacent_face_thin_px",
@@ -25734,11 +25748,6 @@
       "path": "thick55_unit_web2.json:in_plane_disp_world",
       "val": 1.3283950133694437e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "thick55_web2_dpr2.json:border_meter.ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
@@ -32781,12 +32790,14 @@
     "bake61_web2_dpr1.json": [
       12,
       99,
-      101
+      101,
+      105
     ],
     "bake61_web2_dpr2.json": [
       12,
       99,
-      101
+      101,
+      105
     ],
     "basic_flow.json": [
       21,
@@ -33159,6 +33170,7 @@
     "grain61_web2_dpr1.json": [
       12,
       16,
+      42,
       99,
       101,
       102,
@@ -33167,6 +33179,7 @@
     "grain61_web2_dpr2.json": [
       12,
       16,
+      42,
       99,
       101,
       102,

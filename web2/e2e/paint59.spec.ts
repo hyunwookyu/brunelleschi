@@ -24,6 +24,7 @@ import { dirname, resolve } from 'node:path'
 const HERE = dirname(fileURLToPath(import.meta.url))
 const LEDGER_NAME = 'paint59'
 const OUT: Record<string, unknown> = {
+  constants_snapshot: { PAINT59_CROSS_TOL: 0.08, PAINT61_END_TOL: 0.04, PAINT61_PAPER_CORR_MIN: 0.08, PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS: 18, note: '스냅샷-라이트 — 값은 constants.ts가 정본(리터럴 병기: 원장 낡음의 수동 판별용)' },
   what: 'web2-59 — 칠 엔진의 뼈대: 게이트(사전 paint59_pre와 같은 자). ① 미리보기↔확정 픽셀 차(줌 셋 × 면 둘) ② 자기 교차 누적 ③ 끝점 대역 잉크 ④ 결 위상 상관 ⑤ coalesced 곡선 이탈 ⑥ 성능(그리는 중 프레임)',
   note_pitfalls: '#101(web2 러너) · #99(병합-쓰기 · 열쇠 수) · #102(한 test 안 ?reset 재호출 없음 — 장면 하나에 undo로 지운다) · #11(대역 분모 = 몸통 창 · def) · #12·#13(창 크기·문턱을 값으로 · 훑기는 게이트 판) · #92(판정자는 픽셀·수) · #5(자기참조: ①은 같은 캔버스에 같은 함수로 그리면 구성상 0에 가깝다 — 그래서 diff의 «0 아님»은 uv·굵기·압력 경로의 갈림을 잰다. 반증은 벡터 미리보기 되돌림)',
 }
@@ -509,10 +510,10 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
     def: '저압(0.25 · 합성 펜) 굵기 20의 한 획이 (680,y)에서 자기 자신과 ~38°로 교차한다. 창은 굵기 폭(20×20 css) — 교차 창 p95 어둡기 ÷ 몸통 창 둘(600·760)의 p95 평균 · cap_ratio = 교차 p95 ÷ 압력 1.0 직선 몸통 p95(지시 문면 「교차점의 알파가 획의 불투명도를 안 넘는다」). **web2-61 판갈이**: 엔진이 p5.brush로 바뀌어 «최대값 합집합 구성 → 보장»이던 값이 **실측**이 됐다(p5 마스크 안 over 누적이 포화로 눌리는가의 값 — 임계가 실제로 잰다). 옛 엔진 반증(strokeBufferOff)은 엔진과 함께 갔다 — 동결 원장(42c9491 판 paint59_web2)의 falsification 열쇠가 기록. 새 반증 = «같은 마커 획 세 번»(획 사이는 쌓인다 — 46 ⛔): 창 평균 비가 문을 넘는다(평균인 이유는 falsification_stack 주석 — 저압 자국의 p95가 색 상한에 눌린다)',
     threshold: 1 + cs.PAINT59_CROSS_TOL,
     note_grain: '판정(rows)은 **결 끔**에서 잰다(결 칸 잡음 — 종전 사유 그대로). 결 있는 값은 rows_grain에 기록',
-    note_brush: '붓의 «획 안 누적 문 밖이 설계»(옛 DEFERRED · 60 ⚑ 1)는 엔진 교체로 소멸 — rows.brush.p95_ratio가 문 안이다(사람에게 묻던 것이 값으로 닫혔다)',
+    note_brush: '붓 rows.brush.p95_ratio 1.03 대역(문 안) — 다만 이것은 포화가 묶는 값이다(note_saturation). 60 ⚑ 1(«붓의 획 안 누적»)은 «값으로 닫힘»이 아니라 **관측 조건이 바뀐 것**: 옛 엔진의 빗살 흐름 축이 사라졌고, 비포화 판(이 판에 붓은 없다)은 위 한계로 판별력이 없다 — 62의 캡과 함께 다시 잰다',
     rows, rows_grain: rowsGrain, rows_press: rowsPress,
     rows_unsaturated: unsat,
-    note_saturation: '판정 보강(리뷰어 [3]): 압력 다리 탓에 연필·cp의 기본 몸통 p95가 색 상한(~200)에 붙는다 — rows의 p95 비 1.000·cap 1은 상한이 재는 것이라 rows_unsaturated(불투명 배수 0.4 — 상한 아래)의 같은 자를 함께 단언한다. 질량 자(mass)는 falsification_stack(마커 셋)이 든다',
+    note_saturation: '판(리뷰어 [3][27][28] — 값 뒤에 쓴 문장): 압력 다리 탓에 연필·cp의 기본 몸통 p95가 색 상한(~200)에 붙는다 — rows의 p95 비 1.00 대역·cap 1은 «상한이 묶는 값»이다(단언은 그 상태의 사실로서 산다). rows_unsaturated(불투명 .4)는 **기록이지 단언이 아니다** — 그 판 자체의 한계 둘: ① dpr2는 .4에서도 상한을 못 벗어난다(연필 199/199) ② dpr1의 비(연필 1.256)는 두 몸통 창의 비대칭(191.7 vs 116 — 비포화에서 원근·결이 창을 가른다)이 지배한다(cross/body_l은 1.008). «획 안 누적의 실재 정도»는 이 판이 못 가른다 — 62(캡 기제)와 사람 눈(사진 cross)의 몫. 질량 자(mass)는 falsification_stack(마커 셋)이 든다',
     note_marker: '마커 자기 교차는 새 엔진에서 진해진다(rows.marker — 옛 canvas stroke() 한 번의 구성상 1.000(AS-C175)과 다른 거동 · 실물 마커의 젖은 겹침과 같은 결). 46 ⛔ 계약은 획 «사이»이고 그것은 falsification_stack이 지킨다 — 자기 교차의 눈 판정은 사진(shots61 marker cross)이 몫(AS-C175 갱신)',
     falsification_stack: off,
   }

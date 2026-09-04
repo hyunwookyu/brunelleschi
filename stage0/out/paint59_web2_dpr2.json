@@ -334,7 +334,7 @@
     "def": "저압(0.25 · 합성 펜) 굵기 20의 한 획이 (680,y)에서 자기 자신과 ~38°로 교차한다. 창은 굵기 폭(20×20 css) — 교차 창 p95 어둡기 ÷ 몸통 창 둘(600·760)의 p95 평균 · cap_ratio = 교차 p95 ÷ 압력 1.0 직선 몸통 p95(지시 문면 「교차점의 알파가 획의 불투명도를 안 넘는다」). **web2-61 판갈이**: 엔진이 p5.brush로 바뀌어 «최대값 합집합 구성 → 보장»이던 값이 **실측**이 됐다(p5 마스크 안 over 누적이 포화로 눌리는가의 값 — 임계가 실제로 잰다). 옛 엔진 반증(strokeBufferOff)은 엔진과 함께 갔다 — 동결 원장(42c9491 판 paint59_web2)의 falsification 열쇠가 기록. 새 반증 = «같은 마커 획 세 번»(획 사이는 쌓인다 — 46 ⛔): 창 평균 비가 문을 넘는다(평균인 이유는 falsification_stack 주석 — 저압 자국의 p95가 색 상한에 눌린다)",
     "threshold": 1.08,
     "note_grain": "판정(rows)은 **결 끔**에서 잰다(결 칸 잡음 — 종전 사유 그대로). 결 있는 값은 rows_grain에 기록",
-    "note_brush": "붓의 «획 안 누적 문 밖이 설계»(옛 DEFERRED · 60 ⚑ 1)는 엔진 교체로 소멸 — rows.brush.p95_ratio가 문 안이다(사람에게 묻던 것이 값으로 닫혔다)",
+    "note_brush": "붓 rows.brush.p95_ratio 1.03 대역(문 안) — 다만 이것은 포화가 묶는 값이다(note_saturation). 60 ⚑ 1(«붓의 획 안 누적»)은 «값으로 닫힘»이 아니라 **관측 조건이 바뀐 것**: 옛 엔진의 빗살 흐름 축이 사라졌고, 비포화 판(이 판에 붓은 없다)은 위 한계로 판별력이 없다 — 62의 캡과 함께 다시 잰다",
     "rows": {
       "brush": {
         "cross": {
@@ -743,7 +743,7 @@
         "mass_ratio": 1.4939
       }
     },
-    "note_saturation": "판정 보강(리뷰어 [3]): 압력 다리 탓에 연필·cp의 기본 몸통 p95가 색 상한(~200)에 붙는다 — rows의 p95 비 1.000·cap 1은 상한이 재는 것이라 rows_unsaturated(불투명 배수 0.4 — 상한 아래)의 같은 자를 함께 단언한다. 질량 자(mass)는 falsification_stack(마커 셋)이 든다",
+    "note_saturation": "판(리뷰어 [3][27][28] — 값 뒤에 쓴 문장): 압력 다리 탓에 연필·cp의 기본 몸통 p95가 색 상한(~200)에 붙는다 — rows의 p95 비 1.00 대역·cap 1은 «상한이 묶는 값»이다(단언은 그 상태의 사실로서 산다). rows_unsaturated(불투명 .4)는 **기록이지 단언이 아니다** — 그 판 자체의 한계 둘: ① dpr2는 .4에서도 상한을 못 벗어난다(연필 199/199) ② dpr1의 비(연필 1.256)는 두 몸통 창의 비대칭(191.7 vs 116 — 비포화에서 원근·결이 창을 가른다)이 지배한다(cross/body_l은 1.008). «획 안 누적의 실재 정도»는 이 판이 못 가른다 — 62(캡 기제)와 사람 눈(사진 cross)의 몫. 질량 자(mass)는 falsification_stack(마커 셋)이 든다",
     "note_marker": "마커 자기 교차는 새 엔진에서 진해진다(rows.marker — 옛 canvas stroke() 한 번의 구성상 1.000(AS-C175)과 다른 거동 · 실물 마커의 젖은 겹침과 같은 결). 46 ⛔ 계약은 획 «사이»이고 그것은 falsification_stack이 지킨다 — 자기 교차의 눈 판정은 사진(shots61 marker cross)이 몫(AS-C175 갱신)",
     "falsification_stack": {
       "single_mass": 26876,
@@ -1058,37 +1058,37 @@
       1024
     ],
     "idle_ms": {
-      "median": 51.4,
-      "p90": 55.7
+      "median": 48.8,
+      "p90": 52.2
     },
     "idle2_ms": {
-      "median": 51.6,
-      "p90": 56.1
+      "median": 49,
+      "p90": 53.1
     },
     "noise_floor_ms": 0.2,
     "drafting_ms": {
-      "median": 66.8,
-      "p90": 77.2,
-      "max": 106.6,
-      "first": 49.9,
+      "median": 64.1,
+      "p90": 68.1,
+      "max": 99.5,
+      "first": 47.5,
       "frame_cost": {
         "n": 43,
-        "r3": 14.799999982118607,
+        "r3": 14.199999988079071,
         "bs": 0,
         "d2": 0.19999998807907104,
-        "total": 15,
-        "totalMax": 557.8000000119209
+        "total": 14.300000011920929,
+        "totalMax": 537
       },
       "draft_base_bytes_max": 385024,
       "draft_with_base_max": 1
     },
-    "draft_extra_ms": 15.4,
+    "draft_extra_ms": 15.3,
     "draft_memory": {
       "def": "그리는 중 사본(base) 바이트의 최대와 사본 든 텍스처 수의 최대(1차 [8] — 획은 주인 면 하나(54-1)라 1 · 고름이 있으면 그 수까지) · 커버리지 지도는 bbox×4바이트(획마다 해제)",
       "base_bytes_max": 385024,
       "with_base_max": 1
     },
-    "draft_max_extra_ms": 55.2,
+    "draft_max_extra_ms": 50.7,
     "threshold_extra_ms": 18,
     "gate_condition": {
       "workers": 1,
@@ -1128,5 +1128,12 @@
       "start_ratio": 1.0579,
       "end_ratio": 1.0704
     }
+  },
+  "constants_snapshot": {
+    "PAINT59_CROSS_TOL": 0.08,
+    "PAINT61_END_TOL": 0.04,
+    "PAINT61_PAPER_CORR_MIN": 0.08,
+    "PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS": 18,
+    "note": "스냅샷-라이트 — 값은 constants.ts가 정본(리터럴 병기: 원장 낡음의 수동 판별용)"
   }
 }
