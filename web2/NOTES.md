@@ -27289,13 +27289,13 @@ coarse_bulk — 절편 10~97px)에서 작은 요청 폭의 반지름을 0 이하
 
 | 실행 | 트리 | 결과 | 비고 |
 |---|---|---|---|
-| 단위(`npx vitest run` · web2) | @@TREE@@ | 1090/1090 · 134파일 | mypaint62(12) · mypaint62b(1 — 엔진 참조 설정 64/65) · paintseam61(4) · dpr2list54(paint62·shots62 등재) |
+| 단위(`npx vitest run` · web2) | e346796 | 1090/1090 · 134파일 | mypaint62(12) · mypaint62b(1 — 엔진 참조 설정 64/65) · paintseam61(4) · dpr2list54(paint62·shots62 등재) |
 | 밤 1차(`e2e:night` · 워커 4 · 전량 2dpr) | b9a883d | 722/728 · 빨강 2(dim ⑧ dpr2 · draftgate ①② dpr2 — 칠과 무관) · skip 4 | 빨강 2는 **단독 재실행 13/13 초록** → 부하 귀속(#14 · 61과 같은 형태) |
 | 밤 2차(`e2e:night` · 1차 리뷰어 대응 트리) | dcd71fb | 724/728 · 빨강 0 · skip 4 (32.8m) | 판갈이 뒤 스펙(paint62 ①③④⑤⑦ · grain61 ④⑤⑥ · paint50 ④ · lab61) 포함 |
-| 밤 3차(`e2e:night` · 최종 트리 — 2차 대응 뒤) | @@TREE@@ | @@NIGHT3@@ | ⑤ 픽셀 반증·비포화 capOff 팔·binds 1.02·paint59 note_62 포함 |
-| 원장(`e2e:ledger` · 워커 1 · 2dpr) | @@TREE@@ | paint62 6/6 ×2 · grain61 6/6 ×2 · paint59 6/6 ×2 · lab61·mats46·paint50 dpr2(dpr1은 dcd71fb — 이후 변경이 스펙 문면·진단뿐) · bake61 · shots62(사진 픽셀 불변 — git 무변경) | 검증 절의 표가 이 실행의 값 |
-| 빌드(`vite build`) | @@TREE@@ | ✓ · index-*.js 1,253.60 kB(gzip 396.24) | 61보다 +약 200 kB(엔진 + 프리셋 150 kB) |
-| typecheck(`tsc --noEmit`) | @@TREE@@ | ✓ | |
+| 밤 3차(`e2e:night` · 최종 트리 — 2차 대응 뒤) | e346796 | 724/728 · 빨강 0 · skip 4 (32.9m) | ⑤ 픽셀 반증·비포화 capOff 팔·binds 1.02·paint59 note_62 포함 |
+| 원장(`e2e:ledger` · 워커 1 · 2dpr) | e346796 | paint62 6/6 ×2 · grain61 6/6 ×2 · paint59 6/6 ×2 · lab61·mats46·paint50 dpr2(dpr1은 dcd71fb — 이후 변경이 스펙 문면·진단뿐) · bake61 · shots62(사진 픽셀 불변 — git 무변경) | 검증 절의 표가 이 실행의 값 |
+| 빌드(`vite build`) | e346796 | ✓ · index-*.js 1,253.60 kB(gzip 396.24) | 61보다 +약 200 kB(엔진 + 프리셋 150 kB) |
+| typecheck(`tsc --noEmit`) | e346796 | ✓ | |
 
 **selfcheck(최종)**: `scan_pitfalls_table_last` 0 · `scan_ledger_guard` 0 · `scan_unbounded_wait` 0 · 62 원장 플래그의 정체 —
 「정확히 1」(grain61 ⑥ cp·붓·마커·마커100·cp50 ratio · paint62 ④ 마커·잉크펜 cross/body/cap) = **정수 행 수 자(24/24 · 100/100)와
@@ -27303,7 +27303,7 @@ coarse_bulk — 절편 10~97px)에서 작은 요청 폭의 반지름을 0 이하
 딱딱한 불투명 블록 마커의 열 프로파일이 평탄(주기 없음 — 구성) · 「카운터 0」(paint62 반증 판의 smudge_off/self_sample 표집 0 ·
 fringe 행의 brighter 0) = 반증·게이트의 «0이 정상»인 값(술어 그 자체) · calib a/b/w 0 = ok:false 표식(#105 — 값이 아니라 실패 표식). · paint59(62 판) 「정확히 1」(self_cross 잉크펜·마커 p95_ratio·cap_ratio · cp p95_ratio) = 캡이 «정확히» 목표에 묶는 도구(구조 — paint62 ④와 같은 사유) · 「카운터 0」(preview_vs_commit mean_abs) = 미리보기와 확정이 같은 함수(항등 — 61 그대로 · 62는 draft/bake가 같은 drawDab) · grain_phase_spread off 0 = 결 끔 판의 정의.
 
-**도는 백그라운드 없음(실측 · #81 ㉤ · #95)**: @@BG@@
+**도는 백그라운드 없음(실측 · #81 ㉤ · #95)**: 이 저장소 몫 node **0**(남은 node = Adobe CC 1개뿐 — wmic 전수) · 5xxx 리스너: 5040 하나 = 시스템( · PID 11208 — vite 아님) · 세션 배경 작업(밤 3회 · 원장 판갈이 3회 · 62 단독 재실행 · 사진) 전부 completed · 대기 전부 상한부(#95 — TaskOutput 10분 상한).
 
 **⛳ #42 ⑩ — 다음 라운드(63 · 같은 세션) 착수 표에 옮길 것**:
 - **#107**(되돌리는 경로에서 자를 읽지 마라 — 캡처는 되돌리기 «전») · #105·#106은 62가 지켰다(표식 ok:false · 싱글턴 없음).
