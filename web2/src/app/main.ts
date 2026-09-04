@@ -2235,7 +2235,7 @@ function setPaintHex(hex: string, why: string) {
   const sizeVal = document.createElement('span')
   sizeVal.id = 'paint-size-val'
   sizeVal.style.minWidth = '44px'
-  const paintMaxW = (): number => brushDef(app.paintSel.i === 'brush' ? 'brush' : app.paintSel.i).maxW
+  const paintMaxW = (): number => C.PAINT58_MAX_W[app.paintSel.i === 'brush' ? 'brush' : app.paintSel.i]
   const syncSizeRow = syncPaintSizeRow = () => {
     const max = paintMaxW()
     sizeRange.max = String(max)
@@ -2799,11 +2799,17 @@ requestAnimationFrame(() => {
 
 // e2e 진단 통로 — 앱과 같은 함수·같은 상태를 본다(측정 경로와 앱 경로를 가르지 않는다)
 import { project, screenAxes, vpMarks, frameAxes, isParallel, projW, horizonScreenY } from '../core/camera'
-import { setMarkerFlatForTest, setPressFlatForTest, setGrainOffForTest, setPaintOpaqueForTest, paintDensity, paintWidthFactor, setStampLogForTest, stampLogForTest, setStrokeBufferOffForTest, setGrainPerStrokeForTest } from '../core/facetex'
-import { brushDef, setBrushTune, START_POINTS, type Instr58, type BrushDef } from '../core/brush58'
-import { paintMark } from '../core/facetex'
 import { markShape, type MarkShape } from '../core/markshapes'
+import {
+  setPaintRenderer, paintRenderer, drawMark, paintRendererId, type Instr58,
+  setMarkerFlatForTest, setPaintOpaqueForTest, setPressFlatForTest, setGrainOffForTest,
+} from '../core/paintseam'
+import { p5PaintRenderer, p5probeForTest, p5calibForTest, p5grainTileForTest } from './p5paint'
+import { brushTargetSwitches } from './brushtarget'
 import { initTuneLab } from './tunelab'
+
+// 칠 렌더러 등록(web2-61) — 이음매의 주입 지점. 62는 이 한 줄을 갈아끼운다.
+setPaintRenderer(p5PaintRenderer)
 
 // ── 브러시 작업대(web2-58 58-5) — 설정에 숨는다(R8). 시험 긋기 == 제품 굽기(#54) ────
 const tuneLab = initTuneLab({
@@ -2826,22 +2832,28 @@ const diag = {
   openBoxes: () => openBoxIds(),
   /** R7의 **반증 손잡이**(D-3) — 'off'(안 듣는다) · 'swallow'(삼킨다) · 'on'(제자리) */
   boxAwayModeForTest: (m: 'on' | 'off' | 'swallow') => setBoxAwayModeForTest(m),
-  /** **web2-59 반증·표식 셋**(D-3 · #30): 벡터 미리보기 되돌림 · 스트로크 버퍼 끔(옛 엔진) ·
-   *  결 시드 획별(면 고정 깨기). 전부 재굽기 동반. paintDraft는 미리보기 상태(사본·덧그림·포화). */
+  /** **web2-59 반증**(D-3 · #30): 벡터 미리보기 되돌림 · 미리보기 흔들기.
+   *  paintDraft는 미리보기 상태(사본·덧그림·포화). ⚠ 옛 엔진 전용 스위치(strokeBufferOff·
+   *  grainPerStroke·stampLog)는 엔진과 함께 갔다(web2-61 — grain61_pre가 그 기록). */
   setPaintPreviewVectorForTest: (v: boolean) => { setPaintPreviewVectorForTest(v); invalidate() },
   setPaintDraftPerturbForTest: (v: boolean) => { paintDraftPerturb = v },
-  setStrokeBufferOffForTest: (v: boolean) => { setStrokeBufferOffForTest(v); rebakePaintTexForTest(); invalidate() },
-  setGrainPerStrokeForTest: (v: boolean) => { setGrainPerStrokeForTest(v); rebakePaintTexForTest(); invalidate() },
   paintDraft: () => ({ ...paintDraftStats(), strokes: app.paintDraft?.length ?? 0 }),
-  /** **도장 기록**(web2-58 D-1 표식) — 굽기 도장 자리의 수동 기록(끝점 뭉침 D-2의 자) */
-  setStampLogForTest: (on: boolean) => setStampLogForTest(on),
-  stampLogForTest: () => stampLogForTest(),
-  /** **브러시 조정**(web2-58) — 실험실과 같은 배선(#54: setBrushTune 하나) + 재굽기.
-   *  팔이 «손잡이가 실제로 자국을 바꾼다»·«기제가 산다»를 이 길로 잰다. */
-  setBrushTuneForTest: (i: Instr58, patch: Partial<BrushDef> | null) => {
-    setBrushTune(i, patch); rebakePaintTexForTest(); invalidate()
+  paintRendererId: () => paintRendererId(),
+  /** **엔진 조정**(web2-61 — 이음매의 작업대 표면과 같은 배선 #54) + 재굽기 */
+  setPaintParamForTest: (i: Instr58, key: string, value: number) => {
+    paintRenderer()?.setParam?.(i, key, value); rebakePaintTexForTest(); invalidate()
   },
-  brushDefForTest: (i: Instr58) => brushDef(i),
+  setPaintBrushForTest: (i: Instr58, name: string) => {
+    paintRenderer()?.setBrush?.(i, name); rebakePaintTexForTest(); invalidate()
+  },
+  resetPaintTuneForTest: (i: Instr58) => { paintRenderer()?.resetTune?.(i); rebakePaintTexForTest(); invalidate() },
+  paintParamsForTest: (i: Instr58) => paintRenderer()?.params?.(i) ?? [],
+  /** **⚑ 굽는 길 탐침**(web2-61 「재서 정할 것」) — 오프스크린 p5.brush가 되는가 ·
+   *  전환 비용 · 면 20×획 40 비용. bake61.spec이 원장으로 남긴다. */
+  p5probeForTest: () => p5probeForTest(),
+  p5calibForTest: () => p5calibForTest(),
+  p5grainTileForTest: () => p5grainTileForTest(),
+  brushTargetSwitches: () => brushTargetSwitches(),
   /** **자국 견본**(web2-61 게이트·사진의 자) — 흰 판(면 텍스처 규약)에 견본 도형 하나를
    *  제품과 같은 함수(paintMark — 이음매)로 긋고 어둡기 지도(0..255)를 window.__m61에
    *  남긴다. 화면·문서·dpr과 무관한 순수 px 판이라 원근이 자를 안 흐린다(#16 — 주기
@@ -2851,9 +2863,9 @@ const diag = {
     const g2 = c.getContext('2d')!
     g2.fillStyle = '#ffffff'; g2.fillRect(0, 0, W, H)
     const sm = markShape(shape, W, H)
-    paintMark(g2, sm.pts, wPx, brushDef(i), {
+    drawMark(g2, {
+      pts: sm.pts, press: sm.press, wPx, seed, tool: i,
       color: i === 'brush' ? MAT.HB.color : '#8a4a3a',
-      baseAlpha: MAT.HB.alpha, seed, grainWpx: wPx, press: sm.press,
     })
     const d = g2.getImageData(0, 0, W, H).data
     const v = new Array<number>(W * H)
@@ -2862,9 +2874,33 @@ const diag = {
     ;(window as unknown as { __m61cv?: unknown }).__m61cv = c
     return { w: W, h: H }
   },
-  /** web2-60 — 조정 전부(JSON · 실험실 「값 꺼내기」와 같은 함수) · 출발점 표(값의 출처 대조) */
+  /** **다중 자국 견본**(web2-61 — paint59 ④ 「결은 면 고정」의 자) — 흰 판 하나에 자국
+   *  여럿을 같은 함수(drawMark)로 얹고 어둡기 지도를 __m61에 남긴다. 각 항은 markShape의
+   *  도형을 (dx,dy)만큼 옮긴 것 — 시드·도구·굵기는 항이 정한다. */
+  markMultiForTest: (
+    items: { tool: Instr58; shape: MarkShape; wPx: number; seed: number; dx?: number; dy?: number }[],
+    W = 480, H = 240,
+  ) => {
+    const c = document.createElement('canvas'); c.width = W; c.height = H
+    const g2 = c.getContext('2d')!
+    g2.fillStyle = '#ffffff'; g2.fillRect(0, 0, W, H)
+    for (const it of items) {
+      const sm = markShape(it.shape, W, H)
+      drawMark(g2, {
+        pts: sm.pts.map(p => ({ x: p.x + (it.dx ?? 0), y: p.y + (it.dy ?? 0) })),
+        press: sm.press, wPx: it.wPx, seed: it.seed, tool: it.tool,
+        color: it.tool === 'brush' ? MAT.HB.color : '#8a4a3a',
+      })
+    }
+    const d = g2.getImageData(0, 0, W, H).data
+    const v = new Array<number>(W * H)
+    for (let k = 0, j = 0; k < d.length; k += 4, j++) v[j] = 255 - (d[k]! + d[k + 1]! + d[k + 2]!) / 3
+    ;(window as unknown as { __m61?: unknown }).__m61 = { v, w: W, h: H }
+    ;(window as unknown as { __m61cv?: unknown }).__m61cv = c
+    return { w: W, h: H }
+  },
+  /** 조정 전부(JSON · 실험실 「값 꺼내기」와 같은 함수 — web2-61: 엔진 조정) */
   brushTuneJson: () => tuneLab.tuneJson(),
-  brushStartPoints: () => START_POINTS,
   /** **임의의 포즈로 한 점을 사영한다**(web2-42) — 팔이 「원근 판과 얼마나 갈리는가」를
    *  재는 자리다. 사영의 출처는 `camera.project` 하나이고 여기서 식을 다시 안 적는다(#54). */
   projectWith(pose: CamPose, P: { x: number; y: number; z: number }) {
@@ -3411,7 +3447,9 @@ const diag = {
     PAINT59_PREVIEW_DIFF_MAX: C.PAINT59_PREVIEW_DIFF_MAX, PAINT59_CROSS_TOL: C.PAINT59_CROSS_TOL,
     PAINT59_GRAIN_CORR_MIN: C.PAINT59_GRAIN_CORR_MIN, PAINT59_DRAFT_FRAME_EXTRA_MS: C.PAINT59_DRAFT_FRAME_EXTRA_MS,
     PAINT60_CP_BURNISH: C.PAINT60_CP_BURNISH, PAINT60_RIPPLE_MAX: C.PAINT60_RIPPLE_MAX,
-    PAINT60_HOLE_SHARE_GAP: C.PAINT60_HOLE_SHARE_GAP, PAINT60_LAYER_CORR_MIN: C.PAINT60_LAYER_CORR_MIN }),
+    PAINT60_HOLE_SHARE_GAP: C.PAINT60_HOLE_SHARE_GAP, PAINT60_LAYER_CORR_MIN: C.PAINT60_LAYER_CORR_MIN,
+    PAINT61_END_TOL: C.PAINT61_END_TOL, PAINT61_PAPER_CORR_MIN: C.PAINT61_PAPER_CORR_MIN,
+    PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS: C.PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS }),
   /** 저장물 원문(파일 저장과 같은 함수 — #54) — paint50 팔이 «텍스처가 파일에 없다»를 잰다 */
   serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
   corruptPaintTex: () => { const n = corruptPaintTexForTest(); invalidate(); return n },
@@ -3421,8 +3459,8 @@ const diag = {
   /** 51 반증 둘(D-3) — 압력 평탄화 · 결 끔. 켜고 재굽기 — 해당 게이트가 죽어야 한다 */
   setPressFlatForTest: (v: boolean) => { setPressFlatForTest(v); rebakePaintTexForTest(); invalidate() },
   setPaintOpaqueForTest: (v: boolean) => { setPaintOpaqueForTest(v); rebakePaintTexForTest(); invalidate() },
-  // 26-6의 실측 통로(3차 [6]) — 원장이 프로필 «함수»의 기울기를 값으로 들게 한다
-  paintProfile: (p: number) => ({ d: paintDensity(p), w: paintWidthFactor(p) }),
+  // (web2-61) 26-6의 프로필 함수(paintDensity·paintWidthFactor)는 옛 엔진과 함께 갔다 —
+  // 압력 응답은 이제 엔진(브러시 정의의 pressure 곡선)의 것이다. paintProfile 통로도 걷었다.
   setGrainOffForTest: (v: boolean) => { setGrainOffForTest(v); rebakePaintTexForTest(); invalidate() },
   setPaintBlendForTest: (v: boolean) => { setPaintBlendForTest(v); invalidate() },
   /** **안 실린 수리를 손으로 걸어 보는 손잡이**(web2-48 48-1 — 수리는 되돌렸다).

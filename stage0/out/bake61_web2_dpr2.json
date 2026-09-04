@@ -1,0 +1,36 @@
+{
+  "conditions": {
+    "workers": 1,
+    "project": "dpr2",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/bake61.spec.ts (워커 1 — #99)"
+  },
+  "what": "web2-61 ⚑ 굽는 길 — 오프스크린 p5.brush(1024 캔버스 · claim 전환): 자국 실재 · 결정론 · 전환 ms · 면 20×획 40 ms · 획별 옮김 ms · 자가 보정표",
+  "note_pitfalls": "#101(web2 러너) · #99(병합-쓰기) · #12(비용은 두 꼴(면당 1회·획당 1회) 다 잰다 — 동작점 하나가 아니다) · 프레임류 시간은 부하 조건부(59 이월 — 이 원장의 ms는 워커 1의 값)",
+  "probe": {
+    "box": [
+      "pen",
+      "rotring",
+      "2B",
+      "HB",
+      "2H",
+      "cpencil",
+      "pastel",
+      "crayon",
+      "charcoal",
+      "spray",
+      "marker",
+      "marker46"
+    ],
+    "markPx": 12048,
+    "deterministic": true,
+    "switch_ms_per": 0,
+    "bake_20x40_ms": 9386.3,
+    "bake_perstroke_2x40_ms": 1315.2,
+    "calib": {
+      "HB": 1,
+      "cpencil": 2,
+      "marker61": 1,
+      "charcoal": 5
+    }
+  }
+}

@@ -29,6 +29,7 @@
 //      Math.random을 시드로 안 쓴다(§5). e2e가 «같은 문서 → 같은 픽셀»을 해시로 잰다.
 
 import * as brush from 'p5.brush/standalone'
+import { claimBrushTarget, noteBrushTargetCreated } from './brushtarget'
 import type { App } from './state'
 import { docToScreen, isDrawPose, activeGrade, draftBrushed, fadeRef, viewXf, inkMix, settleActive } from './state'
 import { filmSplit, yellowVisible } from './filmlayer'
@@ -100,6 +101,7 @@ function withStraightAlpha<T>(fn: () => T): T {
 export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   let canvas = withStraightAlpha(() =>
     brush.createCanvas(W, H, { parent: '#app', pixelDensity: dpr, id: 'brushc' }))
+  noteBrushTargetCreated(canvas)      // createCanvas가 이미 대상을 실었다(web2-61 — 소유 등록)
 
   // ── 마커(web2-46) — 내장 marker의 **spacing 하나만** 0.03 → C.MARKER_SPACING ──
   // 내장 그대로는 「겹치면 진해진다」가 죽어 있었다(실측 — 46-0 뒤 스윕): spacing 0.03은
@@ -351,6 +353,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     const tFull = performance.now()
     let drawn = 0, clipped = 0
     clipW = cw; clipH = ch
+    claimBrushTarget(canvas)          // 칠 굽기(p5paint)가 대상을 가져갔을 수 있다(web2-61)
     brush.clear()
     if (app.renderer === 'brush') {
       brush.push()
@@ -457,6 +460,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     const t0 = performance.now()
     const s = draftStroke(app, d)
     // 질감만 — 몸체는 Line2(render3d.setDraftLine)가 이 겹 아래(#gl)에서 그린다
+    claimBrushTarget(canvas)          // web2-61 — 대상 소유
     brush.clear()
     brush.push()
     brush.translate(-cw / 2, -ch / 2)
@@ -556,6 +560,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   function bakePass(app: App, items: { s: Stroke; L: number; h: number; w: number }[], from: number, pass: number): number {
     const dpr = snap.width / Math.max(1, cw)
     fitSnap()
+    claimBrushTarget(canvas)          // web2-61 — 대상 소유
     brush.clear()
     brush.push()
     brush.translate(-cw / 2, -ch / 2)
@@ -783,6 +788,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       canvas.remove()
       canvas = withStraightAlpha(() =>
         brush.createCanvas(W2, H2, { parent: '#app', pixelDensity: dpr2, id: 'brushc' }))
+      noteBrushTargetCreated(canvas)  // web2-61 — 소유 갱신
       applyPaper(canvas)
       cw = W2; ch = H2
       last = null

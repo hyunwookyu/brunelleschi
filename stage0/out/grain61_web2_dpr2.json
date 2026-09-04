@@ -9,120 +9,120 @@
   "scene": "호출마다 markSampleForTest가 새 480×240 캔버스를 만든다(문서·뷰 무관 · 잔류 없음)",
   "period_line_w20": {
     "pencil": {
-      "edgeP": 29.5,
-      "edgeAmpN": 0.1574,
-      "mean": 22.304,
-      "dominantP": 18,
-      "ampRatio": 0.0944,
-      "p95": 90.3,
-      "bandMean": 22.3,
-      "bareShare": 0.1231,
+      "edgeP": 30,
+      "edgeAmpN": 0.1183,
+      "mean": 65.532,
+      "dominantP": 51.5,
+      "ampRatio": 0.0643,
+      "p95": 173,
+      "bandMean": 65.53,
+      "bareShare": 0.0592,
       "coreN": 8001,
-      "edgeSd": 3.176,
-      "edgeN": 372
+      "edgeSd": 3.77,
+      "edgeN": 381
     },
     "cp": {
-      "edgeP": 0,
-      "edgeAmpN": 0,
-      "mean": 18.523,
-      "dominantP": 22,
-      "ampRatio": 0.2624,
-      "p95": 77.7,
-      "bandMean": 18.52,
-      "bareShare": 0.1049,
+      "edgeP": 36.5,
+      "edgeAmpN": 0.0547,
+      "mean": 67.836,
+      "dominantP": 31,
+      "ampRatio": 0.0297,
+      "p95": 175.3,
+      "bandMean": 67.84,
+      "bareShare": 0.0026,
       "coreN": 8001,
-      "edgeSd": 0,
+      "edgeSd": 1.331,
       "edgeN": 381
     },
     "brush": {
-      "edgeP": 60,
-      "edgeAmpN": 0.2497,
-      "mean": 21.294,
-      "dominantP": 6,
-      "ampRatio": 0.0449,
-      "p95": 59,
-      "bandMean": 21.29,
-      "bareShare": 0.0492,
+      "edgeP": 31.5,
+      "edgeAmpN": 0.0079,
+      "mean": 154.084,
+      "dominantP": 42.5,
+      "ampRatio": 0.0148,
+      "p95": 184,
+      "bandMean": 154.08,
+      "bareShare": 0,
       "coreN": 8001,
-      "edgeSd": 7.184,
+      "edgeSd": 0.395,
       "edgeN": 381
     },
     "marker": {
-      "edgeP": 0,
-      "edgeAmpN": 0,
-      "mean": 35.425,
-      "dominantP": 59,
-      "ampRatio": 0,
-      "p95": 90.3,
-      "bandMean": 35.42,
-      "bareShare": 0.0476,
+      "edgeP": 54.5,
+      "edgeAmpN": 0.0349,
+      "mean": 59.748,
+      "dominantP": 54,
+      "ampRatio": 0.0367,
+      "p95": 115,
+      "bandMean": 59.75,
+      "bareShare": 0,
       "coreN": 8001,
-      "edgeSd": 0,
+      "edgeSd": 3.278,
       "edgeN": 381
     },
     "def": "띠(굵기+30px) 열 프로파일의 지배 주기 P(3..60 스윕)와 진폭비(DFT 2/N ÷ 평균). ①연필·색연필 격자 ②붓 도장 열 — pre 값이 반증의 기록(D-3)"
   },
   "width_follow": {
     "w20": {
-      "P": 18,
-      "amp": 0.0944
+      "P": 51.5,
+      "amp": 0.0643
     },
     "w40": {
-      "P": 48.5,
-      "amp": 0.1282
+      "P": 43.5,
+      "amp": 0.0629
     },
-    "p_ratio": 2.694,
+    "p_ratio": 0.845,
     "def": "굵기 2배에서 지배 주기의 비 — 결이 굵기에 실리면 ≈2(옛 엔진 · grainWpx×grainK), 종이 성질이면 ≈1"
   },
   "holes_cp": {
     "col": {
-      "P": 22,
-      "ratio": 0.6051
+      "P": 16,
+      "ratio": 0.7251
     },
     "row": {
-      "P": 7,
-      "ratio": 0.4837
+      "P": 10,
+      "ratio": 1.7045
     },
-    "holeShare": 0.4253,
-    "p95": 80.3,
+    "holeShare": 0.0166,
+    "p95": 182,
     "def": "몸통(±10px) 구멍(<0.35·p95) 지시자의 열·행 프로파일 지배 주기 — 격자에 실리면 두 축 다 봉우리(pre), 안 실리면 진폭이 낮다(post)"
   },
   "four_differ": {
     "stats": {
       "pencil": {
-        "p95": 90.3,
-        "bareShare": 0.1231,
-        "edgeSd": 3.176,
-        "bandMean": 22.3
+        "p95": 173,
+        "bareShare": 0.0592,
+        "edgeSd": 3.77,
+        "bandMean": 65.53
       },
       "cp": {
-        "p95": 77.7,
-        "bareShare": 0.1049,
-        "edgeSd": 0,
-        "bandMean": 18.52
+        "p95": 175.3,
+        "bareShare": 0.0026,
+        "edgeSd": 1.331,
+        "bandMean": 67.84
       },
       "brush": {
-        "p95": 59,
-        "bareShare": 0.0492,
-        "edgeSd": 7.184,
-        "bandMean": 21.29
+        "p95": 184,
+        "bareShare": 0,
+        "edgeSd": 0.395,
+        "bandMean": 154.08
       },
       "marker": {
-        "p95": 90.3,
-        "bareShare": 0.0476,
-        "edgeSd": 0,
-        "bandMean": 35.42
+        "p95": 115,
+        "bareShare": 0,
+        "edgeSd": 3.278,
+        "bandMean": 59.75
       }
     },
     "perPair": {
-      "pencil~cp": 1,
-      "pencil~brush": 0.6003,
+      "pencil~cp": 0.9561,
+      "pencil~brush": 1,
       "pencil~marker": 1,
       "cp~brush": 1,
-      "cp~marker": 0.5462,
-      "brush~marker": 1
+      "cp~marker": 1,
+      "brush~marker": 0.8795
     },
-    "minPair": 0.5462,
+    "minPair": 0.8795,
     "def": "짝별로 세 축(p95·빈 몫·가장자리 sd) 중 최대 상대 차 — 그 최소가 «가장 닮은 짝»의 갈림"
   }
 }
