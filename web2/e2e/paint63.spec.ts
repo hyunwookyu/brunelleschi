@@ -20,7 +20,7 @@ import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { REF63_ROWS, REF63_LEDGER, hashRows } from './ref63.spec'
+import { REF63_ROWS, REF63_LEDGER, hashRows } from './ref63'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const OUT: Record<string, unknown> = {

@@ -1516,17 +1516,17 @@
       "brush": null
     },
     "tips_on": {
-      "bake_20faces_40strokes_total_ms": 1085,
-      "bake_perstroke_2x40_ms": 1510.5,
-      "bake_stress_20faces_x40strokes_ms": 16488.2,
+      "bake_20faces_40strokes_total_ms": 1082.2,
+      "bake_perstroke_2x40_ms": 1503.6,
+      "bake_stress_20faces_x40strokes_ms": 16466.8,
       "markPx": 5915,
       "deterministic": true,
       "seed_differs": true
     },
     "tips_off": {
-      "bake_20faces_40strokes_total_ms": 1494.7,
-      "bake_perstroke_2x40_ms": 1857.2,
-      "bake_stress_20faces_x40strokes_ms": 20804.6,
+      "bake_20faces_40strokes_total_ms": 1470.8,
+      "bake_perstroke_2x40_ms": 1834.1,
+      "bake_stress_20faces_x40strokes_ms": 20544.6,
       "markPx": 8604,
       "deterministic": true,
       "seed_differs": true

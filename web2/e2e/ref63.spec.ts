@@ -7,41 +7,10 @@
 //
 // 해시 = 어둡기 지도(__m61.v · 0..255 정수)의 FNV-1a 32비트 · 자국 픽셀 수(> 8)도 함께(해시만 있으면 «무엇이 달랐나»를 못 읽는다).
 
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
-import { fileURLToPath } from 'node:url'
-import { dirname, resolve } from 'node:path'
-
-const HERE = dirname(fileURLToPath(import.meta.url))
-/** 기준 원장(dpr1 하나 — 견본 판은 고정 px · dpr 무관(paint62 note_dpr)) */
-export const REF63_LEDGER = resolve(HERE, '../../stage0/out/ref63_web2_dpr1.json')
-
-/** 팁을 «안» 받는 프리셋(63의 기본 팁 표 밖 — 잉크·마커·에어브러시·둥근 붓) + 팁을 받는 슬롯 둘(연필·색연필 — 63이 팁 없음으로 되돌려 대조) */
-export const REF63_ROWS: { key: string; tool: string; preset?: string; shape: 'line' | 'wave'; w: number }[] = [
-  { key: 'liner_line', tool: 'brush', preset: 'deevad/liner', shape: 'line', w: 20 },
-  { key: 'liner_wave', tool: 'brush', preset: 'deevad/liner', shape: 'wave', w: 20 },
-  { key: 'opaque_marker_line', tool: 'marker', preset: 'ramon/100%_Opaque', shape: 'line', w: 20 },
-  { key: 'pen_wave', tool: 'brush', preset: 'classic/pen', shape: 'wave', w: 20 },
-  { key: 'airbrush_wave', tool: 'brush', preset: 'deevad/airbrush', shape: 'wave', w: 30 },
-  { key: 'round1_wave', tool: 'brush', preset: 'Dieterle/Round#1', shape: 'wave', w: 24 },
-  { key: 'pencil_slot_wave', tool: 'pencil', shape: 'wave', w: 20 },
-  { key: 'cp_slot_wave', tool: 'cp', shape: 'wave', w: 20 },
-]
-
-export async function hashRows(page: Page, rows: typeof REF63_ROWS, ext: Record<string, unknown> = {}) {
-  return page.evaluate(([rs, ex]) => {
-    const b2 = (window as any).__b2
-    const out: Record<string, { hash: number; ink: number }> = {}
-    for (const r of rs as typeof REF63_ROWS) {
-      b2.diag.markSampleForTest(r.tool, r.shape, r.w, 61, 480, 240, r.preset ? { preset: r.preset, ...(ex as object) } : { ...(ex as object) })
-      const v = ((window as any).__m61 as { v: number[] }).v
-      let h = 0x811c9dc5, ink = 0
-      for (let i = 0; i < v.length; i++) { const q = Math.round(v[i]!); h = Math.imul(h ^ q, 0x01000193) >>> 0; if (q > 8) ink++ }
-      out[r.key] = { hash: h, ink }
-    }
-    return out
-  }, [rows, ext] as const)
-}
+import { dirname } from 'node:path'
+import { REF63_ROWS, REF63_LEDGER, hashRows } from './ref63'
 
 test('62 기준 해시 — 팁 없는 자국의 어둡기 지도(REF63=1일 때만 원장을 쓴다)', async ({ page }, info) => {
   test.skip(process.env.REF63 !== '1', '기준 원장은 REF63=1로만 뜬다(밤·원장 실행이 기준을 덮지 않게)')
