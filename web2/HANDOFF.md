@@ -21,21 +21,22 @@
 ```
 저장소 /home/user/brunelleschi · 배포되는 앱은 web2/다(pages.yml의 working-directory가 정본).
 
-**사슬 5(CHAIN5 — 62 ✓ → 63)의 둘째다.** 62(libmypaint 이식·브러시 196·올바른 합성)가 끝났고 배포됐다
-(main 1f912bf — §2 마감 블록 · NOTES 「마감 — web2-62」). 이번 회차는 docs/instructions/**web2-63.md(비트맵 팁 + 종이 결)**다 —
-62가 세운 엔진의 **도장 함수 하나**(src/mypaint/surface.ts renderDabMask)를 팁 아틀라스 표집으로 바꾸고, 종이 결 타일
-(src/mypaint/paper.ts)의 «값»을 CC0 높이맵으로 바꾼다. 그 아래(안료·스머지·블렌드·설정 사상)는 안 건드린다.
+**사슬 5(CHAIN5 — 62 ✓ → 63 ✓)가 완주됐다.** 63(비트맵 팁 + 종이 결)이 끝났고 배포됐다(main 54befa6 — §2 마감 블록 ·
+NOTES 「마감 — web2-63」). **다음은 64(그리는 화면 — 면 정면으로 가서 그린다) · 새 세션**(PAINT-TIERS 「언제 오는가」 ·
+지시문은 사람이 쓴다 — docs/instructions/web2-64.md가 아직 없다: 있으면 그것이 정본).
 
 착수 시:
-· web2/HANDOFF.md §1·§2 · docs/DIRECTION.md · docs/PAINT-TIERS.md · docs/REFERENCE-FEATHER.md · CHAIN5.md
-· tail -40 PITFALLS.md 를 실제로 읽고 번호를 web2/NOTES.md 「착수 시 PITFALLS 대조」에 적어라(#107이 62의 것) ·
+· web2/HANDOFF.md §1·§2 · docs/DIRECTION.md · docs/PAINT-TIERS.md · docs/REFERENCE-FEATHER.md(§8 라이선스)
+· tail -40 PITFALLS.md 를 실제로 읽고 번호를 web2/NOTES.md 「착수 시 PITFALLS 대조」에 적어라(#108이 63의 것) ·
   CLAUDE.md §2의 D 다섯 적용 내용을 적어라
-· 62 마감 블록의 「63 착수 표에 옮길 것」을 옮겨 적어라(#42 ⑩)
+· 63 마감 블록의 「64 착수 표에 옮길 것」을 옮겨 적어라(#42 ⑩)
 · 떠 있는 개발 서버를 내리고 새로 띄운다(#70) · 갈래를 먼저 딴다
 마감은 `cd web2 && node tools/deploy-check.mjs` — 갈래 푸시는 중간 상태다(#58 · #81).
 ⚠ 원장 갱신은 `LEDGER=1`(#90) · 워커 1(#99) · web2 팔은 web2/ 안에서(#101) · e2e 중 web2/ 편집 금지(#104) ·
   상한 없는 대기 ⛔(#95) · 「도는 백그라운드 없음」을 값으로. 시험은 e2e:green / e2e:night(전량) / e2e:ledger.
-⚠ 62의 ⚑(사람 눈 판정 여섯 — 사진 web2/shots/62-*.png · NOTES 62 「사진」 절)는 열려 있다 — 사람의 판정이 오면 그것부터.
+⚠ 칠 엔진(src/mypaint)을 건드리면 ⑤의 기준 원장(ref63 — REF63=1)을 다시 뜨고 커밋에 사유를 적어라.
+⚠ ⚑ 열림 — 62의 여섯 + 63의 다섯(사진 web2/shots/62-*.png · 63-*.png · NOTES 각 「사진」 절). 사람의 판정·스캔 팁이
+  오면 그것부터(스캔 팁은 tips/src + tips/src/tips.json 한 줄 → node tools/tips-gen.mjs).
 ```
 
 ## 2. 대기열 — **이것이 정본이다**
@@ -174,7 +175,17 @@
      (흰 테 0 전수 135,451px · rgb≤a · 안료 혼합 hue 95° · 캡 1.00 · 젖은 붓 R−G 14/오염 0 · 사상 196/65 밖 0 · 갈림 154/145 ·
      결정론 11/11) · 61 자 판갈이(grain61 ⑤ z · paint59 ②③ · paint50 ④ · lab61 · mats46) · 사진 13장(web2/shots/62-*.png).
      ⚠ 63 착수 표에 옮길 것(#42 ⑩): NOTES 62 마감 블록.
-   ▶ **다음 = 63(비트맵 팁 + 종이 결 · 같은 세션 — CHAIN5)** — 62가 배포되면 곧장 간다. 62의 ⚑ 여섯(사진 다섯 + 59 술어 교체 확인)은 열린 채 간다(사슬 규약 ①).
+   **63 완료·배포 — `main 54befa6`**(deploy-check 화면 식별자 일치 · 마감 블록은 NOTES 「마감 — web2-63」)
+     (2026-09-04 · 사슬 5 CHAIN5(62 → 63 · Fable 한 세션 — **완주**) · 갈래 web2-63 · 밤 검증 트리 b7c601f: 밤 738/746 · 빨강 0 · skip 8 ·
+     단위 1096 · 리뷰어 2왕복 35건(20 + 15) 전건). 섰다: **팁 아틀라스**(tools/tips-gen.mjs — GIH/GBR/PNG → 192² × 8판 PNG · 원형 창 · p95 눈금 ·
+     CC0 팁 다섯: rubberduck fine-grain·scratches2 · Revoy chalk_chisel·rock_pitted·scratches_rough — 출처·라이선스·확인 방법은
+     tips.json→tips.gen.ts) · **엔진의 도장 분기 하나**(surface.renderTipMask — 원문 좌표 변환 그대로 · 절차 타원은 62 그대로 =
+     ref63 해시 8/8 항등) · **종이 결 = ambientCG Paper001 높이맵 1024²**(면 고정 · 타일 상관 −.86/−.92 굵기 무관) · **슬롯 팁
+     바인딩**(기본 표 마른 매체만 · tune.tip · 고르개 팁 줄 · 저장 형식 무변) · **팁 크기 자 = 범위 폭 25%**(보정 열쇠 프리셋|팁) ·
+     게이트 paint63 ①~⑤ + 탐침(① 10/10 · ② 판 고정 반증 · ③ 결 · ④ 폭 비 1.89/1.80 · ⑤ 62 픽셀 항등) · grain61 ⑥ 자 팁 인식 ·
+     사진 8장(web2/shots/63-*.png) · PITFALLS #108 · 단위 mypaint63.
+     ⚠ 64 착수 표에 옮길 것(#42 ⑩): NOTES 63 마감 블록. ⚑ 63의 다섯(사진 절)은 열린 채.
+   ▶ **다음 = 64(그리는 화면 · 새 세션)** — 지시문은 사람 몫(web2-64.md 없음). 칠 엔진은 건드리지 않는 것이 전제.
    보류  36(실기기 ③ 대기) · 38(53 뒤 — 개명은 코드가 다 자란 뒤 · 재번호 2026-09-02) · 37-3(장식) ·
          30-13 · 성능 · 근평면 · 1.74배 잔차 · v1.0 태그
    사람 몫(실기기)  기존 ③⑥⑧ + K1·K2·K3 + 「2500 네 획」 유지 + ~~**⑰ 칠의 곱 합성**~~
