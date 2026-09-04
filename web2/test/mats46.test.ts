@@ -105,20 +105,22 @@ describe('46-1 팔레트 — 재료 목록의 성질', () => {
 // 그대로 나가는가」**다. 46의 팔을 지우지 않고 **그 자리에서 다시 겨눈다**(#65 — 정보를
 // 지우지 않는다: 이 절의 픽스처·구조가 그대로 서 있고 판정만 새 규약을 본다).
 describe('46-2 → 48 칠 — 도구·색·굵기·면의 쪽', () => {
-  it('① 붓(기본)은 45 그대로 — 색·도구가 안 실린다(무회귀)', () => {
+  it('① 붓(기본)은 45 그대로 — 도구 표식은 안 실린다(무회귀) · ⚠ web2-64: 색은 실린다(잉크펜도 색을 쓴다)', () => {
     const { s } = roomSession()
     expect(s.app.paintSel.i).toBe('brush')          // 기본값 자체가 45다
     commitPaint(s.app, wallPts())
     const p = s.app.doc.strokes.find(x => x.paint !== undefined)!
-    expect(p.paint!.c).toBeUndefined()
+    // web2-64: 모든 슬롯이 색을 든다 — 잉크펜의 «흑연 등급색» 규약은 c 없는 옛 획에만 남는다(facetex markOfStroke)
+    expect(p.paint!.c).toBe(s.app.paintSel.hex)
     expect(p.paint!.i).toBeUndefined()
-    expect(paintHexOf(p)).toBeNull()
+    expect(p.paint!.br).toBe(s.app.paintSel.br)      // 64-1 — 획이 브러시 id를 든다
+    expect(paintHexOf(p)).toBe(s.app.paintSel.hex)
   })
 
   it('② 마커 — 고른 색이 그대로 실린다(48-7: 재료 프리셋 밖의 임의 색도)', () => {
     const { s, floorId, wallId } = roomSession()
     // 재료 표에 **없는** 색을 고른다 — 46이던 (재료, 톤) 쌍으로는 담을 수 없던 값이다.
-    s.app.paintSel = { hex: '#1e7fd0', i: 'marker', w: 10 }
+    s.app.paintSel = { hex: '#1e7fd0', i: 'marker', w: 10, br: 'deevad/liner', o: 1 }
     commitPaint(s.app, floorPts())
     commitPaint(s.app, wallPts())
     const ps = s.app.doc.strokes.filter(x => x.paint !== undefined)
@@ -136,16 +138,16 @@ describe('46-2 → 48 칠 — 도구·색·굵기·면의 쪽', () => {
     // 트레이 계약 «견본 굵기 == 자국 굵기»의 픽셀 판정은 e2e(paint50 ③)가 하고, 여기는
     // 환산의 **비례**를 잰다: 같은 면·같은 시점에서 트레이 값을 k배 하면 w도 k배다.
     const { s } = roomSession()
-    s.app.paintSel = { hex: '#8a6238', i: 'cp', w: C.PAINT_W_PX[0]! }
+    s.app.paintSel = { hex: '#8a6238', i: 'cp', w: C.PAINT_W_PX[0]!, br: 'deevad/liner', o: 1 }
     commitPaint(s.app, wallPts())
     const p1 = s.app.doc.strokes.find(x => x.paint !== undefined)!
     expect(p1.paint!.w).toBeGreaterThan(0)
     expect(p1.paint!.i).toBe(2)
     // 붓(흑연)도 같은 트레이를 쓴다 — 세 도구 전부 두께가 없다는 것이 48-2의 증상이었다
-    s.app.paintSel = { hex: '#8a6238', i: 'brush', w: C.PAINT_W_PX[4]! }
+    s.app.paintSel = { hex: '#8a6238', i: 'brush', w: C.PAINT_W_PX[4]!, br: 'deevad/liner', o: 1 }
     commitPaint(s.app, wallPts())
     const p2 = s.app.doc.strokes.filter(x => x.paint !== undefined).at(-1)!
-    expect(p2.paint!.c).toBeUndefined()             // 붓은 색이 안 나간다(흑연)
+    expect(p2.paint!.c).toBe('#8a6238')             // web2-64: 붓(잉크펜)도 색이 나간다(옛 «흑연» 규약은 c 없는 옛 획에만)
     // 같은 면(같은 환산)에서의 비례 — px 비 == 세계 단위 비
     const ratio = C.PAINT_W_PX[4]! / C.PAINT_W_PX[0]!
     expect(p2.paint!.w! / p1.paint!.w!).toBeCloseTo(ratio, 6)
@@ -153,7 +155,7 @@ describe('46-2 → 48 칠 — 도구·색·굵기·면의 쪽', () => {
 
   it('④ 면의 쪽(48-5) — 칠할 때 카메라가 있던 쪽의 부호가 실린다', () => {
     const { s, wallId } = roomSession()
-    s.app.paintSel = { hex: '#c07a5b', i: 'marker', w: 10 }
+    s.app.paintSel = { hex: '#c07a5b', i: 'marker', w: 10, br: 'deevad/liner', o: 1 }
     commitPaint(s.app, wallPts())
     const p = s.app.doc.strokes.find(x => x.paint !== undefined)!
     expect(p.paint!.f).toBe(wallId)
@@ -225,7 +227,7 @@ describe('48-3 단색 채움 — 순환·색·실행취소', () => {
 describe('46-4 → 48 저장 왕복 — paint.s/c/i/w · Face.fill · Face.mat', () => {
   it('① 성한 값은 왕복하고, 모양이 틀리면 그 몫만 강등된다(문서 거부 ⛔)', () => {
     const { s, wallId } = roomSession()
-    s.app.paintSel = { hex: '#666d75', i: 'marker', w: 20 }
+    s.app.paintSel = { hex: '#666d75', i: 'marker', w: 20, br: 'deevad/liner', o: 1 }
     commitPaint(s.app, wallPts())
     const w0 = s.app.doc.strokes.find(x => x.paint !== undefined)!.paint!.w!   // 세계 단위(50)
     cycleFaceMat(s.app, wallId)                       // 벽 = 벽돌
@@ -243,7 +245,7 @@ describe('46-4 → 48 저장 왕복 — paint.s/c/i/w · Face.fill · Face.mat',
     // 두 번째 저장이 바이트로 같다(43-1의 규약이 새 필드에도 선다)
     const txt2 = serializeBrnl({ doc: back.doc, nextId: back.nextId, drawView: back.drawView })
     expect(txt2).toBe(txt)
-    // 강등 — 색이 hex가 아니다(도구까지 함께 버린다: 어떤 촉인지 모르는 색은 안 받는다)
+    // 강등 — 색이 hex가 아니다: 그 필드만 버린다(web2-64 — 색과 슬롯은 따로 산다 · 잉크펜도 색을 들므로 «색 없는 슬롯»이 정상값이다)
     const j = JSON.parse(txt)
     const jp = j.strokes.find((x: any) => x.paint !== undefined)
     jp.paint.c = 'rebeccapurple'
@@ -251,7 +253,7 @@ describe('46-4 → 48 저장 왕복 — paint.s/c/i/w · Face.fill · Face.mat',
     const p2 = b2.doc.strokes.find(x => x.paint !== undefined)!
     expect(p2.paint!.f).toBe(wallId)                  // 칠 자체는 산다(흑연 강등)
     expect(p2.paint!.c).toBeUndefined()
-    expect(p2.paint!.i).toBeUndefined()
+    expect(p2.paint!.i).toBe(1)                       // 64: 슬롯은 남는다(굽기는 등급 흑연색으로 — 옛 규약)
     // ⚠⚠ 쪽(s) — web2-50부터 **획째 버린다**(uv·s가 정본의 필수 짝 — 쪽 없는 칠은
     // «양쪽에 보이는 칠»이라 존재하지 않는다. 45~48의 «그 필드만 강등»이 뒤집힌 자리).
     jp.paint.c = '#666d75'; jp.paint.s = 0
@@ -277,7 +279,7 @@ describe('46-4 → 48 저장 왕복 — paint.s/c/i/w · Face.fill · Face.mat',
   it('② ⚠ 계약 반전(web2-50) — 옛 칠(45~48 · uv 없음)은 **획째 버려지고 세어진다**', () => {
     // 사용자 확정 「잃어도 상관없다」(50 지시) — 마이그레이션 ⛔ · 조용하면 안 된다(43-1).
     const { s, wallId } = roomSession()
-    s.app.paintSel = { hex: '#a8a29a', i: 'brush', w: 10 }
+    s.app.paintSel = { hex: '#a8a29a', i: 'brush', w: 10, br: 'deevad/liner', o: 1 }
     commitPaint(s.app, wallPts())
     const txt = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, drawView: s.app.drawView })
     const j = JSON.parse(txt)

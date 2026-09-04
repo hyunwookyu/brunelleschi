@@ -112,7 +112,7 @@ describe('색 충실도 — 고른 색이 그대로 나간다 (48-7·48-8의 값
     // ㉠ 재료 프리셋의 색(46이 담을 수 있던 값) · ㉡ 표 밖의 색(46이 못 담던 값)
     for (const [sel, hex] of [['preset', '#c07a5b'], ['arbitrary', '#1e7fd0']] as [string, string][]) {
       const { s, floor, wall } = roomSession()
-      s.app.paintSel = { hex, i: 'marker', w: 10 }
+      s.app.paintSel = { hex, i: 'marker', w: 10, br: 'ramon/100%_Opaque', o: 1 }
       commitPaint(s.app, floorPts())
       commitPaint(s.app, wallPts())
       const ps = s.app.doc.strokes.filter(x => x.paint !== undefined)

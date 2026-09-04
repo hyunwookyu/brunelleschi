@@ -190,7 +190,7 @@ test('② 재료는 면에, 칠은 획에 — 재료 변경이 획 목록을 안
   await cycleRepTo(page, fid, 'brick')
   await page.waitForTimeout(200)
   // 벽에 마커 획 하나(UI 경로 — mats46의 그 몸짓)
-  await page.evaluate(() => { (window as any).__b2.app.paintSel = { hex: '#1e7fd0', i: 'marker', w: 12 } })
+  await page.evaluate(() => { { const b2 = (window as any).__b2; b2.diag.setPaintInstrForTest('marker'); Object.assign(b2.app.paintSel, { hex: '#1e7fd0', w: 12 }) } /* 64: 슬롯은 diag(br이 같이 든다) */ })
   await page.click('#btn-paint')
   await page.waitForTimeout(60)
   await drawLine(page, 560, 420, 660, 400)
@@ -317,80 +317,7 @@ test('④ 두 겹의 대비(49 무회귀) — 줌 인: 해칭 간격 불변 · �
   }
 })
 
-test('⑤ 브러시 프리셋 — 저장·적용·기기 지속(#94) · 반증 = 빈 칸', async ({ page }) => {
-  await page.goto('/?reset')
-  await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
-  await page.evaluate(() => localStorage.removeItem('b2.brushPresets.v1'))
-  // 칠통을 연다(도구 재누름 — 46 규약) → 프리셋 줄이 산다
-  await page.click('#btn-paint'); await page.click('#btn-paint')
-  await page.waitForTimeout(100)
-  expect(await page.locator('#paint-presets .presetbtn').count(), '프리셋 세 칸').toBe(3)
-  // #97 — 행위 값(52 1차 [3]㉢ — 문면 선언이 아니라 elementFromPoint · 49 ui_path의 그 자):
-  // 세 칸 각각의 중심이 그 단추를 낸다(가로채는 겹이 없다) + 넘침 0
-  const hit = await page.evaluate(() => {
-    const out: { id: string; clickable: boolean }[] = []
-    for (const id of ['btn-preset-1', 'btn-preset-2', 'btn-preset-3']) {
-      const b = document.getElementById(id)!
-      const r = b.getBoundingClientRect()
-      const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
-      out.push({ id, clickable: b === el || b.contains(el) })
-    }
-    const tray = document.getElementById('painttray')!
-    return { hits: out, overflow: { sw: tray.scrollWidth, cw: tray.clientWidth, sh: tray.scrollHeight, ch: tray.clientHeight } }
-  })
-  expect(hit.hits.every(h => h.clickable), '#97 — 세 칸 전부 실제로 눌린다(elementFromPoint)').toBe(true)
-  expect(hit.overflow.sw, '#97 짝 — 가로 넘침 0').toBe(hit.overflow.cw)
-  expect(hit.overflow.sh, '#97 짝 — 세로 넘침 0').toBe(hit.overflow.ch)
-  // 눌림 축(2차 [7] — 넘침 0은 눌림에 둔감하다: 51의 그 사례): 렌더 크기 == 규격
-  const sizes = await page.evaluate(() => {
-    const dot = document.querySelector('#btn-preset-1 .pdot')!.getBoundingClientRect()
-    const btn = document.getElementById('btn-preset-1')!.getBoundingClientRect()
-    return { dot_w: +dot.width.toFixed(1), dot_h: +dot.height.toFixed(1), btn_h: +btn.height.toFixed(1) }
-  })
-  expect(sizes.dot_w, '색 점 렌더 폭 == 규격 14px(눌림 없음 실측)').toBe(14)
-  expect(sizes.dot_h, '색 점 렌더 높이 == 규격 14px').toBe(14)
-  expect(sizes.btn_h, '칸 높이가 점보다 크다(줄이 서 있다)').toBeGreaterThan(14)
-  ;(OUT as any).presets_97 = { ...hit, sizes }
-  // 반증(D-3) 먼저 — 빈 칸 탭은 paintSel을 안 바꾼다
-  const sel0 = await page.evaluate(() => JSON.stringify((window as any).__b2.app.paintSel))
-  await page.click('#btn-preset-1')
-  await page.waitForTimeout(80)
-  expect(await page.evaluate(() => JSON.stringify((window as any).__b2.app.paintSel)),
-    '반증 — 빈 칸 탭은 아무것도 안 바꾼다').toBe(sel0)
-  // 설정 A를 만들고 길게 눌러 저장(WRITE_HOLD_MS = 450ms — 합성 대기 600ms)
-  await page.evaluate(() => { (window as any).__b2.app.paintSel = { hex: '#8a6238', i: 'cp', w: 20 } })
-  const b1 = page.locator('#btn-preset-1')
-  const box1 = await b1.boundingBox()
-  await page.mouse.move(box1!.x + box1!.width / 2, box1!.y + box1!.height / 2)
-  await page.mouse.down()
-  await page.waitForTimeout(600)
-  await page.mouse.up()
-  await page.waitForTimeout(100)
-  const stored = await page.evaluate(() => localStorage.getItem('b2.brushPresets.v1'))
-  expect(stored, '기기에 저장됐다(localStorage — 문서가 아니다)').toContain('#8a6238')
-  // 설정을 B로 바꾼 뒤 탭 — A가 복원된다(행위)
-  await page.evaluate(() => { (window as any).__b2.app.paintSel = { hex: '#1e7fd0', i: 'marker', w: 4 } })
-  await b1.click()
-  await page.waitForTimeout(100)
-  const applied = await page.evaluate(() => ({ ...(window as any).__b2.app.paintSel }))
-  expect(applied, '탭이 저장된 설정(도구·크기·색)을 되실었다').toEqual({ hex: '#8a6238', i: 'cp', w: 20 })
-  // 기기 지속 — 새로고침(문서 reset 없이) 후에도 산다
-  await page.goto('/')
-  await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
-  await page.click('#btn-paint'); await page.click('#btn-paint')
-  await page.waitForTimeout(100)
-  await page.click('#btn-preset-1')
-  await page.waitForTimeout(100)
-  const applied2 = await page.evaluate(() => ({ ...(window as any).__b2.app.paintSel }))
-  expect(applied2, '새로고침 뒤에도 프리셋이 산다(기기 저장의 실증)').toEqual({ hex: '#8a6238', i: 'cp', w: 20 })
-  // 문서 직렬화에 프리셋이 없다 — 52-3 «문서가 아니다»의 행위판
-  const inDoc = await page.evaluate(() => (window as any).__b2.diag.serialize().includes('#8a6238'))
-  expect(inDoc, '프리셋 색이 문서 직렬화에 없다').toBe(false)
-  OUT.presets = {
-    def: '행위 사슬 — 빈 칸 탭(불변 · 반증 먼저) → 길게 눌러 저장(450ms) → 다른 설정에서 탭(복원) → 새로고침 뒤 탭(기기 지속) → 문서 직렬화 부재. 불투명도 축은 없다(값 손잡이 부재 — DEFERRED · D-W22)',
-    stored_has_hex: stored !== null && stored.includes('#8a6238'), applied, applied2_survives_reload: true,
-  }
-})
+// (⑤ 브러시 프리셋 팔은 **web2-64 64-7이 지웠다** — 프리셋 세 칸이 즐겨찾기(paint64 ②·⑦)로 대체됐다. 값은 mats52 원장의 presets 열쇠에 62까지의 기록으로 남는다.)
 
 test('⑥ 타일·기와 — 이번에 더한 무늬가 화면에서 켜·격자로 선다(#12 — 픽셀 대역 확장)', async ({ page }) => {
   // 2차 [8] — 픽셀 팔이 벽돌 하나였다(D-5 문면보다 좁은 대역). 타일(300mm 격자)·기와

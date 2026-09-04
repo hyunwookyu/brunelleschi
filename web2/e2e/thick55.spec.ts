@@ -104,7 +104,7 @@ async function room3s(page: Page) {
  *  픽셀 판별은 칠한(불투명) 면 위에서만 선다. 초판이 그 규약을 잊고 판별력 0을 실측했다
  *  (D-1 — 표식: t=200에서 changed_px 0 → 면 메시 자체가 안 그려지고 있었다). */
 async function paintOn(page: Page, x: number, y: number) {
-  await page.evaluate(() => { (window as any).__b2.app.paintSel = { hex: '#1e7fd0', i: 'marker', w: 10 } })
+  await page.evaluate(() => { { const b2 = (window as any).__b2; b2.diag.setPaintInstrForTest('marker'); Object.assign(b2.app.paintSel, { hex: '#1e7fd0', w: 10 }) } /* 64: 슬롯은 diag(br이 같이 든다) */ })
   await page.click('#btn-paint')
   await page.waitForTimeout(60)
   await drawLine(page, x, y, x + 18, y - 8)
@@ -237,7 +237,7 @@ test('② 일괄 — 예외 없는 벽 «전부»(n=2)가 함께 바뀌고 · �
 test('③ 왕복 — t=0에서 칠하고 0→200→0이면 픽셀이 바이트로 복귀한다', async ({ page }) => {
   const ids = await room3s(page)
   // t=0에서 벽A에 마커 칠
-  await page.evaluate(() => { (window as any).__b2.app.paintSel = { hex: '#1e7fd0', i: 'marker', w: 14 } })
+  await page.evaluate(() => { { const b2 = (window as any).__b2; b2.diag.setPaintInstrForTest('marker'); Object.assign(b2.app.paintSel, { hex: '#1e7fd0', w: 14 }) } /* 64: 슬롯은 diag(br이 같이 든다) */ })
   await page.click('#btn-paint')
   await page.waitForTimeout(80)
   await drawLine(page, 512, 440, 540, 420)
@@ -288,7 +288,7 @@ test('④ 테두리 칠 — e=1로 서고 · t 200→300에서 uv 불변·자국
     x: (band.scr[i].x + band.scr[j].x) / 2, y: (band.scr[i].y + band.scr[j].y) / 2,
   })
   const m0 = mid(0, 3), m1 = mid(1, 2)                       // 사각의 양 끝 중점 — 띠 안 길이 방향
-  await page.evaluate(() => { (window as any).__b2.app.paintSel = { hex: '#1e7fd0', i: 'marker', w: 6 } })
+  await page.evaluate(() => { { const b2 = (window as any).__b2; b2.diag.setPaintInstrForTest('marker'); Object.assign(b2.app.paintSel, { hex: '#1e7fd0', w: 6 }) } /* 64: 슬롯은 diag(br이 같이 든다) */ })
   await page.click('#btn-paint')
   await page.waitForTimeout(80)
   const lerp = (a: typeof m0, b: typeof m0, t: number) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t })

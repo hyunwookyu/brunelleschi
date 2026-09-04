@@ -29,8 +29,4 @@ declare module 'p5.brush/standalone' {
   export function render(): void
 }
 
-// **칠 전용 두 번째 사본**(web2-61 — vite.config resolve.alias가 같은 파일을 다른 모듈 id로
-// 싣는다: 모듈 싱글턴 상태를 선 겹과 나누지 않기 위해서다. 표면은 위와 동일).
-declare module 'p5.brush-paint' {
-  export * from 'p5.brush/standalone'
-}
+// (web2-61의 «칠 전용 두 번째 사본» 선언(p5.brush-paint)은 web2-64 64-6이 지웠다 — 칠은 mypaint 하나다.)

@@ -345,7 +345,7 @@ test('③ 55의 칠이 살아 있다 — 접합 켬/끔에 uv 불변 · 자국�
   await thicken(page, ids.wallA, 200)
   await settle(page)
   // 벽 A 앞면에 마커 한 획(접합 모서리에서 떨어진 자리)
-  await page.evaluate(() => { (window as any).__b2.app.paintSel = { hex: '#1e7fd0', i: 'marker', w: 10 } })
+  await page.evaluate(() => { { const b2 = (window as any).__b2; b2.diag.setPaintInstrForTest('marker'); Object.assign(b2.app.paintSel, { hex: '#1e7fd0', w: 10 }) } /* 64: 슬롯은 diag(br이 같이 든다) */ })
   await page.click('#btn-paint')
   await page.waitForTimeout(80)
   await drawLine(page, 520, 435, 545, 420)

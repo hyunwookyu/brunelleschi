@@ -8,7 +8,6 @@
 
 import { drawMark, paintRenderer, type Instr58 } from '../core/paintseam'
 import { PRESET_CATALOG, PRESET_BY_NAME } from './mypaintpaint'
-import { MAT } from '../core/material'
 import { C } from '../core/constants'
 import { TUNE_STORE_KEY } from './tunelab'
 
@@ -51,7 +50,7 @@ export function initBrushPicker(opts: {
 
   const note = document.createElement('div')
   note.style.cssText = 'font-size:11px;color:#6b665c;flex-shrink:0'
-  note.textContent = '분류를 열면 견본이 그려진다(제품과 같은 함수). 누르면 지금 도구 자리에 앉는다 — 이 기기에 남는다.'
+  note.textContent = '분류를 열면 견본이 그려진다(제품과 같은 함수). 누르면 지금 브러시가 된다 — 이미 그린 획은 안 변한다(64-1).'
 
   // web2-63 — 팁 줄: 지금 슬롯의 비트맵 팁(없음 · 다섯) — 프리셋 기본(null)이면 «기본» 표시. 기기 조정(tune.tip)이고 곧바로 굳힌다.
   const tipRow = document.createElement('div')
@@ -100,32 +99,7 @@ export function initBrushPicker(opts: {
   const drawn = new Set<HTMLCanvasElement>()
   const samples = new Map<string, HTMLCanvasElement>()
 
-  const sampleOf = (name: string, cv: HTMLCanvasElement): void => {
-    const g = cv.getContext('2d')!
-    g.setTransform(1, 0, 0, 1, 0, 0)
-    g.globalCompositeOperation = 'source-over'
-    g.globalAlpha = 1
-    g.fillStyle = '#fffdf8'
-    g.fillRect(0, 0, cv.width, cv.height)
-    const tool = opts.toolOf()
-    const pts: { x: number; y: number }[] = []
-    const press: number[] = []
-    const n = 40
-    for (let k = 0; k <= n; k++) {
-      const t = k / n
-      pts.push({ x: (12 + t * (CV_W - 24)) * 2, y: (CV_H / 2 + Math.sin(t * Math.PI * 1.6) * 7) * 2 })
-      const p = t < 0.5 ? 0.25 + 1.5 * t : 1 - 1.1 * (t - 0.5)
-      press.push(Math.max(0.1, Math.min(1, p)) * C.PRESS_Q)
-    }
-    try {
-      drawMark(g, {
-        pts, press, wPx: 9 * 2, seed: 62, tool, preset: name,
-        color: tool === 'brush' ? MAT.HB.color : opts.hexOf(),
-      })
-    } catch {
-      g.fillStyle = '#b04a3a'; g.font = '11px system-ui'; g.fillText('견본 실패', 6, 18)
-    }
-  }
+  const sampleOf = (name: string, cv: HTMLCanvasElement): void => drawBrushSample(cv, opts.toolOf(), name, opts.hexOf())
 
   const build = (): void => {
     list.replaceChildren()
@@ -179,7 +153,7 @@ export function initBrushPicker(opts: {
       })
       list.append(det)
     }
-    title.textContent = `브러시 고르개 — ${INSTR_NAME[tool]} 자리${cur ? ` · 지금 ${cur}` : ''}`
+    title.textContent = `브러시 — ${INSTR_NAME[tool]} 족${cur ? ` · 지금 ${cur}` : ''}`   // web2-64 규칙 ④: 「브러시 고르개」 → 「브러시»
     buildTips()
   }
 
@@ -197,6 +171,32 @@ export function initBrushPicker(opts: {
   }
   document.body.append(root)
   return api
+}
+
+/** **자국 견본**(web2-62 고르개 · web2-64 패널의 «지금 브러시»가 같은 함수 #54) — 캔버스 실제 크기의 절반을 css px로 본다(2배 또렷).
+ *  물결 하나 · 압력 .25→1→.45 · 시드 62 · 제품과 같은 drawMark(preset 실림). 잉크펜 족도 색을 쓴다(64). */
+export function drawBrushSample(cv: HTMLCanvasElement, tool: Instr58, preset: string, hex: string): void {
+  const g = cv.getContext('2d')!
+  const W = cv.width / 2, H = cv.height / 2
+  g.setTransform(1, 0, 0, 1, 0, 0)
+  g.globalCompositeOperation = 'source-over'
+  g.globalAlpha = 1
+  g.fillStyle = '#fffdf8'
+  g.fillRect(0, 0, cv.width, cv.height)
+  const pts: { x: number; y: number }[] = []
+  const press: number[] = []
+  const n = 40
+  for (let k = 0; k <= n; k++) {
+    const t = k / n
+    pts.push({ x: (12 + t * (W - 24)) * 2, y: (H / 2 + Math.sin(t * Math.PI * 1.6) * Math.min(7, H * 0.23)) * 2 })
+    const p = t < 0.5 ? 0.25 + 1.5 * t : 1 - 1.1 * (t - 0.5)
+    press.push(Math.max(0.1, Math.min(1, p)) * C.PRESS_Q)
+  }
+  try {
+    drawMark(g, { pts, press, wPx: 9 * 2, seed: 62, tool, preset, color: hex })
+  } catch {
+    g.fillStyle = '#b04a3a'; g.font = '11px system-ui'; g.fillText('견본 실패', 6, 18)
+  }
 }
 
 /** 고른 것을 곧바로 기기에 굳힌다(작업대의 열쇠 그대로 — 두 곳이 한 저장을 본다) */

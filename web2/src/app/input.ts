@@ -85,8 +85,8 @@ export interface InputCallbacks {
   /** **칠 한 붓이 끝났다**(web2-45) — 문서 좌표 점렬. 면 배정·확정은 main이 부른다(#54). */
   /** 칠 한 붓 — press는 점별 필압(펜만 · raw와 같은 길이 · web2-50 정본 목록의 «압력») */
   onPaint: (pts: Pt[], press?: number[]) => void
-  /** Injector(web2-51) — 칠 도구의 탭: 짚은 칠 획의 속성(도구·색·굵기)을 지금 도구로 */
-  onPaintInject: (p: Pt) => void
+  /** 칠 도구의 **탭**(web2-64 §3 — raw bbox 대각 ≤ C.PAINT64_TAP_MAX_PX): 면 고르기 + 51의 Injector. 판정은 main·state(#54) */
+  onPaintTap: (p: Pt) => void
 }
 
 export function initInput(
@@ -501,8 +501,16 @@ export function initInput(
     // 실린다 — Feather의 그 도구). 45~50에서 탭은 잡음이었으므로 몸짓에 뜻을 하나만
     // 얹는 것이다(#77 ㉠ 무위반 — 옛 뜻이 없던 자리). 끌면 종전대로 한 붓이다.
     if (paintActive(app)) {
-      if (Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * viewScale(app) <= C.TAP_MAX_PX) {
-        cb.onPaintInject(d.start)
+      // web2-64 §3 — 탭 ↔ 짧은 획은 **움직인 거리**(raw bbox 대각 · 화면 px)로 가른다(#93 — 시간이 아니다). 끝점 거리가 아니라 bbox인 이유:
+      // 되돌아온 한 붓(끝점 거리 0)도 칠이다. 문턱 C.PAINT64_TAP_MAX_PX(6 — 펜 떨림 2 위 · 쓸모 있는 최소 자국 아래 · AS-C189).
+      let bx0 = Infinity, bx1 = -Infinity, by0 = Infinity, by1 = -Infinity
+      for (const p of d.raw) {
+        if (p.x < bx0) bx0 = p.x; if (p.x > bx1) bx1 = p.x
+        if (p.y < by0) by0 = p.y; if (p.y > by1) by1 = p.y
+      }
+      const diagPx = d.raw.length >= 2 ? Math.hypot(bx1 - bx0, by1 - by0) * viewScale(app) : 0
+      if (diagPx <= C.PAINT64_TAP_MAX_PX) {
+        cb.onPaintTap(d.start)
         return
       }
       cb.onPaint(d.raw, d.press && d.press.length === d.raw.length ? d.press : undefined)

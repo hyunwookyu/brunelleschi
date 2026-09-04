@@ -360,7 +360,7 @@ test('⑥ 34-0 몫(#96) — 정면 줄의 툴팁·막힘 사유·고름 수 표�
   })
   expect(blocked.disabled, '고름 없음 — 막혀 있다').toBe(true)
   expect(blocked.title.length, '막힘 사유가 있다').toBeGreaterThan(5)
-  expect(blocked.title, '사유가 «고르는 법»을 말한다').toContain('꾹')
+  expect(blocked.title, '사유가 «고르는 법»을 말한다(64: 탭)').toContain('탭')
   // 고름 둘 — 쓸 수 있는 상태: 툴팁이 뜨고(48-10) 고름 수가 화면에 있다(R6)
   await page.click('#btn-pencil')
   await holdAt(page, 522, 435)
