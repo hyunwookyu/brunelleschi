@@ -21,16 +21,16 @@
       "marker",
       "marker46"
     ],
-    "markPx": 12048,
+    "markPx": 9242,
     "deterministic": true,
-    "switch_ms_per": 0,
-    "bake_20x40_ms": 9386.3,
-    "bake_perstroke_2x40_ms": 1315.2,
+    "instances": "separate (p5.brush-paint alias)",
+    "bake_20x40_ms": 8584.7,
+    "bake_perstroke_2x40_ms": 1223.1,
     "calib": {
-      "HB": 1,
+      "HB": 2,
       "cpencil": 2,
-      "marker61": 1,
-      "charcoal": 5
+      "marker61": 2,
+      "charcoal": 4
     }
   }
 }
