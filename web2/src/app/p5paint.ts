@@ -66,9 +66,10 @@ interface P5Tune {
   grainK?: number                     // 결 배수(내장 grain이 null이면 무효)
   sharpK?: number                     // 날카로움 배수(내장 sharpness가 null이면 무효)
   spacingK?: number                   // 간격 배수
+  paperK?: number                     // 종이 결 깊이 배수(0 = 결 없음 · 1 = 기본 0.42 — 사람 조정 통로)
 }
 const tune: Partial<Record<Instr58, P5Tune>> = {}
-const MUL_KEYS = ['weightK', 'opacityK', 'scatterK', 'grainK', 'sharpK', 'spacingK'] as const
+const MUL_KEYS = ['weightK', 'opacityK', 'scatterK', 'grainK', 'sharpK', 'spacingK', 'paperK'] as const
 
 /** 내장 브러시의 매개변수 원본 — 라이브러리에 조회 API가 없어 **파생 브러시(배수 조정)를
  *  만들 때의 기준**이다. 값은 p5.brush 2.2.2 소스(_standard_brushes — MIT 의존성)의 그대로:
@@ -361,9 +362,11 @@ function drawGroup(g: CanvasRenderingContext2D, marks: SeamMark[]): void {
   sg.drawImage(c, bx, by, bw, bh, 0, 0, bw, bh)
   // 종이 결 — 대상 px 위상(bx·by로 정렬)의 타일을 알파에서 깎는다(destination-out).
   // 마커 무리는 결이 없다(옛 grainK=0 그대로) — 무리는 합성 모드로 갈라져 있어 도구가 섞이지 않는다.
-  if (!grainOffForTest() && !isMarker(marks[0]!)) {
+  const paperK = tune[marks[0]!.tool]?.paperK ?? 1
+  if (!grainOffForTest() && !isMarker(marks[0]!) && paperK > 0) {
     sg.save()
     sg.globalCompositeOperation = 'destination-out'
+    sg.globalAlpha = Math.min(1, paperK)          // 결 깊이 배수(사람 조정 — 실험실 「종이 결」)
     const pat = sg.createPattern(grainCanvas(), 'repeat')!
     const ph = new DOMMatrix().translate(-(bx % GRAIN_TILE), -(by % GRAIN_TILE))
     pat.setTransform(ph)
@@ -432,10 +435,11 @@ export const p5PaintRenderer: PaintRenderer = {
     const t = tune[tool] ?? {}
     const labels: Record<typeof MUL_KEYS[number], string> = {
       weightK: '굵기 배수', opacityK: '불투명 배수', scatterK: '산포 배수',
-      grainK: '결 배수', sharpK: '날 배수', spacingK: '간격 배수',
+      grainK: '결 배수', sharpK: '날 배수', spacingK: '간격 배수', paperK: '종이 결',
     }
     return MUL_KEYS.map(k => ({
-      key: k, label: labels[k], min: k === 'scatterK' ? 0 : 0.1, max: 4, step: 0.05,
+      key: k, label: labels[k], min: k === 'scatterK' || k === 'paperK' ? 0 : 0.1,
+      max: k === 'paperK' ? 2 : 4, step: 0.05,
       value: t[k] ?? 1,
     }))
   },
@@ -514,10 +518,16 @@ export function p5probeForTest(): Record<string, unknown> {
   }
   const tA = performance.now()
   for (let f = 0; f < 20; f++) drawP5Marks(fg, mkMarks(f))
-  out.bake_20x40_ms = +(performance.now() - tA).toFixed(1)
+  out.bake_stress_20faces_x40strokes_ms = +(performance.now() - tA).toFixed(1)
+  // 지시 픽스처(⚑ «면 20개 · 획 40개») — 총 40획을 면 20에 나눠(면당 2) 순차로 굽는 시간:
+  // 커밋 한 번의 전량 재굽기(painted 전부)와 같은 꼴이다.
+  const tC = performance.now()
+  for (let f = 0; f < 20; f++) drawP5Marks(fg, mkMarks(f).slice(0, 2))
+  out.bake_20faces_40strokes_total_ms = +(performance.now() - tC).toFixed(1)
   const tB = performance.now()
   for (let f = 0; f < 2; f++) for (const m of mkMarks(f)) drawP5Mark(fg, m)
   out.bake_perstroke_2x40_ms = +(performance.now() - tB).toFixed(1)
   out.calib = p5calibForTest()
+  out.calib_note = '기준 브러시 weight 1의 반최대 폭(px 행 수 — 정수 자 · 가는 대역 1~5px라 정수가 정상). #105의 «폴백 1» 판별과 다르다: 값이 도구별로 갈리고(charcoal ≠ 연필류) 사다리 칸 폭(sizedW — 실수 아님·칸별 상이)이 그 위에서 실측된다'
   return out
 }

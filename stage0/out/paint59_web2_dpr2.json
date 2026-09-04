@@ -49,8 +49,8 @@
         "px": 64000,
         "diff_frac": 0,
         "mean_abs": 0,
-        "ink_a": 11819,
-        "ink_b": 11819
+        "ink_a": 11068,
+        "ink_b": 11068
       },
       {
         "face": "floor",
@@ -121,8 +121,8 @@
         "px": 102400,
         "diff_frac": 0,
         "mean_abs": 0,
-        "ink_a": 23198,
-        "ink_b": 23198
+        "ink_a": 21702,
+        "ink_b": 21702
       },
       {
         "face": "floor",
@@ -193,8 +193,8 @@
         "px": 121600,
         "diff_frac": 0,
         "mean_abs": 0,
-        "ink_a": 26232,
-        "ink_b": 26232
+        "ink_a": 26728,
+        "ink_b": 26728
       },
       {
         "face": "floor",
@@ -229,8 +229,8 @@
         "px": 121600,
         "diff_frac": 0,
         "mean_abs": 0,
-        "ink_a": 85083,
-        "ink_b": 85083
+        "ink_a": 85000,
+        "ink_b": 85000
       }
     ],
     "falsification": {
@@ -264,10 +264,10 @@
         false
       ],
       "px": 102400,
-      "diff_frac": 0.1237,
-      "mean_abs": 4.02,
-      "ink_a": 25001,
-      "ink_b": 23219
+      "diff_frac": 0.1241,
+      "mean_abs": 4.045,
+      "ink_a": 23616,
+      "ink_b": 21823
     },
     "falsification_input": {
       "face": "wall",
@@ -300,10 +300,10 @@
         false
       ],
       "px": 102400,
-      "diff_frac": 0.1577,
-      "mean_abs": 11.617,
-      "ink_a": 17908,
-      "ink_b": 23260
+      "diff_frac": 0.1615,
+      "mean_abs": 11.773,
+      "ink_a": 16365,
+      "ink_b": 21669
     },
     "note_input_arm": "두 반증 — 매체(벡터 미리보기)와 입력(raw 끝 셋 뗌). 둘 다 diff > 문. rows의 0은 «같은 캔버스·같은 함수»의 구성(#5 — 보장)이고 자의 생존은 두 반증이 든다"
   },
@@ -697,6 +697,54 @@
         }
       }
     },
+    "rows_unsaturated": {
+      "pencil": {
+        "cross": {
+          "mass": 43560.2,
+          "p95": 199,
+          "max": 199.7,
+          "n": 1600
+        },
+        "body_l": {
+          "mass": 40557.4,
+          "p95": 199,
+          "max": 199.7,
+          "n": 1600
+        },
+        "body_r": {
+          "mass": 25631.2,
+          "p95": 177.7,
+          "max": 197,
+          "n": 1600
+        },
+        "p95_ratio": 1.0565,
+        "mass_ratio": 1.3162
+      },
+      "cp": {
+        "cross": {
+          "mass": 49758.8,
+          "p95": 198.7,
+          "max": 198.7,
+          "n": 1600
+        },
+        "body_l": {
+          "mass": 29035,
+          "p95": 159,
+          "max": 178.3,
+          "n": 1600
+        },
+        "body_r": {
+          "mass": 37582.9,
+          "p95": 189,
+          "max": 196,
+          "n": 1600
+        },
+        "p95_ratio": 1.142,
+        "mass_ratio": 1.4939
+      }
+    },
+    "note_saturation": "판정 보강(리뷰어 [3]): 압력 다리 탓에 연필·cp의 기본 몸통 p95가 색 상한(~200)에 붙는다 — rows의 p95 비 1.000·cap 1은 상한이 재는 것이라 rows_unsaturated(불투명 배수 0.4 — 상한 아래)의 같은 자를 함께 단언한다. 질량 자(mass)는 falsification_stack(마커 셋)이 든다",
+    "note_marker": "마커 자기 교차는 새 엔진에서 진해진다(rows.marker — 옛 canvas stroke() 한 번의 구성상 1.000(AS-C175)과 다른 거동 · 실물 마커의 젖은 겹침과 같은 결). 46 ⛔ 계약은 획 «사이»이고 그것은 falsification_stack이 지킨다 — 자기 교차의 눈 판정은 사진(shots61 marker cross)이 몫(AS-C175 갱신)",
     "falsification_stack": {
       "single_mass": 26876,
       "triple_mass": 53379.1,
@@ -833,40 +881,14 @@
       }
     },
     "falsification_tip": {
-      "def": "마커 브러시 = marker46(markerTip 켬) — 끝/시작 창 최대비가 문을 넘는다",
-      "rows": {
-        "brush": {
-          "sw": 7410,
-          "snb": 15015,
-          "ew": 7410,
-          "enb": 15015,
-          "start_ratio": 0.987,
-          "end_ratio": 0.987
-        },
-        "marker": {
-          "sw": 33401.333333333096,
-          "snb": 52880.66666666686,
-          "ew": 40009.916666666744,
-          "enb": 80303.2500000003,
-          "start_ratio": 1.2633,
-          "end_ratio": 0.9965
-        },
-        "cp": {
-          "sw": 7410,
-          "snb": 15015,
-          "ew": 7410,
-          "enb": 15015,
-          "start_ratio": 0.987,
-          "end_ratio": 0.987
-        },
-        "pencil": {
-          "sw": 7410,
-          "snb": 15015,
-          "ew": 7410,
-          "enb": 15015,
-          "start_ratio": 0.987,
-          "end_ratio": 0.987
-        }
+      "def": "마커 브러시 = marker46(markerTip 켬) — 끝/시작 창 최대비가 문을 넘는다. 이 팔은 마커만 다시 그린다 — 마커 행만 싣는다(다른 도구 창은 빈 띠의 균일 바탕이라 정확히 1이 나와 자기참조로 오독된다 · selfcheck)",
+      "marker": {
+        "sw": 33401.333333333096,
+        "snb": 52880.66666666686,
+        "ew": 40009.916666666744,
+        "enb": 80303.2500000003,
+        "start_ratio": 1.2633,
+        "end_ratio": 0.9965
       },
       "max": 1.2633
     },
@@ -1036,37 +1058,37 @@
       1024
     ],
     "idle_ms": {
-      "median": 48.1,
-      "p90": 51.3
+      "median": 51.4,
+      "p90": 55.7
     },
     "idle2_ms": {
-      "median": 49.5,
-      "p90": 53.2
+      "median": 51.6,
+      "p90": 56.1
     },
-    "noise_floor_ms": 1.4,
+    "noise_floor_ms": 0.2,
     "drafting_ms": {
-      "median": 63.4,
-      "p90": 66.5,
-      "max": 173.3,
-      "first": 50.7,
+      "median": 66.8,
+      "p90": 77.2,
+      "max": 106.6,
+      "first": 49.9,
       "frame_cost": {
         "n": 43,
-        "r3": 14.099999994039536,
+        "r3": 14.799999982118607,
         "bs": 0,
         "d2": 0.19999998807907104,
-        "total": 14.300000011920929,
-        "totalMax": 547.8000000119209
+        "total": 15,
+        "totalMax": 557.8000000119209
       },
       "draft_base_bytes_max": 385024,
       "draft_with_base_max": 1
     },
-    "draft_extra_ms": 15.3,
+    "draft_extra_ms": 15.4,
     "draft_memory": {
       "def": "그리는 중 사본(base) 바이트의 최대와 사본 든 텍스처 수의 최대(1차 [8] — 획은 주인 면 하나(54-1)라 1 · 고름이 있으면 그 수까지) · 커버리지 지도는 bbox×4바이트(획마다 해제)",
       "base_bytes_max": 385024,
       "with_base_max": 1
     },
-    "draft_max_extra_ms": 125.2,
+    "draft_max_extra_ms": 55.2,
     "threshold_extra_ms": 18,
     "gate_condition": {
       "workers": 1,

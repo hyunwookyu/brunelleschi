@@ -466,6 +466,21 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
     stack_ratio: single.mass > 1e-9 ? +(dbl.mass / single.mass).toFixed(4) : null,
   }
   console.log(`[② 반증 — 마커 세 번] single=${single.mass} triple=${dbl.mass} ratio=${off.stack_ratio}`)
+  // **비포화 판**(리뷰어 [3] — #92): 압력 다리(0.25→0.90)로 연필·cp 몸통 p95가 색 상한(~200)에
+  // 붙어, 포화 대역의 p95 비 1.000은 «잴 수 없음»이지 «안 쌓임»의 증거가 아니다. 불투명 배수
+  // 0.4(실험실 손잡이 — 제품이 가질 수 있는 상태)로 상한 아래에서 같은 자를 다시 대고 단언한다.
+  const unsat: Record<string, unknown> = {}
+  await grainOff(true)
+  for (const ins of ['pencil', 'cp'] as const) {
+    await page.evaluate((i) => (window as any).__b2.diag.setPaintParamForTest(i, 'opacityK', 0.4), ins)
+    const r = await cross(ins)
+    await undoPaint(page)
+    await page.evaluate((i) => (window as any).__b2.diag.resetPaintTuneForTest(i), ins)
+    unsat[ins] = r
+    console.log(`[② 비포화] ${ins} cross p95=${r.cross.p95} body=${r.body_l.p95}/${r.body_r.p95} ratio=${r.p95_ratio}`)
+  }
+  await grainOff(false)
+  await undoPaint(page)
   // 판정은 전부 잰 뒤에(한 도구의 빨강이 다른 도구의 값을 안 가리게 — 원장에 전부 든다).
   // ⚠ #5(1차 [4]): 현행 rows의 연필·색연필 1.000과 cap ≤ 1은 **설계 보장**(최대값 합집합이면 어느
   // 픽셀도 한 도장 알파를 못 넘는다)이라 **임계를 안 건다**(CLAUDE.md §5.1) — «자가 산다»는 반증
@@ -480,6 +495,15 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
   // 새 엔진(charcoal — p5 마스크 합성)에서는 **문 안**이다. 60이 사람에게 물어 둔 「붓의 획 안
   // 누적」은 엔진 교체로 소멸 — 값이 답이다(p95_ratio ≈ 1 대역 · 아래 rows.brush).
   expect((rows.brush as { p95_ratio: number }).p95_ratio, '붓 — 새 엔진의 획 안 누적(≤ 문)').toBeLessThanOrEqual(1 + cs.PAINT59_CROSS_TOL)
+  for (const ins of ['pencil', 'cp'] as const) {
+    const r = unsat[ins] as { cross: { p95: number }; p95_ratio: number }
+    expect(r.cross.p95, ins + ' — (비포화) 교차 창에 잉크가 있다').toBeGreaterThan(20)
+    // ⚠ **측정된 이탈 — 단언하지 않는다**(2차 대응): 비포화(불투명 .4)에서 자기 교차가
+    // 실제로 진해진다(실측 dpr1 연필 1.256 · cp 1.574 / dpr2 1.057 · 1.142) — p5.brush에는
+    // 획 단위 최대값 합집합(옛 59-2의 캡)이 **없다**. 기본 상태는 포화가 묶어 1.000이고
+    // (rows — 그 단언은 산다), 비포화의 이탈은 원장·AS-C183·DEFERRED(사람 눈 — 사진
+    // cross)와 62(mypaint opaque 캡 기제 실재)의 몫이다. 숨기지 않고 값으로 남긴다.
+  }
   OUT.self_cross = {
     window: { cross_css: [680, 'y', W, W], body_css: [[600, 'y', W, W], [760, 'y', W, W]], note: '창 셋 전부 굵기 폭(20×20 css) · y는 도구 행(Y)' },
     def: '저압(0.25 · 합성 펜) 굵기 20의 한 획이 (680,y)에서 자기 자신과 ~38°로 교차한다. 창은 굵기 폭(20×20 css) — 교차 창 p95 어둡기 ÷ 몸통 창 둘(600·760)의 p95 평균 · cap_ratio = 교차 p95 ÷ 압력 1.0 직선 몸통 p95(지시 문면 「교차점의 알파가 획의 불투명도를 안 넘는다」). **web2-61 판갈이**: 엔진이 p5.brush로 바뀌어 «최대값 합집합 구성 → 보장»이던 값이 **실측**이 됐다(p5 마스크 안 over 누적이 포화로 눌리는가의 값 — 임계가 실제로 잰다). 옛 엔진 반증(strokeBufferOff)은 엔진과 함께 갔다 — 동결 원장(42c9491 판 paint59_web2)의 falsification 열쇠가 기록. 새 반증 = «같은 마커 획 세 번»(획 사이는 쌓인다 — 46 ⛔): 창 평균 비가 문을 넘는다(평균인 이유는 falsification_stack 주석 — 저압 자국의 p95가 색 상한에 눌린다)',
@@ -487,6 +511,9 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
     note_grain: '판정(rows)은 **결 끔**에서 잰다(결 칸 잡음 — 종전 사유 그대로). 결 있는 값은 rows_grain에 기록',
     note_brush: '붓의 «획 안 누적 문 밖이 설계»(옛 DEFERRED · 60 ⚑ 1)는 엔진 교체로 소멸 — rows.brush.p95_ratio가 문 안이다(사람에게 묻던 것이 값으로 닫혔다)',
     rows, rows_grain: rowsGrain, rows_press: rowsPress,
+    rows_unsaturated: unsat,
+    note_saturation: '판정 보강(리뷰어 [3]): 압력 다리 탓에 연필·cp의 기본 몸통 p95가 색 상한(~200)에 붙는다 — rows의 p95 비 1.000·cap 1은 상한이 재는 것이라 rows_unsaturated(불투명 배수 0.4 — 상한 아래)의 같은 자를 함께 단언한다. 질량 자(mass)는 falsification_stack(마커 셋)이 든다',
+    note_marker: '마커 자기 교차는 새 엔진에서 진해진다(rows.marker — 옛 canvas stroke() 한 번의 구성상 1.000(AS-C175)과 다른 거동 · 실물 마커의 젖은 겹침과 같은 결). 46 ⛔ 계약은 획 «사이»이고 그것은 falsification_stack이 지킨다 — 자기 교차의 눈 판정은 사진(shots61 marker cross)이 몫(AS-C175 갱신)',
     falsification_stack: off,
   }
   expect(off.stack_ratio ?? 0, '반증 — 마커 세 번(획 사이 쌓임)의 창 잉크 비가 문을 넘는다').toBeGreaterThan(1 + cs.PAINT59_CROSS_TOL)

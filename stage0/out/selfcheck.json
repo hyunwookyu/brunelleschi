@@ -1,5 +1,5 @@
 {
-  "n_flags": 6425,
+  "n_flags": 6418,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -21665,11 +21665,6 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint50_web2_dpr2.json:multiply.under_pattern_norep.bandPx",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
       "path": "paint50_web2_dpr2.json:multiply.under_pattern_norep.contrastPx",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -21731,36 +21726,6 @@
     },
     {
       "path": "paint59_web2_dpr1.json:self_cross.rows.pencil.cap_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:ends.falsification_tip.rows.brush.start_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:ends.falsification_tip.rows.brush.end_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:ends.falsification_tip.rows.cp.start_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:ends.falsification_tip.rows.cp.end_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:ends.falsification_tip.rows.pencil.start_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr1.json:ends.falsification_tip.rows.pencil.end_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },

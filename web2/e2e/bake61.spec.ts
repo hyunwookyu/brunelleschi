@@ -35,6 +35,7 @@ test('⚑ 굽는 길 — 실재·결정론·전환·비용', async ({ page }) =>
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(150)
+  OUT.constants_snapshot = await page.evaluate(() => { const c = (window as any).__b2.diag.paint50Constants(); return { PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS: c.PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS } })
   const r = await page.evaluate(() => (window as any).__b2.diag.p5probeForTest())
   OUT.probe = r
   // 판정 셋 — 사슬 멈춤 조건 ③의 술어(비용은 원장으로 남기고 문은 안 건다 — 59 이월: 시간은 부하 조건부)

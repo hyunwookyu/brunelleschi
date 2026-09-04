@@ -28,7 +28,7 @@ import { dirname, resolve } from 'node:path'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const OUT: Record<string, unknown> = {
-  what: 'web2-61 — 자국 게이트 자: ①격자 주기 ②도장 주기 ③구멍 규칙성 ④굵기 무관 ⑤넷 갈림 (흰 판 · paintMark 직접 · 원근 무관)',
+  what: 'web2-61 — 자국 게이트 자: ①격자 주기 ②도장 주기 ③구멍 규칙성 ④굵기 무관 ⑤넷 갈림 ⑥크기 정직성 (흰 판 · 이음매 drawMark 직접 · 원근 무관)',
   note_pitfalls: '#103(호출마다 새 캔버스 — 구성 · scene 열쇠) · #102(?reset 시험당 1회) · #101(web2 러너) · #99(병합-쓰기) · #16(순수 px 판 — 원근 정규화 불요) · #12(주기 탐색은 3..60 스윕 — 동작점 하나가 아니다)',
   scene: '호출마다 markSampleForTest가 새 480×240 캔버스를 만든다(문서·뷰 무관 · 잔류 없음)',
 }
@@ -236,16 +236,48 @@ test('⑤ 넷이 갈린다 — 같은 압력·같은 도형의 통계', async ({
     perPair[`${keys[a]}~${keys[b]}`] = +best.toFixed(4)
   }
   const minPair = Math.min(...Object.values(perPair))
-  OUT.four_differ = { stats, perPair, minPair: +minPair.toFixed(4),
-    def: '짝별로 세 축(p95·빈 몫·가장자리 sd) 중 최대 상대 차 — 그 최소가 «가장 닮은 짝»의 갈림' }
+  // **반증(D-3) — 자의 영점**: 같은 도구(연필)를 시드만 바꿔 두 번 재면 이 자가 0 대역을
+  // 내야 한다(도구가 같은데 «갈린다»고 읽으면 자가 잡음을 재는 것). 제품 최소 짝과의 간격이
+  // 이 자의 판별력이다.
+  const pA = await measureLine(page, 'pencil', 20)
+  const nullDiff = (() => {
+    const a = stats.pencil!, b = { p95: pA.p95, bareShare: pA.bareShare, edgeSd: pA.edgeSd }
+    let best = 0
+    for (const ax of ['p95', 'bareShare', 'edgeSd'] as const) {
+      const rel = Math.abs(a[ax] - b[ax]) / Math.max(1e-6, Math.max(Math.abs(a[ax]), Math.abs(b[ax])))
+      if (rel > best) best = rel
+    }
+    return +best.toFixed(4)
+  })()
+  OUT.four_differ = { stats, perPair, minPair: +minPair.toFixed(4), null_same_tool: nullDiff,
+    def: '짝별로 세 축(p95·빈 몫·가장자리 sd) 중 최대 상대 차 — 그 최소가 «가장 닮은 짝»의 갈림. ⚠ 마른 알갱이 매체 둘(cp↔붓)이 가장 닮은 짝이다 — 수치 갈림의 눈금은 이 표가, 성격의 갈림은 사진(shots61 — 눈)이 판정. ⚠ pre(옛 엔진)와 이 자는 같은 눈금이 아니다: pre의 cp·마커는 edgeSd·amp가 정확히 0(구성상 평탄)이라 상대 차가 1에 포화했다(0 나눗셈 형태 — 리뷰어 [11]). 반증 null_same_tool = 같은 도구(연필 · 시드만 다름)의 같은 자 — 0 대역이어야 하고 제품 최소 짝과의 간격이 판별력이다',
+  }
   expect(minPair, '어떤 짝도 완전히 같지 않다(신호 실재)').toBeGreaterThan(0)
+  expect(nullDiff, '반증 — 같은 도구는 이 자에서 최소 짝보다 훨씬 아래다(자의 영점)').toBeLessThan(minPair / 2)
+})
+
+test('① 반증 — 간격 배수 4(성긴 도장)에서 주기 진폭이 되살아난다(자의 이빨)', async ({ page }) => {
+  await boot(page)
+  const base = await measureLine(page, 'pencil', 20)
+  await page.evaluate(() => (window as any).__b2.diag.setPaintParamForTest('pencil', 'spacingK', 120))   // 0.1px 걸음 × 120 = 12px — 도장 지름(~19px) 대역: 점열이 실제로 보인다
+  const sparse = await measureLine(page, 'pencil', 20)
+  await page.evaluate(() => (window as any).__b2.diag.resetPaintTuneForTest('pencil'))
+  OUT.falsification_period = {
+    def: '연필 간격 배수 120(걸음 12px — 도장 지름 대역) — 도장이 성겨지면 점열 주기가 자에 실려야 한다(D-3: ①②의 실패 조건 실행). 제품(base) 대비 진폭 비',
+    base: { P: base.dominantP, amp: base.ampRatio, edgeAmpN: base.edgeAmpN },
+    sparse: { P: sparse.dominantP, amp: sparse.ampRatio, edgeAmpN: sparse.edgeAmpN },
+    amp_rise: base.ampRatio > 1e-9 ? +(sparse.ampRatio / base.ampRatio).toFixed(3) : null,
+  }
+  expect(sparse.ampRatio, '반증 — 성긴 도장의 주기 진폭이 제품의 2배를 넘는다').toBeGreaterThan(base.ampRatio * 2)
 })
 test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 · 2배는 2배', async ({ page }) => {
   await boot(page)
   const widthOf = (i: Instr, wPx: number) =>
     page.evaluate(([tool, w]) => {
       const b2 = (window as any).__b2
-      b2.diag.markSampleForTest(tool, 'line', w)
+      // 큰 붓(58 ⛔ 도구별 최대 대역)은 판을 키운다 — 획 산포가 판을 넘으면 폭이 잘려 거짓 통과
+      const bh = Math.max(240, Math.ceil((w as number) * 2.6)), bw2 = bh > 240 ? 900 : 480
+      b2.diag.markSampleForTest(tool, 'line', w, 61, bw2, bh)
       const m = (window as any).__m61 as { v: number[]; w: number; h: number }
       const W = m.w, H = m.h
       const widths: number[] = []
@@ -263,6 +295,7 @@ test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 ·
     }, [i, wPx] as const)
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const rows: Record<string, unknown> = {}
+  OUT.constants_snapshot = { PAINT61_SIZE_TOL: cs.PAINT61_SIZE_TOL, PAINT61_END_TOL: cs.PAINT61_END_TOL, PAINT61_PAPER_CORR_MIN: cs.PAINT61_PAPER_CORR_MIN, note: '스냅샷-라이트(#42 ⑥의 최소 고리 — web2 원장의 constantsSnapshot 기계 부재는 종전 유보)' }
   for (const i of ['pencil', 'cp', 'brush', 'marker'] as Instr[]) {
     const w24 = await widthOf(i, 24)
     const r = +(w24 / 24).toFixed(3)
@@ -271,11 +304,22 @@ test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 ·
   }
   const p48 = await widthOf('pencil', 48)
   const doubling = +(p48 / (rows.pencil as { w24: number }).w24).toFixed(3)
+  // 58 ⛔의 «도구별 최대» 대역(붓 500·마커 100·색연필/연필 50) — 상한 쪽도 잰다(리뷰어 [6]):
+  // 마커 100·붓 250은 문 안을 단언하고, 붓 500은 견본 판(1024 캔버스)의 물리 한계 안에서
+  // 실측 기록(레벨 상한과 같은 자리 — 대형은 실기기 눈 판정 몫 · DEFERRED).
+  const m100 = await widthOf('marker', 100)
+  const b250 = await widthOf('brush', 250)
+  const b500 = await widthOf('brush', 500)
+  const rm = +(m100 / 100).toFixed(3), rb = +(b250 / 250).toFixed(3)
   OUT.size_honesty = {
     rows, pencil_w48: p48, doubling,
-    def: '직선 견본(압력 0.5 상수)의 열별 반최대 폭 중앙값 ÷ 요청 굵기(px). 58 ⛔ 「크기 슬라이더」의 정직성 — 사다리(√2 파생)와 자가 보정(px/weight)이 실제로 px를 낸다는 실측. doubling = 연필 48 ÷ 24의 폭 비(기대 ~2)',
+    marker_w100: { w: m100, ratio: rm }, brush_w250: { w: b250, ratio: rb },
+    brush_w500: { w: b500, ratio: +(b500 / 500).toFixed(3), note: '기록 — 견본 판·굽기 캔버스(1024)의 상한 대역. 대형 자국의 눈 판정은 실기기 몫' },
+    def: '직선 견본(압력 0.5 상수)의 열별 반최대 폭 중앙값 ÷ 요청 굵기(px). 58 ⛔ 「크기 슬라이더·도구별 최대」의 정직성 — 사다리(√2 파생)와 칸별 실측 보정이 실제로 px를 낸다. doubling = 연필 48 ÷ 24의 폭 비(기대 ~2) · 상한 대역은 marker_w100·brush_w250(단언)·brush_w500(기록)',
     threshold: cs.PAINT61_SIZE_TOL,
   }
   expect(doubling, '연필 — 굵기 2배는 폭도 2배 대역').toBeGreaterThan(1.6)
   expect(doubling, '연필 — 굵기 2배는 폭도 2배 대역').toBeLessThan(2.4)
+  expect(Math.abs(rm - 1), '마커 100(도구 최대) — 반최대 폭이 허용 안').toBeLessThanOrEqual(cs.PAINT61_SIZE_TOL)
+  expect(Math.abs(rb - 1), '붓 250 — 반최대 폭이 허용 안').toBeLessThanOrEqual(cs.PAINT61_SIZE_TOL)
 })

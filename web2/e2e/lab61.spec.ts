@@ -73,6 +73,7 @@ const markHash = async (page: Page, tool: string) => {
 test('작업대 — 열림·손잡이·브러시 선택·값의 왕복', async ({ page }) => {
   test.setTimeout(120_000)
   await openLab(page)
+  OUT.constants_snapshot = await page.evaluate(() => { const c = (window as any).__b2.diag.paint50Constants(); return { PAINT61_SIZE_TOL: c.PAINT61_SIZE_TOL } })
   // ① 구조 — 도구 넷 · 손잡이(엔진 params — 여섯) · 브러시 후보(연필 2B·HB·2H)
   const shape = await page.evaluate(() => ({
     picks: ['brush', 'marker', 'cp', 'pencil'].map(k => !!document.getElementById(`tunelab-pick-${k}`)),
