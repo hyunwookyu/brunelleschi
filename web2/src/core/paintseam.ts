@@ -34,6 +34,11 @@ export interface SeamMark {
   tool: Instr58
   /** 연필 등급(있으면 — 2B·HB·2H 갈래의 입력. 지시 「연필: 2B·HB·2H(등급에 따라)」) */
   grade?: string
+  /** web2-62 — 브러시 이름(엔진이 알면 도구 슬롯 대신 이 브러시로 · 고르개 견본·팔의 통로.
+   *  제품 굽기는 안 넣는다 — 저장 형식 무변: 획은 도구 표식(paint.i)뿐이다). */
+  preset?: string
+  /** web2-62 — 엔진 설정 기준값 덮개(팔·실험실 전용 — 키는 엔진의 설정 이름). 제품 경로는 안 넣는다. */
+  over?: Record<string, number>
 }
 
 /** 실험실 손잡이 서술 — 엔진이 제 매개변수를 «데이터»로 내놓는다(작업대가 이것만 읽는다).
@@ -81,9 +86,10 @@ export function drawMark(g: CanvasRenderingContext2D, m: SeamMark): void {
 export function drawMarksSeam(g: CanvasRenderingContext2D, marks: SeamMark[]): void {
   if (!renderer) throw new Error('칠 렌더러가 등록되지 않았다 — main이 부팅에서 setPaintRenderer를 부른다')
   const list = marks.filter(m => m.pts.length >= 2)
-  if (list.length === 0) return
-  if (renderer.drawMany) renderer.drawMany(g, list)
-  else for (const m of list) renderer.draw(g, m)
+  // web2-62: 빈 목록도 drawMany에 «넘긴다» — 엔진이 그 캔버스의 층을 비울 기회다(획 전부를
+  // 지운 면을 다시 구우면 옛 획의 유령이 층에 남는 것을 막는다). draw 갈래는 종전대로 안 부른다.
+  if (renderer.drawMany) { renderer.drawMany(g, list); return }
+  for (const m of list) renderer.draw(g, m)
 }
 
 // ── 반증 스위치(D-3 · #30 — e2e 전용 · 제품 경로는 안 부른다) — **엔진 중립**이라 이음매가

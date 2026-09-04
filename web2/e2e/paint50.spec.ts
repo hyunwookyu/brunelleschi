@@ -161,20 +161,31 @@ const blueColumnThickness = (page: Page, x: number, y: number, w: number, h: num
     // web2-61 판갈이: 문턱을 «열 최대의 절반»으로 — 새 엔진(p5.brush)의 마커는 가장자리가
     // 부드러운 감쇠라, 고정 저문턱(α>16)이 옅은 치마까지 세어 원근 비를 부풀렸다(실측
     // 1.775 vs 기대 1.240). 반최대 폭은 옛 엔진의 딱딱한 띠에서는 같은 수를 내던 자다.
+    // web2-62 판갈이: 문턱을 «색상 차(b−r)의 열 최대 절반»으로 — 61 자(알파 반최대 ∧ b−r>30 고정)는 알파가 255로
+    // 포화한 #gl에서 사실상 «b−r>30 고정 문턱»이었다. mypaint 마커(tanda/marker-01 · hardness .6 · AA)는 가장자리가
+    // 부드러워 먼 끝(축소 표집 · 흐림)에서 고정 문턱이 띠를 더 많이 잘라 원근 비를 부풀렸다(실측 1.462 vs 기대
+    // 1.240 — 텍스처 안의 띠는 16±1px로 균일했다). 대칭 흐림은 반최대 폭을 보존한다 — 61 판갈이의 그 원리를 색상 축에.
+    const colsAlpha: number[] = []
     for (let c = 0; c < t.width; c++) {
-      let maxA = 0
+      let maxBR = 0, maxA = 0
       for (let r = 0; r < t.height; r++) {
         const i = (r * t.width + c) * 4
-        if (d[i + 2]! - d[i]! > 30 && d[i + 3]! > maxA) maxA = d[i + 3]!
+        const br = d[i + 2]! - d[i]!
+        if (d[i + 3]! > 16 && br > maxBR) maxBR = br
+        if (br > 30 && d[i + 3]! > maxA) maxA = d[i + 3]!
       }
-      const th = Math.max(16, maxA / 2)
-      let rows = 0
+      const th = Math.max(15, maxBR / 2)
+      const thA = Math.max(16, maxA / 2)
+      let rows = 0, rowsA = 0
       for (let r = 0; r < t.height; r++) {
         const i = (r * t.width + c) * 4
-        if (d[i + 3]! > th && d[i + 2]! - d[i]! > 30) rows++
+        if (d[i + 3]! > 16 && d[i + 2]! - d[i]! > th) rows++
+        if (d[i + 3]! > thA && d[i + 2]! - d[i]! > 30) rowsA++
       }
-      cols.push(rows)
+      cols.push(maxBR > 30 ? rows : 0)
+      colsAlpha.push(rowsA)
     }
+    ;(window as any).__p50colsAlpha = colsAlpha      // 61 자(알파 반최대 ∧ b−r>30) — 기록용(리뷰어 [M10])
     return cols
   }, [x, y, w, h] as unknown[])
 
@@ -410,6 +421,9 @@ test('④⑤ 원근 폭(가까운 끝 > 먼 끝) · 면 경계 절단(밖은 0)'
     return n ? s / n : 0
   }
   const near = at(545), far = at(855)
+  const colsA = await page.evaluate(() => (window as any).__p50colsAlpha as number[])
+  const atA = (cssX: number) => { const c = Math.round((cssX - 440) * dpr); let s = 0, n = 0; for (let k = -2; k <= 2; k++) { const v = colsA[c + k]; if (v !== undefined) { s += v; n++ } } return n ? s / n : 0 }
+  const nearA = atA(545), farA = atA(855)
   expect(near, '가까운 끝에 띠가 있다').toBeGreaterThan(0)
   expect(far, '먼 끝에 띠가 있다').toBeGreaterThan(0)
   // ④ — 기대 비를 **픽스처에서 유도한다**(#88 · 1차 [4]): 면 고정 굵기의 화면 두께는
@@ -447,6 +461,8 @@ test('④⑤ 원근 폭(가까운 끝 > 먼 끝) · 면 경계 절단(밖은 0)'
   OUT.foreshorten_clip = {
     def: '경계를 일부러 지나는 마커 획 — 열별 파란 띠 두께(물리 px · ±2열 평균). near=545css · far=855css · 밖=488/915css. 기대 비 = 벽 투영 높이 비(픽스처에서 유도 — #88)',
     near_px: +near.toFixed(1), far_px: +far.toFixed(1), ratio: +ratio.toFixed(3),
+    ruler: '(62 판갈이) 열별 «색상 차(b−r)의 열 최대 절반» 문턱의 행 수 — 61 자(알파 반최대 ∧ b−r>30 고정)는 alpha_halfmax 열에 기록',
+    alpha_halfmax: { near_px: +nearA.toFixed(1), far_px: +farA.toFixed(1), ratio: farA > 0 ? +(nearA / farA).toFixed(3) : null },
     expected_ratio: +expected.toFixed(3), tol_registered: 'C.PAINT50_FORESHORTEN_TOL', tol_value: tol,
     note_dpr_bias: '실측/기대 잔차가 두 dpr 다 양의 방향(2차 [9]) — 띠 두께 계수(채널 차 문턱·±2열 평균·AA)의 dpr 의존 편의로 본다. 유보로 남긴다 — 문 안이고 방향이 판정(화면 고정 1.0과의 판별)을 돕는 쪽이다',
     screen_fixed_would_give: 1.0,

@@ -17,9 +17,10 @@ import { MAT } from '../core/material'
 import { C } from '../core/constants'
 import type { Pt } from '../core/vec'
 
-const STORE_KEY = 'b2.paintTune61.v1'
+export const TUNE_STORE_KEY = 'b2.paintTune61.v1'
+const STORE_KEY = TUNE_STORE_KEY
 
-const INSTR_NAME: Record<Instr58, string> = { brush: '붓', marker: '마커', cp: '색연필', pencil: '연필' }
+const INSTR_NAME: Record<Instr58, string> = { brush: '잉크펜', marker: '마커', cp: '색연필', pencil: '연필' }
 
 export interface TuneLab {
   root: HTMLElement
@@ -236,8 +237,9 @@ export function initTuneLab(opts: {
       const b = document.createElement('button')
       b.id = `tunelab-b-${name}`
       b.dataset.act = 'state'
-      b.textContent = name
+      b.textContent = name.includes('/') ? name.split('/')[1]! : name
       b.title = `${INSTR_NAME[instr]}를 «${name}» 브러시로 그린다(엔진 내장 — 출발점)`
+      b.style.fontSize = '10px'
       b.classList.toggle('on', name === cur)
       b.addEventListener('click', () => {
         e?.setBrush?.(instr, name)

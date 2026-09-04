@@ -2097,7 +2097,7 @@ function doGripAction(key: string) {
 // 그림 정본은 docs/instrument-icons.md 「마커·색연필(칠통)」.
 const painttrayEl = document.getElementById('painttray')!
 const PAINT_INSTRS: { i: Instr; name: string; tip: string; svg: string }[] = [
-  { i: 'brush', name: '붓', tip: '붓 — 흑연 톤으로 칠한다(색을 안 쓴다)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3 V14"/><path d="M12.5 14 h7 v4 h-7 z"/><path d="M12.5 18 C12.5 23 11.5 25.5 10.5 27.5 C13.5 26.6 18.5 26.6 21.5 27.5 C20.5 25.5 19.5 23 19.5 18 Z"/></svg>' },
+  { i: 'brush', name: '잉크펜', tip: '잉크펜 — 흑연·잉크 톤으로 긋는다(색을 안 쓴다). 고르개에서 어떤 브러시든 이 자리에 앉힌다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3 V14"/><path d="M12.5 14 h7 v4 h-7 z"/><path d="M12.5 18 C12.5 23 11.5 25.5 10.5 27.5 C13.5 26.6 18.5 26.6 21.5 27.5 C20.5 25.5 19.5 23 19.5 18 Z"/></svg>' },
   { i: 'marker', name: '마커', tip: '마커 — 넓게 덮는다. 겹치면 진해진다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="4" width="8" height="15" rx="1"/><path d="M13.5 19 L13 24 L17 28 L18.5 19"/></svg>' },
   { i: 'cp', name: '색연필', tip: '색연필 — 결이 굵고 색이 완전히 덮이지 않는다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 h6 v16 l-3 8 l-3 -8 z"/><path d="M14.2 21.5 l1.1 3 M16.9 21.5 l-1.1 3" stroke-width="1.0"/></svg>' },
   // 연필(web2-51) — 종이 결에 걸린 불연속 · 압력이 농도(가파름)·굵기(완만)를 움직인다
@@ -2184,6 +2184,17 @@ function setPaintHex(hex: string, why: string) {
     })
     painttrayEl.append(b)
     paintInstrRow.set(r.i, b)
+  }
+  // ── 브러시 고르개(web2-62) — 196개 · 분류로 접힘 · 견본은 그 자리에서 ─────────────
+  {
+    const b = document.createElement('button')
+    b.id = 'btn-brushpick'
+    b.className = 'rrow'
+    b.dataset.act = 'state'   // 고르기는 칠통을 안 접는다
+    b.title = '브러시 고르개 — 지금 도구 자리에 앉힐 브러시를 196개 중에서 고른다(분류별 · 견본 실물)'
+    b.innerHTML = `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8 h20 M6 16 h20 M6 24 h14"/><circle cx="25" cy="24" r="2.2"/></svg><span>브러시…</span>`
+    b.addEventListener('click', () => { brushPicker.setOpen(!brushPicker.isOpen()) })
+    painttrayEl.append(b)
   }
 
   // ── **정면**(web2-54 54-3) — 44의 「정면」이 칠통에서도 닿는다. 새 기제가 아니라
@@ -2801,14 +2812,23 @@ requestAnimationFrame(() => {
 import { project, screenAxes, vpMarks, frameAxes, isParallel, projW, horizonScreenY } from '../core/camera'
 import { markShape, type MarkShape } from '../core/markshapes'
 import {
-  setPaintRenderer, paintRenderer, drawMark, paintRendererId, type Instr58,
+  setPaintRenderer, paintRenderer, drawMark, drawMarksSeam, paintRendererId, type Instr58,
   setMarkerFlatForTest, setPaintOpaqueForTest, setPressFlatForTest, setGrainOffForTest,
 } from '../core/paintseam'
-import { p5PaintRenderer, p5probeForTest, p5calibForTest, p5grainTileForTest } from './p5paint'
+import { p5PaintRenderer, p5probeForTest, p5calibForTest } from './p5paint'
+import {
+  mypaintRenderer, mypaintProbeForTest, calibForTest as mypaintCalibForTest, presetMappingForTest,
+  lastLayerAlphaForTest, smudgeStatsForTest, resetSmudgeStatsForTest, premulViolationsForTest, layerStatsForTest, lastStrokeCapForTest, presetBaseForTest,
+  setCapOffForTest, setSmudgeSelfSampleForTest, setPremulBreakForTest, setFringeBreakForTest,
+  setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET,
+} from './mypaintpaint'
+import { grainTileForTest } from '../mypaint/paper'
 import { initTuneLab } from './tunelab'
+import { initBrushPicker, persistTune } from './brushpicker'
 
-// 칠 렌더러 등록(web2-61) — 이음매의 주입 지점. 62는 이 한 줄을 갈아끼운다.
-setPaintRenderer(p5PaintRenderer)
+// 칠 렌더러 등록(web2-62) — 이음매의 주입 지점. 61의 p5.brush 판은 팔(62-vs-61 사진 · 엔진 갈아끼움
+// 반증)이 setPaintEngineForTest로 잠깐 되돌릴 수 있게 남겼다 — 제품은 mypaint다.
+setPaintRenderer(mypaintRenderer)
 
 // ── 브러시 작업대(web2-58 58-5) — 설정에 숨는다(R8). 시험 긋기 == 제품 굽기(#54) ────
 const tuneLab = initTuneLab({
@@ -2820,6 +2840,21 @@ document.getElementById('btn-tunelab')?.addEventListener('click', () => tuneLab.
 registerBox({
   id: '#tunelab', isOpen: () => tuneLab.isOpen(), close: () => tuneLab.setOpen(false),
   zone: () => [tuneLab.root, document.getElementById('btn-tunelab')],
+})
+// ── 브러시 고르개(web2-62) — 칠통의 「브러시…」가 연다. 고른 것은 곧바로 기기에 남는다.
+const brushPicker = initBrushPicker({
+  toolOf: () => app.paintSel.i,
+  hexOf: () => app.paintSel.hex,
+  onPick: (tool, name) => {
+    paintRenderer()?.setBrush?.(tool, name)
+    persistTune()
+    rebakePaintTexForTest(); invalidate()
+  },
+  notify: (m) => notify(m),
+})
+registerBox({
+  id: '#brushpick', isOpen: () => brushPicker.isOpen(), close: () => brushPicker.setOpen(false),
+  zone: () => [brushPicker.root, document.getElementById('btn-brushpick')],
 })
 import { forwardOf, yawDir } from '../core/level'
 import { loopAt, buildGraph, cyclesOf, planesOf, faceScreen } from '../core/face'
@@ -2851,20 +2886,56 @@ const diag = {
    *  전환 비용 · 면 20×획 40 비용. bake61.spec이 원장으로 남긴다. */
   p5probeForTest: () => p5probeForTest(),
   p5calibForTest: () => p5calibForTest(),
-  p5grainTileForTest: () => p5grainTileForTest(),
+  /** 결 타일(면 고정 · paint59 ④의 자) — 62부터 엔진 밖(src/mypaint/paper)의 것이다 */
+  paintGrainTileForTest: () => grainTileForTest(),
+  /** **web2-62 — mypaint 엔진 진단·반증** */
+  mypaintProbeForTest: () => mypaintProbeForTest(),
+  mypaintCalibForTest: () => mypaintCalibForTest(),
+  presetMappingForTest: () => presetMappingForTest(),
+  presetCatalogForTest: () => PRESET_CATALOG.map(c => ({ group: c.group, names: [...c.names] })),
+  defaultPresetsForTest: () => ({ ...DEFAULT_PRESET }),
+  lastLayerAlphaForTest: () => { const r = lastLayerAlphaForTest(); return r ? { a: Array.from(r.a), w: r.w, h: r.h } : null },
+  smudgeStatsForTest: () => smudgeStatsForTest(),
+  resetSmudgeStatsForTest: () => resetSmudgeStatsForTest(),
+  premulViolationsForTest: () => premulViolationsForTest(),
+  lastStrokeCapForTest: () => lastStrokeCapForTest(),
+  presetBaseForTest: (name: string) => presetBaseForTest(name),
+  layerStatsForTest: () => layerStatsForTest(),
+  setCapOffForTest: (v: boolean) => { setCapOffForTest(v); rebakePaintTexForTest(); invalidate() },
+  setSmudgeSelfSampleForTest: (v: boolean) => setSmudgeSelfSampleForTest(v),
+  setPremulBreakForTest: (v: boolean) => setPremulBreakForTest(v),
+  setFringeBreakForTest: (v: boolean | 'dark') => setFringeBreakForTest(v),
+  setPaintModeOffForTest: (v: boolean) => setPaintModeOffForTest(v),
+  setSmudgeOffForTest: (v: boolean) => setSmudgeOffForTest(v),
+  /** 반증(grain61 ⑥ — 리뷰어 [H4]) — 크기 자가 보정 끔(반지름 = 폭/2 · 기하 그대로) */
+  setCalibOffForTest: (v: boolean) => { setCalibOffForTest(v); rebakePaintTexForTest(); invalidate() },
+  /** 반증(AS-C184) — 이벤트 고정 dtime(ms) · null = 제품(걸음 ÷ 일정 속도) */
+  setEventDtimeForTest: (ms: number | null) => { setEventDtimeForTest(ms); rebakePaintTexForTest(); invalidate() },
+  /** 엔진 갈아끼움(62-vs-61 사진 · 이음매 계약의 반증) — 'mypaint' | 'p5brush' */
+  setPaintEngineForTest: (id: 'mypaint' | 'p5brush') => {
+    setPaintRenderer(id === 'p5brush' ? p5PaintRenderer : mypaintRenderer); rebakePaintTexForTest(); invalidate()
+  },
+  /** 지금 도구 슬롯(칠통) — 고르개·사진 팔이 읽는다 */
+  paintInstrForTest: () => app.paintSel.i,
+  setPaintInstrForTest: (i: Instr58) => { app.paintSel.i = i; syncPainttray() },
   /** **자국 견본**(web2-61 게이트·사진의 자) — 흰 판(면 텍스처 규약)에 견본 도형 하나를
    *  제품과 같은 함수(paintMark — 이음매)로 긋고 어둡기 지도(0..255)를 window.__m61에
    *  남긴다. 화면·문서·dpr과 무관한 순수 px 판이라 원근이 자를 안 흐린다(#16 — 주기
    *  측정에 원근 정규화가 필요 없다). 부작용 없음(문서 무변 · 오프스크린). */
-  markSampleForTest: (i: Instr58, shape: MarkShape, wPx: number, seed = 61, W = 480, H = 240) => {
+  markSampleForTest: (i: Instr58, shape: MarkShape, wPx: number, seed = 61, W = 480, H = 240,
+    ext?: { preset?: string; over?: Record<string, number>; color?: string; bg?: string }) => {
     const c = document.createElement('canvas'); c.width = W; c.height = H
     const g2 = c.getContext('2d')!
-    g2.fillStyle = '#ffffff'; g2.fillRect(0, 0, W, H)
+    g2.fillStyle = ext?.bg ?? '#ffffff'; g2.fillRect(0, 0, W, H)
     const sm = markShape(shape, W, H)
-    drawMark(g2, {
-      pts: sm.pts, press: sm.press, wPx, seed, tool: i,
-      color: i === 'brush' ? MAT.HB.color : '#8a4a3a',
-    })
+    setAlphaCaptureForTest(true)                 // 초안 통로는 층을 되돌린다 — 되돌리기 전 알파를 떠 둔다(팔의 자)
+    try {
+      drawMark(g2, {
+        pts: sm.pts, press: sm.press, wPx, seed, tool: i,
+        color: ext?.color ?? (i === 'brush' ? MAT.HB.color : '#8a4a3a'),
+        preset: ext?.preset, over: ext?.over,
+      })
+    } finally { setAlphaCaptureForTest(false) }
     const d = g2.getImageData(0, 0, W, H).data
     const v = new Array<number>(W * H)
     for (let k = 0, j = 0; k < d.length; k += 4, j++) v[j] = 255 - (d[k]! + d[k + 1]! + d[k + 2]!) / 3
@@ -2876,20 +2947,26 @@ const diag = {
    *  여럿을 같은 함수(drawMark)로 얹고 어둡기 지도를 __m61에 남긴다. 각 항은 markShape의
    *  도형을 (dx,dy)만큼 옮긴 것 — 시드·도구·굵기는 항이 정한다. */
   markMultiForTest: (
-    items: { tool: Instr58; shape: MarkShape; wPx: number; seed: number; dx?: number; dy?: number }[],
-    W = 480, H = 240,
+    items: { tool: Instr58; shape: MarkShape; wPx: number; seed: number; dx?: number; dy?: number;
+      preset?: string; over?: Record<string, number>; color?: string; press?: number }[],
+    W = 480, H = 240, bake = false, bg = '#ffffff',
   ) => {
     const c = document.createElement('canvas'); c.width = W; c.height = H
     const g2 = c.getContext('2d')!
-    g2.fillStyle = '#ffffff'; g2.fillRect(0, 0, W, H)
-    for (const it of items) {
+    g2.fillStyle = bg; g2.fillRect(0, 0, W, H)
+    const marks = items.map(it => {
       const sm = markShape(it.shape, W, H)
-      drawMark(g2, {
+      return {
         pts: sm.pts.map(p => ({ x: p.x + (it.dx ?? 0), y: p.y + (it.dy ?? 0) })),
-        press: sm.press, wPx: it.wPx, seed: it.seed, tool: it.tool,
-        color: it.tool === 'brush' ? MAT.HB.color : '#8a4a3a',
-      })
-    }
+        press: it.press !== undefined ? sm.press.map(() => it.press! * C.PRESS_Q) : sm.press,
+        wPx: it.wPx, seed: it.seed, tool: it.tool,
+        color: it.color ?? (it.tool === 'brush' ? MAT.HB.color : '#8a4a3a'),
+        preset: it.preset, over: it.over,
+      }
+    })
+    // bake = 굽기 통로(drawMarksSeam — 층 하나에 차례로 · 스머지가 앞 획을 본다) · 아니면 draw 하나씩
+    if (bake) drawMarksSeam(g2, marks)
+    else for (const m of marks) drawMark(g2, m)
     const d = g2.getImageData(0, 0, W, H).data
     const v = new Array<number>(W * H)
     for (let k = 0, j = 0; k < d.length; k += 4, j++) v[j] = 255 - (d[k]! + d[k + 1]! + d[k + 2]!) / 3
@@ -3425,6 +3502,10 @@ const diag = {
     PAINT_MARKER_ALPHA: C.PAINT_MARKER_ALPHA, PAINT_CP_ALPHA: C.PAINT_CP_ALPHA,
     PAINT_W_FALLBACK_UNITS: C.PAINT_W_FALLBACK_UNITS,
     PAINT50_LUM_TOL: C.PAINT50_LUM_TOL, PAINT50_FORESHORTEN_TOL: C.PAINT50_FORESHORTEN_TOL,
+    PAINT62_CAP_TOL: C.PAINT62_CAP_TOL, PAINT62_EDGE_ALPHA_LO: C.PAINT62_EDGE_ALPHA_LO, PAINT62_EDGE_ALPHA_HI: C.PAINT62_EDGE_ALPHA_HI,
+    PAINT62_FRINGE_TOL: C.PAINT62_FRINGE_TOL, PAINT62_GREEN_HUE: C.PAINT62_GREEN_HUE, PAINT62_GREEN_SAT: C.PAINT62_GREEN_SAT,
+    PAINT62_SMUDGE_RG_MIN: C.PAINT62_SMUDGE_RG_MIN, PAINT62_PAINTED_ALPHA: C.PAINT62_PAINTED_ALPHA, PAINT62_SIG_DIGITS: C.PAINT62_SIG_DIGITS,
+    PAINT62_DISTINCT_MIN: C.PAINT62_DISTINCT_MIN,
     PAINT50_PATTERN_MIN_PX: C.PAINT50_PATTERN_MIN_PX, PAINT50_LINE_INK_MIN_PX: C.PAINT50_LINE_INK_MIN_PX,
     PAINT51_DPR_W_TOL: C.PAINT51_DPR_W_TOL, PAINT51_SWATCH_W_TOL: C.PAINT51_SWATCH_W_TOL,
     PAINT51_DENSITY_SLOPE: C.PAINT51_DENSITY_SLOPE, PAINT51_WIDTH_SLOPE: C.PAINT51_WIDTH_SLOPE,
