@@ -88,24 +88,24 @@
     "threshold_ratio_record_only": 1.08,
     "rows": {
       "pencil": {
-        "cross": 0.3507,
-        "body_l": 0.208,
-        "body_r": 0.211,
-        "ratio": 1.6739,
+        "cross": 0.4095,
+        "body_l": 0.2454,
+        "body_r": 0.2511,
+        "ratio": 1.6498,
         "cap": 0.42,
-        "cross_over_cap": 0.835,
+        "cross_over_cap": 0.9751,
         "at": [
           224,
           127
         ]
       },
       "cp": {
-        "cross": 0.3418,
-        "body_l": 0.301,
-        "body_r": 0.2891,
-        "ratio": 1.1586,
-        "cap": 0.3798,
-        "cross_over_cap": 0.9,
+        "cross": 0.3999,
+        "body_l": 0.3999,
+        "body_r": 0.3999,
+        "ratio": 1,
+        "cap": 0.3999,
+        "cross_over_cap": 1,
         "at": [
           224,
           127
@@ -138,24 +138,24 @@
     },
     "rows_capoff": {
       "pencil": {
-        "cross": 0.3507,
-        "body_l": 0.208,
-        "body_r": 0.211,
-        "ratio": 1.6739,
+        "cross": 0.4095,
+        "body_l": 0.2454,
+        "body_r": 0.2511,
+        "ratio": 1.6498,
         "cap": 0.42,
-        "cross_over_cap": 0.835,
+        "cross_over_cap": 0.9751,
         "at": [
           224,
           127
         ]
       },
       "cp": {
-        "cross": 0.4607,
-        "body_l": 0.301,
-        "body_r": 0.2891,
-        "ratio": 1.5615,
-        "cap": 0.3798,
-        "cross_over_cap": 1.213,
+        "cross": 0.7949,
+        "body_l": 0.5858,
+        "body_r": 0.566,
+        "ratio": 1.3802,
+        "cap": 0.3999,
+        "cross_over_cap": 1.9875,
         "at": [
           224,
           127
@@ -188,24 +188,24 @@
     },
     "rows_unsaturated": {
       "pencil": {
-        "cross": 0.1565,
-        "body_l": 0.0878,
-        "body_r": 0.0891,
-        "ratio": 1.77,
+        "cross": 0.168,
+        "body_l": 0.1048,
+        "body_r": 0.1077,
+        "ratio": 1.5808,
         "cap": 0.168,
-        "cross_over_cap": 0.9318,
+        "cross_over_cap": 1,
         "at": [
           224,
           127
         ]
       },
       "cp": {
-        "cross": 0.1367,
-        "body_l": 0.1337,
-        "body_r": 0.1276,
-        "ratio": 1.0468,
-        "cap": 0.1519,
-        "cross_over_cap": 0.9,
+        "cross": 0.16,
+        "body_l": 0.16,
+        "body_r": 0.16,
+        "ratio": 1,
+        "cap": 0.16,
+        "cross_over_cap": 1,
         "at": [
           224,
           127
@@ -214,24 +214,24 @@
     },
     "rows_unsaturated_capoff": {
       "pencil": {
-        "cross": 0.1565,
-        "body_l": 0.0878,
-        "body_r": 0.0891,
-        "ratio": 1.77,
+        "cross": 0.1872,
+        "body_l": 0.1048,
+        "body_r": 0.1077,
+        "ratio": 1.7616,
         "cap": 0.168,
-        "cross_over_cap": 0.9318,
+        "cross_over_cap": 1.1143,
         "at": [
           224,
           127
         ]
       },
       "cp": {
-        "cross": 0.2223,
-        "body_l": 0.1337,
-        "body_r": 0.1276,
-        "ratio": 1.7018,
-        "cap": 0.1519,
-        "cross_over_cap": 1.4632,
+        "cross": 0.4633,
+        "body_l": 0.2924,
+        "body_r": 0.2795,
+        "ratio": 1.6203,
+        "cap": 0.16,
+        "cross_over_cap": 2.8961,
         "at": [
           224,
           127
@@ -255,7 +255,7 @@
       "brush": false,
       "n": 2,
       "unsaturated": {
-        "pencil": false,
+        "pencil": true,
         "cp": true
       }
     }
@@ -338,10 +338,10 @@
   },
   "differ": {
     "def": "196 견본(직선 12px · 시드 62 · 잉크펜 슬롯 · 층 알파) 통계 서명 {mean,p95,bare,edgeSd} — painted = 최대 알파 ≥ C.PAINT62_PAINTED_ALPHA인 것 · distinct2 = 두 자리(§5 유효 자릿수 — 술어) 고유 서명 수 · distinct4 = 네 자리(기록) · empty_reasons = 사유별 수(겹침 포함) · empty = 빈 층에 아무것도 안 남긴 것과 그 사유(값 — eraser · smudge≥.65(젖은 붓·물만·블렌더) · posterize · opaque≤.05 · lock_alpha · smudge_transparency · dabs_sparse(반지름당 도장 < .2 — splatter)) · unexplained = 사유 없는 빈 것(0이어야). 반증 = 같은 브러시 8번 → 서명 1",
-    "total": 196,
-    "painted": 154,
-    "distinct4": 144,
-    "distinct2": 141,
+    "total": 197,
+    "painted": 155,
+    "distinct4": 145,
+    "distinct2": 142,
     "empty": {
       "Dieterle/Blender": "smudge≥.65",
       "Dieterle/Dissolver": "smudge≥.65+smudge_transparency",
@@ -394,14 +394,20 @@
       "opaque≤.05": 2
     },
     "unexplained": [],
-    "ms": 20746,
+    "ms": 25674,
     "falsification_same_brush_distinct": 1,
     "sample": {
+      "brunelleschi/colored_pencil": {
+        "mean": 0.1026,
+        "p95": 0.2891,
+        "bare": 0.0298,
+        "edgeSd": 0.597
+      },
       "Dieterle/8B_Pencil#1": {
-        "mean": 0.0159,
-        "p95": 0.0678,
-        "bare": 0.3894,
-        "edgeSd": 3.657
+        "mean": 0.0379,
+        "p95": 0.1393,
+        "bare": 0.2865,
+        "edgeSd": 3.054
       },
       "Dieterle/arrow#1": {
         "mean": 0.3069,
@@ -426,33 +432,27 @@
         "p95": 0.2987,
         "bare": 0.5087,
         "edgeSd": 4.686
-      },
-      "Dieterle/Fount-offset#1": {
-        "mean": 0.2961,
-        "p95": 0.8304,
-        "bare": 0,
-        "edgeSd": 0.111
       }
     },
     "threshold_sensitivity": {
       "0.002": {
-        "painted": 155,
+        "painted": 156,
         "unexplained": 0
       },
       "0.004": {
-        "painted": 155,
+        "painted": 156,
         "unexplained": 0
       },
       "0.008": {
-        "painted": 154,
+        "painted": 155,
         "unexplained": 0
       },
       "0.015": {
-        "painted": 149,
+        "painted": 150,
         "unexplained": 0
       },
       "0.03": {
-        "painted": 145,
+        "painted": 146,
         "unexplained": 3
       }
     },
@@ -466,20 +466,20 @@
     "def": "조합 ① 회색 바탕(140) 위 어두운 안료(#2a2a30) · 조합 ② 어두운 바탕(48) 위 밝은 안료(#d8d0c0) — 물결 22px. 층 알파 창(C.PAINT62_EDGE_ALPHA_LO..HI /255)의 픽셀(edge)에서 brighter = 배경+C.PAINT62_FRINGE_TOL보다 밝은 수(흰 테의 정의 · 조합 ①의 술어) · brighter0 = 관용 0으로 센 수(기록 — 8비트 반올림의 몫) · outside = 배경·안료 사이 창 밖(어느 쪽이든 · 조합 ②의 술어 — 안료보다 밝은 것이 흰 테) · maxOver = 창 위로 벗어난 최대. 도구 넷 + 프리셋 8(①) / 넷 + 4(②). 반증 fringeBreak = 그 픽셀의 rgb를 흰색(조합 ①)/검정(조합 ② — 어두운 쪽으로 새는 병)으로 — 두 조합 다 실제로 걸린다",
     "rows": {
       "pencil": {
-        "edge": 11685,
+        "edge": 11720,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 13139
+        "painted": 13288
       },
       "cp": {
-        "edge": 11955,
+        "edge": 7185,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 15206
+        "painted": 13621
       },
       "marker": {
         "edge": 93,
@@ -530,12 +530,12 @@
         "painted": 49806
       },
       "ramon/Pastel_1": {
-        "edge": 19317,
+        "edge": 22580,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 34908
+        "painted": 41146
       },
       "kaerhon_v1/paint_sm": {
         "edge": 3185,
@@ -562,26 +562,26 @@
         "painted": 11129
       }
     },
-    "edge_total": 115956,
+    "edge_total": 114484,
     "brighter_total": 0,
     "brighter0_total": 0,
     "outside_total": 0,
     "rows_light": {
       "pencil": {
-        "edge": 11685,
-        "brighter": 10250,
-        "brighter0": 11685,
+        "edge": 11720,
+        "brighter": 10461,
+        "brighter0": 11720,
         "outside": 0,
         "maxOver": 0,
-        "painted": 13139
+        "painted": 13288
       },
       "cp": {
-        "edge": 11955,
-        "brighter": 10109,
-        "brighter0": 11955,
+        "edge": 7185,
+        "brighter": 6463,
+        "brighter0": 7185,
         "outside": 0,
         "maxOver": 0,
-        "painted": 15206
+        "painted": 13621
       },
       "marker": {
         "edge": 93,
@@ -624,31 +624,31 @@
         "painted": 12813
       },
       "ramon/Pastel_1": {
-        "edge": 19317,
-        "brighter": 13995,
-        "brighter0": 19317,
+        "edge": 22580,
+        "brighter": 15567,
+        "brighter0": 22580,
         "outside": 0,
         "maxOver": 0,
-        "painted": 34908
+        "painted": 41146
       }
     },
-    "edge_total_light": 63337,
+    "edge_total_light": 61865,
     "outside_total_light": 0,
     "falsification_fringe_break": {
-      "edge": 11685,
-      "brighter": 9276,
-      "brighter0": 11359,
-      "outside": 9276,
+      "edge": 11720,
+      "brighter": 9678,
+      "brighter0": 11437,
+      "outside": 9678,
       "maxOver": 31,
-      "painted": 13139
+      "painted": 13288
     },
     "falsification_fringe_break_light": {
-      "edge": 11685,
+      "edge": 11720,
       "brighter": 0,
       "brighter0": 0,
-      "outside": 7709,
+      "outside": 8239,
       "maxOver": 0,
-      "painted": 13139
+      "painted": 13288
     },
     "threshold": {
       "fringe_tol": 2,
@@ -721,8 +721,12 @@
   },
   "probe": {
     "def": "실재(markPx) · 결정론 · 면 20×획 40 굽기 ms(스트레스 800획 · 지시 픽스처 40획 · 획별 80) · 보정표(프리셋별 {a,b,ok,w1,w2} — 반지름 6·24의 반최대 폭 선형 · ok:false = 실패 표식 #105) · 층 현황 · 사상 · 합성 속도. ⚠ ms는 워커 1 원장의 값 — 밤(워커 4)은 기록만",
-    "presets": 196,
+    "presets": 197,
     "groups": [
+      {
+        "group": "Brunelleschi",
+        "n": 1
+      },
       {
         "group": "Dieterle",
         "n": 19
@@ -752,19 +756,38 @@
         "n": 20
       }
     ],
-    "markPx": 5907,
+    "markPx": 6937,
     "deterministic": true,
     "seed_differs": true,
-    "bake_stress_20faces_x40strokes_ms": 16177.8,
-    "bake_20faces_40strokes_total_ms": 1073.5,
-    "bake_perstroke_2x40_ms": 1495.5,
+    "bake_stress_20faces_x40strokes_ms": 16671.1,
+    "bake_20faces_40strokes_total_ms": 1262.6,
+    "bake_perstroke_2x40_ms": 1607,
     "calib": {
+      "brunelleschi/colored_pencil|scratches2": {
+        "a": 1.7222222222222223,
+        "b": -0.3333333333333339,
+        "ok": true,
+        "w1": 10,
+        "w2": 41,
+        "gainOk": true,
+        "gain": 1.3767539547535157,
+        "meanProc": 0.1509,
+        "meanTipRaw": 0.1431,
+        "meanTip": 0.1457,
+        "gainIters": 10
+      },
       "Dieterle/8B_Pencil#1|fine-grain": {
         "a": 0.2222222222222222,
         "b": 1.6666666666666667,
         "ok": true,
         "w1": 3,
-        "w2": 7
+        "w2": 7,
+        "gainOk": true,
+        "gain": 6,
+        "meanProc": 0.0391,
+        "meanTipRaw": 0.0123,
+        "meanTip": 0.0256,
+        "gainIters": 3
       },
       "Dieterle/arrow#1": {
         "a": 7.888888888888889,
@@ -848,7 +871,13 @@
         "b": 3,
         "ok": true,
         "w1": 3,
-        "w2": 3
+        "w2": 3,
+        "gainOk": true,
+        "gain": 6,
+        "meanProc": 0.0039,
+        "meanTipRaw": 0.0007,
+        "meanTip": 0.0017,
+        "gainIters": 2
       },
       "Dieterle/Posterizer": {
         "a": 0,
@@ -939,7 +968,13 @@
         "b": 0.6666666666666679,
         "ok": true,
         "w1": 19,
-        "w2": 74
+        "w2": 74,
+        "gainOk": true,
+        "gain": 0.8223994756671457,
+        "meanProc": 0.1145,
+        "meanTipRaw": 0.1199,
+        "meanTip": 0.1155,
+        "gainIters": 7
       },
       "classic/coarse_bulk_1": {
         "a": 1.5555555555555556,
@@ -967,7 +1002,13 @@
         "b": -0.33333333333333215,
         "ok": true,
         "w1": 17,
-        "w2": 69
+        "w2": 69,
+        "gainOk": true,
+        "gain": 1.2006958794151188,
+        "meanProc": 0.1962,
+        "meanTipRaw": 0.1881,
+        "meanTip": 0.1943,
+        "gainIters": 8
       },
       "classic/imp_blending": {
         "a": 0,
@@ -1065,7 +1106,13 @@
         "b": 0.33333333333333215,
         "ok": true,
         "w1": 10,
-        "w2": 39
+        "w2": 39,
+        "gainOk": true,
+        "gain": 1.3185190594918341,
+        "meanProc": 0.0617,
+        "meanTipRaw": 0.0505,
+        "meanTip": 0.0615,
+        "gainIters": 3
       },
       "classic/pointy_ink": {
         "a": 7.111111111111111,
@@ -1142,14 +1189,26 @@
         "b": -0.33333333333333215,
         "ok": true,
         "w1": 11,
-        "w2": 45
+        "w2": 45,
+        "gainOk": true,
+        "gain": 1,
+        "meanProc": 0.0318,
+        "meanTipRaw": 0.0315,
+        "meanTip": 0.0315,
+        "gainIters": 0
       },
       "deevad/4H_pencil|fine-grain": {
         "a": 0,
         "b": 0,
         "ok": false,
         "w1": 0,
-        "w2": 0
+        "w2": 0,
+        "gainOk": false,
+        "gain": 1,
+        "meanProc": 0,
+        "meanTipRaw": 0,
+        "meanTip": 0,
+        "gainIters": 0
       },
       "deevad/airbrush": {
         "a": 1.1111111111111112,
@@ -1212,7 +1271,13 @@
         "b": 3.3333333333333286,
         "ok": true,
         "w1": 36,
-        "w2": 134
+        "w2": 134,
+        "gainOk": true,
+        "gain": 4.393486232579256,
+        "meanProc": 0.0847,
+        "meanTipRaw": 0.0589,
+        "meanTip": 0.0803,
+        "gainIters": 10
       },
       "deevad/detail_brush_large": {
         "a": 3,
@@ -1401,14 +1466,26 @@
         "b": 0,
         "ok": true,
         "w1": 15,
-        "w2": 60
+        "w2": 60,
+        "gainOk": true,
+        "gain": 0.5599677679665713,
+        "meanProc": 0.1119,
+        "meanTipRaw": 0.1321,
+        "meanTip": 0.1119,
+        "gainIters": 8
       },
       "ramon/B-pencil|scratches2": {
         "a": 1.2222222222222223,
         "b": 0.6666666666666661,
         "ok": true,
         "w1": 8,
-        "w2": 30
+        "w2": 30,
+        "gainOk": true,
+        "gain": 1.387829724022196,
+        "meanProc": 0.1063,
+        "meanTipRaw": 0.0901,
+        "meanTip": 0.1056,
+        "gainIters": 5
       },
       "ramon/Beamlight": {
         "a": 0.6666666666666666,
@@ -1506,7 +1583,13 @@
         "b": 4.333333333333332,
         "ok": true,
         "w1": 20,
-        "w2": 67
+        "w2": 67,
+        "gainOk": true,
+        "gain": 3.881089879869298,
+        "meanProc": 0.272,
+        "meanTipRaw": 0.1762,
+        "meanTip": 0.2601,
+        "gainIters": 10
       },
       "ramon/Pen": {
         "a": 1.2222222222222223,
@@ -1737,7 +1820,13 @@
         "b": 3,
         "ok": true,
         "w1": 14,
-        "w2": 47
+        "w2": 47,
+        "gainOk": true,
+        "gain": 1.288341499599125,
+        "meanProc": 0.2256,
+        "meanTipRaw": 0.2067,
+        "meanTip": 0.2237,
+        "gainIters": 7
       },
       "experimental/track": {
         "a": 7.555555555555555,
@@ -1814,21 +1903,39 @@
         "b": -0.6666666666666661,
         "ok": true,
         "w1": 5,
-        "w2": 22
+        "w2": 22,
+        "gainOk": true,
+        "gain": 6,
+        "meanProc": 0.1007,
+        "meanTipRaw": 0.0342,
+        "meanTip": 0.0475,
+        "gainIters": 2
       },
       "tanda/charcoal-03|chalk-chisel": {
         "a": 2.5,
         "b": 1,
         "ok": true,
         "w1": 16,
-        "w2": 61
+        "w2": 61,
+        "gainOk": true,
+        "gain": 6,
+        "meanProc": 0.2344,
+        "meanTipRaw": 0.0928,
+        "meanTip": 0.1242,
+        "gainIters": 3
       },
       "tanda/charcoal-04|chalk-chisel": {
         "a": 1.7777777777777777,
         "b": 1.333333333333334,
         "ok": true,
         "w1": 12,
-        "w2": 44
+        "w2": 44,
+        "gainOk": true,
+        "gain": 6,
+        "meanProc": 0.0752,
+        "meanTipRaw": 0.0271,
+        "meanTip": 0.0354,
+        "gainIters": 2
       },
       "tanda/charcoal-blur1": {
         "a": 0,
@@ -1905,14 +2012,26 @@
         "b": 1,
         "ok": true,
         "w1": 12,
-        "w2": 45
+        "w2": 45,
+        "gainOk": true,
+        "gain": 1.0610499064626737,
+        "meanProc": 0.0319,
+        "meanTipRaw": 0.0314,
+        "meanTip": 0.0316,
+        "gainIters": 5
       },
       "tanda/pencil-8b|fine-grain": {
         "a": 0.2777777777777778,
         "b": 0.33333333333333326,
         "ok": true,
         "w1": 2,
-        "w2": 7
+        "w2": 7,
+        "gainOk": true,
+        "gain": 6,
+        "meanProc": 0.0341,
+        "meanTipRaw": 0.0111,
+        "meanTip": 0.0234,
+        "gainIters": 3
       },
       "tanda/splatter-02": {
         "a": -0.5,
@@ -2138,12 +2257,12 @@
         "w1": 7,
         "w2": 27
       },
-      "ramon/B-pencil": {
-        "a": 1.1111111111111112,
-        "b": -0.666666666666667,
+      "brunelleschi/colored_pencil": {
+        "a": 2,
+        "b": 0,
         "ok": true,
-        "w1": 6,
-        "w2": 26
+        "w1": 12,
+        "w2": 48
       }
     },
     "calib_def": "프리셋별 {w1,w2,ok,a,b}: w1·w2 = 반지름 6·24의 직선 견본 반최대 폭(px) · ok = 둘 다 > 0. 요청 폭 → 반지름은 «구간별 비례·로그 보간»(w ≤ w1: r = w·6/w1 · w ≥ w2: r = w·24/w2 · 사이: 로그 보간 — 절편 없음). a·b는 초판 선형 맞춤의 기울기·절편 «기록»(산포 붓의 절편이 얼마나 컸는지 — 2차 리뷰어 [12]) · 쓰이지 않는다. ok:false = 반지름 = 폭/2(#105 표식)",

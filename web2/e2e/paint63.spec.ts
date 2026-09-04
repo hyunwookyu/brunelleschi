@@ -416,9 +416,13 @@ test('⑤ 무회귀 — 팁 없는 자국 + 61 결 = 62 기준 해시(ref63 원�
     rows,
     same_count: Object.values(rows).filter(r => (r as { same_as_ref: boolean }).same_as_ref).length,
     of: REF63_ROWS.length,
+    note_64: '항등 단언은 여덟 중 일곱(cp_slot_wave는 64-2 문턱 판으로 갈리는 것이 값 — cp_slot_changed_by_64)',
   }
   expect(paper61, '61 결 스위치가 실제로 결 출처를 바꾼다').toBe('value61')
+  // web2-64 64-2: 색연필 슬롯은 결의 «문턱 판»(봉우리에만 · 깊이 1)이 도는 자리라 팁을 꺼도 62와 같을 수 없다 — 그 행은 «갈림»이 값이다(반증의 짝 · 나머지 일곱은 항등)
+  ;(OUT.noregress as Record<string, unknown>).cp_slot_changed_by_64 = { key: 'cp_slot_wave', differs: noTip61.cp_slot_wave!.hash !== ref.rows.cp_slot_wave!.hash, why: '64-2 문턱 판(cp 슬롯의 결 매핑) — 엔진 무변 · 슬롯 매핑 변경' }
   for (const r of REF63_ROWS) {
+    if (r.key === 'cp_slot_wave') { expect(noTip61[r.key]!.hash, `${r.key} — 64-2(문턱 판)로 62와 갈린다`).not.toBe(ref.rows[r.key]!.hash); continue }
     expect(noTip61[r.key]!.hash, `${r.key} — 팁 없음 + 61 결 = 62 해시`).toBe(ref.rows[r.key]!.hash)
     expect(noTip61[r.key]!.ink, `${r.key} — 자국 픽셀 수도 같다`).toBe(ref.rows[r.key]!.ink)
   }

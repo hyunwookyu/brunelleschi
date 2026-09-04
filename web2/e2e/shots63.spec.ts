@@ -141,7 +141,9 @@ test('사진 — 브러시 고르개의 팁 줄(화면 · dpr1에서만)', async
   test.skip(info.project.name === 'dpr2', '화면 사진 하나면 된다')
   await boot(page)
   // 단추는 칠통 안(면을 고르면 보인다) — 사진은 고르개 판 자체가 목적이라 단추를 프로그램으로 누른다
-  await page.evaluate(() => (document.getElementById('btn-brushpick') as HTMLButtonElement).click())
+  await page.click('#btn-paint')   // web2-64: 패널이 뜬다 — «브러시…» 단추 대신 견본 단추가 목록을 연다
+  await page.waitForTimeout(120)
+  await page.evaluate(() => (document.getElementById('paint-brush-btn') as HTMLButtonElement).click())
   await page.waitForSelector('#brushpick-tips button')
   const tips = await page.$$eval('#brushpick-tips button', bs => bs.map(b => (b as HTMLElement).dataset.tip))
   expect(tips).toEqual(['default', 'none', 'fine-grain', 'chalk-chisel', 'rock-pitted', 'scratches-rough', 'scratches2'])

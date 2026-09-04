@@ -83,7 +83,7 @@ async function bigBox(page: Page) {
 /** 칠 도구 + 마커 선택(색·굵기는 상태로 직접 — 판정 대상은 «색 고르기 UI»가 아니라 칠이다) */
 async function pickMarker(page: Page, hex: string, wPx = 14) {
   await page.evaluate(([h, w]) => {
-    (window as any).__b2.app.paintSel = { hex: h, i: 'marker', w }
+    { const b2 = (window as any).__b2; b2.diag.setPaintInstrForTest('marker'); Object.assign(b2.app.paintSel, { hex: h, w }) } /* 64: 슬롯은 diag(br이 같이 든다) */
   }, [hex, wPx] as [string, number])
   await page.click('#btn-paint')
   await page.waitForTimeout(80)

@@ -92,7 +92,7 @@ type Instr = typeof INSTRS[number]
 
 async function pickInstr(page: Page, i: Instr, w = 20, hex = '#8a4a3a') {
   await page.evaluate(([i, w, h]) => {
-    (window as any).__b2.app.paintSel = { hex: h, i, w }
+    { const b2 = (window as any).__b2; b2.diag.setPaintInstrForTest(i); Object.assign(b2.app.paintSel, { hex: h, w }) } /* 64: 슬롯은 diag(br이 같이 든다) */
   }, [i, w, hex] as const)
   await page.click('#btn-paint')
   await page.waitForTimeout(60)

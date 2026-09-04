@@ -325,17 +325,17 @@ test('① 반증 — 간격 배수 4(성긴 도장)에서 주기 진폭이 되�
 })
 test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 · 2배는 2배', async ({ page }) => {
   await boot(page)
-  const widthOf = (i: Instr, wPx: number) =>
-    page.evaluate(([tool, w]) => {
+  const widthOf = (i: Instr, wPx: number, preset?: string) =>
+    page.evaluate(([tool, w, preset]) => {
       const b2 = (window as any).__b2
       // 큰 붓(58 ⛔ 도구별 최대 대역)은 판을 키운다 — 획 산포가 판을 넘으면 폭이 잘려 거짓 통과
       const bh = Math.max(240, Math.ceil((w as number) * 2.6)), bw2 = bh > 240 ? 900 : 480
-      b2.diag.markSampleForTest(tool, 'line', w, 61, bw2, bh)
+      b2.diag.markSampleForTest(tool, 'line', w, 61, bw2, bh, preset ? { preset } : undefined)
       const m = (window as any).__m61 as { v: number[]; w: number; h: number }
       const W = m.w, H = m.h
       // web2-63: 팁이 든 슬롯(연필·색연필 기본)은 «범위 폭»(열 최대의 25% 위 — 보정이 쓰는 그 자 · 희소 판에서 반최대는 판의
       // 몇 픽셀만 센다)으로, 팁 없는 슬롯은 61의 반최대 그대로. 어느 자였는지와 다른 자의 값도 함께 남긴다(ruler · alt).
-      const tipOn = (b2.diag.tipStatsForTest?.().defaults ?? {})[tool as string] != null
+      const tipOn = preset ? b2.diag.tipDefaultOfForTest(preset) != null : (b2.diag.tipStatsForTest?.().defaults ?? {})[tool as string] != null
       const measure = (frac: number): number => {
         const widths: number[] = []
         for (let x = 60; x < W - 60; x += 2) {
@@ -353,7 +353,7 @@ test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 ·
       const half = measure(0.5), ext = measure(0.25)
       ;(window as any).__w61 = { ruler: tipOn ? 'extent25' : 'halfmax', halfmax: half, extent25: ext }
       return tipOn ? ext : half
-    }, [i, wPx] as const)
+    }, [i, wPx, preset] as const)
   const lastRuler = () => page.evaluate(() => (window as any).__w61 as { ruler: string; halfmax: number; extent25: number })
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const rows: Record<string, unknown> = {}
@@ -386,6 +386,9 @@ test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 ·
   await page.evaluate(() => (window as any).__b2.diag.setCalibOffForTest(true))
   const naive: Record<string, number> = {}
   for (const i of ['pencil', 'cp', 'brush', 'marker'] as Instr[]) naive[i] = +((await widthOf(i, 24)) / 24).toFixed(3)
+  // web2-64: 슬롯 넷의 기본이 전부 «반지름 ≈ 폭/2» 대역에 들어(cp 슬롯이 앱 색연필로 바뀌며 .75 — 문 .35 안) 반증이 넷만으로는 안 선다 →
+  // 팁 든 산포 프리셋(파스텔 rock-pitted — 보정표 w1 20·w2 67)을 다섯째 행으로: 보정 끔이면 폭이 요청에서 크게 벗어나야 한다(보정이 «한 일»의 값)
+  naive.pastel_preset = +((await widthOf('pencil', 24, 'ramon/Pastel_1')) / 24).toFixed(3)
   await page.evaluate(() => (window as any).__b2.diag.setCalibOffForTest(false))
   const naiveDev = Math.max(...Object.values(naive).map(v => Math.abs(v - 1)))
   const naiveBinds = Object.fromEntries(Object.entries(naive).map(([k, v]) => [k, Math.abs(v - 1) > cs.PAINT61_SIZE_TOL]))

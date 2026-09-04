@@ -100,12 +100,13 @@ test('사진 — 색연필 전후 · 젖은 카탈로그(색 위) (dpr1에서만
     const sg = sheet.getContext('2d')!
     sg.fillStyle = '#fffdf8'; sg.fillRect(0, 0, sheet.width, sheet.height)
     sg.fillStyle = '#3c3831'; sg.font = '15px system-ui'
-    sg.fillText(`흰 판에서 빈 프리셋 ${empties.length} — 색 위(100%_Opaque 빨강 띠 w60)에 파랑 w14 물결 · 굽기 통로(스머지가 앞 획을 본다) · 64-3`, 12, 20)
+    sg.fillText(`흰 판에서 빈 프리셋 ${empties.length} — 두 색 위(100%_Opaque 빨강 w60 + 파랑 w34 반겹침)에 노랑 w14 물결 · 굽기 통로(스머지가 앞 획을 본다) · 64-3`, 12, 20)
     empties.forEach((name, i) => {
       const cx = 10 + (i % COLS) * CW, cy = 30 + Math.floor(i / COLS) * (CH + 22)
       b2.diag.markMultiForTest([
         { tool: 'marker', shape: 'line', wPx: 60, seed: 5, preset: 'ramon/100%_Opaque', color: '#c0392b', press: 1 },
-        { tool: 'brush', shape: 'wave', wPx: 14, seed: 7, preset: name, color: '#1e4fd0', press: 0.8 },
+        { tool: 'marker', shape: 'line', wPx: 34, seed: 6, preset: 'ramon/100%_Opaque', color: '#2050c8', press: 1, dy: 16 },
+        { tool: 'brush', shape: 'wave', wPx: 14, seed: 7, preset: name, color: '#e8c020', press: 0.8 },
       ], CW - 10, CH, true)
       sg.drawImage((window as any).__m61cv as HTMLCanvasElement, cx, cy + 16)
       sg.fillStyle = '#3c3831'; sg.font = '11px system-ui'

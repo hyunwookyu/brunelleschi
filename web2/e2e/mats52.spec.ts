@@ -190,7 +190,7 @@ test('② 재료는 면에, 칠은 획에 — 재료 변경이 획 목록을 안
   await cycleRepTo(page, fid, 'brick')
   await page.waitForTimeout(200)
   // 벽에 마커 획 하나(UI 경로 — mats46의 그 몸짓)
-  await page.evaluate(() => { (window as any).__b2.app.paintSel = { hex: '#1e7fd0', i: 'marker', w: 12 } })
+  await page.evaluate(() => { { const b2 = (window as any).__b2; b2.diag.setPaintInstrForTest('marker'); Object.assign(b2.app.paintSel, { hex: '#1e7fd0', w: 12 }) } /* 64: 슬롯은 diag(br이 같이 든다) */ })
   await page.click('#btn-paint')
   await page.waitForTimeout(60)
   await drawLine(page, 560, 420, 660, 400)

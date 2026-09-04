@@ -248,11 +248,12 @@ test('⑤ 농도 일치 — 팁 있음/없음이 같은 설정에서 같은 농�
     return out
   }
   const fixed = await measure()
+  // 보정표는 반증 스위치가 «비우기 전에» 읽는다(첫 원장이 빈 표를 냈다 — 순서의 결함)
+  const calib = await page.evaluate(() => (window as any).__b2.diag.mypaintCalibForTest()) as Record<string, { gain?: number; gainOk?: boolean; meanTip?: number; meanProc?: number; gainIters?: number; meanTipRaw?: number }>
   await page.evaluate(() => (window as any).__b2.diag.setTipGainOffForTest(true))
   const raw = await measure()
   await page.evaluate(() => (window as any).__b2.diag.setTipGainOffForTest(false))
-  const calib = await page.evaluate(() => (window as any).__b2.diag.mypaintCalibForTest()) as Record<string, { gain?: number; gainOk?: boolean; meanTip?: number; meanProc?: number }>
-  const gains = Object.fromEntries(Object.entries(calib).filter(([k]) => k.includes('|')).map(([k, v]) => [k, { gain: v.gain, ok: v.gainOk, meanTip: v.meanTip, meanProc: v.meanProc }]))
+  const gains = Object.fromEntries(Object.entries(calib).filter(([k]) => k.includes('|')).map(([k, v]) => [k, { gain: v.gain, ok: v.gainOk, meanTipRaw: v.meanTipRaw, meanTip: v.meanTip, meanProc: v.meanProc, iters: v.gainIters }]))
   const dev = (m: Record<string, { ratio: number }>) => Math.max(...Object.values(m).map(v => Math.abs(v.ratio - 1)))
   OUT.density = {
     def: '직선 · 압력 .6 · 굵기 10/20/40 · 마른 매체 여섯(63의 다섯 + 새 cp) — 몸통 평균 어둡기(63 ①의 자) 팁 켬 ÷ 팁 끔(tip none · 절차 타원) · 문 ±5%(지시 64-4). 보정 = 프리셋|팁 열쇠의 gain(반지름 12 직선 견본 · 절차 평균 ÷ 팁 평균 · 상한 3 · opacityK 경로 — 성격(구멍)은 그대로) · 반증 = setTipGainOffForTest → 63의 옅음(연필 .86)이 돌아온다',
@@ -281,7 +282,11 @@ test('④ 젖은 브러시 전수 — 흰 판에서 빈 프리셋 전부가 «�
     }
     // ② 색 위 — 굽기 통로(drawMarksSeam · 한 층에 차례로 · 스머지가 앞 획을 본다): 바탕 = 100%_Opaque 빨강 w60 가로띠 ·
     //    그 위에 젖은 프리셋 파랑 w14 물결. «돈다» = 바탕만 그린 판과의 픽셀 차(RGB 합 차 > 12)가 ≥ 40px.
-    const base = [{ tool: 'marker', shape: 'line', wPx: 60, seed: 5, preset: 'ramon/100%_Opaque', color: '#c0392b', press: 1 }]
+    // 바탕은 «두 색»(빨강 띠 + 아래로 반쯤 겹친 파랑 띠) — 한 색 띠에서는 문지름이 픽셀을 바꿔도 눈에 안 보였다(첫 사진 실측 · 판정대로서 약함)
+    const base = [
+      { tool: 'marker', shape: 'line', wPx: 60, seed: 5, preset: 'ramon/100%_Opaque', color: '#c0392b', press: 1 },
+      { tool: 'marker', shape: 'line', wPx: 34, seed: 6, preset: 'ramon/100%_Opaque', color: '#2050c8', press: 1, dy: 16 },
+    ]
     const pixels = (): Uint8ClampedArray => new Uint8ClampedArray((window as any).__m61cv.getContext('2d').getImageData(0, 0, W, H).data)
     const changedPx = (A: Uint8ClampedArray, B: Uint8ClampedArray): number => {
       let changed = 0
@@ -291,7 +296,7 @@ test('④ 젖은 브러시 전수 — 흰 판에서 빈 프리셋 전부가 «�
     b2.diag.markMultiForTest(base, W, H, true)
     const A = pixels()
     const diffOf = (name: string): number => {
-      b2.diag.markMultiForTest([...base, { tool: 'brush', shape: 'wave', wPx: 14, seed: 7, preset: name, color: '#1e4fd0', press: 0.8 }], W, H, true)
+      b2.diag.markMultiForTest([...base, { tool: 'brush', shape: 'wave', wPx: 14, seed: 7, preset: name, color: '#e8c020', press: 0.8 }], W, H, true)
       return changedPx(A, pixels())
     }
     const onColor: Record<string, number> = {}
@@ -325,7 +330,7 @@ test('④ 젖은 브러시 전수 — 흰 판에서 빈 프리셋 전부가 «�
   // 그 밖은 진짜 결함(지시 64-3). 이름은 어느 쪽이든 원장에 남는다.
   const deadUnexplained = dead.filter(k => (r.opaqueOf[k] ?? 1) > 0.05)
   OUT.wet = {
-    def: '흰 판 빈칸(62 ⑦의 판정 — 최대 층 알파 < C.PAINT62_PAINTED_ALPHA · 직선 12px) 전부를 «색 위»(100%_Opaque 빨강 w60 띠 · 굽기 통로)에 파랑 w14 물결로 긋고 바탕만 판과의 픽셀 차(RGB 합 > 12) ≥ 40px이면 돈다 · dead = 색 위에서도 안 도는 이름(지시: 「그것이 진짜 결함」) · 반증 = 바탕만 두 번(차 0)',
+    def: '흰 판 빈칸(62 ⑦의 판정 — 최대 층 알파 < C.PAINT62_PAINTED_ALPHA · 직선 12px) 전부를 «색 위»(100%_Opaque 빨강 w60 띠 + 파랑 w34 띠(dy 16 · 반쯤 겹침) · 굽기 통로)에 노랑 w14 물결로 긋고 바탕만 판과의 픽셀 차(RGB 합 > 12) ≥ 40px이면 돈다 · dead = 색 위에서도 안 도는 이름(지시: 「그것이 진짜 결함」) · 반증 = 바탕만 두 번(차 0)',
     empties_on_white: r.empties.length, changed_px: r.onColor, min_changed_px: MIN, dead, dead_explained_opaque: Object.fromEntries(dead.map(k => [k, r.opaqueOf[k]])),
     dead_unexplained: deadUnexplained, falsification_nothing_changed: r.nothing,
   }

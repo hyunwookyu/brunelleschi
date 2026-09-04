@@ -16,12 +16,12 @@
       "smudgeK",
       "paperK"
     ],
-    "pencil_brush_candidates": 196
+    "pencil_brush_candidates": 197
   },
   "knob_effect": {
-    "h0": -2092864722,
-    "tuned": -1510243679,
-    "reset": -2092864722,
+    "h0": -2097425348,
+    "tuned": -1215857040,
+    "reset": -2097425348,
     "changed": true,
     "restored": true
   },
