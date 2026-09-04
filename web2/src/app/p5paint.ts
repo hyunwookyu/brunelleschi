@@ -125,37 +125,51 @@ const sizedW = new Map<string, number>()    // 등록 이름 → 실측 폭(px �
 const LADDER = Math.SQRT2
 const MAX_KI = 24                            // 500px 상한(58 ⛔)이면 충분한 칸 수
 
-/** 칸 ki의 브러시를 (등록하고) 그 실측 폭을 돌려준다 — 캐시. */
+/** 칸 ki의 브러시를 (등록하고) 그 실측 폭을 돌려준다 — 캐시.
+ *  ⚠ 마커류(type marker)는 폭 실측 뒤 **같은 이름으로 보상 불투명을 재등록**한다(아래). */
 function stepBrush(tool: Instr58, base: string, ki: number): { name: string; wm: number } {
   const t = tune[tool]
   const key = `${base}|${ki}|${MUL_KEYS.map(mk => t?.[mk] ?? 1).join(',')}`
   const hit = derived.get(key)
   if (hit) return { name: hit, wm: sizedW.get(hit)! }
-  let name = base
-  if (ki !== 0 || !(!t || MUL_KEYS.every(mk => mk === 'weightK' || (t[mk] ?? 1) === 1))) {
-    const k = Math.pow(LADDER, ki)
-    const bp = BASE_PARAMS[base] ?? BASE_PARAMS.HB!
-    name = `s61-${derived.size}`
-    const num = (v: unknown): number | null => (typeof v === 'number' ? v : null)
-    const mul = (v: unknown, m: number): unknown => (num(v) === null ? v : num(v)! * m)
-    brush.add(name, {
-      ...bp,
-      // 크기의 몫 — 도장 지름·산포만 k배. ⚠ spacing은 **경로상 절대 px 걸음**(draw()의
-      // stepSize — 소스 실측)이라 k배 하면 도장 수가 1/k이 되어 자국이 사라진다(첫 판
-      // 사진이 잡았다). √k배(비용 절충)도 대 보았다 — 연필·색연필이 성긴 점열이 됐다(기각).
-      weight: mul(bp.weight, k),
-      scatter: mul(bp.scatter, k * (t?.scatterK ?? 1)),
-      spacing: Math.max(0.005, (num(bp.spacing) ?? 0.1) * (t?.spacingK ?? 1)),
-      opacity: mul(bp.opacity, t?.opacityK ?? 1),
-      grain: mul(bp.grain, t?.grainK ?? 1),
-      sharpness: mul(bp.sharpness, t?.sharpK ?? 1),
-    })
-  }
+  const bp = BASE_PARAMS[base] ?? BASE_PARAMS.HB!
+  const k = Math.pow(LADDER, ki)
+  const num = (v: unknown): number | null => (typeof v === 'number' ? v : null)
+  const mul = (v: unknown, m: number): unknown => (num(v) === null ? v : num(v)! * m)
+  /** 이 칸의 매개변수(크기 k배 + 사람 배수) — 등록·재등록이 같은 셈을 쓴다(#54) */
+  const paramsOf = (opacityOverride?: number): Record<string, unknown> => ({
+    ...bp,
+    // 크기의 몫 — 도장 지름·산포만 k배. ⚠ spacing은 **경로상 절대 px 걸음**(draw()의
+    // stepSize — 소스 실측)이라 k배 하면 도장 수가 1/k이 되어 자국이 사라진다(첫 판
+    // 사진이 잡았다). √k배(비용 절충)도 대 보았다 — 연필·색연필이 성긴 점열이 됐다(기각).
+    weight: mul(bp.weight, k),
+    scatter: mul(bp.scatter, k * (t?.scatterK ?? 1)),
+    spacing: Math.max(0.005, (num(bp.spacing) ?? 0.1) * (t?.spacingK ?? 1)),
+    opacity: opacityOverride !== undefined ? opacityOverride : mul(bp.opacity, t?.opacityK ?? 1),
+    grain: mul(bp.grain, t?.grainK ?? 1),
+    sharpness: mul(bp.sharpness, t?.sharpK ?? 1),
+  })
+  const noMul = !t || MUL_KEYS.every(mk => mk === 'weightK' || (t[mk] ?? 1) === 1)
+  const plain = ki === 0 && noMul && bp.type !== 'marker'
+  const name = plain ? base : `s61-${derived.size}`
+  if (!plain) brush.add(name, paramsOf())
   const wm = Math.max(0.5, measureWidth(name))
+  // **마커의 크기 불변 잉크 농도**(46·50 계약 상수 C.PAINT_MARKER_ALPHA(0.55)로 되맞춤):
+  // p5 마커의 한 획 불투명은 겹침 수(폭 ÷ 간격)의 함수라 **굵기에 실린다** — 가는 마커
+  // (2.5px)는 겹침 ~12로 α≈0.03(사실상 안 보임 — paint48 ③ 실측 0픽셀), 굵은 마커도 0.26
+  // 대역(옛 band 0.55의 절반). 도장 알파 = 1−(1−A)^(간격/폭)이면 몸통 한 번 지남의 누적이
+  // 폭과 무관하게 A다(A는 46이 잰 그 상수 — 새 수 아님). p5의 α 나눗셈(min(weight,1.3) ·
+  // u∈[1,1.4])은 ≤30% 눈금 오차로 받는다. 사람 배수(opacityK)는 그 위에 곱으로 산다.
+  if (bp.type === 'marker') {
+    const spc = num(bp.spacing) ?? C.MARKER_SPACING
+    const aDab = 1 - Math.pow(1 - C.PAINT_MARKER_ALPHA, spc / Math.max(spc, wm))
+    brush.add(name, paramsOf(Math.max(1, Math.round(aDab * 255 * (t?.opacityK ?? 1)))))
+  }
   derived.set(key, name)
   sizedW.set(name, wm)
   return { name, wm }
 }
+
 
 /** **크기는 파생 브러시가 든다** — p5.brush의 산포·간격은 «획 weight × param»이라 획
  *  weight로 굵기를 키우면 자국이 점구름이 된다(첫 판 사진). scaleBrushes의 셈(도장 지름·
