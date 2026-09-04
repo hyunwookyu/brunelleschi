@@ -57,8 +57,8 @@ async function boot(page: Page) {
 type Instr = 'brush' | 'marker' | 'cp' | 'pencil'
 
 /** 견본을 긋고(w px · 직선) 띠 프로파일·주기·통계를 계산한다 — 계산 전부가 페이지 안이다. */
-const measureLine = (page: Page, instr: Instr, wPx: number) =>
-  page.evaluate(([i, w]) => {
+const measureLine = (page: Page, instr: Instr, wPx: number, maxP = 60) =>
+  page.evaluate(([i, w, PMAX]) => {
     const b2 = (window as any).__b2
     b2.diag.markSampleForTest(i, 'line', w)
     const m = (window as any).__m61 as { v: number[]; w: number; h: number }
@@ -86,7 +86,7 @@ const measureLine = (page: Page, instr: Instr, wPx: number) =>
       }
       return mean > 1e-6 ? (2 * Math.hypot(re, im)) / N / mean : 0
     }
-    for (let P = 3; P <= 60; P += 0.5) {
+    for (let P = 3; P <= (PMAX as number); P += 0.5) {
       const r = ratioAt(P)
       if (r > bestRatio) { bestRatio = r; bestP = P }
     }
@@ -136,7 +136,7 @@ const measureLine = (page: Page, instr: Instr, wPx: number) =>
       bareShare: core > 0 ? +(coreBare / core).toFixed(4) : 0, coreN: core,
       edgeSd: +eSd.toFixed(3), edgeN: edges.length,
     }
-  }, [instr, wPx] as const)
+  }, [instr, wPx, maxP] as const)
 
 test('①② 격자·도장 주기 — 넷의 직선(굵기 20)', async ({ page }, info) => {
   await boot(page)
@@ -155,16 +155,18 @@ test('①② 격자·도장 주기 — 넷의 직선(굵기 20)', async ({ page 
 
 test('④ 굵기 무관 — 연필 20 vs 40', async ({ page }) => {
   await boot(page)
-  const a = await measureLine(page, 'pencil', 20)
-  const b = await measureLine(page, 'pencil', 40)
+  // 2차 [19]: w40의 지배 주기가 스윕 상한(60)에 붙었다 — ④는 상한 120으로 잰다(①②의 자는 그대로 60)
+  const a = await measureLine(page, 'pencil', 20, 120)
+  const b = await measureLine(page, 'pencil', 40, 120)
   expect(a.mean, '20px 자국 실재').toBeGreaterThan(2)
   expect(b.mean, '40px 자국 실재').toBeGreaterThan(2)
   // web2-62: 같은 자를 결 «끔»에서 — 지배 주기가 결의 것이면 끔에서 사라지고, 도장 산포의 것이면 그대로다(리뷰어 [H5]의 값)
   await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(true))
-  const a0 = await measureLine(page, 'pencil', 20)
-  const b0 = await measureLine(page, 'pencil', 40)
+  const a0 = await measureLine(page, 'pencil', 20, 120)
+  const b0 = await measureLine(page, 'pencil', 40, 120)
   await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(false))
   OUT.width_follow = {
+    sweep_max_P: 120,
     w20: { P: a.dominantP, amp: a.ampRatio },
     w40: { P: b.dominantP, amp: b.ampRatio },
     p_ratio: a.dominantP > 0 ? +(b.dominantP / a.dominantP).toFixed(3) : 0,
@@ -298,7 +300,7 @@ test('⑤ 넷이 갈린다 — 같은 압력·같은 도형의 통계', async ({
     return +best.toFixed(3)
   })()
   OUT.four_differ = { stats, perPair, minPair: +minPair.toFixed(3), null_same_tool: nullDiff, seeds: SEEDS, floors: FLOOR, by_seed: bySeed,
-    def: '(62 판갈이 2판) 도구마다 시드 셋(61·4242·777)의 평균·퍼짐 — 짝별로 세 축(p95·빈 몫·가장자리 sd) 중 «|평균 차| ÷ max(바닥, 퍼짐 제곱평균)»(z)의 최대 — 그 최소가 «가장 닮은 짝»의 갈림(신호 ÷ 잡음). 영점 = 연필 시드 둘의 z(제 퍼짐 기준 ~1 대역). 61 자(시드 하나 · 상대 차)의 문면은 아래에 남긴다: 짝별로 세 축(p95·빈 몫·가장자리 sd) 중 최대 상대 차 — 그 최소가 «가장 닮은 짝»의 갈림. ⚠ 마른 알갱이 매체 둘(cp↔붓)이 가장 닮은 짝이다 — 수치 갈림의 눈금은 이 표가, 성격의 갈림은 사진(shots61 — 눈)이 판정. ⚠ pre(옛 엔진)와 이 자는 같은 눈금이 아니다: pre의 cp·마커는 edgeSd·amp가 정확히 0(구성상 평탄)이라 상대 차가 1에 포화했다(0 나눗셈 형태 — 리뷰어 [11]). 반증 null_same_tool = 같은 도구(연필 · 시드 4242 — 도장 배치 잡음만 다름)의 같은 자 — 작지만 0이 아닌 값이어야 하고(0이면 결정론 항등을 잰 것) 제품 최소 짝과의 간격이 판별력이다',
+    def: '(62 판갈이 2판) 도구마다 시드 셋(61·4242·777)의 평균·퍼짐 — 짝별로 세 축(p95·빈 몫·가장자리 sd) 중 «|평균 차| ÷ max(바닥, 퍼짐 제곱평균)»(z)의 최대 — 그 최소가 «가장 닮은 짝»의 갈림(신호 ÷ 잡음). 영점 = 연필 시드 둘의 z(제 퍼짐 기준 ~1 대역). ⚠ 잉크펜(deevad/liner)·마커(ramon/100%_Opaque)는 난수를 안 써 시드 셋이 같은 값(sd 0) — 그 둘의 z 분모는 바닥이 준다(2차 [20]). 61 자(시드 하나 · 상대 차)의 문면은 아래에 남긴다: 짝별로 세 축(p95·빈 몫·가장자리 sd) 중 최대 상대 차 — 그 최소가 «가장 닮은 짝»의 갈림. ⚠ 마른 알갱이 매체 둘(cp↔붓)이 가장 닮은 짝이다 — 수치 갈림의 눈금은 이 표가, 성격의 갈림은 사진(shots61 — 눈)이 판정. ⚠ pre(옛 엔진)와 이 자는 같은 눈금이 아니다: pre의 cp·마커는 edgeSd·amp가 정확히 0(구성상 평탄)이라 상대 차가 1에 포화했다(0 나눗셈 형태 — 리뷰어 [11]). 반증 null_same_tool = 같은 도구(연필 · 시드 4242 — 도장 배치 잡음만 다름)의 같은 자 — 작지만 0이 아닌 값이어야 하고(0이면 결정론 항등을 잰 것) 제품 최소 짝과의 간격이 판별력이다',
   }
   expect(minPair, '어떤 짝도 완전히 같지 않다(신호 실재)').toBeGreaterThan(0)
   expect(minPair, '가장 닮은 짝의 갈림이 잡음의 3배를 넘는다(z ≥ 3)').toBeGreaterThanOrEqual(3)
@@ -377,6 +379,8 @@ test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 ·
   for (const i of ['pencil', 'cp', 'brush', 'marker'] as Instr[]) naive[i] = +((await widthOf(i, 24)) / 24).toFixed(3)
   await page.evaluate(() => (window as any).__b2.diag.setCalibOffForTest(false))
   const naiveDev = Math.max(...Object.values(naive).map(v => Math.abs(v - 1)))
+  const naiveBinds = Object.fromEntries(Object.entries(naive).map(([k, v]) => [k, Math.abs(v - 1) > cs.PAINT61_SIZE_TOL]))
+  ;(OUT.size_honesty as Record<string, unknown>).falsification_calib_off_binds = { def: '보정 끔이 게이트 값을 문 밖으로 밀어낸 도구(여기서만 반증이 섰다 — 2차 [7]). 마커(ramon/100%_Opaque)는 보정표가 w = 2r(a 2 · b 0)이라 «반지름 = 폭/2»와 같은 사상 = 항등이 맞다 · 잉크펜은 .917(문 안)', ...naiveBinds, n: Object.values(naiveBinds).filter(Boolean).length }
   ;(OUT.size_honesty as Record<string, unknown>).falsification_calib_off = { def: '보정 끔(반지름 = 요청 폭/2)의 w24 반최대 폭 비 — 보정이 무엇인가를 «한다»의 실증(넷 중 최대 편차가 문 밖이어야 자가 산다). 보정과 게이트가 같은 자(반최대 폭)를 쓰는 것은 «자가 보정의 정의»이지 자기참조가 아니다 — 보정은 반지름 6·24 두 점의 직선 견본에서 폭을 재고, 게이트는 그 표로 «다른 요청 폭(24·48·100·250·500)»의 자국을 다시 잰다(보간·비례가 실제로 서는가)', rows: naive, max_dev: +naiveDev.toFixed(3) }
   expect(naiveDev, '반증 — 보정을 끄면 어느 도구의 반최대 폭이 허용을 벗어난다(보정이 실제로 일한다)').toBeGreaterThan(cs.PAINT61_SIZE_TOL)
   expect(doubling, '연필 — 굵기 2배는 폭도 2배 대역').toBeGreaterThan(1.6)

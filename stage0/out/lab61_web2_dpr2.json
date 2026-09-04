@@ -7,38 +7,34 @@
   "what": "web2-61 — 작업대(엔진 매개변수 판): 열림 · 손잡이→자국 · 브러시 선택 · 꺼내기/가져오기/굳힌다",
   "note_pitfalls": "#103(자국 해시는 markSample — 호출마다 새 캔버스) · #102(?reset 시험당 1회) · #99(병합-쓰기) · #101(web2 러너)",
   "structure": {
-    "knobs": 7,
+    "knobs": 6,
     "params": [
-      "weightK",
+      "sizeK",
       "opacityK",
-      "scatterK",
-      "grainK",
-      "sharpK",
       "spacingK",
+      "scatterK",
+      "smudgeK",
       "paperK"
     ],
-    "pencil_brushes": [
-      "2B",
-      "HB",
-      "2H"
-    ]
+    "pencil_brush_candidates": 196
   },
   "knob_effect": {
-    "h0": -2138357669,
-    "tuned": 1079032356,
-    "reset": -2138357669,
+    "h0": -2073334200,
+    "tuned": -1664041977,
+    "reset": -2073334200,
     "changed": true,
     "restored": true
   },
   "brush_pick": {
-    "marker61": -1371846723,
-    "marker46": 1151013325,
-    "changed": true
+    "default_marker": 2059660774,
+    "classic_marker_small": -1897160416,
+    "changed": true,
+    "note": "기본 마커 = 엔진 DEFAULT_PRESET.marker(62: ramon/100%_Opaque)"
   },
   "roundtrip": {
-    "json_len": 30,
+    "json_len": 42,
     "stored_equal": true,
-    "reimported": 1151013325,
+    "reimported": -1897160416,
     "matches_tuned": true
   },
   "constants_snapshot": {

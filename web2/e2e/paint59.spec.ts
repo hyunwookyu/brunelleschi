@@ -513,11 +513,10 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
     def: '저압(0.25 · 합성 펜) 굵기 20의 한 획이 (680,y)에서 자기 자신과 ~38°로 교차한다. 창은 굵기 폭(20×20 css) — 교차 창 p95 어둡기 ÷ 몸통 창 둘(600·760)의 p95 평균 · cap_ratio = 교차 p95 ÷ 압력 1.0 직선 몸통 p95(지시 문면 「교차점의 알파가 획의 불투명도를 안 넘는다」). **web2-61 판갈이**: 엔진이 p5.brush로 바뀌어 «최대값 합집합 구성 → 보장»이던 값이 **실측**이 됐다(p5 마스크 안 over 누적이 포화로 눌리는가의 값 — 임계가 실제로 잰다). 옛 엔진 반증(strokeBufferOff)은 엔진과 함께 갔다 — 동결 원장(42c9491 판 paint59_web2)의 falsification 열쇠가 기록. 새 반증 = «같은 마커 획 세 번»(획 사이는 쌓인다 — 46 ⛔): 창 평균 비가 문을 넘는다(평균인 이유는 falsification_stack 주석 — 저압 자국의 p95가 색 상한에 눌린다)',
     threshold: 1 + cs.PAINT59_CROSS_TOL,
     note_grain: '판정(rows)은 **결 끔**에서 잰다(결 칸 잡음 — 종전 사유 그대로). 결 있는 값은 rows_grain에 기록',
-    note_brush: '붓 rows.brush.p95_ratio 1.03 대역(문 안) — 다만 이것은 포화가 묶는 값이다(note_saturation). 60 ⚑ 1(«붓의 획 안 누적»)은 «값으로 닫힘»이 아니라 **관측 조건이 바뀐 것**: 옛 엔진의 빗살 흐름 축이 사라졌고, 비포화 판(이 판에 붓은 없다)은 위 한계로 판별력이 없다 — 62의 캡과 함께 다시 잰다',
+    note_brush: '(62) 잉크펜 슬롯(deevad/liner · 불투명 1)의 rows.brush p95_ratio·cap_ratio는 1 — 포화(캡 1)가 묶는 값. 61 문면(«1.03 대역 · 빗살 흐름 축 소멸»)은 61 원장(@ac76441)의 것이다',
     rows, rows_grain: rowsGrain, rows_press: rowsPress,
     rows_unsaturated: unsat,
-    note_saturation: '판(리뷰어 [3][27][28] — 값 뒤에 쓴 문장): 압력 다리 탓에 연필·cp의 기본 몸통 p95가 색 상한(~200)에 붙는다 — rows의 p95 비 1.00 대역·cap 1은 «상한이 묶는 값»이다(단언은 그 상태의 사실로서 산다). rows_unsaturated(불투명 .4)는 **기록이지 단언이 아니다** — 그 판 자체의 한계 둘: ① dpr2는 .4에서도 상한을 못 벗어난다(연필 199/199) ② dpr1의 비(연필 1.256)는 두 몸통 창의 비대칭(191.7 vs 116 — 비포화에서 원근·결이 창을 가른다)이 지배한다(cross/body_l은 1.008). «획 안 누적의 실재 정도»는 이 판이 못 가른다 — 62(캡 기제)와 사람 눈(사진 cross)의 몫. 질량 자(mass)는 falsification_stack(마커 셋)이 든다',
-    note_marker: '마커 자기 교차는 새 엔진에서 진해진다(rows.marker — 옛 canvas stroke() 한 번의 구성상 1.000(AS-C175)과 다른 거동 · 실물 마커의 젖은 겹침과 같은 결). 46 ⛔ 계약은 획 «사이»이고 그것은 falsification_stack이 지킨다 — 자기 교차의 눈 판정은 사진(shots61 marker cross)이 몫(AS-C175 갱신)',
+    note_62: '(62 판갈이 — 이 원장의 값으로 다시 쓴 문장 · 2차 리뷰어 [3][15]) ② 에서 **단언으로 남은 것**: ① cap_ratio ≤ 1.08(교차 p95 ÷ 압력 1 몸통 p95 — 도구 넷 · 마커 제외) ② 마커 셋 쌓임(falsification_stack) > 1.08 ③ 교차 창 잉크 > 20 · 비포화 > 10. **기록으로 내려간 것**: 연필·cp의 같은 획 p95_ratio(연필 1.31 — 62 캡의 술어 paint62 ④가 그 자리 · 사람 확인 ⚑). 비포화(.4) 판은 연필·cp 몸통 창이 대칭(17.3/17.3)이고 비 1.12·1.02 — 61 문면(비대칭 191.7 vs 116 · 1.256)은 61 원장(@ac76441)의 것이라 여기서 지웠다. 마커(ramon/100%_Opaque · 캡 .55)는 자기 교차가 안 진해진다(rows.marker 1 · AS-C175 62 재갱신). 비포화 «잉크 있음» 바닥 10의 근거: 실측 19.3·20이 옛 바닥 20에 걸렸고, 빈 창의 p95는 0~3(잡음) — 그 사이의 값',
     falsification_stack: off,
   }
   expect(off.stack_ratio ?? 0, '반증 — 마커 세 번(획 사이 쌓임)의 창 잉크 비가 문을 넘는다').toBeGreaterThan(1 + cs.PAINT59_CROSS_TOL)
@@ -642,7 +641,7 @@ test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감�
     scene: { paint_with_grain: sceneN, paint_no_grain: sceneN2, note: '#103 — 결 끔은 같은 획 재굽기(획 수 무변)' },
     rows: withGrain, rows_no_grain: noGrain,
     end_windows: endRows,
-    falsification_tip: { def: '(62 판갈이) 마커 슬롯을 tanda/marker-01(dabs_per_second 80)로 + capOff(원문 누적) + 이벤트 고정 dtime 20ms — 느린 끝이 뭉친다: 끝/시작 창 최대비가 문을 넘는다. 캡만 켠 판(.98)은 캡이 뭉침을 «막는» 실증이라 함께 기록. 이 팔은 마커만 다시 그린다 — 마커 행만 싣는다(다른 도구 창은 빈 띠의 균일 바탕이라 정확히 1이 나와 자기참조로 오독된다 · selfcheck)', marker: tipRows.marker, max: tipMax },
+    falsification_tip: { def: '(62 판갈이) 마커 슬롯을 tanda/marker-01(dabs_per_second 80)로 + capOff(원문 누적) + 이벤트 고정 dtime 20ms — 느린 끝이 뭉친다: 끝/시작 창 최대비가 문을 넘는다. ⚠ 셋을 함께 바꾼다 — 귀속은 DEFERRED · «캡만 켠 판 .98»·«8ms 판 1.041»은 원장 밖(중간 실행)·재현 불가(2차 [21]). 이 팔은 마커만 다시 그린다 — 마커 행만 싣는다(다른 도구 창은 빈 띠의 균일 바탕이라 정확히 1이 나와 자기참조로 오독된다 · selfcheck)', marker: tipRows.marker, max: tipMax },
     grain_phase_spread: { def: '연필 · 결 켬 · 시작 x 오프셋 0·2·4·6·8px 다섯 획의 대역 비 평균·표준편차 — 결 켠 값의 잡음 눈금(1차 [3] · 새 종이 결에서도 같은 자)', ...grainSpread },
   }
   expect(tipMax, '반증 — 이벤트 고정 dtime(끝 뭉침)에서 끝/시작 창이 문을 넘는다').toBeGreaterThan(1 + cs.PAINT61_END_TOL)

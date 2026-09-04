@@ -59,7 +59,7 @@
       ],
       "sat": 0.25
     },
-    "note_sweep": "노랑 몫 스윕 × 결(리뷰어 [M4]): 어느 동작점이 초록 창 안인지 값으로 — .5는 청록 경계(첫 실측 173°)라 술어의 동작점은 .65 · 결 끔이다. 결 켬은 캡을 깎아 노랑 몫이 준다(값이 그 정도를 든다)",
+    "note_sweep": "노랑 몫 스윕 × 결(리뷰어 [M4] · 2차 [6] 정정): .5 결 끔은 창 «안»(158.6° — 창 끝 12° 여유)이고 .65는 창 중앙(95°)이라 술어의 동작점은 .65 · 결 끔이다(여유가 큰 쪽). 173.1°는 «.5 결 켬» 행 — 결이 캡을 깎아 노랑 몫이 준 값. 첫 실행의 173°도 그 조건(결 켬)이었다",
     "def": "굽기 통로(drawMarksSeam) — 파랑(#2040e0 · paint_mode 1 · opaque 1 · 압력 1 — opaque_multiply 곡선이 1) 직선 위에 노랑(#f0d020 · paint_mode 1 · opaque .65 · 압력 1 → 덮임 캡 .65 = 노랑 몫 .65 — 결 끔). ⚠ 반반(.5)은 이 10채널 모형에서 청록(hue 155 — node 실측)이라 «초록 대역 끝»이었다: 실물처럼 노랑이 조금 더 든 판을 자로 삼는다(.65 → hue ~110 예상). 몸통(±5px · x 100..380) 평균 색의 색상각(0..360)·채도. 초록 = 색상각 70..170 ∧ 채도 > .25. 반증 = paint_mode 강제 0(가산 over) — 초록 대역 밖",
     "on": {
       "rgb": [
@@ -212,6 +212,32 @@
         ]
       }
     },
+    "rows_unsaturated_capoff": {
+      "pencil": {
+        "cross": 0.1659,
+        "body_l": 0.0931,
+        "body_r": 0.0821,
+        "ratio": 1.8929,
+        "cap": 0.168,
+        "cross_over_cap": 0.9872,
+        "at": [
+          224,
+          127
+        ]
+      },
+      "cp": {
+        "cross": 0.2833,
+        "body_l": 0.176,
+        "body_r": 0.1777,
+        "ratio": 1.602,
+        "cap": 0.1519,
+        "cross_over_cap": 1.8651,
+        "at": [
+          224,
+          127
+        ]
+      }
+    },
     "stack": {
       "one": 0.55,
       "two": 0.7975,
@@ -219,13 +245,19 @@
       "ratio_2_1": 1.45,
       "ratio_3_2": 1.1397
     },
+    "note_cp": "cp의 cross_over_cap .90이 포화·비포화에서 같은 이유(2차 [8]): 불투명 배수는 캡과 도장 알파에 «같은» 배수로 걸려 창 안 분포가 선형 배율이다 — .90은 «몸통이 목표의 90%까지 쌓인다»(B-pencil 도장 밀도·산포)의 값이지 비가 아니다. 비포화 판이 새로 가르는 것은 «캡이 목표에 비례해 내려가는가»(capoff 팔이 그 반증)",
+    "note_stack": "stack(.55 → .7975 → .9089)은 상수 알파 .55의 over 닫힌 해(1−.45² · 1−.45³)와 같다 — 마커가 압력 무관 불투명 블록이라 «over가 도는가»의 항등에 가깝다(2차 [9]) · 획 «사이» 물성의 실증은 mats46 ②(안료 단조)와 paint59 falsification_stack이 든다",
     "falsification_binds": {
-      "def": "capOff에서 교차가 캡을 문(1.08) 넘게 넘는 도구 — 여기서만 반증이 실행됐다(연필·잉크펜은 캡이 안 걸린 상태라 capOff가 항등: 실패 조건 미실행 — 그 도구의 ④는 «캡 안»이 아니라 «캡에 안 닿음»이다)",
+      "def": "capOff에서 교차가 캡의 문(1 + C.PAINT62_CAP_TOL — 게이트와 같은 문 · 2차 [18]) 넘게 넘는 도구 — 여기서만 반증이 실행됐다(연필·잉크펜은 캡이 안 걸린 상태라 capOff가 항등: 실패 조건 미실행 — 그 도구의 ④는 «캡 안»이 아니라 «캡에 안 닿음»이다). unsaturated = 비포화(.4) 판의 같은 표",
       "pencil": false,
       "cp": true,
       "marker": true,
       "brush": false,
-      "n": 2
+      "n": 2,
+      "unsaturated": {
+        "pencil": false,
+        "cp": true
+      }
     }
   },
   "smudge": {
@@ -272,6 +304,19 @@
         "liveClean": 1086
       }
     },
+    "falsification_self_sample_pixels": {
+      "def": "스머지 cross 획(빨강 직선(중앙 아래 60px)을 첫 변이 가로지른 뒤 셋째 변이 제 트레일을 가로지름) — 제품(스냅숏 표집) vs 층 표집의 어둡기 지도 차: 차 > 8/255인 픽셀 수 · 평균 절대 차 · 최대. 계수기(liveTouched)가 아니라 «자국»이 갈린다는 실증(2차 [4]). smudge_length .85가 단언의 조건이고 기본값 .35(default_length)는 양동이가 빨리 잊어 «안 갈린다»(0) — 반증은 조건부다: 자기 오염이 실재하는 조건에서만 선다",
+      "smudge_length": 0.85,
+      "differ_px_gt8": 1837,
+      "mean_abs_diff": 0.369,
+      "max_diff": 25.7,
+      "default_length": {
+        "smudge_length": 0.35,
+        "differ_px_gt8": 0,
+        "mean_abs_diff": 0.069,
+        "max_diff": 6.7
+      }
+    },
     "threshold": {
       "red_excess_min": 8,
       "note_liveClean": "liveClean = 이 획이 «안 닿은» 타일을 층에서 읽은 표집(획 전 내용 그대로 — 오염 아님) · 오염의 술어는 liveTouched(닿은 타일을 층에서 읽음)뿐"
@@ -287,7 +332,9 @@
     "skipped": {
       "surfacemap_x": 12,
       "surfacemap_y": 12
-    }
+    },
+    "engine_reads": 64,
+    "engine_reads_of": 65
   },
   "differ": {
     "def": "196 견본(직선 12px · 시드 62 · 잉크펜 슬롯 · 층 알파) 통계 서명 {mean,p95,bare,edgeSd} — painted = 최대 알파 ≥ C.PAINT62_PAINTED_ALPHA인 것 · distinct2 = 두 자리(§5 유효 자릿수 — 술어) 고유 서명 수 · distinct4 = 네 자리(기록) · empty_reasons = 사유별 수(겹침 포함) · empty = 빈 층에 아무것도 안 남긴 것과 그 사유(값 — eraser · smudge≥.65(젖은 붓·물만·블렌더) · posterize · opaque≤.05 · lock_alpha · smudge_transparency · dabs_sparse(반지름당 도장 < .2 — splatter)) · unexplained = 사유 없는 빈 것(0이어야). 반증 = 같은 브러시 8번 → 서명 1",
@@ -347,7 +394,7 @@
       "opaque≤.05": 2
     },
     "unexplained": [],
-    "ms": 20967,
+    "ms": 21003,
     "falsification_same_brush_distinct": 1,
     "sample": {
       "Dieterle/8B_Pencil#1": {
@@ -385,6 +432,28 @@
         "p95": 0.8577,
         "bare": 0,
         "edgeSd": 0.221
+      }
+    },
+    "threshold_sensitivity": {
+      "0.002": {
+        "painted": 155,
+        "unexplained": 0
+      },
+      "0.004": {
+        "painted": 155,
+        "unexplained": 0
+      },
+      "0.008": {
+        "painted": 154,
+        "unexplained": 0
+      },
+      "0.015": {
+        "painted": 149,
+        "unexplained": 0
+      },
+      "0.03": {
+        "painted": 145,
+        "unexplained": 3
       }
     },
     "threshold": {
@@ -686,9 +755,9 @@
     "markPx": 8584,
     "deterministic": true,
     "seed_differs": true,
-    "bake_stress_20faces_x40strokes_ms": 20698.1,
-    "bake_20faces_40strokes_total_ms": 1483.7,
-    "bake_perstroke_2x40_ms": 1849,
+    "bake_stress_20faces_x40strokes_ms": 20728.1,
+    "bake_20faces_40strokes_total_ms": 1484.2,
+    "bake_perstroke_2x40_ms": 1841.7,
     "calib": {
       "Dieterle/8B_Pencil#1": {
         "a": 0.16666666666666666,
@@ -2063,6 +2132,7 @@
         "w2": 32
       }
     },
+    "calib_def": "프리셋별 {w1,w2,ok,a,b}: w1·w2 = 반지름 6·24의 직선 견본 반최대 폭(px) · ok = 둘 다 > 0. 요청 폭 → 반지름은 «구간별 비례·로그 보간»(w ≤ w1: r = w·6/w1 · w ≥ w2: r = w·24/w2 · 사이: 로그 보간 — 절편 없음). a·b는 초판 선형 맞춤의 기울기·절편 «기록»(산포 붓의 절편이 얼마나 컸는지 — 2차 리뷰어 [12]) · 쓰이지 않는다. ok:false = 반지름 = 폭/2(#105 표식)",
     "layers": {
       "layers": 51,
       "bytes": 100282880,
@@ -2077,7 +2147,9 @@
       "skipped": {
         "surfacemap_x": 12,
         "surfacemap_y": 12
-      }
+      },
+      "engine_reads": 64,
+      "engine_reads_of": 65
     },
     "premul_violations": 0,
     "speed_px_s": 300
@@ -2097,5 +2169,6 @@
     "PAINT62_DISTINCT_MIN": 0.8,
     "PAINT62_CAP_TOL": 0.02,
     "note": "스냅샷-라이트(web2 원장의 constantsSnapshot 기계 부재는 종전 유보 · 값은 constants.ts가 정본)"
-  }
+  },
+  "note_dpr": "견본 판은 고정 px 캔버스(dpr 무관)라 dpr1·dpr2 원장이 시간 열 빼고 «같아야» 한다(같음이 곧 그 사실의 확인 — D-C3의 dpr 감시는 화면을 읽는 paint50·mats46·paint59가 진다 · 2차 리뷰어 [16])"
 }

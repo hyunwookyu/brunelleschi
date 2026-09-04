@@ -28,6 +28,9 @@ import { SETTINGS, INPUTS, S } from '../mypaint/settings.gen'
 import { hexToLinear, rgbToHsv } from '../mypaint/helpers'
 import { grainTile, GRAIN_DEPTH } from '../mypaint/paper'
 
+/** 엔진(brush.ts·surface.ts)이 읽는 설정 수 — 65 중 64(restore_color는 원문 mypaint-brush.c도 안 읽는다 · 앱의 것).
+ *  단위(mypaint62b.test)가 소스를 훑어 이 수와 대조한다 — 게이트 ⑥ «사상»의 값(원장 probe.mapping.engine_reads). */
+export const ENGINE_SETTINGS_READ = 64
 /** 합성 속도(px/s) — 점렬에 시각이 없으므로 dtime = 걸음 ÷ 이 값(AS-C184). */
 export const SPEED_PX_S = 300
 /** 층 예산(바이트) — 1024² float 층이 16MB라 여섯 장 남짓. 넘치면 오래된 캔버스의 층을 버린다. */
@@ -121,7 +124,7 @@ function brushOf(name: string): Loaded {
   return l
 }
 /** 진단 — 사상 통계(게이트 ⑥): 프리셋 전부를 실어 설정·곡선 수와 미지 항목을 센다 */
-export function presetMappingForTest(): { presets: number; settings: number; curves: number; unknownSettings: number; unknownInputs: Record<string, number>; skipped: Record<string, number> } {
+export function presetMappingForTest(): { presets: number; settings: number; curves: number; unknownSettings: number; unknownInputs: Record<string, number>; skipped: Record<string, number>; engine_reads: number; engine_reads_of: number } {
   let settings = 0, curves = 0, unknownSettings = 0
   const unknownInputs: Record<string, number> = {}
   for (const p of PRESETS) {
@@ -129,7 +132,7 @@ export function presetMappingForTest(): { presets: number; settings: number; cur
     settings += l.stats.settings; curves += l.stats.curves; unknownSettings += l.stats.unknownSettings.length
     for (const k of l.stats.unknownInputs) unknownInputs[k] = (unknownInputs[k] ?? 0) + 1
   }
-  return { presets: PRESETS.length, settings, curves, unknownSettings, unknownInputs, skipped: PRESET_SKIPPED_INPUTS }
+  return { presets: PRESETS.length, settings, curves, unknownSettings, unknownInputs, skipped: PRESET_SKIPPED_INPUTS, engine_reads: ENGINE_SETTINGS_READ, engine_reads_of: SETTINGS.length }
 }
 
 // ── 층(대상 캔버스마다) ──────────────────────────────────────────────────────────
@@ -494,6 +497,7 @@ export function mypaintProbeForTest(): Record<string, unknown> {
   for (let f = 0; f < 2; f++) for (const m of mkMarks(f)) drawOne(fg, m)
   out.bake_perstroke_2x40_ms = +(performance.now() - tB).toFixed(1)
   out.calib = calibForTest()
+  out.calib_def = '프리셋별 {w1,w2,ok,a,b}: w1·w2 = 반지름 6·24의 직선 견본 반최대 폭(px) · ok = 둘 다 > 0. 요청 폭 → 반지름은 «구간별 비례·로그 보간»(w ≤ w1: r = w·6/w1 · w ≥ w2: r = w·24/w2 · 사이: 로그 보간 — 절편 없음). a·b는 초판 선형 맞춤의 기울기·절편 «기록»(산포 붓의 절편이 얼마나 컸는지 — 2차 리뷰어 [12]) · 쓰이지 않는다. ok:false = 반지름 = 폭/2(#105 표식)'
   out.layers = layerStatsForTest()
   out.mapping = presetMappingForTest()
   out.premul_violations = premulViolationsTotal

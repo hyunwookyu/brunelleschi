@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { SETTINGS } from '../src/mypaint/settings.gen'
+import { ENGINE_SETTINGS_READ } from '../src/app/mypaintpaint'
 
 describe('62 ⑥ 사상 — 엔진이 읽는 설정', () => {
   it('brush.ts + surface.ts가 참조하는 S.<설정>이 65개 전부다(안 읽는 설정 0)', () => {
@@ -18,5 +19,6 @@ describe('62 ⑥ 사상 — 엔진이 읽는 설정', () => {
     // 설정이지 엔진의 것이 아니다. 엔진이 읽는 것은 64/65이고, 그 하나는 원문과 같은 자리다(값으로 남긴다).
     expect(unread, '엔진이 참조하지 않는 설정 — 원문도 안 읽는 restore_color 하나뿐').toEqual(['RESTORE_COLOR'])
     expect(used.size, '엔진이 읽는 설정 수').toBe(64)
+    expect(ENGINE_SETTINGS_READ, '원장에 실리는 상수(probe.mapping.engine_reads)가 소스 실측과 같다').toBe(used.size)
   })
 })

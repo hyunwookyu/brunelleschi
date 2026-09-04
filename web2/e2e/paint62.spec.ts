@@ -27,6 +27,7 @@ const OUT: Record<string, unknown> = {
   what: 'web2-62 — mypaint 엔진·합성 게이트 여덟: ①흰 테 0 ②rgb≤a ③겹침 물성 ④획 안/사이 ⑤젖은 붓 ⑥프리셋 충실도 ⑦넷을 넘어 ⑧결정론 + 탐침(비용·보정·층)',
   note_pitfalls: '#103(호출마다 새 캔버스 — scene 열쇠) · #102(?reset 시험당 1회) · #101(web2 러너) · #99(병합-쓰기) · #105(보정 실패는 ok:false 표식) · #12(⑦은 196 전수 · ①은 도구 넷+프리셋 여덟 · 동작점 하나가 아니다)',
   scene: '호출마다 markSample/markMulti가 새 캔버스를 만든다(문서·뷰 무관 · 잔류 없음)',
+  note_dpr: '견본 판은 고정 px 캔버스(dpr 무관)라 dpr1·dpr2 원장이 시간 열 빼고 «같아야» 한다(같음이 곧 그 사실의 확인 — D-C3의 dpr 감시는 화면을 읽는 paint50·mats46·paint59가 진다 · 2차 리뷰어 [16])',
 }
 const LEDGER_OF = (projectName: string) =>
   resolve(HERE, `../../stage0/out/paint62_web2_dpr${projectName === 'dpr2' ? 2 : 1}.json`)
@@ -232,7 +233,7 @@ test('③ 겹침 물성 — 파랑 위 노랑 = 초록(색상각) · 반증: pai
   }
   OUT.pigment = {
     sweep, threshold: { hue: cs.PAINT62_GREEN_HUE, sat: cs.PAINT62_GREEN_SAT },
-    note_sweep: '노랑 몫 스윕 × 결(리뷰어 [M4]): 어느 동작점이 초록 창 안인지 값으로 — .5는 청록 경계(첫 실측 173°)라 술어의 동작점은 .65 · 결 끔이다. 결 켬은 캡을 깎아 노랑 몫이 준다(값이 그 정도를 든다)',
+    note_sweep: '노랑 몫 스윕 × 결(리뷰어 [M4] · 2차 [6] 정정): .5 결 끔은 창 «안»(158.6° — 창 끝 12° 여유)이고 .65는 창 중앙(95°)이라 술어의 동작점은 .65 · 결 끔이다(여유가 큰 쪽). 173.1°는 «.5 결 켬» 행 — 결이 캡을 깎아 노랑 몫이 준 값. 첫 실행의 173°도 그 조건(결 켬)이었다',
     def: '굽기 통로(drawMarksSeam) — 파랑(#2040e0 · paint_mode 1 · opaque 1 · 압력 1 — opaque_multiply 곡선이 1) 직선 위에 노랑(#f0d020 · paint_mode 1 · opaque .65 · 압력 1 → 덮임 캡 .65 = 노랑 몫 .65 — 결 끔). ⚠ 반반(.5)은 이 10채널 모형에서 청록(hue 155 — node 실측)이라 «초록 대역 끝»이었다: 실물처럼 노랑이 조금 더 든 판을 자로 삼는다(.65 → hue ~110 예상). 몸통(±5px · x 100..380) 평균 색의 색상각(0..360)·채도. 초록 = 색상각 70..170 ∧ 채도 > .25. 반증 = paint_mode 강제 0(가산 over) — 초록 대역 밖',
     on, off, on_is_green: green(on.hue, on.sat), off_is_green: green(off.hue, off.sat),
   }
@@ -279,8 +280,8 @@ test('④ 획 안/사이 — 자기교차 ≤ 몸통(캡) · 반증(capOff) · �
   const rows: Record<string, unknown> = {}, rowsOff: Record<string, unknown> = {}
   for (const t of TOOLS) { rows[t] = await crossRatio(page, t, false); rowsOff[t] = await crossRatio(page, t, true) }
   // 비포화 판(61 AS-C183의 그 물음) — 불투명 배수 .4에서도 캡이 묶는가
-  const unsat: Record<string, unknown> = {}
-  for (const t of ['pencil', 'cp'] as Instr[]) unsat[t] = await crossRatio(page, t, false, 0.4)
+  const unsat: Record<string, unknown> = {}, unsatOff: Record<string, unknown> = {}
+  for (const t of ['pencil', 'cp'] as Instr[]) { unsat[t] = await crossRatio(page, t, false, 0.4); unsatOff[t] = await crossRatio(page, t, true, 0.4) }
   // 획 사이 — 같은 직선 두 번(굽기 통로 · 층 over) vs 한 번: 몸통 알파
   const stack = await page.evaluate(() => {
     const b2 = (window as any).__b2
@@ -299,7 +300,9 @@ test('④ 획 안/사이 — 자기교차 ≤ 몸통(캡) · 반증(capOff) · �
   })
   OUT.self_cross = {
     def: '층 알파 지도(결 끔) — cross 도형(압력 .6 상수) 교차 창(굵기 폭 20×20) p95 · 첫 변 25%·75% 몸통 창 p95 · cap = 이 획의 «획 불투명도»(도장 목표 불투명도(선형화 전 opaque × 압력 곡선) × 도구 캡 — 엔진이 값으로 낸다). **술어 = cross_over_cap ≤ 1 + C.PAINT62_CAP_TOL**(지시 문면 「한 획 자기교차는 획 불투명도를 안 넘는다」 그대로). ratio(교차 ÷ 몸통)는 기록 — 부드러운 브러시(classic/pencil hardness .1 · 도장 산포)는 몸통이 목표에 못 미쳐 교차가 목표까지 «진해진다»(실물 연필과 같다 · libmypaint 설계 · 59의 최대값 합집합 구성과 다른 자리 — DECISIONS). 반증 capOff = libmypaint 원문 누적(cross_over_cap이 1을 넘는다). rows_unsaturated = 불투명 배수 .4(61이 못 가른 비포화 판 — 캡은 «목표»라 여기서도 cap 안). stack = 마커 직선 1·2·3번(굽기 통로 · 층 over)의 몸통 평균 알파 — 획 «사이»는 쌓인다',
-    threshold_cap: 1 + cs.PAINT62_CAP_TOL, threshold_ratio_record_only: 1 + cs.PAINT59_CROSS_TOL, rows, rows_capoff: rowsOff, rows_unsaturated: unsat, stack,
+    threshold_cap: 1 + cs.PAINT62_CAP_TOL, threshold_ratio_record_only: 1 + cs.PAINT59_CROSS_TOL, rows, rows_capoff: rowsOff, rows_unsaturated: unsat, rows_unsaturated_capoff: unsatOff, stack,
+    note_cp: 'cp의 cross_over_cap .90이 포화·비포화에서 같은 이유(2차 [8]): 불투명 배수는 캡과 도장 알파에 «같은» 배수로 걸려 창 안 분포가 선형 배율이다 — .90은 «몸통이 목표의 90%까지 쌓인다»(B-pencil 도장 밀도·산포)의 값이지 비가 아니다. 비포화 판이 새로 가르는 것은 «캡이 목표에 비례해 내려가는가»(capoff 팔이 그 반증)',
+    note_stack: 'stack(.55 → .7975 → .9089)은 상수 알파 .55의 over 닫힌 해(1−.45² · 1−.45³)와 같다 — 마커가 압력 무관 불투명 블록이라 «over가 도는가»의 항등에 가깝다(2차 [9]) · 획 «사이» 물성의 실증은 mats46 ②(안료 단조)와 paint59 falsification_stack이 든다',
   }
   for (const t of TOOLS) {
     const r = rows[t] as { cross: number; cap: number; cross_over_cap: number }
@@ -311,8 +314,9 @@ test('④ 획 안/사이 — 자기교차 ≤ 몸통(캡) · 반증(capOff) · �
   const offMax = Math.max(...TOOLS.map(t => (rowsOff[t] as { cross_over_cap: number }).cross_over_cap))
   // 반증의 귀속(리뷰어 [H2]): 캡이 «묶는» 도구에서만 capOff가 값을 바꾼다 — 몸통이 목표에 못 미치는 도구(연필 — 산포 · 잉크펜 — 이미 1)는
   // 캡이 안 걸려 capOff와 제품이 같다. 어느 도구에서 반증이 실제로 섰는지를 값으로 남긴다.
-  const capBinds = Object.fromEntries(TOOLS.map(t => [t, (rowsOff[t] as { cross_over_cap: number }).cross_over_cap > 1 + cs.PAINT59_CROSS_TOL]))
-  ;(OUT.self_cross as Record<string, unknown>).falsification_binds = { def: 'capOff에서 교차가 캡을 문(1.08) 넘게 넘는 도구 — 여기서만 반증이 실행됐다(연필·잉크펜은 캡이 안 걸린 상태라 capOff가 항등: 실패 조건 미실행 — 그 도구의 ④는 «캡 안»이 아니라 «캡에 안 닿음»이다)', ...capBinds, n: Object.values(capBinds).filter(Boolean).length }
+  const capBinds = Object.fromEntries(TOOLS.map(t => [t, (rowsOff[t] as { cross_over_cap: number }).cross_over_cap > 1 + cs.PAINT62_CAP_TOL]))
+  const capBindsUnsat = Object.fromEntries((['pencil', 'cp'] as Instr[]).map(t => [t, (unsatOff[t] as { cross_over_cap: number }).cross_over_cap > 1 + cs.PAINT62_CAP_TOL]))
+  ;(OUT.self_cross as Record<string, unknown>).falsification_binds = { def: 'capOff에서 교차가 캡의 문(1 + C.PAINT62_CAP_TOL — 게이트와 같은 문 · 2차 [18]) 넘게 넘는 도구 — 여기서만 반증이 실행됐다(연필·잉크펜은 캡이 안 걸린 상태라 capOff가 항등: 실패 조건 미실행 — 그 도구의 ④는 «캡 안»이 아니라 «캡에 안 닿음»이다). unsaturated = 비포화(.4) 판의 같은 표', ...capBinds, n: Object.values(capBinds).filter(Boolean).length, unsaturated: capBindsUnsat }
   expect(Object.values(capBinds).filter(Boolean).length, '반증 — 캡이 묶는 도구 둘 이상(cp·마커)에서 capOff가 캡을 넘는다').toBeGreaterThanOrEqual(2)
   expect(offMax, '반증 — capOff(원문 누적)에서 어느 도구든 교차가 캡을 넘는다').toBeGreaterThan(1 + cs.PAINT59_CROSS_TOL)
   expect(stack.ratio_2_1, '두 획은 쌓인다(마커 .55 → .80 대역)').toBeGreaterThan(1.3)
@@ -347,10 +351,37 @@ test('⑤ 젖은 붓 — smudge가 캔버스 색을 실제로 문다(값) · 제
   const on = await smudgeTrail(page, false, false)
   const off = await smudgeTrail(page, true, false)
   const self = await smudgeTrail(page, false, true)
+  // 픽셀 반증(2차 [4] — 계수기 항등이 아닌 «자국이 실제로 바뀌는» 조건): 스머지가 «제 자국을 다시 지나는» 획(cross 도형 —
+  // 빨강 위를 지난 뒤 제 젖은 트레일을 가로지른다). 제품(획 «전» 스냅숏)은 교차에서 획 전 내용(흰/빨강)을 물고, 층 표집은 제 트레일을
+  // 문다 → 교차 뒤 트레일의 픽셀이 갈린다. 자 = 두 판의 어둡기 지도 차(> 8/255인 픽셀 수 · 평균 절대 차).
+  const selfPixels = await page.evaluate(() => {
+    const b2 = (window as any).__b2
+    const W = 480, H = 240
+    // 빨강은 판 중앙 «아래» 60px — cross의 첫 변(왼 아래 → 오른 위)이 빨강을 이르게 가로질러 트레일에 빨강을 싣고, 셋째 변이
+    // 그 트레일을 가로지른다. smudge_length .85(기본 .35는 양동이가 빨리 잊어 트레일이 흐리다 — 그 값도 원장에 «안 갈린다»로 든다).
+    const render = (self: boolean, smudgeLength: number): number[] => {
+      b2.diag.setSmudgeSelfSampleForTest(self)
+      b2.diag.markMultiForTest([
+        { tool: 'brush', shape: 'line', wPx: 24, seed: 21, preset: 'deevad/liner', color: '#d02020', press: 0.8, dy: 60 },
+        { tool: 'brush', shape: 'cross', wPx: 30, seed: 22, preset: 'classic/smudge', color: '#000000', press: 0.7, over: { smudge_length: smudgeLength } },
+      ], W, H, true)
+      b2.diag.setSmudgeSelfSampleForTest(false)
+      return ((window as any).__m61 as { v: number[] }).v
+    }
+    const diff = (sl: number) => {
+      const a = render(false, sl), b = render(true, sl)
+      let n8 = 0, sum = 0, mx = 0
+      for (let i = 0; i < a.length; i++) { const d = Math.abs(a[i]! - b[i]!); if (d > 8) n8++; sum += d; if (d > mx) mx = d }
+      return { smudge_length: sl, differ_px_gt8: n8, mean_abs_diff: +(sum / a.length).toFixed(3), max_diff: +mx.toFixed(1) }
+    }
+    return { ...diff(0.85), default_length: diff(0.35) }
+  })
   OUT.smudge = {
     def: '굽기 통로 — 빨강 라이너(24px · 압력 .8) 위에 classic/smudge(30px · 14px 아래 · 검정 «색»)를 긋는다. 빨강 띠 «아래» 자리(y H/2+13..+26 · x 120..360)의 평균 색: red_excess = R−G(빨강을 물어 왔는가) · dark = 어둡기. stats = 스머지 표집 출처(fromSnapshot = 획 «전» 스냅숏 · liveTouched = 이 획이 이미 닿은 타일을 층에서 읽음 = 제 자국 오염). 반증 ① smudgeOff(smudge 0 — 제 색 검정을 칠한다 → red_excess 0 대역) ② selfSample(스냅숏 대신 층 — liveTouched > 0)',
     on, falsification_smudge_off: off, falsification_self_sample: self,
+    falsification_self_sample_pixels: { def: '스머지 cross 획(빨강 직선(중앙 아래 60px)을 첫 변이 가로지른 뒤 셋째 변이 제 트레일을 가로지름) — 제품(스냅숏 표집) vs 층 표집의 어둡기 지도 차: 차 > 8/255인 픽셀 수 · 평균 절대 차 · 최대. 계수기(liveTouched)가 아니라 «자국»이 갈린다는 실증(2차 [4]). smudge_length .85가 단언의 조건이고 기본값 .35(default_length)는 양동이가 빨리 잊어 «안 갈린다»(0) — 반증은 조건부다: 자기 오염이 실재하는 조건에서만 선다', ...selfPixels },
   }
+  expect(selfPixels.differ_px_gt8, '반증 ③ — 제 자국을 다시 지나면 층 표집이 «자국»을 바꾼다(픽셀 차 > 8인 수)').toBeGreaterThan(50)
   const cs5 = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   ;(OUT.smudge as Record<string, unknown>).threshold = { red_excess_min: cs5.PAINT62_SMUDGE_RG_MIN, note_liveClean: 'liveClean = 이 획이 «안 닿은» 타일을 층에서 읽은 표집(획 전 내용 그대로 — 오염 아님) · 오염의 술어는 liveTouched(닿은 타일을 층에서 읽음)뿐' }
   expect(on.dark, '스머지 자국이 실재한다').toBeGreaterThan(8)
@@ -426,7 +457,23 @@ test('⑥⑦⑧ 프리셋 충실도 · 196이 서로 갈린다 · 결정론 · �
     for (let k = 0; k < 8; k++) same.add(JSON.stringify(sigOf('classic/pencil')))
     const reasonCount: Record<string, number> = {}
     for (const r of Object.values(empty)) for (const k of (r as string).split('+')) reasonCount[k] = (reasonCount[k] ?? 0) + 1
-    return { total: Object.keys(sigs).length, painted: painted.length, distinct4: keys.size, distinct2: keys2.size, empty, empty_reasons: reasonCount, unexplained, ms: +ms.toFixed(0), falsification_same_brush_distinct: same.size, sample: Object.fromEntries(painted.slice(0, 6)) }
+    // 문턱 민감도(2차 [17] · #12): 최대 알파 문턱을 흔들어 unexplained가 0으로 남는 대역을 값으로 — 문턱 자체는 위 sigOf가 상수로 썼으므로
+    // 여기서는 각 프리셋의 «최대 알파»를 다시 재어(같은 견본) 문턱별 painted·unexplained를 센다
+    const maxAlphaOf: Record<string, number> = {}
+    for (const c of cat) for (const n of c.names) {
+      b2.diag.markSampleForTest('brush', 'line', 12, 62, W, H, { preset: n, color: '#3a3a44' })
+      const L = b2.diag.lastLayerAlphaForTest() as { a: number[] }
+      let mx = 0
+      for (let y = H / 2 - 14; y <= H / 2 + 14; y++) for (let x = 60; x < W - 60; x++) if (L.a[y * W + x]! > mx) mx = L.a[y * W + x]!
+      maxAlphaOf[n] = mx
+    }
+    const sensitivity: Record<string, { painted: number; unexplained: number }> = {}
+    for (const th of [0.002, 0.004, 0.008, 0.015, 0.03]) {
+      let pc = 0, un = 0
+      for (const [n, mx] of Object.entries(maxAlphaOf)) { if (mx >= th) pc++; else if (reasonOf(n) === '??') un++ }
+      sensitivity[String(th)] = { painted: pc, unexplained: un }
+    }
+    return { total: Object.keys(sigs).length, painted: painted.length, distinct4: keys.size, distinct2: keys2.size, empty, empty_reasons: reasonCount, unexplained, ms: +ms.toFixed(0), falsification_same_brush_distinct: same.size, sample: Object.fromEntries(painted.slice(0, 6)), threshold_sensitivity: sensitivity }
   })
   const cs7 = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   OUT.differ = { def: '196 견본(직선 12px · 시드 62 · 잉크펜 슬롯 · 층 알파) 통계 서명 {mean,p95,bare,edgeSd} — painted = 최대 알파 ≥ C.PAINT62_PAINTED_ALPHA인 것 · distinct2 = 두 자리(§5 유효 자릿수 — 술어) 고유 서명 수 · distinct4 = 네 자리(기록) · empty_reasons = 사유별 수(겹침 포함) · empty = 빈 층에 아무것도 안 남긴 것과 그 사유(값 — eraser · smudge≥.65(젖은 붓·물만·블렌더) · posterize · opaque≤.05 · lock_alpha · smudge_transparency · dabs_sparse(반지름당 도장 < .2 — splatter)) · unexplained = 사유 없는 빈 것(0이어야). 반증 = 같은 브러시 8번 → 서명 1', ...differ }

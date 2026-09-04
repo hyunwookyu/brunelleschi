@@ -1,5 +1,5 @@
 {
-  "n_flags": 6532,
+  "n_flags": 6533,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -21734,7 +21734,17 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "paint50_web2_dpr2.json:multiply.under_pattern_over.contrastPx",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "paint50_web2_dpr2.json:multiply.under_pattern_opaque.contrastPx",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint50_web2_dpr2.json:multiply.under_pattern_norep.bandPx",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -21824,11 +21834,6 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint59_web2_dpr2.json:preview_vs_commit.rows[0].mean_abs",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
       "path": "paint59_web2_dpr2.json:preview_vs_commit.rows[1].mean_abs",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -21844,14 +21849,29 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint59_web2_dpr2.json:preview_vs_commit.rows[4].mean_abs",
+      "path": "paint59_web2_dpr2.json:preview_vs_commit.rows[5].mean_abs",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint59_web2_dpr2.json:preview_vs_commit.rows[5].mean_abs",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "path": "paint59_web2_dpr2.json:self_cross.rows.brush.p95_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "paint59_web2_dpr2.json:self_cross.rows.brush.cap_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "paint59_web2_dpr2.json:self_cross.rows.marker.p95_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "paint59_web2_dpr2.json:self_cross.rows.marker.cap_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "paint59_web2_dpr2.json:self_cross.rows.cp.p95_ratio",
@@ -21859,37 +21879,12 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "paint59_web2_dpr2.json:self_cross.rows.cp.cap_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:self_cross.rows.pencil.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:self_cross.rows.pencil.cap_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:self_cross.rows_press.pencil.p0.5.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:self_cross.rows_press.pencil.p0.75.p95_ratio",
+      "path": "paint59_web2_dpr2.json:self_cross.rows_grain.marker.p95_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "paint59_web2_dpr2.json:self_cross.rows_press.cp.p0.5.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:self_cross.rows_press.cp.p0.75.p95_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -21950,6 +21945,11 @@
     },
     {
       "path": "paint62_web2_dpr1.json:smudge.falsification_self_sample.stats.fromSnapshot",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint62_web2_dpr1.json:smudge.falsification_self_sample_pixels.default_length.differ_px_gt8",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -22215,6 +22215,11 @@
     },
     {
       "path": "paint62_web2_dpr2.json:smudge.falsification_self_sample.stats.fromSnapshot",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint62_web2_dpr2.json:smudge.falsification_self_sample_pixels.default_length.differ_px_gt8",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
