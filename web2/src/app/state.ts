@@ -175,7 +175,9 @@ export interface App {
    *  · `i: 'brush'`가 45의 흑연 붓 그대로다(기본 — 무회귀).
    *  · `w` 자국 굵기 px(58-1 슬라이더 — 도구별 최대 C.PAINT58_MAX_W. 48-2의 이산 트레이는 철회 · DECISIONS).
    *  ⛔ `t: 'auto'`(46의 「톤 자동」)는 48-8이 없앴다. */
-  paintSel: { hex: string; i: Instr; w: number }
+  /** 칠 도구의 지금 설정 — web2-64: **브러시 id(br)**가 정본이고 슬롯(i)은 «성질의 족»(캡·결·기본 색)이다.
+   *  획은 br·o·c·w를 그대로 든다(64-1 — 브러시를 바꿔도 옛 획이 안 변한다). o = 불투명(0..1 · 1이면 저장 안 함). */
+  paintSel: { hex: string; i: Instr; w: number; br: string; o: number }
   /** **면 고름**(web2-54 54-2) — 잡기(꾹 누름)로 고른 면들. 차례가 뜻이다: **마지막이
    *  정면의 대상**(54-3 — 예측 가능한 쪽). 도구를 바꿔도 산다(핀셋으로 골라 놓고 칠
    *  도구를 들면 그대로 — 「칠 도구를 든 채로 고르기」를 안 만들고도 되는 길). 잡은 채
@@ -437,7 +439,7 @@ export function createApp(W: number, H: number): App {
     nib: C.NIB_PX,
     // 기본 색은 46의 콘크리트 중간톤 그대로다 — 값이 바뀌면 46의 픽셀 팔이 이유 없이
     // 흔들린다(무회귀). 기본 굵기는 마커 촉 폭(C.MARKER_W_PX = 크기 트레이의 가운데 칸).
-    paintSel: { hex: '#a8a29a', i: 'brush', w: C.MARKER_W_PX },
+    paintSel: { hex: '#a8a29a', i: 'brush', w: C.MARKER_W_PX, br: DEFAULT_BRUSH.brush, o: 1 },
     faceSel: [],
     paintOwnGate: true,
     frontBack: null,
@@ -1310,18 +1312,9 @@ export function holdTargetAt(app: App, p: Pt): HoldHit | null {
   // ④ 잠긴 선 — 안 잡히되 **사유를 말한다**(조용히 안 잡히면 고장으로 읽힌다)
   const lk = lockedHitAt(app.lift, app.pose, p, bodyR)
   if (lk !== null) return { kind: 'locked', id: lk }
-  // ⑤ 면 — 안(구멍 제외)을 눌렀다
-  for (const f of app.faces) {
-    const poly = faceScreen(app.lift, app.pose, f.outer)
-    if (!poly || !inPoly(p, poly)) continue
-    let inHole = false
-    for (const h of f.holes) {
-      const hp = faceScreen(app.lift, app.pose, h)
-      if (hp && inPoly(p, hp)) { inHole = true; break }
-    }
-    if (!inHole) return { kind: 'face', id: f.id }
-  }
-  return null
+  // ⑤ 면 — 안(구멍 제외)을 눌렀다(faceAtPoint — 64의 탭 고르기와 같은 자)
+  const fid = faceAtPoint(app, p)
+  return fid === null ? null : { kind: 'face', id: fid }
 }
 
 export type HoldResult =
@@ -1361,6 +1354,42 @@ function faceStrokeIds(app: App, faceId: number): number[] {
     }
   }
   return [...out]
+}
+
+/** 화면 점이 짚는 면(구멍 제외) — holdTargetAt ⑤의 그 판정을 뽑아낸 것(#54 · 탭 고르기와 꾹 누름이 같은 자를 쓴다) */
+export function faceAtPoint(app: App, p: Pt): number | null {
+  for (const f of app.faces) {
+    const poly = faceScreen(app.lift, app.pose, f.outer)
+    if (!poly || !inPoly(p, poly)) continue
+    let inHole = false
+    for (const h of f.holes) {
+      const hp = faceScreen(app.lift, app.pose, h)
+      if (hp && inPoly(p, hp)) { inHole = true; break }
+    }
+    if (!inHole) return f.id
+  }
+  return null
+}
+
+/** **칠 도구의 탭이 면을 고른다**(web2-64 §3 — 사람: 「면은 탭으로 고르면 된다」 · 꾹 누름이 아니다: 39의 손글씨·44의 잡기가 그 자리).
+ *  54-2의 faceSel 규약 그대로 — 탭으로 더한다 · 같은 면을 다시 탭하면 맨 뒤로(마지막이 정면의 대상 · 54-3) · 빈 곳 탭이면 풀린다.
+ *  ⚠ 칠 도구를 들었을 때만 불린다(input이 도구를 본다) — 작도 중의 탭은 옛 뜻(소실점·잡음) 그대로다. */
+export function tapSelectFace(app: App, p: Pt): { kind: 'face'; id: number; n: number } | { kind: 'clear'; n: number } | { kind: 'none' } {
+  const id = faceAtPoint(app, p)
+  if (id === null) {
+    if (app.faceSel.length > 0) {
+      const n = app.faceSel.length
+      app.faceSel = []
+      app.frontBack = null                     // 왕복의 발판도 고름과 함께 걷는다(54-2 sel-clear 그대로)
+      for (const l of app.listeners) l()
+      return { kind: 'clear', n }
+    }
+    return { kind: 'none' }
+  }
+  app.faceSel = app.faceSel.filter(x => x !== id)
+  app.faceSel.push(id)
+  for (const l of app.listeners) l()
+  return { kind: 'face', id, n: app.faceSel.length }
 }
 
 /** **꾹 누름의 배선 하나**(#54) — input의 시계가 다 돌면 이것이 불린다.
@@ -1788,6 +1817,7 @@ import { computeJoints, type JointFaceIn, type JointsOut } from '../core/joint'
 import { borderGeoOf, borderHitAt } from '../core/border'
 import { uvFromScreen, paintGeoOf } from '../core/facetex'
 import { cycleMat, isMatId, materialOf, type MatId, type Instr } from '../core/palette'
+import { DEFAULT_BRUSH, defaultBrushOf } from '../core/paintseam'
 import { cycleRep, isRepId, isMatRepId, REP_NAMES, repBasis } from '../core/matrep'
 
 /** 이 면 중심에서의 «화면 px / 세계 단위»(지금 포즈·줌) — gateRep의 pxPerMm와 같은 식.
@@ -1881,10 +1911,7 @@ export function buildPaintStrokes(
         paint: { f: bFace, e: 1, uv },
         mat: { grade: activeGrade(app) },
       }
-      if (app.paintSel.i !== 'brush') {
-        s.paint!.c = app.paintSel.hex
-        s.paint!.i = app.paintSel.i === 'marker' ? 1 : app.paintSel.i === 'cp' ? 2 : 3
-      }
+      stampPaintSel(app, s)
       // 굵기 — 세계 단위(50의 규약). 띠 위 (s,u)는 이미 세계 단위라 화면 px → 세계 환산은
       // 커밋 시점의 화면 자(viewScale)와 그 자리의 원근 배율이 필요하다 — worldPerPxPerp의
       // 그 자를 못 쓰므로(면 기저가 아니다) **띠 폭 근사**: 첫 두 적중의 3D 화면 사영
@@ -1947,12 +1974,8 @@ export function buildPaintStrokes(
     if (press && press.length === pts.length && uv.length / 2 === r.idx.length) {
       s.paint!.press = r.idx.map(i => press[i]!)
     }
-    // 재료 칠(46 → 48-7 → 51) — 도구가 색을 쓰면 지금 색이 실린다(hex 하나 — #54).
-    // 51: 연필(i=3)이 넷째 도구다.
-    if (app.paintSel.i !== 'brush') {
-      s.paint!.c = app.paintSel.hex
-      s.paint!.i = app.paintSel.i === 'marker' ? 1 : app.paintSel.i === 'cp' ? 2 : 3
-    }
+    // 재료 칠(46 → 48-7 → 51 → **64**) — 색·슬롯·브러시 id·불투명이 한 자리에서 실린다(stampPaintSel · #54).
+    stampPaintSel(app, s)
     // 굵기(48-2 → 50 → 51) — 트레이 값은 화면 px이고 저장은 **세계 단위**다. 환산은
     // **그 획 중점의 수직 방향**(폭의 방향)이다 — u축 환산은 원근 비등방에서 폭을
     // 절반 대역으로 틀리게 냈다(brush51 ⑤ 실측 · worldPerPxPerp 머리주석).
@@ -1964,6 +1987,16 @@ export function buildPaintStrokes(
     added.push(s)
   }
   return { strokes: added, offFace, offOwn }
+}
+
+/** 지금 설정을 획에 찍는다(web2-64 — 한 자리 #54): 슬롯 표식 i(잉크펜은 없음 — 50의 규약) · 색 c(모든 슬롯 — 64) ·
+ *  브러시 id br(64-1) · 불투명 o(1이면 안 쓴다 — 옛 문서 바이트 무변). */
+function stampPaintSel(app: App, s: Stroke): void {
+  const ps = app.paintSel
+  if (ps.i !== 'brush') s.paint!.i = ps.i === 'marker' ? 1 : ps.i === 'cp' ? 2 : 3
+  s.paint!.c = ps.hex
+  s.paint!.br = ps.br
+  if (ps.o > 0 && ps.o < 1) s.paint!.o = Math.round(ps.o * 100) / 100
 }
 
 /** **Injector**(web2-51) — 칠 도구의 탭이 짚은 칠 획의 속성 전부(도구·색·굵기)를 지금
@@ -2004,7 +2037,8 @@ export function injectPaintAt(app: App, p: Pt): { i: Instr; hex: string; w: numb
     const ppu = pxPerUnitOnScreen(app, rf)
     wPx = wpp ? ps.w / wpp : ppu ? ps.w * ppu : app.paintSel.w
   }
-  app.paintSel = { hex: ps.c ?? app.paintSel.hex, i, w: wPx }
+  // web2-64 — 브러시 id·불투명도 되찾는다(«전부»의 외연이 i·c·w → i·c·w·br·o)
+  app.paintSel = { hex: ps.c ?? app.paintSel.hex, i, w: wPx, br: ps.br ?? defaultBrushOf(i, best.s.mat?.grade), o: ps.o ?? 1 }
   return { i, hex: app.paintSel.hex, w: wPx }
 }
 

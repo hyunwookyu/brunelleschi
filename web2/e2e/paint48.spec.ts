@@ -112,9 +112,12 @@ async function pickPaint(page: Page, opt: { swatch?: string; sizePx?: number; in
   // ⚠ 재누름은 **토글**이다(46의 문법): 이미 칠 도구를 든 상태면 한 번에 열리고 두 번이면
   //   다시 접힌다. 두 번을 늘 누르던 초판은 두 번째 호출에서 통을 **닫아 놓고** 줄을 찾다가
   //   시간 초과했다 — 「열려 있는가」를 값으로 보고 필요한 만큼만 누른다(#88).
-  await page.click('#btn-paint')                     // 도구(이미 들었으면 이 한 번이 통을 연다)
-  if (await page.locator('#painttray.open').count() === 0) await page.click('#btn-paint')
-  if (opt.swatch) await page.click(`#${opt.swatch}`)
+  await page.click('#btn-paint')                     // 도구 — web2-64: 패널이 곧 뜬다(재누름 불요)
+  // web2-64: 견본 줄(swatch-*)은 64-7이 지웠다 — 견본 id(swatch-<재료>-<톤>)를 그 톤의 hex로 풀어 패널의 setPaintHex로 싣는다(무손실)
+  if (opt.swatch) {
+    const m = /^swatch-([a-z]+)-(\d)$/.exec(opt.swatch)!
+    await page.evaluate(([mat, tone]) => { const b2 = (window as any).__b2; b2.diag.setPaintHexForTest(b2.diag.materialToneForTest(mat, Number(tone))) }, [m[1]!, m[2]!] as const)
+  }
   if (opt.sizePx !== undefined) {
     // 58-1 — 크기는 슬라이더다(제품 핸들러 그대로 input 이벤트로 넣는다)
     await page.evaluate((v) => {
@@ -123,8 +126,7 @@ async function pickPaint(page: Page, opt: { swatch?: string; sizePx?: number; in
       el.dispatchEvent(new Event('input', { bubbles: true }))
     }, opt.sizePx)
   }
-  if (opt.instr) await page.click(`#btn-paint-${opt.instr}`)
-  await page.mouse.click(150, 700)                   // 통 밖 — 접는다(빈 종이 구석)
+  if (opt.instr) await page.evaluate((i) => (window as any).__b2.diag.setPaintInstrForTest(i), opt.instr)   // 64: 슬롯은 팔 통로로(패널의 도구 넷은 즐겨찾기가 됐다)
   await page.waitForTimeout(60)
 }
 
@@ -399,9 +401,8 @@ test('⑦ 48-10 툴팁 — 44~47이 더한 손잡이 전수에 설명이 있다'
     'btn-grip', 'btn-grip-dup', 'btn-grip-lock', 'btn-grip-join', 'btn-grip-front',
     // web2-45
     'btn-paint', 'btn-grip-cls', 'btn-grip-fill',
-    // web2-46
-    'btn-paint-brush', 'btn-paint-marker', 'btn-paint-cp', 'btn-grip-fmat',
-    'swatch-brick-0', 'swatch-conc-1', 'swatch-glass-1', 'swatch-wood-2', 'swatch-metal-2',
+    // web2-46 — ⚠ web2-64 64-7이 도구 넷 단추·견본 줄을 지웠다(즐겨찾기·최근 색이 그 자리 — paint64 ⑦이 패널 전수를 잰다)
+    'btn-grip-fmat',
     // web2-47
     'btn-floor-area', 'btn-person', 'btn-stencil', 'stencil-save', 'stencil-clear', 'stencil-close',
     'btn-grip-farea',
@@ -409,6 +410,8 @@ test('⑦ 48-10 툴팁 — 44~47이 더한 손잡이 전수에 설명이 있다'
     'paint-wheel-cv',
     // web2-58 — 크기 슬라이더(다섯 칸 트레이 대체 · D-W26)
     'paint-size-range',
+    // web2-64 — 칠 패널의 새 손잡이(견본 단추 · 불투명 · 색 원 · 즐겨찾기)
+    'paint-brush-btn', 'paint-opacity-range', 'paint-color-btn', 'paint-fav-1',
   ]
   const rows = await page.evaluate((list) => list.map(id => {
     const el = document.getElementById(id)

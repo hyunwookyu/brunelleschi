@@ -133,6 +133,11 @@ const inTex = (s: Stroke, faceId: number, side: 1 | -1 | 'e'): boolean =>
 /** 획 하나 → 이음매 자국(SeamMark) — uv를 텍스처 px로 펴고 색·굵기·시드를 싣는다.
  *  결 칸의 굵기 사다리(59)는 걷혔다 — 새 종이 결은 대상 px 고정이라 굵기와 무관하다
  *  (게이트 ④의 답 · 엔진(p5paint)의 결 절이 정본). */
+// web2-64 반증 스위치(D-3 · 게이트 ①) — 굽기가 획의 브러시 id를 «무시»하면 렌더러가 슬롯의 지금 브러시를 읽는다 = 옛 결함.
+let brushIdOff = false
+export function setBrushIdOffForTest(v: boolean): void { brushIdOff = v }
+export const brushIdOffForTest = (): boolean => brushIdOff
+
 function markOfStroke(s: Stroke, box: UvBox, dims: { h: number; pxPerUnit: number }): SeamMark {
   const p = s.paint!
   const uv = p.uv!
@@ -143,12 +148,15 @@ function markOfStroke(s: Stroke, box: UvBox, dims: { h: number; pxPerUnit: numbe
   const wWorld = p.w ?? C.PAINT_W_FALLBACK_UNITS
   const grade = s.mat?.grade ?? 'HB'
   const tool = instrOfTag(p.i)
-  // 색 — 붓(흑연)은 MAT 등급색, 색이 있는 도구(마커·색연필·연필)는 획의 hex(#54 그대로).
-  const color = tool !== 'brush' && p.c ? p.c : MAT[grade].color
+  // 색 — 획의 hex(#54 그대로). web2-64: 잉크펜도 색을 든다 — 없는 옛 획만 등급 흑연색(옛 규약 그대로).
+  const color = p.c ?? MAT[grade].color
   return {
     pts, press: p.press, color,
     wPx: Math.max(0.5, wWorld * dims.pxPerUnit),
     seed: s.id, tool, grade,
+    // web2-64 64-1 — 획이 든 브러시 id가 굽기를 정한다(슬롯의 «지금» 브러시가 아니다 — 원칙 a). 반증 스위치는 옛 결함.
+    preset: brushIdOff ? undefined : p.br,
+    opacityK: p.o,
   }
 }
 

@@ -7,7 +7,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
   frontFlyTarget, liveFaceSel, lastSelFace, faceThicknessNow, setClsThickness, setFaceThicknessEx, faceSlotsOf,
   njGrip, setStrokeNj, setJoint56OffForTest,
-  commitPaint, buildPaintStrokes, injectPaintAt, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen,
+  commitPaint, buildPaintStrokes, injectPaintAt, tapSelectFace, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen,
   placePersonAt, gripFaceArea, floorAreaNow, volumeNow, flashFaces, screenToDoc, roomsNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
@@ -17,7 +17,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, setPaintBlendForTest, paintDraftClamped, paintDraftStats } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintDraftClamped, paintDraftStats } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -26,7 +26,7 @@ import { initNotice, notify, status, ask, clearNotice, confirmNear } from './not
 import { recognizeStrokes } from '../core/handwriting'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
-import { MATERIALS, TONE_NAMES, type Instr } from '../core/palette'
+import { type Instr, materialOf, type MatId } from '../core/palette'   // (MATERIALS·TONE_NAMES의 견본 줄은 web2-64 64-7이 지웠다 — 재료 자체는 matrep·facetex가 쓴다)
 // 색상 휠(web2-48 48-7) — 기하·색 변환은 순수 모듈이 든다(이 파일은 DOM만).
 import { hsvOf, hexOfHsv, svRect, svPoint, huePoint, hueAt, svAt, partAt, markerInk, type Hsv, type WheelGeom, type WheelPart } from '../core/colorwheel'
 import type { Grade, Layer, Sheet, Stroke, CamPose } from '../core/types'
@@ -511,14 +511,20 @@ inputApi = initInput(ink, app, {
   },
   // ── 칠 한 붓(web2-45) — 면 배정·분할·확정은 state.commitPaint 하나다(#54) ──────
   // ── Injector(web2-51) — 탭이 짚은 칠 획의 속성을 되찾는다(판정은 state 하나 #54) ────
-  onPaintInject(p) {
-    const r = injectPaintAt(app, p)
-    if (r) {
-      syncPainttray()
-      const name = r.i === 'marker' ? '마커' : r.i === 'cp' ? '색연필' : r.i === 'pencil' ? '연필' : '붓'
-      status(`${name} · ${r.hex} · ${r.w.toFixed(1)}px — 짚은 획의 속성을 실었다`)
-      invalidate()
-    }
+  // ── 칠 도구의 **탭**(web2-64 §3 — 사람: 「면은 탭으로 고르면 된다」) ──────────────────
+  // 탭 하나에 뜻이 둘 얹힌다(#77 ㉠의 자리): ① 51의 Injector(짚은 칠 획의 속성이 지금 브러시로) ② 그 자리의 **면이 골라진다**
+  // (54-2의 faceSel — 탭으로 더한다 · 빈 곳 탭이면 풀린다). 둘이 «같은 면»을 가리키므로 옛 뜻이 죽지 않는다 — 짚은 획은 그 면 위에 있다.
+  // 판정은 state.tapSelectFace 하나(#54) · 탭↔짧은 획은 거리(C.PAINT64_TAP_MAX_PX · #93)로 input이 가른다.
+  onPaintTap(p) {
+    const inj = injectPaintAt(app, p)
+    const r = tapSelectFace(app, p)
+    if (inj) syncPainttray()
+    const injTxt = inj ? ` · ${SLOT_NAME[inj.i]} ${brushShort(app.paintSel.br)} ${inj.hex} ${inj.w.toFixed(1)}px를 실었다` : ''
+    if (r.kind === 'face') status(`면 ${r.n}장 고름 — 칠은 고른 면 안에서만 · 빈 곳을 탭하면 풀린다${injTxt}`)
+    else if (r.kind === 'clear') status(`면 고름을 풀었다(${r.n}장)${injTxt}`)
+    else if (inj) status(`짚은 획의 속성을 실었다${injTxt}`)
+    syncPainttray()
+    invalidate()
   },
   onPaint(pts, press) {
     const r = commitPaint(app, pts, press)
@@ -839,6 +845,8 @@ function syncTray() {
   penBtn.classList.toggle('on', app.tool === 'pen')
 }
 
+/** 칠 패널이 섰는가(web2-64) — 패널 블록(아래)은 setTool의 첫 호출(부팅)보다 뒤에 선다: TDZ를 피하는 표식 */
+let paintPanelReady = false
 function setTool(t: Tool) {
   app.tool = t
   for (const k of Object.keys(toolBtn) as (keyof typeof toolBtn)[]) {
@@ -866,6 +874,8 @@ function setTool(t: Tool) {
   // 펜의 굵기는 **촉**이, 지우개의 크기는 **크기통**이 정한다. 셋 다 «고르는 것»이다.
   // 도구를 떠나면 그 통은 접는다(연필통·촉통과 같은 규약).
   if (!isEraser(t)) setEtrayOpen(false)
+  // web2-64 §2 — 칠 패널은 칠 도구를 든 «동안» 항상 뜬다(R8 정정 — DECISIONS). 작도 중에는 없다.
+  if (paintPanelReady) setPainttrayOpen(t === 'paint')
   syncNib()
   invalidate()
 }
@@ -874,8 +884,8 @@ for (const k of Object.keys(toolBtn) as (keyof typeof toolBtn)[]) {
     // 면 버튼을 **다시** 누르면 팝오버(web2-21 4부 — 「전부 찾기」). 손 띠에 버튼을 안
     // 늘린다(지시 4-e ⚠). 다른 도구는 종전 그대로다.
     if (k === 'face' && app.tool === 'face') { toggleFacePop(); return }
-    // 붓을 **다시** 누르면 칠통(web2-46) — 면 팝오버의 문법 그대로(#77 ㉠: 옛 뜻이 먼저).
-    if (k === 'paint' && app.tool === 'paint') { setPainttrayOpen(!painttrayOpen); return }
+    // 붓을 **다시** 누르면 — web2-64: 패널은 도구를 든 동안 늘 떠 있으므로 여닫을 것이 없다(옛 «재누름이 칠통을 연다»는 걷었다).
+    if (k === 'paint' && app.tool === 'paint') { setPainttrayOpen(true); return }
     // 재기는 **토글**이다 — 다시 누르면 연필로 돌아온다(재는 일은 잠깐 하는 일이다)
     if (k === 'measure' && app.tool === 'measure') { setTool('pencil'); return }
     // 지우개 둘 — **도구를 먼저 바꾸고 크기통을 연다**(web2-34 3번). 연필·펜 단추가
@@ -2081,34 +2091,37 @@ function doGripAction(key: string) {
   }
   invalidate()
 }
-// ── 칠통(web2-46 → **web2-48이 다시 지었다**) ────────────────────────────────
+// ── 칠 패널(web2-64 §2) — **칠 도구를 든 «동안» 항상 뜬다.** 놓으면 사라진다. ─────────────────
 //
-// ⚠⚠ **정정**(48-7 「원장·DECISIONS에 정정을 남겨라 — 무엇을 누가 왜 좁혔는지까지」):
-// 46 **지시문**이 「팔레트를 색 목록으로 만들지 마라, 재료 목록이어야 한다」고 못 박았고
-// 46 세션이 그대로 지어 이 통이 **재료 다섯 × 톤 = 견본 14개**뿐이었다. 그 좁힘은
-// **사용자와 상의 없이 지시문이 한 것**이고 판단도 틀렸다 — 전문 드로잉 툴이면 임의의
-// 색을 뽑을 수 있어야 한다. 48-7이 뒤집는다:
+// 사람 지적(2026-09-04): 「버튼·도구의 트리 구조가 복잡하고 직관적이지 않다 … 자꾸 뭘 펼쳐야 하는가? 선택된 브러시는 항상
+// 떠 있고, 그걸 누르면 다른 걸 선택할 수 있다. 포토샵을 보면 한 화면에 브러시 형태·색상·투명도·크기를 한 번에 설정한다.」
 //
-//     기본    **색상 휠**(프로크리에이트·모폴리오 방식) — 고리(색상) + 안쪽 판(채도·명도)
-//     곁에    재료 프리셋 열넷 — 빠른 길이지 유일한 길이 아니다
-//     그리고  **크기 슬라이더**(58-1 — 48-2의 트레이를 대체. 「슬라이더 ⛔」는 R1 오적용으로 철회 · DECISIONS)
+// **R8의 정정**(지시 64 §2 — DECISIONS 「R8은 «지금 하는 일»에는 안 걸린다」): R8(늘 보이는 것은 잠깐 얹히는 것보다 약하다)은
+// «경쟁하는 것들» 사이의 규칙이다. 칠 도구를 든 동안 칠 설정은 곧 그 일이라 항상 보인다 — 작도 중에는 없다.
 //
-// ⛔ 「톤 자동」(46의 분류 제안)은 **48-8이 없앴다** — 사용자가 원하지 않았다.
-// 그림 정본은 docs/instrument-icons.md 「마커·색연필(칠통)」.
+// 규칙 넷(지시): ① 지금 브러시는 항상 보인다 — 자국 견본으로 ② 펼치는 것은 둘뿐 — «브러시 목록»·«색상 휠», 그 둘도 한 단계
+// ③ 색상 프리셋은 없다(64-7이 견본 줄 여덟·프리셋 세 칸을 지웠다) ④ 「브러시 고르개」 → 「브러시」.
+// ⛳ 게이트 ②: 칠의 어떤 설정(브러시·크기·불투명·색)에도 «두 번 펼쳐서» 닿지 않는다 — paint64 ②가 elementFromPoint로 센다(#87).
+//
+// 구조(위에서 아래): [지금 브러시 견본 + 이름 · 누르면 «브러시» 목록] / 크기 슬라이더 + 값 / 불투명 슬라이더 + 값 /
+//   [색 원 · 누르면 색상 휠] + 최근 색 여섯 / [즐겨찾기 여섯 — 옛 «도구 넷»의 자리 · 브러시 바로가기] / 정면(54-3 그대로).
+// 자리: placeFlyout(붓 단추 곁 — 46부터의 자리 · R2 리본 길이 불변). ⚠ 통 등록부(registerBox)에는 **안 든다** — 잠깐 얹히는 통이
+// 아니라 «도구의 화면»이다(R7의 바깥 누름으로 안 접힌다 · 도구를 놓아야 사라진다). 브러시 목록·색상 휠은 통이다(등록 · 한 단계).
+// #97: 견본 캔버스는 position:static 명시 · 줄은 flex-shrink:0(index.html #painttray > *).
 const painttrayEl = document.getElementById('painttray')!
-const PAINT_INSTRS: { i: Instr; name: string; tip: string; svg: string }[] = [
-  { i: 'brush', name: '잉크펜', tip: '잉크펜 — 흑연·잉크 톤으로 긋는다(색을 안 쓴다). 고르개에서 어떤 브러시든 이 자리에 앉힌다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3 V14"/><path d="M12.5 14 h7 v4 h-7 z"/><path d="M12.5 18 C12.5 23 11.5 25.5 10.5 27.5 C13.5 26.6 18.5 26.6 21.5 27.5 C20.5 25.5 19.5 23 19.5 18 Z"/></svg>' },
-  { i: 'marker', name: '마커', tip: '마커 — 넓게 덮는다. 겹치면 진해진다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="4" width="8" height="15" rx="1"/><path d="M13.5 19 L13 24 L17 28 L18.5 19"/></svg>' },
-  { i: 'cp', name: '색연필', tip: '색연필 — 결이 굵고 색이 완전히 덮이지 않는다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 h6 v16 l-3 8 l-3 -8 z"/><path d="M14.2 21.5 l1.1 3 M16.9 21.5 l-1.1 3" stroke-width="1.0"/></svg>' },
-  // 연필(web2-51) — 종이 결에 걸린 불연속 · 압력이 농도(가파름)·굵기(완만)를 움직인다
-  { i: 'pencil', name: '연필', tip: '연필 — 종이 결에 걸린다. 세게 누르면 진해진다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 24 L24 12 l-4 -4 L8 20 l-1 5 z"/><path d="M18 10 l4 4"/></svg>' },
-]
-const paintInstrRow = new Map<Instr, HTMLButtonElement>()
-/** 크기 슬라이더 줄의 동기화(58-1) — 도구가 바뀌면 max·값·점이 따라온다(아래 블록이 채운다) */
-let syncPaintSizeRow: () => void = () => {}
+/** 슬롯(성질의 족)의 그림·이름 — 즐겨찾기 칸이 쓴다(옛 도구 넷의 그 그림 · docs/instrument-icons.md) */
+const SLOT_SVG: Record<Instr, string> = {
+  brush: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3 V14"/><path d="M12.5 14 h7 v4 h-7 z"/><path d="M12.5 18 C12.5 23 11.5 25.5 10.5 27.5 C13.5 26.6 18.5 26.6 21.5 27.5 C20.5 25.5 19.5 23 19.5 18 Z"/></svg>',
+  marker: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="4" width="8" height="15" rx="1"/><path d="M13.5 19 L13 24 L17 28 L18.5 19"/></svg>',
+  cp: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4 h6 v16 l-3 8 l-3 -8 z"/><path d="M14.2 21.5 l1.1 3 M16.9 21.5 l-1.1 3" stroke-width="1.0"/></svg>',
+  pencil: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 24 L24 12 l-4 -4 L8 20 l-1 5 z"/><path d="M18 10 l4 4"/></svg>',
+}
+const SLOT_NAME: Record<Instr, string> = { brush: '잉크펜', marker: '마커', cp: '색연필', pencil: '연필' }
+/** 브러시 id → 짧은 이름(group/name의 name · 밑줄은 띄어쓰기) */
+const brushShort = (br: string): string => (br.split('/')[1] ?? br).replace(/_/g, ' ')
 
 // ── 색상 휠(48-7) — 기하·색 변환은 `core/colorwheel.ts`가 든다(이 파일은 DOM만) ──
-// 크기는 통의 폭(208px — index.html `--dim-w` 계산의 그 내용 폭)에 맞춘다.
+// 64: 휠은 **색 원을 누르면 얹히는 통**(#paint-wheelbox)에 산다 — 한 단계.
 const WHEEL: WheelGeom = { cx: 68, cy: 68, rOut: 64, rIn: 48 }
 const wheelCv = document.createElement('canvas')
 const wheelHex = document.createElement('span')
@@ -2126,7 +2139,6 @@ function drawWheel(hsv: Hsv) {
   const g = wheelCv.getContext('2d')!
   g.setTransform(dpr, 0, 0, dpr, 0, 0)
   g.clearRect(0, 0, S, S)
-  // 고리 — 1° 부채꼴 360개(경계가 안 보이게 1.2° 겹친다)
   for (let a = 0; a < 360; a++) {
     g.beginPath()
     g.fillStyle = hexOfHsv({ h: a, s: 1, v: 1 })
@@ -2135,7 +2147,6 @@ function drawWheel(hsv: Hsv) {
     g.arc(WHEEL.cx, WHEEL.cy, WHEEL.rIn, t1, t0, true)
     g.closePath(); g.fill()
   }
-  // 안쪽 판 — 가로 채도 · 세로 명도(위가 밝다). 2px 격자면 눈에 안 갈린다.
   const rc = svRect(WHEEL)
   const step = 2
   for (let y = 0; y < rc.h; y += step) {
@@ -2144,7 +2155,6 @@ function drawWheel(hsv: Hsv) {
       g.fillRect(rc.x + x, rc.y + y, step, step)
     }
   }
-  // 표식 둘 — 지금 색상(고리)과 지금 채도·명도(판). 테 색은 배경 대비로 갈린다.
   const hex = hexOfHsv(hsv)
   const ring = huePoint(WHEEL, hsv.h)
   const sv = svPoint(WHEEL, hsv)
@@ -2159,94 +2169,96 @@ function drawWheel(hsv: Hsv) {
 /** 지금 색을 HSV로 — 상태의 정본은 `app.paintSel.hex` 하나다(#54). 휠은 그것을 그린다. */
 const wheelHsv = (): Hsv => hsvOf(app.paintSel.hex) ?? { h: 0, s: 0, v: 0.5 }
 
-function setPaintHex(hex: string, why: string) {
-  app.paintSel.hex = hex
-  // 색을 골랐다 = 색이 나가는 도구다(붓은 흑연이라 색이 안 나간다) — 46의 견본 규약 그대로.
-  if (app.paintSel.i === 'brush') app.paintSel.i = 'marker'
-  if (app.tool !== 'paint') setTool('paint')
-  syncPainttray()
-  status(`${hex} — ${app.paintSel.i === 'marker' ? '마커' : '색연필'}${why}`)
+// ── 최근 색 여섯(64 — 견본 줄 여덟의 자리) · 기기 저장 ────────────────────────────
+const RECENT_KEY = 'b2.paintRecent64.v1'
+const RECENT_N = 6
+const readRecent = (): string[] => {
+  try {
+    const arr = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') as unknown
+    return Array.isArray(arr) ? arr.filter((h): h is string => typeof h === 'string' && /^#[0-9a-f]{6}$/i.test(h)).slice(0, RECENT_N) : []
+  } catch { return [] }
+}
+const pushRecent = (hex: string): void => {
+  const list = [hex, ...readRecent().filter(h => h !== hex)].slice(0, RECENT_N)
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)) } catch { /* 사생활 모드 */ }
 }
 
+function setPaintHex(hex: string, why: string) {
+  app.paintSel.hex = hex
+  // 64: 잉크펜도 색을 쓴다 — 슬롯을 안 바꾼다(48의 «색을 골랐다 = 마커» 규약은 걷었다)
+  if (app.tool !== 'paint') setTool('paint')
+  pushRecent(hex)
+  syncPainttray()
+  status(`${hex} — ${SLOT_NAME[app.paintSel.i]}${why}`)
+}
+
+// ── 즐겨찾기 여섯(64 — 옛 «도구 넷»의 자리 · 슬롯의 새 이름) · 기기 저장 ───────────────
+// 칸 = {슬롯 i, 브러시 br}. 탭 = 지금 브러시로 · 길게 누름(WRITE_HOLD_MS) = 지금 브러시를 그 칸에 놔둔다.
+// 64-1로 획이 br을 저장하므로 칸의 브러시를 바꿔도 옛 획은 안 변한다(게이트 ①).
+const FAV_KEY = 'b2.brushFavs64.v1'
+const FAV_N = 6
+type Fav = { i: Instr; br: string }
+/** 기본 여섯 — 슬롯 넷의 기본 브러시(DEFAULT_BRUSH — AS-C186) + 목탄(연필 족) + 수채(잉크펜 족 · 흰 판에서도 그려지는 것) */
+const FAV_DEFAULT: Fav[] = [
+  { i: 'pencil', br: DEFAULT_BRUSH.pencil }, { i: 'brush', br: DEFAULT_BRUSH.brush }, { i: 'marker', br: DEFAULT_BRUSH.marker },
+  { i: 'cp', br: DEFAULT_BRUSH.cp }, { i: 'pencil', br: 'classic/charcoal' }, { i: 'brush', br: 'deevad/watercolor_expressive' },
+]
+const isInstr = (v: unknown): v is Instr => v === 'brush' || v === 'marker' || v === 'cp' || v === 'pencil'
+const readFavs = (): Fav[] => {
+  try {
+    const arr = JSON.parse(localStorage.getItem(FAV_KEY) ?? 'null') as unknown
+    if (!Array.isArray(arr)) return FAV_DEFAULT.map(f => ({ ...f }))
+    return FAV_DEFAULT.map((d, k) => {
+      const v = arr[k] as Partial<Fav> | undefined
+      return v && isInstr(v.i) && typeof v.br === 'string' && v.br.includes('/') ? { i: v.i, br: v.br } : { ...d }
+    })
+  } catch { return FAV_DEFAULT.map(f => ({ ...f })) }
+}
+const writeFavs = (fs: Fav[]): void => { try { localStorage.setItem(FAV_KEY, JSON.stringify(fs)) } catch { /* 세션 한정 */ } }
+
+/** 크기 슬라이더 줄의 동기화(58-1) — 도구가 바뀌면 max·값이 따라온다(아래 블록이 채운다) */
+let syncPaintSizeRow: () => void = () => {}
+let syncPaintPanel: () => void = () => {}
+let closePaintWheel: () => void = () => {}
+
 {
-  for (const r of PAINT_INSTRS) {
-    const b = document.createElement('button')
-    b.id = `btn-paint-${r.i}`
-    b.className = 'rrow'
-    b.dataset.act = 'state'   // 도구 상태 — 누른다고 통이 접히지 않는다(색을 이어 고른다)
-    b.title = r.tip           // 48-10 — 새 손잡이에도 설명이 붙는다(28-2의 규칙)
-    b.innerHTML = `${r.svg}<span>${r.name}</span>`
-    b.addEventListener('click', () => {
-      app.paintSel.i = r.i
-      if (app.tool !== 'paint') setTool('paint')
-      syncPainttray()
-      status(r.tip)
-    })
-    painttrayEl.append(b)
-    paintInstrRow.set(r.i, b)
-  }
-  // ── 브러시 고르개(web2-62) — 196개 · 분류로 접힘 · 견본은 그 자리에서 ─────────────
-  {
-    const b = document.createElement('button')
-    b.id = 'btn-brushpick'
-    b.className = 'rrow'
-    b.dataset.act = 'state'   // 고르기는 칠통을 안 접는다
-    b.title = '브러시 고르개 — 지금 도구 자리에 앉힐 브러시를 196개 중에서 고른다(분류별 · 견본 실물)'
-    b.innerHTML = `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8 h20 M6 16 h20 M6 24 h14"/><circle cx="25" cy="24" r="2.2"/></svg><span>브러시…</span>`
-    b.addEventListener('click', () => { brushPicker.setOpen(!brushPicker.isOpen()) })
-    painttrayEl.append(b)
-  }
+  // ── ① 지금 브러시 — 견본 + 이름. 누르면 «브러시» 목록(한 단계 · brushpick) ──────────────
+  const brushBtn = document.createElement('button')
+  brushBtn.id = 'paint-brush-btn'
+  brushBtn.className = 'rrow'
+  brushBtn.dataset.act = 'state'
+  brushBtn.title = '지금 브러시 — 누르면 브러시 목록이 열린다(196 + 앱 · 분류별 · 견본 실물)'
+  const sampleCv = document.createElement('canvas')
+  sampleCv.id = 'paint-brush-sample'
+  const SAMPLE_W = 150, SAMPLE_H = 26
+  sampleCv.width = SAMPLE_W * 2; sampleCv.height = SAMPLE_H * 2
+  sampleCv.style.cssText = `width:${SAMPLE_W}px;height:${SAMPLE_H}px;position:static;inset:auto;flex-shrink:0;border:1px solid #d8d2c4;border-radius:3px;background:#fffdf8`
+  const brushName = document.createElement('span')
+  brushName.id = 'paint-brush-name'
+  brushName.style.cssText = 'display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden;text-overflow:ellipsis'
+  brushBtn.append(sampleCv, brushName)
+  brushBtn.addEventListener('click', () => { brushPicker.setOpen(!brushPicker.isOpen()) })
+  painttrayEl.append(brushBtn)
 
-  // ── **정면**(web2-54 54-3) — 44의 「정면」이 칠통에서도 닿는다. 새 기제가 아니라
-  // 손통 front와 **같은 배선**(frontFlyTarget — #54: 판정은 state 하나)이다. 왕복이다:
-  // 다시 누르면 직전 시점으로. 대상은 마지막에 고른 면(54-2의 faceSel — 핀셋으로 골라
-  // 놓고 칠 도구를 들면 그대로다). ⚠ #97 — 이 요소는 <button>(전역 canvas 규칙 밖)이고
-  // painttray 자식은 index.html의 `#painttray > * { flex-shrink: 0 }`이 이미 눌림을 막는다.
-  {
-    const b = document.createElement('button')
-    b.id = 'btn-paint-front'
-    b.className = 'rrow'
-    b.dataset.act = 'state'   // 시점 이동은 색 고르기를 안 끊는다 — 통이 안 접힌다
-    b.innerHTML = `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg><span id="paint-front-lbl">정면</span>`
-    b.addEventListener('click', () => {
-      const r = frontFlyTarget(app)
-      if (!r) { notify('정면은 면을 골라야 한다 — 연필을 든 채로 면 안쪽을 꾹 눌러 고른 뒤 칠로 돌아온다'); return }
-      autolevel.glide(r.to)
-      status(r.back ? '직전 시점으로 돌아간다' : '정면 — 다시 누르면 직전 시점으로 돌아온다')
-      syncPainttray()
-    })
-    painttrayEl.append(b)
-  }
-
-  // ── 크기 **슬라이더**(web2-58 58-1 — 48-2의 이산 트레이를 철회) ─────────────────
-  // ⚠⚠ 51의 「슬라이더 ⛔(R1)」는 **R1의 오적용**이었다(사람 정정 — 58 지시):
-  // R1은 「진짜 도구가 **이산**인 곳」의 규칙이다(연필 등급·펜 촉 — 실물이 이산).
-  // **칠 도구의 크기는 이산이 아니다** — 실제 붓도 마커도 연속이다. 그래서 연속 조절이
-  // 맞고, 최대는 도구별 사람 값(C.PAINT58_MAX_W — 마커 100 · 붓 500 · 색연필/연필 50).
-  // DECISIONS 「51 문면 철회」가 기록. 34-0 재대조는 NOTES 58 절(#96).
-  // 곁의 점은 «지금 값의 1:1 자국»(48-2의 그 문법)— 통 폭을 넘는 값은 36px에 멎고
-  // 숫자 라벨이 항상 정확한 값을 든다(1:1의 판정자는 e2e — 슬라이더 값 == 자국 픽셀).
-  // <label>인 이유(#96 · 28-2): 툴팁 대상 선택자(button·summary·label·[role=button])의
-  // 규칙 — input 낱개는 대상이 아니라서 label로 감싼다(45·47의 체크상자 선례 그대로).
+  // ── ② 크기 **슬라이더**(web2-58 58-1) — 값이 숫자로 같이 보인다 ────────────────────
+  // R1의 오적용 철회(58 · DECISIONS): 칠 도구의 크기는 이산이 아니다. 최대는 도구별 사람 값(C.PAINT58_MAX_W).
   const sizeWrap = document.createElement('label')
   sizeWrap.id = 'paint-sizes'
   sizeWrap.className = 'rrow prow'
-  sizeWrap.title = '자국 굵기 — 도구별 최대: 붓 500 · 마커 100 · 색연필 50 · 연필 50'
-  // ⚠ 초판의 «1:1 점»(채운 원 단독 svg)은 papericon31 ①이 빨갛게 잡았다 — 채운 원
-  // 하나가 카메라 실루엣 견본과 IoU 0.89(48-2 초판 막대의 0.9145와 같은 병 · 문 0.75).
-  // 점을 걷는다: 값 표찰(숫자)이 R6를 지고, 시각 피드백은 자국 자체·작업대가 진다.
+  sizeWrap.title = '자국 굵기 — 슬롯별 최대: 잉크펜 500 · 마커 100 · 색연필 50 · 연필 50'
+  const sizeLbl = document.createElement('span'); sizeLbl.className = 'prow-name'; sizeLbl.textContent = '크기'
   const sizeRange = document.createElement('input')
   sizeRange.type = 'range'
   sizeRange.id = 'paint-size-range'
   sizeRange.min = String(C.PAINT58_MIN_W)
   sizeRange.step = '0.5'
-  sizeRange.style.width = '110px'
+  sizeRange.style.width = '96px'
   sizeRange.style.flexShrink = '0'                     // #97
   sizeRange.title = '자국 굵기(px) — 끌어서 조절한다'
   const sizeVal = document.createElement('span')
   sizeVal.id = 'paint-size-val'
-  sizeVal.style.minWidth = '44px'
-  const paintMaxW = (): number => C.PAINT58_MAX_W[app.paintSel.i === 'brush' ? 'brush' : app.paintSel.i]
+  sizeVal.style.minWidth = '38px'
+  const paintMaxW = (): number => C.PAINT58_MAX_W[app.paintSel.i]
   const syncSizeRow = syncPaintSizeRow = () => {
     const max = paintMaxW()
     sizeRange.max = String(max)
@@ -2260,109 +2272,93 @@ function setPaintHex(hex: string, why: string) {
     syncSizeRow()
   })
   sizeRange.addEventListener('change', () => status(`자국 굵기 ${app.paintSel.w}px`))
-  sizeWrap.append(sizeRange, sizeVal)
+  sizeWrap.append(sizeLbl, sizeRange, sizeVal)
   painttrayEl.append(sizeWrap)
   syncSizeRow()
 
-  // ── 브러시 프리셋(web2-52-3) — 도구 설정 묶음(종류·크기·색)을 **기기에** 저장한다 ──
-  // 문서가 아니다 — 손에 붙는 것이다(필압 보정과 같은 이유 · 지시 52-3). 세 칸:
-  // 탭 = 적용, 길게 누름(450ms — WRITE_HOLD_MS의 그 값 문법) = 지금 설정을 그 칸에 저장.
-  // Injector(51)와 역할이 안 겹친다 — Injector는 그린 것에서 «되찾고» 프리셋은 «미리 정한다».
-  // ⚠ 불투명도는 안 싣는다 — 이 앱에 불투명도 «손잡이»가 없다(도구의 성질·상수다).
-  //   값 손잡이가 생기면 그때 축이 된다(DEFERRED — 없는 축을 저장하면 유령 열쇠다).
-  const PRESET_KEY = 'b2.brushPresets.v1'
-  type BrushPreset = { i: Instr; w: number; hex: string }
-  const readPresets = (): (BrushPreset | null)[] => {
-    try {
-      const raw = localStorage.getItem(PRESET_KEY)
-      if (!raw) return [null, null, null]
-      const arr = JSON.parse(raw) as unknown
-      if (!Array.isArray(arr)) return [null, null, null]
-      return [0, 1, 2].map(k => {
-        const v = arr[k] as Partial<BrushPreset> | null
-        return v && typeof v.hex === 'string' && typeof v.w === 'number' &&
-          (v.i === 'brush' || v.i === 'marker' || v.i === 'cp' || v.i === 'pencil')
-          ? { i: v.i, w: v.w, hex: v.hex } : null
-      })
-    } catch { return [null, null, null] }
+  // ── ③ 불투명 슬라이더(64 — 새 축 · 획이 o를 든다 · 52-3의 «불투명 손잡이 없음» 유보가 여기서 닫힌다) ────
+  const opWrap = document.createElement('label')
+  opWrap.id = 'paint-opacity'
+  opWrap.className = 'rrow prow'
+  opWrap.title = '불투명 — 획의 불투명(0.05~1). 브러시 자체의 불투명에 곱한다'
+  const opLbl = document.createElement('span'); opLbl.className = 'prow-name'; opLbl.textContent = '불투명'
+  const opRange = document.createElement('input')
+  opRange.type = 'range'
+  opRange.id = 'paint-opacity-range'
+  opRange.min = '0.05'; opRange.max = '1'; opRange.step = '0.05'
+  opRange.style.width = '96px'
+  opRange.style.flexShrink = '0'
+  opRange.title = '불투명 — 끌어서 조절한다'
+  const opVal = document.createElement('span')
+  opVal.id = 'paint-opacity-val'
+  opVal.style.minWidth = '38px'
+  const syncOpRow = () => {
+    if (Number(opRange.value) !== app.paintSel.o) opRange.value = String(app.paintSel.o)
+    opVal.textContent = app.paintSel.o.toFixed(2)
   }
-  const writePresets = (ps: (BrushPreset | null)[]) => {
-    try { localStorage.setItem(PRESET_KEY, JSON.stringify(ps)) } catch { /* 세션 한정 */ }
-  }
-  const presetWrap = document.createElement('div')
-  presetWrap.id = 'paint-presets'
-  presetWrap.className = 'rrow prow'
-  const presetBtns: HTMLButtonElement[] = []
-  const paintPresetInstrName = (i: Instr): string =>
-    i === 'brush' ? '붓' : i === 'marker' ? '마커' : i === 'cp' ? '색연필' : '연필'
-  const renderPresets = () => {
-    const ps = readPresets()
-    presetBtns.forEach((b, k) => {
-      const v = ps[k]!
-      const dot = b.querySelector('.pdot') as HTMLElement
-      const lbl = b.querySelector('.plbl') as HTMLElement
-      if (v) {
-        dot.style.background = v.hex
-        dot.style.borderStyle = 'solid'
-        lbl.textContent = `${paintPresetInstrName(v.i)} ${v.w}`
-        b.title = `프리셋 ${k + 1} — ${paintPresetInstrName(v.i)} · ${v.w}px · ${v.hex}. 누르면 적용 · 길게 눌러 지금 설정으로 바꾼다(기기에 남는다)`
-      } else {
-        dot.style.background = 'transparent'
-        dot.style.borderStyle = 'dashed'
-        lbl.textContent = '비어 있다'
-        b.title = `프리셋 ${k + 1} — 비어 있다. 길게 눌러 지금 설정(도구·크기·색)을 저장한다(기기에 남는다 — 문서가 아니다)`
-      }
-    })
-  }
-  for (const k of [0, 1, 2]) {
-    const b = document.createElement('button')
-    b.id = `btn-preset-${k + 1}`
-    b.className = 'presetbtn'
-    b.dataset.act = 'state'
-    b.innerHTML = '<span class="pdot"></span><span class="plbl"></span>'
-    let holdT: number | null = null
-    let held = false
-    b.addEventListener('pointerdown', () => {
-      held = false
-      holdT = window.setTimeout(() => {
-        held = true
-        const ps = readPresets()
-        ps[k] = { i: app.paintSel.i, w: app.paintSel.w, hex: app.paintSel.hex }
-        writePresets(ps)
-        renderPresets()
-        status(`프리셋 ${k + 1}에 저장 — ${paintPresetInstrName(app.paintSel.i)} · ${app.paintSel.w}px · ${app.paintSel.hex}(이 기기)`)
-      }, C.WRITE_HOLD_MS)
-    })
-    const cancelHold = () => { if (holdT !== null) { clearTimeout(holdT); holdT = null } }
-    b.addEventListener('pointerup', cancelHold)
-    b.addEventListener('pointerleave', cancelHold)
-    b.addEventListener('click', () => {
-      if (held) return                                   // 저장 직후의 click은 적용이 아니다
-      const v = readPresets()[k]
-      if (!v) { status(`프리셋 ${k + 1}은 비어 있다 — 길게 눌러 지금 설정을 저장한다`); return }
-      app.paintSel = { i: v.i, w: v.w, hex: v.hex }
-      if (app.tool !== 'paint') setTool('paint')
-      syncPainttray()
-      status(`프리셋 ${k + 1} 적용 — ${paintPresetInstrName(v.i)} · ${v.w}px · ${v.hex}`)
-    })
-    presetBtns.push(b)
-    presetWrap.append(b)
-  }
-  renderPresets()
-  painttrayEl.append(presetWrap)
+  opRange.addEventListener('input', () => {
+    app.paintSel.o = Math.min(1, Math.max(0.05, Math.round(Number(opRange.value) * 100) / 100))
+    if (app.tool !== 'paint') setTool('paint')
+    syncOpRow()
+  })
+  opRange.addEventListener('change', () => status(`불투명 ${app.paintSel.o.toFixed(2)}`))
+  opWrap.append(opLbl, opRange, opVal)
+  painttrayEl.append(opWrap)
+  syncOpRow()
 
-  // ── 색상 휠 — **기본이다**(48-7) ──────────────────────────────────────────
-  const wheelWrap = document.createElement('div')
-  wheelWrap.id = 'paint-wheel'
-  wheelWrap.className = 'rrow prow'
+  // ── ④ 색 원(누르면 색상 휠 — 한 단계) + 최근 색 여섯 ──────────────────────────────
+  const colorRow = document.createElement('div')
+  colorRow.id = 'paint-color'
+  colorRow.className = 'rrow prow'
+  const colorBtn = document.createElement('button')
+  colorBtn.id = 'paint-color-btn'
+  colorBtn.className = 'colordot'
+  colorBtn.dataset.act = 'state'
+  colorBtn.title = '지금 색 — 누르면 색상 휠이 열린다'
+  const recentWrap = document.createElement('div')
+  recentWrap.id = 'paint-recent'
+  recentWrap.style.cssText = 'display:flex;gap:4px;align-items:center;flex-shrink:0'
+  const recentBtns: HTMLButtonElement[] = []
+  for (let k = 0; k < RECENT_N; k++) {
+    const b = document.createElement('button')
+    b.id = `paint-recent-${k + 1}`
+    b.className = 'swatch'
+    b.dataset.act = 'state'
+    b.title = '최근 색 — 비어 있다(색을 고르면 여기 남는다)'
+    b.addEventListener('click', () => { const h = b.dataset.hex; if (h) setPaintHex(h, ' — 최근 색') })
+    recentBtns.push(b)
+    recentWrap.append(b)
+  }
+  colorRow.append(colorBtn, recentWrap)
+  painttrayEl.append(colorRow)
+  // 색상 휠 통(등록 — R7 · 한 단계)
+  const wheelBox = document.createElement('div')
+  wheelBox.id = 'paint-wheelbox'
+  wheelBox.className = 'rrow prow'
+  wheelBox.hidden = true
   wheelCv.id = 'paint-wheel-cv'
   wheelCv.setAttribute('role', 'button')     // 툴팁 대상 선택자에 든다(28-2 · 48-10)
   wheelCv.title = '색상 휠 — 바깥 고리가 색상, 안쪽 판이 채도·명도'
-  wheelWrap.append(wheelCv)
   wheelHex.id = 'paint-hex'
   wheelHex.className = 'prow-name'
-  wheelWrap.append(wheelHex)
-  painttrayEl.append(wheelWrap)
+  wheelBox.append(wheelCv, wheelHex)
+  document.body.append(wheelBox)
+  let wheelOpen = false
+  const setWheelOpen = (v: boolean) => {
+    wheelOpen = v
+    wheelBox.hidden = !v
+    if (v) {
+      drawWheel(wheelHsv()); wheelHex.textContent = app.paintSel.hex
+      closeOtherBoxes('#paint-wheelbox')
+      // 자리 — 색 원의 왼쪽(패널 곁 · R5 새 모서리 없음)
+      const r = colorBtn.getBoundingClientRect()
+      wheelBox.style.right = `${Math.round(window.innerWidth - r.left + C.FLYOUT_GAP_PX)}px`
+      wheelBox.style.top = `${Math.round(Math.max(C.FLYOUT_EDGE_PX, Math.min(r.top, window.innerHeight - 150)))}px`
+    }
+  }
+  closePaintWheel = () => setWheelOpen(false)
+  colorBtn.addEventListener('click', () => setWheelOpen(!wheelOpen))
+  registerBox({ id: '#paint-wheelbox', isOpen: () => wheelOpen, close: () => setWheelOpen(false), zone: () => [wheelBox, colorBtn] })
   const wheelPick = (e: PointerEvent) => {
     const r = wheelCv.getBoundingClientRect()
     const x = e.clientX - r.left, y = e.clientY - r.top
@@ -2372,7 +2368,10 @@ function setPaintHex(hex: string, why: string) {
     const next: Hsv = part === 'ring'
       ? { ...cur, h: hueAt(WHEEL, x, y), s: cur.s || 1, v: cur.v || 1 }
       : { h: cur.h, ...svAt(WHEEL, x, y) }
-    setPaintHex(hexOfHsv(next), ' — 색상 휠')
+    app.paintSel.hex = hexOfHsv(next)
+    if (app.tool !== 'paint') setTool('paint')
+    drawWheel(next); wheelHex.textContent = app.paintSel.hex
+    syncPaintPanel()
     e.preventDefault()
   }
   wheelCv.addEventListener('pointerdown', e => {
@@ -2381,31 +2380,97 @@ function setPaintHex(hex: string, why: string) {
     wheelPick(e)
   })
   wheelCv.addEventListener('pointermove', e => { if (wheelDrag) wheelPick(e) })
-  wheelCv.addEventListener('pointerup', () => { wheelDrag = null })
-  wheelCv.addEventListener('pointercancel', () => { wheelDrag = null })
+  const wheelDone = () => { if (wheelDrag) { wheelDrag = null; pushRecent(app.paintSel.hex); syncPainttray(); status(`${app.paintSel.hex} — 색상 휠`) } }
+  wheelCv.addEventListener('pointerup', wheelDone)
+  wheelCv.addEventListener('pointercancel', wheelDone)
 
-  // ── 재료 프리셋 — **곁이다**(빠른 길이지 유일한 길이 아니다) ──────────────────
-  // 46의 견본 열넷을 그대로 둔다: 좁힘이 틀렸다는 것이지 이 열넷이 쓸모없다는 게 아니다.
-  // 누르면 **휠의 색이 된다** — 색의 출처는 `paintSel.hex` 하나다(#54).
-  for (const m of MATERIALS) {
-    const row = document.createElement('div')
-    row.id = `paintrow-${m.id}`
-    row.className = 'rrow prow'
-    const name = document.createElement('span')
-    name.className = 'prow-name'
-    name.textContent = m.name
-    row.append(name)
-    m.tones.forEach((hex, ti) => {
-      const b = document.createElement('button')
-      b.id = `swatch-${m.id}-${ti}`
-      b.className = 'swatch'
-      b.dataset.act = 'state'
-      b.style.background = hex
-      b.title = `${m.name} · ${TONE_NAMES[ti] ?? ''}`
-      b.addEventListener('click', () => setPaintHex(hex, ` — ${m.name} · ${TONE_NAMES[ti]}`))
-      row.append(b)
+  // ── ⑤ 즐겨찾기 여섯 — 옛 «도구 넷»의 자리 ───────────────────────────────────────
+  const favWrap = document.createElement('div')
+  favWrap.id = 'paint-favs'
+  favWrap.className = 'rrow prow'
+  const favBtns: HTMLButtonElement[] = []
+  for (let k = 0; k < FAV_N; k++) {
+    const b = document.createElement('button')
+    b.id = `paint-fav-${k + 1}`
+    b.className = 'favbtn'
+    b.dataset.act = 'state'
+    b.title = `즐겨찾기 ${k + 1} — 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기)`   // 48-10: 패널이 뜨기 전에도 설명이 있다(동기화가 값을 채운다)
+    let holdT: number | null = null
+    let held = false
+    b.addEventListener('pointerdown', () => {
+      held = false
+      holdT = window.setTimeout(() => {
+        held = true
+        const fs = readFavs()
+        fs[k] = { i: app.paintSel.i, br: app.paintSel.br }
+        writeFavs(fs)
+        syncPainttray()
+        status(`즐겨찾기 ${k + 1} ← ${SLOT_NAME[app.paintSel.i]} · ${brushShort(app.paintSel.br)}(이 기기에 남는다 · 옛 획은 안 변한다)`)
+      }, C.WRITE_HOLD_MS)
     })
-    painttrayEl.append(row)
+    const cancelHold = () => { if (holdT !== null) { clearTimeout(holdT); holdT = null } }
+    b.addEventListener('pointerup', cancelHold)
+    b.addEventListener('pointerleave', cancelHold)
+    b.addEventListener('click', () => {
+      if (held) return                                   // 저장 직후의 click은 적용이 아니다
+      const f = readFavs()[k]!
+      pickBrush(f.i, f.br)
+      if (app.tool !== 'paint') setTool('paint')
+      status(`${SLOT_NAME[f.i]} · ${brushShort(f.br)} — 즐겨찾기 ${k + 1}`)
+    })
+    favBtns.push(b)
+    favWrap.append(b)
+  }
+  painttrayEl.append(favWrap)
+
+  // ── ⑥ **정면**(web2-54 54-3) — 손통 front와 같은 배선(frontFlyTarget — #54). 왕복이다. ──
+  {
+    const b = document.createElement('button')
+    b.id = 'btn-paint-front'
+    b.className = 'rrow'
+    b.dataset.act = 'state'   // 시점 이동은 색 고르기를 안 끊는다
+    b.innerHTML = `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg><span id="paint-front-lbl">정면</span>`
+    b.addEventListener('click', () => {
+      const r = frontFlyTarget(app)
+      if (!r) { notify('정면은 면을 골라야 한다 — 칠 도구로 면을 탭해 고른 뒤 누른다'); return }
+      autolevel.glide(r.to)
+      status(r.back ? '직전 시점으로 돌아간다' : '정면 — 다시 누르면 직전 시점으로 돌아온다')
+      syncPainttray()
+    })
+    painttrayEl.append(b)
+  }
+
+  // ── 동기화 — 패널의 모든 값은 paintSel(정본)에서 온다(#54) ─────────────────────────
+  let sampleKey = ''
+  syncPaintPanel = () => {
+    const ps = app.paintSel
+    const key = `${ps.i}|${ps.br}|${ps.hex}`
+    if (key !== sampleKey) {
+      sampleKey = key
+      drawBrushSample(sampleCv, ps.i, ps.br, ps.hex)
+    }
+    brushName.innerHTML = `<b>${brushShort(ps.br)}</b><span style="color:#8d8880">${SLOT_NAME[ps.i]} · ${ps.br.split('/')[0]}</span>`
+    brushBtn.title = `지금 브러시 ${ps.br}(${SLOT_NAME[ps.i]} 족) — 누르면 브러시 목록이 열린다`
+    syncSizeRow(); syncOpRow()
+    colorBtn.style.background = ps.hex
+    colorBtn.title = `지금 색 ${ps.hex} — 누르면 색상 휠이 열린다`
+    const rec = readRecent()
+    recentBtns.forEach((b, k) => {
+      const h = rec[k]
+      b.dataset.hex = h ?? ''
+      b.style.background = h ?? 'transparent'
+      b.style.borderStyle = h ? 'solid' : 'dashed'
+      b.title = h ? `최근 색 ${h}` : '최근 색 — 비어 있다(색을 고르면 여기 남는다)'
+      b.classList.toggle('on', !!h && h === ps.hex)
+    })
+    const fs = readFavs()
+    favBtns.forEach((b, k) => {
+      const f = fs[k]!
+      b.innerHTML = `${SLOT_SVG[f.i]}<span class="favname">${brushShort(f.br)}</span>`
+      b.title = `즐겨찾기 ${k + 1} — ${SLOT_NAME[f.i]} · ${f.br}. 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)`
+      b.classList.toggle('on', f.i === ps.i && f.br === ps.br)
+    })
+    if (wheelOpen) { drawWheel(wheelHsv()); wheelHex.textContent = ps.hex }
   }
 }
 let wheelDrag: WheelPart = null
@@ -2423,30 +2488,19 @@ function syncPainttray() {
       b.title = can
         ? (app.frontBack ? '정면 — 다시 누르면 직전 시점으로 돌아온다'
           : `정면 — ${n > 1 ? '마지막에 고른 면' : '고른 면'}을 정면으로 본다(평행)`)
-        : '정면은 면을 골라야 한다 — 연필을 든 채로 면 안쪽을 꾹 눌러 고른 뒤 칠로 돌아온다'
+        : '정면은 면을 골라야 한다 — 칠 도구로 면을 탭해 고른 뒤 누른다'
     }
   }
-  for (const [i, b] of paintInstrRow) b.classList.toggle('on', app.paintSel.i === i)
-  syncPaintSizeRow()                          // 58-1 — 슬라이더 max·값·점이 도구를 따른다
-  drawWheel(wheelHsv())
-  wheelHex.textContent = app.paintSel.hex
-  for (const m of MATERIALS) {
-    m.tones.forEach((hex, ti) => {
-      const b = document.getElementById(`swatch-${m.id}-${ti}`)
-      b?.classList.toggle('on', app.paintSel.hex === hex)
-    })
-  }
+  syncPaintPanel()
 }
 let painttrayOpen = false
+/** 칠 패널 — 칠 도구를 든 동안 켜진다(setTool이 부른다). 통 등록부 밖(R8 정정 — 도구의 화면). */
 function setPainttrayOpen(v: boolean) {
   painttrayOpen = v
   painttrayEl.classList.toggle('open', v)
-  if (v) { syncPainttray(); closeOtherBoxes('#painttray'); placeFlyout(painttrayEl, toolBtn['paint']) }
+  if (v) { syncPainttray(); placeFlyout(painttrayEl, toolBtn['paint']) }
+  else { if (paintPanelReady && brushPicker.isOpen()) brushPicker.setOpen(false); closePaintWheel() }
 }
-registerBox({
-  id: '#painttray', isOpen: () => painttrayOpen, close: () => setPainttrayOpen(false),
-  zone: () => [painttrayEl, toolBtn['paint']],
-})
 
 // ── 숫자와 표시(web2-47) ────────────────────────────────────────────────────
 
@@ -2815,22 +2869,42 @@ import {
   setPaintRenderer, paintRenderer, drawMark, drawMarksSeam, paintRendererId, type Instr58,
   setMarkerFlatForTest, setPaintOpaqueForTest, setPressFlatForTest, setGrainOffForTest,
 } from '../core/paintseam'
-import { p5PaintRenderer, p5probeForTest, p5calibForTest } from './p5paint'
 import {
   mypaintRenderer, mypaintProbeForTest, calibForTest as mypaintCalibForTest, presetMappingForTest,
   lastLayerAlphaForTest, smudgeStatsForTest, resetSmudgeStatsForTest, premulViolationsForTest, layerStatsForTest, lastStrokeCapForTest, presetBaseForTest,
   setCapOffForTest, setSmudgeSelfSampleForTest, setPremulBreakForTest, setFringeBreakForTest,
   setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET,
   setTipsOffForTest, setTipFrameLockForTest, tipsReadyForTest, tipStatsForTest, resetTipStatsForTest, tipDefaultOfForTest, onTipAssetsLoaded,
+  unknownBrushIdsForTest, setTipGainOffForTest, presetStatsForTest, resetCpTilesForTest,
 } from './mypaintpaint'
+import { setBrushIdOffForTest } from '../core/facetex'
+import { setBrushOfSlot } from '../core/file'
+import { defaultBrushOf, DEFAULT_BRUSH } from '../core/paintseam'
+import { drawBrushSample } from './brushpicker'
 import { grainTileForTest, setPaper61ForTest, paper61ForTest, setPaperSeamBreakForTest } from '../mypaint/paper'
 import { loadTipAssets, tipAtlasesForTest } from '../mypaint/tips'
 import { initTuneLab } from './tunelab'
 import { initBrushPicker, persistTune } from './brushpicker'
 
-// 칠 렌더러 등록(web2-62) — 이음매의 주입 지점. 61의 p5.brush 판은 팔(62-vs-61 사진 · 엔진 갈아끼움
-// 반증)이 setPaintEngineForTest로 잠깐 되돌릴 수 있게 남겼다 — 제품은 mypaint다.
+// 칠 렌더러 등록(web2-62) — 이음매의 주입 지점. **web2-64 64-6: 렌더러는 하나다** — 61의 p5.brush 판(app/p5paint.ts)과
+// 런타임 전환 손잡이(setPaintEngineForTest)를 지웠다(원칙 a · #70의 그 모양: 둘이 살아 있으면 «지금 어느 것이 도는가»를 못 센다).
 setPaintRenderer(mypaintRenderer)
+/** 슬롯의 «지금» 브러시 — 조정(tune.base — 마지막으로 고른 것) → 기본 표. 옛 문서 이주(file.setBrushOfSlot)·슬롯 바꿈이 같은 함수를 본다(#54). */
+const slotBrushOf = (i: Instr58, grade?: string): string => paintRenderer()?.brushOf?.(i) ?? defaultBrushOf(i, grade)
+setBrushOfSlot((i, grade) => {
+  // 조정이 없으면 등급을 본다(연필 2H/HB/2B — 62 pencilOfGrade). 조정이 있으면 그것(마지막으로 고른 브러시).
+  const tuned = paintRenderer()?.brushOf?.(i)
+  return tuned && tuned !== DEFAULT_PRESET[i] ? tuned : defaultBrushOf(i, grade)
+})
+/** **지금 브러시를 고른다** — 패널의 견본·브러시 목록·즐겨찾기가 전부 이 하나를 부른다(#54). paintSel.br가 정본(64-1)이고
+ *  슬롯 조정(tune.base)은 «그 슬롯이 마지막으로 든 브러시»의 기록이다(옛 문서 이주·preset 없는 팔의 폴백). */
+function pickBrush(i: Instr58, name: string): void {
+  app.paintSel.i = i
+  app.paintSel.br = name
+  paintRenderer()?.setBrush?.(i, name)
+  persistTune()
+  syncPainttray()
+}
 
 // ── 브러시 작업대(web2-58 58-5) — 설정에 숨는다(R8). 시험 긋기 == 제품 굽기(#54) ────
 const tuneLab = initTuneLab({
@@ -2847,17 +2921,16 @@ registerBox({
 const brushPicker = initBrushPicker({
   toolOf: () => app.paintSel.i,
   hexOf: () => app.paintSel.hex,
-  onPick: (tool, name) => {
-    paintRenderer()?.setBrush?.(tool, name)
-    persistTune()
-    rebakePaintTexForTest(); invalidate()
-  },
+  onPick: (tool, name) => { pickBrush(tool, name); invalidate() },   // web2-64: 옛 획은 안 변한다(br) — 재굽기 불요
   notify: (m) => notify(m),
 })
 registerBox({
   id: '#brushpick', isOpen: () => brushPicker.isOpen(), close: () => brushPicker.setOpen(false),
-  zone: () => [brushPicker.root, document.getElementById('btn-brushpick')],
+  zone: () => [brushPicker.root, document.getElementById('paint-brush-btn')],
 })
+// 칠 패널이 섰다(web2-64) — 패널 블록과 브러시 목록이 둘 다 선 뒤에야 켤 수 있다(부팅의 setTool은 표식 전이라 못 켰다 · TDZ)
+paintPanelReady = true
+setPainttrayOpen(app.tool === 'paint')
 import { forwardOf, yawDir } from '../core/level'
 import { loopAt, buildGraph, cyclesOf, planesOf, faceScreen } from '../core/face'
 import { geomSize3 } from '../core/osnap'
@@ -2884,10 +2957,6 @@ const diag = {
   },
   resetPaintTuneForTest: (i: Instr58) => { paintRenderer()?.resetTune?.(i); rebakePaintTexForTest(); invalidate() },
   paintParamsForTest: (i: Instr58) => paintRenderer()?.params?.(i) ?? [],
-  /** **⚑ 굽는 길 탐침**(web2-61 「재서 정할 것」) — 오프스크린 p5.brush가 되는가 ·
-   *  전환 비용 · 면 20×획 40 비용. bake61.spec이 원장으로 남긴다. */
-  p5probeForTest: () => p5probeForTest(),
-  p5calibForTest: () => p5calibForTest(),
   /** 결 타일(면 고정 · paint59 ④의 자) — 62부터 엔진 밖(src/mypaint/paper)의 것이다 */
   paintGrainTileForTest: () => grainTileForTest(),
   /** **web2-62 — mypaint 엔진 진단·반증** */
@@ -2912,7 +2981,7 @@ const diag = {
   // ── web2-63 팁·종이 ──
   setTipsOffForTest: (v: boolean) => { setTipsOffForTest(v); rebakePaintTexForTest(); invalidate() },
   setTipFrameLockForTest: (v: number) => setTipFrameLockForTest(v),
-  setPaper61ForTest: (v: boolean) => { setPaper61ForTest(v); rebakePaintTexForTest(); invalidate() },
+  setPaper61ForTest: (v: boolean) => { setPaper61ForTest(v); resetCpTilesForTest(); rebakePaintTexForTest(); invalidate() },
   paper61ForTest: () => paper61ForTest(),
   setPaperSeamBreakForTest: (v: boolean) => setPaperSeamBreakForTest(v),
   tipsReadyForTest: () => tipsReadyForTest(),
@@ -2924,13 +2993,31 @@ const diag = {
   setCalibOffForTest: (v: boolean) => { setCalibOffForTest(v); rebakePaintTexForTest(); invalidate() },
   /** 반증(AS-C184) — 이벤트 고정 dtime(ms) · null = 제품(걸음 ÷ 일정 속도) */
   setEventDtimeForTest: (ms: number | null) => { setEventDtimeForTest(ms); rebakePaintTexForTest(); invalidate() },
-  /** 엔진 갈아끼움(62-vs-61 사진 · 이음매 계약의 반증) — 'mypaint' | 'p5brush' */
-  setPaintEngineForTest: (id: 'mypaint' | 'p5brush') => {
-    setPaintRenderer(id === 'p5brush' ? p5PaintRenderer : mypaintRenderer); rebakePaintTexForTest(); invalidate()
-  },
+  /** web2-64 ① — 지금 브러시를 고른다(패널·즐겨찾기의 그 배선 — pickBrush 하나 #54). 슬롯 조정(tune.base)도 같이 앉힌다:
+   *  «그 슬롯의 지금 브러시»(옛 문서 이주·preset 없는 팔의 폴백)가 마지막으로 고른 것이 되게. */
+  pickBrushForTest: (i: Instr58, name: string) => { pickBrush(i, name); rebakePaintTexForTest(); invalidate() },
+  /** web2-64 ① 반증(D-3) — 굽기가 획의 브러시 id를 무시한다(옛 결함: 슬롯의 지금 브러시로 굽는다) */
+  setBrushIdOffForTest: (v: boolean) => { setBrushIdOffForTest(v); rebakePaintTexForTest(); invalidate() },
+  /** web2-64 ⑧ — 읽기(파일과 같은 함수 readBrnl) + 보고 + 알림 문장 · 문서는 안 바꾼다 */
+  readBrnlForTest: (text: string) => { const r = readBrnl(text); return { data: r.data, report: r.report, notice: reportNotice(r.report) } },
+  /** web2-64 — 엔진이 모르는 브러시 id로 굽힌 횟수(#105 — 조용한 폴백 계수기) */
+  unknownBrushIdsForTest: () => unknownBrushIdsForTest(),
+  /** web2-64 64-4 반증(D-3) — 팁 농도 보정 끔(63의 옅음이 돌아온다) · 보정표는 mypaintCalibForTest(gain·meanTip·meanProc) */
+  setTipGainOffForTest: (v: boolean) => { setTipGainOffForTest(v); rebakePaintTexForTest(); invalidate() },
+  /** web2-64 64-5 — 프리셋 하나의 사상 통계(설정 수 · 곡선 수 · 모르는 설정/입력)와 기준값 몇 */
+  presetStatsForTest: (name: string) => presetStatsForTest(name),
   /** 지금 도구 슬롯(칠통) — 고르개·사진 팔이 읽는다 */
   paintInstrForTest: () => app.paintSel.i,
-  setPaintInstrForTest: (i: Instr58) => { app.paintSel.i = i; syncPainttray() },
+  /** 슬롯을 바꾼다 — web2-64: 그 슬롯의 «지금» 브러시(조정 → 기본)도 같이 든다(paintSel.br가 정본이라 i만 바꾸면 갈린다) */
+  setPaintInstrForTest: (i: Instr58) => { app.paintSel.i = i; app.paintSel.br = slotBrushOf(i); syncPainttray() },
+  paintSelForTest: () => ({ ...app.paintSel }),
+  /** web2-64 — 색을 고른다(패널의 setPaintHex — 견본 줄이 지워진 자리의 팔 통로 · 최근 색에 남는다) */
+  setPaintHexForTest: (hex: string) => setPaintHex(hex, ' — 팔'),
+  /** web2-64 — 재료의 톤 색(palette 그대로 — 46의 (재료, 톤) 사상 · 견본 줄이 지워진 자리의 팔 통로) */
+  materialToneForTest: (mat: string, tone: number): string => materialOf(mat as MatId)?.tones[tone] ?? '#000000',
+  /** web2-64 — 즐겨찾기·최근 색 읽기(기기 저장 — 값으로) */
+  paintFavsForTest: () => readFavs(),
+  paintRecentForTest: () => readRecent(),
   /** **자국 견본**(web2-61 게이트·사진의 자) — 흰 판(면 텍스처 규약)에 견본 도형 하나를
    *  제품과 같은 함수(paintMark — 이음매)로 긋고 어둡기 지도(0..255)를 window.__m61에
    *  남긴다. 화면·문서·dpr과 무관한 순수 px 판이라 원근이 자를 안 흐린다(#16 — 주기
@@ -3511,6 +3598,8 @@ const diag = {
   /** 면 텍스처(web2-50) — 팔의 판정 통로 셋: 요약(자리·단계·보임) · 파생 증명의 오염 ·
    *  합성 반증(곱 → 보통 — 켜면 증상 ①②가 되살아나야 한다 · D-3 · #30) */
   paintTex: () => paintTexStats(),
+  /** web2-64 게이트 ① — 굽힌 텍스처의 픽셀 해시(면·쪽별) */
+  paintTexHash: () => paintTexHashForTest(),
   paint50Constants: () => ({ FACETEX_MIN_PX: C.FACETEX_MIN_PX, FACETEX_MAX_PX: C.FACETEX_MAX_PX,
     PAINT_MARKER_ALPHA: C.PAINT_MARKER_ALPHA, PAINT_CP_ALPHA: C.PAINT_CP_ALPHA,
     PAINT_W_FALLBACK_UNITS: C.PAINT_W_FALLBACK_UNITS,
@@ -3522,28 +3611,11 @@ const diag = {
     PAINT63_DISTINCT_REL: C.PAINT63_DISTINCT_REL, PAINT63_AC_MARGIN: C.PAINT63_AC_MARGIN, PAINT63_AC_MAX: C.PAINT63_AC_MAX,
     PAINT63_TILE_CORR_MAX: C.PAINT63_TILE_CORR_MAX, PAINT63_TILE_CORR_TIP_MAX: C.PAINT63_TILE_CORR_TIP_MAX, PAINT63_TILE_RATIO_TOL: C.PAINT63_TILE_RATIO_TOL, PAINT63_SEAM_RATIO_MAX: C.PAINT63_SEAM_RATIO_MAX, PAINT63_SAMESPOT_CORR: C.PAINT63_SAMESPOT_CORR, PAINT63_ASPECT_WIDTH_RATIO_MIN: C.PAINT63_ASPECT_WIDTH_RATIO_MIN,
     PAINT50_PATTERN_MIN_PX: C.PAINT50_PATTERN_MIN_PX, PAINT50_LINE_INK_MIN_PX: C.PAINT50_LINE_INK_MIN_PX,
-    PAINT51_DPR_W_TOL: C.PAINT51_DPR_W_TOL, PAINT51_SWATCH_W_TOL: C.PAINT51_SWATCH_W_TOL,
-    PAINT51_DENSITY_SLOPE: C.PAINT51_DENSITY_SLOPE, PAINT51_WIDTH_SLOPE: C.PAINT51_WIDTH_SLOPE,
-    PAINT51_GATE_MARGIN: C.PAINT51_GATE_MARGIN, PAINT51_TIP_MIN_RATIO: C.PAINT51_TIP_MIN_RATIO,
-    PAINT51_SPLIT_MIN_RATIO: C.PAINT51_SPLIT_MIN_RATIO, PAINT51_FLOW_CV_MIN: C.PAINT51_FLOW_CV_MIN,
-    PAINT51_CP_COVER_MARGIN: C.PAINT51_CP_COVER_MARGIN,
-    PAINT51_GRAIN_ZOOM_K: C.PAINT51_GRAIN_ZOOM_K, PAINT51_GRAIN_ZOOM_FLOOR: C.PAINT51_GRAIN_ZOOM_FLOOR,
-    // 성질 상수 전수(2차 [10] — 결 팔이 딛는 GRAIN 상수까지 원장이 든다)
-    PAINT51_DENSITY_FLOOR: C.PAINT51_DENSITY_FLOOR, PAINT51_WIDTH_FLOOR: C.PAINT51_WIDTH_FLOOR,
-    PAINT51_PENCIL_GRAIN_K: C.PAINT51_PENCIL_GRAIN_K, PAINT51_PENCIL_GRAIN_FLOOR: C.PAINT51_PENCIL_GRAIN_FLOOR,
-    PAINT51_CP_GRAIN_K: C.PAINT51_CP_GRAIN_K, PAINT51_CP_SKIP_TH: C.PAINT51_CP_SKIP_TH,
-    PAINT51_CP_SKIP_ALPHA: C.PAINT51_CP_SKIP_ALPHA,
-    PAINT51_MARKER_TIP_ALPHA: C.PAINT51_MARKER_TIP_ALPHA, PAINT51_MARKER_TIP_LEN_K: C.PAINT51_MARKER_TIP_LEN_K,
-    PAINT51_BRUSH_BRISTLES: C.PAINT51_BRUSH_BRISTLES, PAINT51_BRUSH_SPLIT_T: C.PAINT51_BRUSH_SPLIT_T,
-    PAINT51_BRUSH_SPLIT_K: C.PAINT51_BRUSH_SPLIT_K, PAINT51_BRUSH_FLOW_NODES: C.PAINT51_BRUSH_FLOW_NODES,
     MATS52_SCALE_TOL: C.MATS52_SCALE_TOL, MATS52_TWO_LAYER_MIN: C.MATS52_TWO_LAYER_MIN, REP_MIN_PX: C.REP_MIN_PX,
-    PAINT58_STAMP_BAND_TOL: C.PAINT58_STAMP_BAND_TOL,
-    PAINT59_PREVIEW_DIFF_MAX: C.PAINT59_PREVIEW_DIFF_MAX, PAINT59_CROSS_TOL: C.PAINT59_CROSS_TOL,
-    PAINT59_GRAIN_CORR_MIN: C.PAINT59_GRAIN_CORR_MIN, PAINT59_DRAFT_FRAME_EXTRA_MS: C.PAINT59_DRAFT_FRAME_EXTRA_MS,
-    PAINT60_CP_BURNISH: C.PAINT60_CP_BURNISH, PAINT60_RIPPLE_MAX: C.PAINT60_RIPPLE_MAX,
-    PAINT60_HOLE_SHARE_GAP: C.PAINT60_HOLE_SHARE_GAP, PAINT60_LAYER_CORR_MIN: C.PAINT60_LAYER_CORR_MIN,
+    PAINT59_PREVIEW_DIFF_MAX: C.PAINT59_PREVIEW_DIFF_MAX, PAINT59_CROSS_TOL: C.PAINT59_CROSS_TOL, PAINT59_DRAFT_FRAME_EXTRA_MS: C.PAINT59_DRAFT_FRAME_EXTRA_MS,
     PAINT61_END_TOL: C.PAINT61_END_TOL, PAINT61_PAPER_CORR_MIN: C.PAINT61_PAPER_CORR_MIN,
-    PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS: C.PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS, PAINT61_SIZE_TOL: C.PAINT61_SIZE_TOL }),
+    PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS: C.PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS, PAINT61_SIZE_TOL: C.PAINT61_SIZE_TOL,
+    PAINT64_DENSITY_TOL: C.PAINT64_DENSITY_TOL, PAINT64_WET_MIN_PX: C.PAINT64_WET_MIN_PX, PAINT64_TAP_MAX_PX: C.PAINT64_TAP_MAX_PX }),
   /** 저장물 원문(파일 저장과 같은 함수 — #54) — paint50 팔이 «텍스처가 파일에 없다»를 잰다 */
   serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
   corruptPaintTex: () => { const n = corruptPaintTexForTest(); invalidate(); return n },

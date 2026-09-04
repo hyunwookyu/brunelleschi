@@ -1,5 +1,5 @@
 {
-  "n_flags": 6537,
+  "n_flags": 6538,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -32869,6 +32869,11 @@
       "flag": "**성공률이 0인 자리가 있다**(#38) — 특정 팔·구도의 0이면 정상이고 원장이 그렇게 적어야 한다. **원장 전체가 0이면 그 하네스는 «깨지지 않고 죽은» 것이다**(18차에 `order_lock`이 실제로 그랬다: `camera_ok 0/300`인데 시험은 통과)"
     },
     {
+      "path": "web2/NOTES.md:마감 — web2-63",
+      "val": "「도는 백그라운드」 줄 없음",
+      "flag": "**마감 보고가 「도는 백그라운드 없음」을 값으로 안 적었다**(#95 · #81 ㉤) — 세션 끝에 도는 대기가 있으면 그 자체가 결함이다. 12시간 51분짜리 배포 대기가 그렇게 남았다"
+    },
+    {
       "path": "scan_citation_hashes",
       "val": [
         "assumptions.md:199 test_cost.json",
@@ -33172,7 +33177,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 666,
+      "files_scanned": 670,
       "exts_declared": [
         ".md",
         ".py",
@@ -33196,14 +33201,14 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 666,
+      "files_scanned": 670,
       "exts_declared": [
         ".md",
         ".py",
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 43,
+        ".md": 44,
         ".py": 4,
         ".html": 1,
         ".ts": 115
@@ -33259,8 +33264,8 @@
     {
       "scan": "scan_unbounded_wait",
       "unit": "마감 블록·도구 파일",
-      "targets": 18,
-      "hits": 0,
+      "targets": 19,
+      "hits": 1,
       "note": "⚠ **세션 안에서 즉석으로 만든 대기는 안 보인다** — 저장소에 없기 때문이다. 그 자리를 지키는 것은 **마감 보고의 「도는 백그라운드 없음」 한 줄**이다"
     },
     {

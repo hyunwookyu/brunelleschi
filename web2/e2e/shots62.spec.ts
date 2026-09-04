@@ -2,7 +2,7 @@
 //   62-<tool>.png      슬롯 넷(연필·색연필·마커·잉크펜) × 획 셋(직선·물결·자기교차)
 //   62-catalog-<group>.png  분류별 196 전수 — 이름 + 물결 견본(제품과 같은 함수 · 고르개의 견본과 같은 길)
 //   62-overlap.png     겹침 물성(파랑 위 노랑 = 초록 · paint_mode 끔 대조) + 젖은 붓(빨강 위 스머지)
-//   62-vs-61.png       슬롯 넷의 물결 — 왼쪽 mypaint(62) · 오른쪽 p5.brush(61 · 엔진 갈아끼움 팔)
+//   (62-vs-61.png — 64-6이 걷었다 · 파일은 62의 산출물로 남는다)
 //
 // ⚠ #104: PNG는 stage0/out/shots62/(vite 감시 밖)에 쓰고 실행 뒤 web2/shots/로 옮긴다(tools/shots62-copy.mjs).
 
@@ -28,7 +28,7 @@ const save = (name: string, dataUrl: string) => {
   expect(b64.length, `${name} PNG가 실재한다`).toBeGreaterThan(2000)
 }
 
-test('사진 — 슬롯 넷 × 셋 · 62-vs-61 (dpr1에서만)', async ({ page }, info) => {
+test('사진 — 슬롯 넷 × 셋 (dpr1에서만 · 62-vs-61은 64-6이 걷었다)', async ({ page }, info) => {
   test.skip(info.project.name === 'dpr2', '견본 판은 고정 px — dpr1 한 번이면 같은 그림')
   test.setTimeout(180_000)
   await boot(page)
@@ -52,27 +52,7 @@ test('사진 — 슬롯 넷 × 셋 · 62-vs-61 (dpr1에서만)', async ({ page }
     }, [tool, defaults[tool]] as const)
     save(`62-${tool}.png`, dataUrl)
   }
-  // 62-vs-61 — 왼쪽 mypaint · 오른쪽 p5.brush(엔진 갈아끼움 팔)
-  const vs = await page.evaluate((tools) => {
-    const b2 = (window as any).__b2
-    const W = 480, H = 240
-    const sheet = document.createElement('canvas')
-    sheet.width = W * 2 + 20; sheet.height = H * tools.length + 30
-    const sg = sheet.getContext('2d')!
-    sg.fillStyle = '#fffdf8'; sg.fillRect(0, 0, sheet.width, sheet.height)
-    for (const engine of ['mypaint', 'p5brush'] as const) {
-      b2.diag.setPaintEngineForTest(engine)
-      tools.forEach((t, i) => {
-        b2.diag.markSampleForTest(t, 'wave', 20)
-        sg.drawImage((window as any).__m61cv as HTMLCanvasElement, engine === 'mypaint' ? 0 : W + 20, 30 + i * H)
-      })
-    }
-    b2.diag.setPaintEngineForTest('mypaint')
-    sg.fillStyle = '#3c3831'; sg.font = '16px system-ui'
-    sg.fillText('62 mypaint(왼쪽)  vs  61 p5.brush(오른쪽) — pencil / cp / marker / brush · wave · w20', 12, 20)
-    return sheet.toDataURL('image/png')
-  }, [...TOOLS])
-  save('62-vs-61.png', vs)
+  // (62-vs-61 사진은 **web2-64 64-6이 걷었다** — p5.brush 칠 렌더러와 전환 손잡이(setPaintEngineForTest)가 없다. web2/shots/62-vs-61.png은 62의 산출물로 남는다.)
 })
 
 test('사진 — 겹침 물성 · 젖은 붓 (dpr1에서만)', async ({ page }, info) => {

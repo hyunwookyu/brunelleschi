@@ -1,0 +1,91 @@
+{
+  "conditions": {
+    "project": "dpr1",
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/paint64.spec.ts (워커 1 — #99)"
+  },
+  "what": "web2-64 — 칠의 화면 게이트: ①옛 획 불변(브러시 id) ⑧저장 왕복·이주",
+  "note_pitfalls": "#108(단언=반증 «같은 값»이면 자부터 — 반증 스위치가 해시를 실제로 바꾸는 것을 먼저 본다) · #107(확정본 캔버스) · #103(같은 장면을 두 번 읽는다 — ink 수가 장면 확인) · #99 · #101 · #12(슬롯 넷 × 브러시 쌍)",
+  "scene": "paint50의 bigBox(오른쪽 벽 · 축척 2500) — 벽 한 면에 획 하나씩",
+  "old_strokes": {
+    "def": "슬롯 넷 × 브러시 쌍(A → B): A로 벽에 획 하나 → paintTexHash(굽힌 캔버스 해시·잉크 수) → 지금 브러시를 B로(pickBrushForTest = 패널의 그 배선) → 재굽기 → 해시 같음. 반증 = setBrushIdOffForTest(굽기가 획의 br을 무시하고 슬롯의 지금 브러시를 읽는다 — 옛 결함의 재현) → 해시 다름 · 되돌리면 같음",
+    "rows": {
+      "marker": {
+        "a": "ramon/100%_Opaque",
+        "b": "tanda/marker-01",
+        "ink_a": 5927,
+        "same_after_b": true,
+        "falsification_idoff_same": false,
+        "back_same": true,
+        "hashes": {
+          "a": [
+            1668369760
+          ],
+          "b": [
+            1668369760
+          ],
+          "off": [
+            -1411027970
+          ]
+        }
+      },
+      "pencil": {
+        "a": "classic/pencil",
+        "b": "deevad/2B_pencil",
+        "ink_a": 10221,
+        "same_after_b": true,
+        "falsification_idoff_same": false,
+        "back_same": true,
+        "hashes": {
+          "a": [
+            -1072093494
+          ],
+          "b": [
+            -1072093494
+          ],
+          "off": [
+            147061242
+          ]
+        }
+      },
+      "cp": {
+        "a": "ramon/B-pencil",
+        "b": "classic/charcoal",
+        "ink_a": 14696,
+        "same_after_b": true,
+        "falsification_idoff_same": false,
+        "back_same": true,
+        "hashes": {
+          "a": [
+            -239485509
+          ],
+          "b": [
+            -239485509
+          ],
+          "off": [
+            21767084
+          ]
+        }
+      },
+      "brush": {
+        "a": "deevad/liner",
+        "b": "classic/pen",
+        "ink_a": 20620,
+        "same_after_b": true,
+        "falsification_idoff_same": false,
+        "back_same": true,
+        "hashes": {
+          "a": [
+            -2114659797
+          ],
+          "b": [
+            -2114659797
+          ],
+          "off": [
+            -1498456967
+          ]
+        }
+      }
+    }
+  }
+}

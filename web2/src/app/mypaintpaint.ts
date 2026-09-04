@@ -20,10 +20,16 @@ import {
   type PaintRenderer, type SeamMark, type ParamDesc, type Instr58,
 } from '../core/paintseam'
 import { rng32 } from '../core/material'
+import { markShape } from '../core/markshapes'
 import { C } from '../core/constants'
 import { Brush } from '../mypaint/brush'
 import { Layer, StrokeSurface, type Bbox, type StrokeOpts } from '../mypaint/surface'
-import { PRESETS, PRESET_GROUPS, PRESET_SKIPPED_INPUTS, type Preset } from '../mypaint/presets.gen'
+import { PRESETS as MYPAINT_PRESETS, PRESET_GROUPS as MYPAINT_GROUPS, PRESET_SKIPPED_INPUTS, type Preset } from '../mypaint/presets.gen'
+import { APP_PRESETS, APP_GROUP } from './brushes64'
+import { DEFAULT_BRUSH, defaultBrushOf } from '../core/paintseam'
+/** 브러시 전부 — mypaint 196(CC0 · 값을 짓지 않는다) + 앱 프리셋(web2-64 — 색연필의 성질로 지은 것 · brushes64.ts가 사유·값). */
+export const PRESETS: readonly Preset[] = [...MYPAINT_PRESETS, ...APP_PRESETS]
+export const PRESET_GROUPS: readonly string[] = [APP_GROUP, ...MYPAINT_GROUPS]
 import { SETTINGS, INPUTS, S } from '../mypaint/settings.gen'
 import { hexToLinear, rgbToHsv } from '../mypaint/helpers'
 import { grainTile, grainTileN, grainSource, GRAIN_DEPTH, setPaperHeightTile, paperHeightLoaded } from '../mypaint/paper'
@@ -45,23 +51,39 @@ export const INPUT_IDX: ReadonlyMap<string, number> = new Map(INPUTS.map((s, i) 
 export const PRESET_CATALOG: readonly { group: string; names: string[] }[] =
   PRESET_GROUPS.map(g => ({ group: g, names: PRESETS.filter(p => p.group === g).map(p => p.name) }))
 
-// ── 도구 슬롯 → 기본 브러시(세션이 정했다 — 지시 「사람을 멈춰 세우지 마라」 · ⚑ 사진이 판정대) ──
-/** 연필 등급 → 프리셋(2H·H → 4H · F·HB → classic · B·2B → 2B) */
-export const pencilOfGrade = (grade?: string): string =>
-  grade === '2H' || grade === 'H' ? 'deevad/4H_pencil'
-    : grade === 'B' || grade === '2B' ? 'deevad/2B_pencil' : 'classic/pencil'
-export const DEFAULT_PRESET: Record<Instr58, string> = {
-  pencil: 'classic/pencil',            // 등급이 오면 pencilOfGrade가 가른다
-  brush: 'deevad/liner',               // 잉크펜 슬롯 — 제도 라이너(불투명 1 · AA 2)
-  marker: 'ramon/100%_Opaque',         // 둥근·딱딱한 불투명 블록(균일 띠 — 61의 마커 계약 · 압력 무관 = 실물 마커) · 끌 마커는 고르개에
-                                       // ⚠ tanda/marker-01(hardness .6)은 가장자리가 부드러워 paint50 ④의 원근 자가 먼 끝을 잃었다(1.46~1.58 vs 1.24 —
-                                       // 텍스처 안 띠는 균일 · 딱딱한 liner는 1.29): 자의 결이 아니라 마커의 «날»이 다른 것 — 사진이 판정대
-  cp: 'ramon/B-pencil',                // 색연필 — 연필 엔진 + 색(PAINT-TIERS)
-}
+// ── 도구 슬롯 → 기본 브러시 — **web2-64: core(paintseam.DEFAULT_BRUSH)로 이사했다**(옛 문서 이주가 엔진 없이 이름을 알아야 한다).
+// 값의 사유는 62 그대로(AS-C186 · 마커 = 딱딱한 불투명 블록 — tanda/marker-01은 paint50 ④의 원근 자가 먼 끝을 잃었다 1.46~1.58 vs 1.24) ·
+// 색연필만 64-2가 앱 프리셋(brunelleschi/colored_pencil)으로 바꿨다. 이 이름들은 «되내보내기»다(옛 팔·고르개의 import 자리 무변).
+export { pencilOfGrade } from '../core/paintseam'
+export const DEFAULT_PRESET: Readonly<Record<Instr58, string>> = DEFAULT_BRUSH
 /** 도구 캡(획 불투명도 상한 — 46·50 계약 상수 그대로) */
 const TOOL_CAP: Record<Instr58, number> = { pencil: 1, brush: 1, marker: C.PAINT_MARKER_ALPHA, cp: C.PAINT_CP_ALPHA }
-/** 종이 결 기본(paperK 1 = 깊이 GRAIN_DEPTH · 마커는 결 없음 — 61 그대로) */
+/** 종이 결 기본(paperK 1 = 깊이 GRAIN_DEPTH · 마커는 결 없음 — 61 그대로). cp는 아래 «문턱 판»이 따로 든다(64-2). */
 const TOOL_PAPER: Record<Instr58, number> = { pencil: 1, brush: 1, marker: 0, cp: 1 }
+/** web2-64 64-2 색연필 — 안료가 종이 **봉우리에만** 얹힌다(구멍): 결 타일을 «문턱 판»으로 바꾼다 — 골(타일 > 문턱)은 1(깊이 1이면 도장 알파 0 =
+ *  구멍) · 봉우리는 타일 × .35(옅은 결). 압력이 알파가 아니라 **문턱을 내린다**(버니싱 — 지시 문면 · 60의 cpBurnish 자리): 문턱 = .5 + .5·p̄
+ *  (획 평균 압력 · 저압 .2 → 구멍 40% · .6 → 20% · 1 → 0%). 엔진의 결 곱(1 − 깊이 × 타일)은 62 그대로 — 판의 «값»만 바뀐다(paper.ts와 같은
+ *  자리 · 매핑). 문턱은 .05 눈금으로 양자화해 판을 캐시한다(1024² 판 하나 4 MB · 최대 넷). */
+const CP_PEAK_K = 0.35
+const cpThresholdOf = (press: number[] | null | undefined): number => {
+  if (!press || press.length === 0) return 0.75                     // 압력 없음(마우스 .5 상수의 자리)
+  let s = 0
+  for (const v of press) s += Math.min(1, Math.max(0, v / C.PRESS_Q))
+  return Math.round((0.5 + 0.5 * (s / press.length)) * 20) / 20
+}
+const cpTiles = new Map<number, Float32Array>()
+function cpGrainTile(th: number): Float32Array {
+  const hit = cpTiles.get(th)
+  if (hit) return hit
+  const src = grainTile()
+  const out = new Float32Array(src.length)
+  for (let i = 0; i < src.length; i++) out[i] = src[i]! > th ? 1 : src[i]! * CP_PEAK_K
+  if (cpTiles.size >= 4) cpTiles.delete(cpTiles.keys().next().value!)
+  cpTiles.set(th, out)
+  return out
+}
+/** 진단·반증 — 결 판이 바뀌면(paper61 스위치 등) 캐시를 비운다 */
+export function resetCpTilesForTest(): void { cpTiles.clear() }
 
 // ── 사람 조정(작업대·고르개 — 기기 저장) ────────────────────────────────────────
 interface Tune {
@@ -81,7 +103,8 @@ const TIP_EXACT: Record<string, string> = {
   'classic/charcoal': 'chalk-chisel', 'tanda/charcoal-01': 'chalk-chisel', 'tanda/charcoal-03': 'chalk-chisel', 'tanda/charcoal-04': 'chalk-chisel',
   'ramon/Pastel_1': 'rock-pitted', 'deevad/chalk': 'rock-pitted',
   'classic/dry_brush': 'scratches-rough',
-  'ramon/B-pencil': 'scratches2',            // 색연필 슬롯 기본(빗금 이빨)
+  'ramon/B-pencil': 'scratches2',            // 63의 색연필 슬롯(빗금 이빨)
+  'brunelleschi/colored_pencil': 'scratches2',   // 64-2 — 앱 색연필도 같은 팁(이름에 pencil이 들어 fine-grain으로 떨어지지 않게 정확 이름으로)
 }
 export function tipDefaultOf(preset: string): string | null {
   const e = TIP_EXACT[preset]
@@ -154,16 +177,24 @@ function brushOf(name: string): Loaded {
   loaded.set(name, l)
   return l
 }
+/** web2-64 64-5 — 프리셋 하나의 사상 통계(설정·곡선·미지) + 기준값 몇(opaque·smudge·smudge_length·opaque_multiply) */
+export function presetStatsForTest(name: string): { known: boolean; settings: number; curves: number; unknownSettings: string[]; unknownInputs: string[]; base: Record<string, number> } | null {
+  if (!PRESET_BY_NAME.has(name)) return null
+  const l = brushOf(name)
+  const pick = ['opaque', 'opaque_multiply', 'opaque_linearize', 'smudge', 'smudge_length', 'radius_logarithmic', 'hardness', 'dabs_per_basic_radius', 'dabs_per_actual_radius', 'eraser']
+  return { known: true, settings: l.stats.settings, curves: l.stats.curves, unknownSettings: [...l.stats.unknownSettings], unknownInputs: [...l.stats.unknownInputs],
+    base: Object.fromEntries(pick.map(k => [k, l.brush.getBaseValue(SETTING_IDX.get(k)!)])) }
+}
 /** 진단 — 사상 통계(게이트 ⑥): 프리셋 전부를 실어 설정·곡선 수와 미지 항목을 센다 */
 export function presetMappingForTest(): { presets: number; settings: number; curves: number; unknownSettings: number; unknownInputs: Record<string, number>; skipped: Record<string, number>; engine_reads: number; engine_reads_of: number } {
   let settings = 0, curves = 0, unknownSettings = 0
   const unknownInputs: Record<string, number> = {}
-  for (const p of PRESETS) {
+  for (const p of MYPAINT_PRESETS) {                  // 사상 통계는 mypaint 196의 것(앱 프리셋은 62 게이트 ⑥의 모집단 밖)
     const l = brushOf(p.name)
     settings += l.stats.settings; curves += l.stats.curves; unknownSettings += l.stats.unknownSettings.length
     for (const k of l.stats.unknownInputs) unknownInputs[k] = (unknownInputs[k] ?? 0) + 1
   }
-  return { presets: PRESETS.length, settings, curves, unknownSettings, unknownInputs, skipped: PRESET_SKIPPED_INPUTS, engine_reads: ENGINE_SETTINGS_READ, engine_reads_of: SETTINGS.length }
+  return { presets: MYPAINT_PRESETS.length, settings, curves, unknownSettings, unknownInputs, skipped: PRESET_SKIPPED_INPUTS, engine_reads: ENGINE_SETTINGS_READ, engine_reads_of: SETTINGS.length }
 }
 
 // ── 층(대상 캔버스마다) ──────────────────────────────────────────────────────────
@@ -208,7 +239,31 @@ export const layerStatsForTest = (): { layers: number; bytes: number; budget: nu
 // 작은 요청 폭의 반지름을 0 이하로 내어 «자국 없음»을 만들었다(paint62 ⑦ unexplained 5 — 실측이
 // 잡았다). 폭은 반지름에 비례한다(마스크·산포 둘 다 base_radius 배)는 것이 원문의 구조이므로
 // 절편을 두지 않는다: 요청 폭이 두 점 사이면 로그 보간, 밖이면 가까운 점에서 비례.
-interface Calib { a: number; b: number; ok: boolean; w1: number; w2: number }
+/** web2-64 64-4 — 팁 농도 계수(gain): **팁 판의 값을 g배**(1로 자름 · 마스크 눈금)해 같은 설정에서 팁 켬의 몸통 평균 알파가 팁 끔(절차 타원)과
+ *  같아지게 한다. 팁은 «어디에 얹히나»만 정해야 하고(63 DECISIONS) «얼마나 진한가»는 절차와 같아야 한다(지시 64-4 «농도만 맞춘다»).
+ *  마스크 눈금이면 성격(구멍 = 0인 자리)은 그대로다. ⚠ 첫 판(불투명 곱 opacityK)은 포화 프리셋(파스텔 opaque 1)에서 아무것도 못 했다(실측
+ *  gain 2.15 · 비 .87 그대로) — 그래서 눈금을 «판»에 건다. 값은 고정점 반복(≤ 4회 · 비 → g × 절차/팁)으로 찾고 ok:false = 못 쟀다(#105 표식).
+ *  잰 값(meanTip·meanProc·반복 수)을 표에 남긴다 — 게이트 ⑤(±5%)가 굵기 셋에서 다시 잰다. */
+interface Calib { a: number; b: number; ok: boolean; w1: number; w2: number; gain?: number; gainOk?: boolean; meanTip?: number; meanProc?: number; gainIters?: number; meanTipRaw?: number }
+const TIP_GAIN_MAX = 6
+const TIP_GAIN_MIN = 0.25
+let tipGainOff = false
+/** 64-4 반증(D-3) — 농도 보정 끔 → 63의 옅음(−14%)이 돌아온다 */
+export function setTipGainOffForTest(v: boolean): void { tipGainOff = v; calibs.clear() }
+/** 눈금 판(팁 × g) — 열쇠 이름|g(두 자리) · 원본은 안 바꾼다(63 팁 원장·사진의 판이 그대로다) */
+const scaledTips = new Map<string, TipAtlas>()
+function scaledTip(t: TipAtlas, g: number): TipAtlas {
+  if (Math.abs(g - 1) < 1e-4) return t
+  const key = t.name + '|' + g.toFixed(2)
+  const hit = scaledTips.get(key)
+  if (hit) return hit
+  const data = new Float32Array(t.data.length)
+  for (let i = 0; i < data.length; i++) data[i] = Math.min(1, t.data[i]! * g)
+  const out: TipAtlas = { ...t, data }
+  if (scaledTips.size > 24) scaledTips.delete(scaledTips.keys().next().value!)
+  scaledTips.set(key, out)
+  return out
+}
 const calibs = new Map<string, Calib>()
 const CAL_W = 512, CAL_H = 192, CAL_R1 = 6, CAL_R2 = 24
 let calSurface: StrokeSurface | null = null
@@ -244,6 +299,46 @@ function measureHalfMaxWidth(name: string, radius: number, tip: TipAtlas | null)
   widths.sort((p, q) => p - q)
   return widths.length ? widths[Math.floor(widths.length / 2)]! : 0
 }
+/** 64-4 — 몸통 평균 알파(직선 견본 · 반지름 r · 압력 .5): 열마다 «열 최대의 25% 위» 대역의 알파 평균(팁 자·절차 자에 같은 대역 정의 —
+ *  두 판을 같은 자로 잰다 #103). 빈 판(열 최대 < .02 전부)이면 0. */
+const GAIN_W = 480, GAIN_H = 240
+let gainSurface: StrokeSurface | null = null
+function measureBodyMean(name: string, radius: number, tip: TipAtlas | null): number {
+  // 견본 = 게이트 ⑤의 그것과 같은 함수(core/markshapes line · 480×240 · 압력 .6 상수) — 자가 갈리면 계통 편차가 난다(첫 판 실측 +6%)
+  if (!gainSurface) gainSurface = new StrokeSurface(new Layer(GAIN_W, GAIN_H))
+  const surf = gainSurface
+  const CAL_W = GAIN_W, CAL_H = GAIN_H
+  surf.layer.clear()
+  const l = brushOf(name)
+  restoreBase(l)
+  l.brush.setBaseValue(S.RADIUS_LOGARITHMIC, Math.log(radius))
+  l.brush.setBaseValue(S.COLOR_H, 0); l.brush.setBaseValue(S.COLOR_S, 0); l.brush.setBaseValue(S.COLOR_V, 0)
+  l.brush.setRng(rng32(62))
+  // 결 켬(제품 기본 깊이 GRAIN_DEPTH — 팁과 결이 곱해지는 그 자리에서 잰다 · 결 없이 재면 게이트 ⑤와 계통이 어긋났다: 실측 .94~.98)
+  surf.beginStroke({ cap: 1, capExact: false, opacityK: 1, capOff: false, grain: grainTile(), grainN: grainTileN(), grainDepth: GRAIN_DEPTH, snapshotAll: false, smudgeSnapshot: true, rng: rng32(63 ^ 0x5bd1e995), tip, tipFrameLock: -1 })
+  runStroke(l.brush, surf, markShape('line', GAIN_W, GAIN_H).pts, null, 0.6)
+  surf.endStroke()
+  restoreBase(l)
+  const a = surf.alphaMap()
+  // 대역 = paint63 ① STATS의 그 정의(#103 — 같은 자): 열마다 어둡기 > 16/255인 위·아래 가장자리 → 중앙값 안쪽 3px 띠의 알파 평균
+  const X0 = 80, X1 = GAIN_W - 80, TH = 16 / 255
+  const tops: number[] = [], bots: number[] = []
+  for (let x = X0; x < X1; x++) {
+    let t = -1, b = -1
+    for (let y = 0; y < CAL_H; y++) { if (a[y * CAL_W + x]! > TH) { if (t < 0) t = y; b = y } }
+    if (t >= 0) { tops.push(t); bots.push(b) }
+  }
+  if (tops.length < 40) return 0
+  const med = (arr: number[]): number => { const s = [...arr].sort((p, q) => p - q); return s[Math.floor(s.length / 2)]! }
+  const yT = med(tops) + 3, yB = med(bots) - 3
+  if (yB < yT) return 0
+  // 잰 값은 **sRGB 어둡기**(흰 판 위 검정 — 사람 눈·게이트의 눈금)다: 층 알파의 평균으로 맞추면 팁(값이 흩어진 판)과 절차(고른 판)가
+  // 비선형 부호화에서 갈린다(첫 판 실측 — 파스텔 알파 평균 ±1% 맞춤이 어둡기 평균에서 −9%).
+  const srgb = (lin: number): number => lin <= 0.0031308 ? 12.92 * lin : 1.055 * Math.pow(lin, 1 / 2.4) - 0.055
+  let sum = 0, n = 0
+  for (let y = yT; y <= yB; y++) for (let x = X0; x < X1; x++) { sum += 1 - srgb(1 - a[y * CAL_W + x]!); n++ }
+  return n > 0 ? sum / n : 0
+}
 function calib(name: string, tipName: string | null = null): Calib {
   // 63: 열쇠에 팁이 든다(같은 프리셋도 팁이 다르면 반최대 폭이 다르다 — #105) · 아틀라스가 아직 없으면 절차 판의 열쇠
   const tip = tipName ? tipAtlas(tipName) : null
@@ -257,8 +352,32 @@ function calib(name: string, tipName: string | null = null): Calib {
   const b = w1 - a * CAL_R1
   // ⚠ #105 — 실패는 그럴듯한 값이 아니라 표식이다: ok:false면 반지름 = 폭/2(기하 그대로)를 쓰되 표에 남긴다
   const c: Calib = { a, b, ok, w1, w2 }
+  // 64-4 — 팁이 든 열쇠는 농도 계수도 잰다: 절차 판(팁 없음)의 몸통 평균을 목표로 판 눈금 g를 고정점 반복(같은 프리셋 · 반지름 = 요청 폭 20의
+  // 그것 · 압력 .6 — 게이트 ⑤의 가운데 점). 비가 ±1% 안이면 멈춘다.
+  if (tip && !tipGainOff) {
+    const r20 = radiusFor(c, 20)
+    const meanProc = measureBodyMean(name, r20, null)
+    const meanRaw = measureBodyMean(name, r20, tip)
+    let g = 1, meanTip = meanRaw, iters = 0
+    if (meanProc > 1e-4 && meanRaw > 1e-4) {
+      for (; iters < 10; iters++) {
+        const ratio = meanTip / meanProc
+        if (Math.abs(ratio - 1) < 0.01 || (g >= TIP_GAIN_MAX && ratio < 1) || (g <= TIP_GAIN_MIN && ratio > 1)) break
+        g = Math.min(TIP_GAIN_MAX, Math.max(TIP_GAIN_MIN, g * (meanProc / Math.max(1e-4, meanTip))))
+        meanTip = measureBodyMean(name, r20, scaledTip(tip, g))
+      }
+    }
+    c.gainOk = meanProc > 1e-4 && meanRaw > 1e-4
+    c.gain = c.gainOk ? g : 1                                   // ok:false면 1이되 표식이 남는다(#105)
+    c.meanProc = +meanProc.toFixed(4); c.meanTipRaw = +meanRaw.toFixed(4); c.meanTip = +meanTip.toFixed(4); c.gainIters = iters
+  }
   calibs.set(key, c)
   return c
+}
+/** 64-4 — 자국의 팁(눈금 판): 보정 끔이면 원본 · 켬이면 계수 g의 판 */
+function tipFor(name: string, tipName: string, t: TipAtlas): TipAtlas {
+  if (tipGainOff || calibOff) return t
+  return scaledTip(t, calib(name, tipName).gain ?? 1)
 }
 /** 요청 폭(px) → 반지름: 두 점 사이는 로그 보간 · 밖은 가까운 점에서 비례(절편 없음) */
 function radiusFor(c: Calib, wPx: number): number {
@@ -331,11 +450,17 @@ function runStroke(brush: Brush, surf: StrokeSurface, pts: { x: number; y: numbe
   brush.strokeTo(surf, prev.x, prev.y, 0, 0, 0, 0.001)
 }
 
+/** 진단(#105) — 획이 든 브러시 id를 엔진이 «모른» 횟수(슬롯 기본으로 떨어졌다 — 조용한 폴백 ⛔ · 값으로 보인다) */
+let unknownBrushIds = 0
+export const unknownBrushIdsForTest = (): number => unknownBrushIds
 function presetOf(m: SeamMark): string {
-  if (m.preset && PRESET_BY_NAME.has(m.preset)) return m.preset
+  if (m.preset) {
+    if (PRESET_BY_NAME.has(m.preset)) return m.preset
+    unknownBrushIds++
+  }
   const t = tune[m.tool]
   if (t?.base && PRESET_BY_NAME.has(t.base)) return t.base
-  return m.tool === 'pencil' ? pencilOfGrade(m.grade) : DEFAULT_PRESET[m.tool]
+  return defaultBrushOf(m.tool, m.grade)
 }
 
 function paintOne(surf: StrokeSurface, m: SeamMark, draft: boolean): Bbox {
@@ -347,9 +472,10 @@ function paintOne(surf: StrokeSurface, m: SeamMark, draft: boolean): Bbox {
   const b = l.brush
   // 크기(자가 보정 위에 배수) · 색(선형광 → HSV 기준값)
   const tipName = flat ? null : tipNameFor(m, name)
-  const tip = tipName ? tipAtlas(tipName) : null
-  if (tipName && !tip) tipMissing++                       // 아틀라스 미로드 — 절차 타원으로(값으로 남는다 · #105)
-  b.setBaseValue(S.RADIUS_LOGARITHMIC, radiusLogFor(name, Math.max(0.5, m.wPx * (t.sizeK ?? 1)), tip ? tipName : null))
+  const tipRaw = tipName ? tipAtlas(tipName) : null
+  if (tipName && !tipRaw) tipMissing++                    // 아틀라스 미로드 — 절차 타원으로(값으로 남는다 · #105)
+  b.setBaseValue(S.RADIUS_LOGARITHMIC, radiusLogFor(name, Math.max(0.5, m.wPx * (t.sizeK ?? 1)), tipRaw ? tipName : null))
+  const tip = tipRaw && tipName ? tipFor(name, tipName, tipRaw) : null   // 64-4 — 농도 눈금 판(보정 열쇠와 같은 프리셋|팁)
   const [lr, lg, lb] = hexToLinear(m.color)
   const [h, s, v] = rgbToHsv(lr, lg, lb)
   b.setBaseValue(S.COLOR_H, h); b.setBaseValue(S.COLOR_S, s); b.setBaseValue(S.COLOR_V, v)
@@ -369,14 +495,16 @@ function paintOne(surf: StrokeSurface, m: SeamMark, draft: boolean): Bbox {
   if (flat) { b.setBaseValue(S.OPAQUE, 1); b.setBaseValue(S.HARDNESS, 1); b.setBaseValue(S.OPAQUE_LINEARIZE, 0) }
   b.setRng(rng32(m.seed))
   const paperK = grainOffForTest() || flat ? 0 : (t.paperK ?? TOOL_PAPER[m.tool])
+  // 64-2 — 색연필 슬롯: 문턱 판(구멍) · 깊이 1(골 = 알파 0). 슬롯 조정 paperK 0이면 결 없음 그대로.
+  const cpTh = m.tool === 'cp' && paperK > 0 ? cpThresholdOf(pressFlatForTest() ? null : m.press) : null
   const opts: StrokeOpts = {
     cap: flat ? 1 : TOOL_CAP[m.tool],
     capExact: !flat && m.tool === 'marker',          // 마커 한 획 알파 = C.PAINT_MARKER_ALPHA(46 계약 · 61 그대로)
-    opacityK: flat ? 1 : (t.opacityK ?? 1),
+    opacityK: flat ? 1 : (t.opacityK ?? 1) * (m.opacityK ?? 1),   // web2-64: 획의 불투명(paint.o) × 슬롯 조정 배수(팁 농도는 판의 눈금 — tipFor)
     capOff: capOffOverride,
-    grain: paperK > 0 ? grainTile() : null,
+    grain: cpTh !== null ? cpGrainTile(cpTh) : paperK > 0 ? grainTile() : null,
     grainN: grainTileN(),
-    grainDepth: Math.min(1, GRAIN_DEPTH * paperK),
+    grainDepth: cpTh !== null ? 1 : Math.min(1, GRAIN_DEPTH * paperK),
     tip,
     tipFrameLock,
     snapshotAll: draft,

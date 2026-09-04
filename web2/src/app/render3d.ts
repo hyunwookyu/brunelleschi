@@ -799,6 +799,26 @@ export function paintTexStats(): { key: string; faceId: number; side: number | s
   return out
 }
 
+/** **굽힌 텍스처의 픽셀 해시**(web2-64 게이트 ① — 「브러시를 바꿔도 옛 획의 픽셀이 같다」의 자).
+ *  확정본(굽힌 캔버스 — 초안 되돌림과 무관 · #107)을 텍스처마다 읽어 (면, 쪽) 열쇠별 해시·잉크 픽셀 수를 낸다.
+ *  같은 문서·같은 굽기면 같은 해시(캔버스 2D + 엔진 결정론 · paint62 ⑧). 제품 경로는 안 부른다. */
+export function paintTexHashForTest(): { key: string; level: number; hash: number; ink: number; w: number; h: number }[] {
+  const out: ReturnType<typeof paintTexHashForTest> = []
+  for (const [k, e] of paintTexes) {
+    if (e.level === 0 || e.canvas.width === 0) continue
+    const g = e.canvas.getContext('2d')!
+    const d = g.getImageData(0, 0, e.canvas.width, e.canvas.height).data
+    let h = 0, ink = 0
+    for (let i = 0; i < d.length; i += 4) {
+      const v = d[i]! + d[i + 1]! + d[i + 2]!
+      if (v < 750) ink++
+      h = (Math.imul(h, 31) + v) | 0
+    }
+    out.push({ key: k, level: e.level, hash: h, ink, w: e.canvas.width, h: e.canvas.height })
+  }
+  return out.sort((a, b) => a.key < b.key ? -1 : 1)
+}
+
 /** 파생 증명 팔용(web2-50 게이트) — 두 단계로 가른다(오염이 **화면에 실제로 보인 뒤**
  *  재굽기가 지우는 것을 재야 반증이 선다 — D-3):
  *  ① corrupt — 텍스처에 검은 사각을 찍는다(단계는 그대로 → 재굽기가 안 돈다 · 오염이 보인다)

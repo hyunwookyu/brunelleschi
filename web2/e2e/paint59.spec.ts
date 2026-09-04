@@ -522,7 +522,7 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
   expect(off.stack_ratio ?? 0, '반증 — 마커 세 번(획 사이 쌓임)의 창 잉크 비가 문을 넘는다').toBeGreaterThan(1 + cs.PAINT59_CROSS_TOL)
 })
 
-test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감속 몸짓 · 도구 넷) · 게이트 ±C.PAINT58_STAMP_BAND_TOL(도장 셋 — 붓 제외 · 결 끔)', async ({ page }) => {
+test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감속 몸짓 · 도구 넷) · 게이트(61 판갈이: 끝 창 C.PAINT61_END_TOL — 옛 ±STAMP_BAND 상수는 64-8이 지웠다)', async ({ page }) => {
   test.setTimeout(240_000)                      // dpr2 — 팔이 늘어(동작점 셋·위상 다섯·창 둘) 60s를 넘는다(실측 타임아웃)
   await bigBox(page, false)
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())

@@ -107,7 +107,8 @@ export const hatchHexOf = (face: Pick<Face, 'mat'>): string => {
  *  hex로 옮겨 받고(`core/file.ts`), 여기서는 hex만 읽는다. */
 export const paintHexOf = (s: Pick<Stroke, 'paint'>): string | null => {
   const p = s.paint
-  if (!p || p.i === undefined) return null
+  if (!p) return null
+  // web2-64: 잉크펜(i 없음)도 색을 든다 — c가 성하면 그것이 색이다(없는 옛 획은 null → 굽기가 등급 흑연색)
   return isHex6(p.c) ? p.c! : null
 }
 

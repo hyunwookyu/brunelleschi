@@ -103,52 +103,56 @@ const inkRowCount = (page: Page, x: number, y: number, w: number, h: number) =>
   }, [x, y, w, h])
 
 /** 마커·재료를 UI로 고른다 — 칠통 경로(견본 클릭이 결과에 실리는 그 배선을 지난다) */
+/** web2-64: 재료 견본 줄(swatch-*)은 64-7이 지웠다 — 색은 팔 통로(setPaintHexForTest = 패널 setPaintHex)로, 슬롯은 setPaintInstrForTest로.
+ *  재료의 톤 값은 palette의 그것을 그대로 쓴다(diag.materialToneForTest — 46의 (재료, 톤) → hex 사상 무손실). */
 async function pickMarker(page: Page, matId: string, tone: number) {
-  await page.click('#btn-paint')                     // 도구
-  await page.click('#btn-paint')                     // 재누름 — 칠통
-  await page.click(`#swatch-${matId}-${tone}`)       // 견본 → 재료+톤, 도구 마커로
-  await page.click('#btn-paint-marker')              // 명시(견본이 이미 마커로 돌린다 — 멱등)
-  await page.keyboard.press('Escape').catch(() => {})
-  await page.mouse.click(150, 700)                   // 통 밖 — 접는다(빈 종이 구석)
+  await page.click('#btn-paint')                     // 도구(패널이 뜬다 — 64)
+  await page.evaluate(([m, t]) => {
+    const b2 = (window as any).__b2
+    b2.diag.setPaintInstrForTest('marker')
+    b2.diag.setPaintHexForTest(b2.diag.materialToneForTest(m, t))
+  }, [matId, tone] as const)
   await page.waitForTimeout(60)
 }
 
-test('① 칠통 — 재누름이 열고 · 견본이 화면과 같은 상태에 실린다(#88)', async ({ page }) => {
+test('① 칠 패널(64) — 도구를 들면 뜨고 놓으면 사라진다 · 줄 전수가 값으로 · 색은 hex 하나(#88)', async ({ page }) => {
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await page.click('#btn-paint')
   expect(await page.evaluate(() => (window as any).__b2.app.tool)).toBe('paint')
-  expect(await page.locator('#painttray.open').count(), '한 번에는 안 열린다(도구 선택)').toBe(0)
+  // web2-64 §2 — 칠 도구를 들면 패널이 «항상» 뜬다(R8 정정 — 옛 «재누름이 칠통을 연다»는 걷었다)
+  expect(await page.locator('#painttray.open').count(), '도구를 들면 패널이 뜬다(64)').toBe(1)
+  await page.click('#btn-pencil')
+  expect(await page.locator('#painttray.open').count(), '도구를 놓으면 사라진다(작도 중에는 없다)').toBe(0)
   await page.click('#btn-paint')
-  expect(await page.locator('#painttray.open').count(), '재누름이 연다').toBe(1)
   const rows = await page.locator('#painttray .rrow').count()
-  // ⚠ web2-48이 10으로(자동 빠짐 · 크기·휠 들어옴), web2-51이 11로(연필 — 넷째 도구),
-  // web2-52가 15로(재료 다섯 → 여덟 + 프리셋 줄), **web2-54가 16으로**: 「정면」 줄
-  // (btn-paint-front — 54-3 · 고른 면을 정면으로 보고 다시 누르면 돌아온다).
-  // 이 팔이 지키는 요구(「자리마다 무엇이 있는지가 값으로 못 박혀 있다」)는 그대로이고
-  // **표가 늘어난 것**이다(#75 ㉣) — 이 팔이 실제로 그 추가를 잡았다(54 회차 실측).
-  expect(rows, '도구 넷 + 브러시 고르개(62) + 정면 + 크기 + 프리셋 + 휠 + 재료 여덟(4+1+1+1+1+1+8)').toBe(17)
-  await page.click('#swatch-wood-2')
+  // 46 → 48(10) → 51(11) → 52(15) → 54(16) → 62(17) → **64: 여섯** — 브러시 견본 · 크기 · 불투명 · 색(원 + 최근) · 즐겨찾기 · 정면.
+  // 이 팔이 지키는 요구(「자리마다 무엇이 있는지가 값으로 못 박혀 있다」)는 그대로이고 표가 «줄어든» 것이다(64-7 · 지시 §2 도식).
+  expect(rows, '브러시 + 크기 + 불투명 + 색 + 즐겨찾기 + 정면(6)').toBe(6)
+  await page.evaluate(() => { const b2 = (window as any).__b2; b2.diag.setPaintHexForTest(b2.diag.materialToneForTest('wood', 2)) })
   const sel = await page.evaluate(() => (window as any).__b2.diag.mats46().paintSel)
-  // ⚠⚠ **web2-48 48-7이 상태의 모양을 바꿨다**: (재료, 톤) 쌀이 아니라 **색 hex 하나**다
-  // (색의 출처가 둘이면 「고른 색」과 「나가는 색」이 갈린다 — #54). 견본은 **그 색을
-  // 휠에 실는 여러 길 중 하나**가 됐고, 견본이 가리키던 값은 그대로다(무손실).
-  expect(sel.hex, '견본 = 그 톤의 색(나무 · 그림자)').toBe('#8a6238')
-  expect(sel.i, '재료를 고르면 재료 도구로(주력 마커)').toBe('marker')
-  expect(sel.w, '굵기는 크기 트레이의 값이다(48-2)').toBeGreaterThan(0)
-  expect((sel as Record<string, unknown>).m, '⛔ (재료, 톤) 쌀은 상태에 안 남는다').toBeUndefined()
-  await page.click('#btn-paint-cp')
+  // 48-7: (재료, 톤) 쌍이 아니라 **색 hex 하나**다(#54). 64: 색을 골라도 슬롯은 안 바뀐다(잉크펜도 색을 쓴다).
+  expect(sel.hex, '나무 · 그림자 톤의 색').toBe('#8a6238')
+  expect(sel.i, '색을 골라도 슬롯은 그대로(64 — 잉크펜도 색을 쓴다)').toBe('brush')
+  expect(sel.w, '굵기는 크기 슬라이더의 값이다(58-1)').toBeGreaterThan(0)
+  expect(typeof sel.br, '지금 브러시 id(64-1)').toBe('string')
+  expect((sel as Record<string, unknown>).m, '⛔ (재료, 톤) 쌍은 상태에 안 남는다').toBeUndefined()
+  await page.evaluate(() => (window as any).__b2.diag.setPaintInstrForTest('cp'))
   const sel2 = await page.evaluate(() => (window as any).__b2.diag.mats46().paintSel)
   expect(sel2.i).toBe('cp')
+  expect(sel2.br, '슬롯을 바꾸면 그 슬롯의 지금 브러시(기본 = 앱 색연필)').toBe('brunelleschi/colored_pencil')
   // ⛔ `#btn-paint-auto`(「톤 자동」)는 **48-8이 기능째 없앨다** — 단추가 없는 것을 재는 것이
   // 이제 이 줄의 일이다(남기면 다음 회차가 «있으니 쓴다»로 되살린다 — #65).
   expect(await page.locator('#btn-paint-auto').count(), '「톤 자동」은 없다(48-8)').toBe(0)
-  // 그 자리에 들어온 것 둘이 실제로 서 있다
-  expect(await page.locator('#paint-wheel-cv').count(), '색상 휠이 기본이다(48-7)').toBe(1)
+  // 64 — 색상 휠은 색 원을 누르면 얹히는 통(한 단계) · 견본 줄·프리셋 칸은 없다(64-7)
+  expect(await page.locator('#paint-color-btn').count(), '색 원(64)').toBe(1)
+  expect(await page.locator('#paint-wheel-cv').count(), '색상 휠(48-7 → 64 통)').toBe(1)
+  expect(await page.locator('#painttray [id^=swatch-]').count(), '재료 견본 줄은 없다(64-7)').toBe(0)
+  expect(await page.locator('#paint-presets').count(), '프리셋 세 칸은 없다(64-7)').toBe(0)
   // 58-1 — 다섯 칸 트레이는 슬라이더로 대체됐다(D-W26 · R1 오적용 철회)
   expect(await page.locator('#paint-size-range').count(), '크기 슬라이더(58-1)').toBe(1)
   expect(await page.locator('#paint-sizes .sizebtn').count(), '이산 칸은 없다(철회의 값)').toBe(0)
-  OUT.tray = { rows, sel_after_swatch: sel, sel_after_cp: sel2.i }
+  OUT.tray = { rows, sel_after_hex: sel, sel_after_cp: sel2.i, note_64: '견본 줄·프리셋 칸이 지워졌다(64-7) — 패널 여섯 줄' }
   OUT.constants_used = await page.evaluate(() => (window as any).__b2.diag.mats46().constants)
 })
 
@@ -270,13 +274,11 @@ test('②③ 마커 — 겹침 퇴적 단조(1·2·3겹 스윕) · 끝(팁)이 �
   // **톤이 픽셀을 바꾼다**(2차 PITFALLS 대조 — #92: gate_suggest_not_default가 판정하는
   // 톤 인덱스는 이름표다. 그 이름표가 결과의 자리(픽셀)를 실제로 움직이는 것을 여기서 잇는다):
   // 같은 재료(벽돌)의 밝음(0)·그림자(2)를 같은 길이로 긋고 안료 합을 비교한다.
-  await page.click('#btn-paint')
-  await page.click('#swatch-brick-0')
-  await page.mouse.click(150, 700); await page.waitForTimeout(60)
+  await page.evaluate(() => { const b2 = (window as any).__b2; b2.diag.setPaintHexForTest(b2.diag.materialToneForTest('brick', 0)) })
+  await page.waitForTimeout(60)
   await drawLine(page, 520, 415, 545, 415)
-  await page.click('#btn-paint')
-  await page.click('#swatch-brick-2')
-  await page.mouse.click(150, 700); await page.waitForTimeout(60)
+  await page.evaluate(() => { const b2 = (window as any).__b2; b2.diag.setPaintHexForTest(b2.diag.materialToneForTest('brick', 2)) })
+  await page.waitForTimeout(60)
   await drawLine(page, 555, 415, 580, 415)
   await page.waitForTimeout(150)
   const tone0 = await inkSums(page, 522, 408, 20, 14)
@@ -297,10 +299,8 @@ test('④ 색연필 — 같은 길이 획의 잉크 띠가 마커보다 가늘�
   // 자리와 다른 색이어야 한다.
   await pickMarker(page, 'wood', 1)
   await drawLine(page, 520, 410, 580, 410)          // 마커 획(가로)
-  await page.click('#btn-paint')                    // 이미 붓 도구 — 재누름 한 번이 연다
-  await page.click('#swatch-brick-2')               // 색을 확 바꾼다(그림자 벽돌 — 어두운 적)
-  await page.click('#btn-paint-cp')
-  await page.mouse.click(150, 700); await page.waitForTimeout(60)
+  await page.evaluate(() => { const b2 = (window as any).__b2; b2.diag.setPaintInstrForTest('cp'); b2.diag.setPaintHexForTest(b2.diag.materialToneForTest('brick', 2)) })   // 색을 확 바꾼다(그림자 벽돌)
+  await page.waitForTimeout(60)
   await drawLine(page, 545, 380, 545, 445)          // 색연필 획(세로 — 마커를 가로지른다)
   await page.waitForTimeout(200)
   const rgbAt = (x: number, y: number, w: number, h: number) =>

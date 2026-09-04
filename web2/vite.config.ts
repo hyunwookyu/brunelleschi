@@ -68,17 +68,8 @@ const id = buildId()
 
 export default defineConfig({
   base: './',
-  resolve: {
-    // **p5.brush 두 번째 사본**(web2-61) — 표준 빌드는 모듈 싱글턴이라 활성 대상이 하나다.
-    // 선 겹(#brushc — brushlayer)과 칠 굽기(오프스크린)가 한 싱글턴을 나눠 쓰면 대상 전환마다
-    // GL 자원이 컨텍스트를 넘나들고, 라이브러리의 전환 경로가 얕아(«bindFramebuffer: object
-    // does not belong to this context» · 전환 뒤 첫 자국 비결정 — 실측) 자국이 흔들린다.
-    // 별칭이 같은 파일을 **다른 모듈 id**로 실어 상태가 갈린 사본을 만든다 — 칠은 제 사본·
-    // 제 캔버스만 본다(전환 소멸). exports 맵이 직접 경로 import를 막아 별칭이 유일한 길이다.
-    alias: {
-      'p5.brush-paint': fileURLToPath(new URL('./node_modules/p5.brush/dist/brush.esm.js', import.meta.url)),
-    },
-  },
+  // (web2-61의 p5.brush 칠 사본 별칭 «p5.brush-paint»는 **web2-64 64-6이 걷었다** — 칠 렌더러가 mypaint 하나라 두 번째 사본이 없다.
+  //  선 겹(brushlayer)은 표준 'p5.brush/standalone' 그대로다.)
   define: {
     __BUILD_ID__: JSON.stringify(id),
   },

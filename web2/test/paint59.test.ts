@@ -34,7 +34,7 @@ describe('59-1 — 미리보기 획 == 확정 획(buildPaintStrokes ↔ commitPa
   it('문서를 안 건드리고, 커밋이 만드는 획과 id·uv·w·쪽이 같다', () => {
     const s = wallScene()
     s.app.tool = 'paint'
-    s.app.paintSel = { hex: '#3a6b35', i: 'pencil', w: 12 }
+    s.app.paintSel = { hex: '#3a6b35', i: 'pencil', w: 12, br: 'deevad/liner', o: 1 }
     const pts = line(515, 420, 585)
     const press = pts.map((_, i) => Math.round((0.3 + 0.5 * (i / (pts.length - 1))) * 8191))
     const n0 = s.app.doc.strokes.length, id0 = s.app.nextId
@@ -59,7 +59,7 @@ describe('59-1 — 미리보기 획 == 확정 획(buildPaintStrokes ↔ commitPa
   it('반증(D-3) — idBase가 다르면 id(시드)가 갈린다 · 면 밖 점렬은 획이 0(offFace가 센다)', () => {
     const s = wallScene()
     s.app.tool = 'paint'
-    s.app.paintSel = { hex: '#3a6b35', i: 'pencil', w: 12 }
+    s.app.paintSel = { hex: '#3a6b35', i: 'pencil', w: 12, br: 'deevad/liner', o: 1 }
     const pts = line(515, 420, 585)
     const a = buildPaintStrokes(s.app, pts, undefined, s.app.nextId)
     const b = buildPaintStrokes(s.app, pts, undefined, s.app.nextId + 7)

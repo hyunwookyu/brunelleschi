@@ -19,6 +19,23 @@ export const INSTRS58: readonly Instr58[] = ['brush', 'marker', 'cp', 'pencil']
 export const instrOfTag = (i: number | undefined): Instr58 =>
   i === 1 ? 'marker' : i === 2 ? 'cp' : i === 3 ? 'pencil' : 'brush'
 
+// ── web2-64: 슬롯의 «기본 브러시 id» — core의 것이다(이사: 62의 DEFAULT_PRESET은 app/mypaintpaint에 있었다).
+// 왜 core인가: 옛 문서 이주(file.ts — 브러시 id 없는 칠 획 → 그 슬롯의 기본)가 이름만 필요하고 엔진은 몰라야 한다.
+// 값은 62의 그것(AS-C186 — 세션의 선택 · CC0 프리셋 그대로) + 64-2의 색연필(app/brunelleschi 프리셋 — 64-2 절).
+/** 연필 등급 → 프리셋(2H·H → 4H · F·HB → classic · B·2B → 2B) — 62 그대로 */
+export const pencilOfGrade = (grade?: string): string =>
+  grade === '2H' || grade === 'H' ? 'deevad/4H_pencil'
+    : grade === 'B' || grade === '2B' ? 'deevad/2B_pencil' : 'classic/pencil'
+export const DEFAULT_BRUSH: Readonly<Record<Instr58, string>> = {
+  pencil: 'classic/pencil',            // 등급이 오면 pencilOfGrade가 가른다
+  brush: 'deevad/liner',               // 잉크펜 — 제도 라이너(불투명 1 · AA 2)
+  marker: 'ramon/100%_Opaque',         // 둥근·딱딱한 불투명 블록(61의 마커 계약 · 압력 무관 = 실물 마커)
+  cp: 'brunelleschi/colored_pencil',   // web2-64-2 — 색연필의 성질로 지은 앱 프리셋(ramon/B-pencil은 «연필»이었다)
+}
+/** 슬롯(+등급) → 기본 브러시 id — 이주·초기값·«지금 브러시 없음»의 폴백이 전부 이 한 함수다(#54) */
+export const defaultBrushOf = (tool: Instr58, grade?: string): string =>
+  tool === 'pencil' ? pencilOfGrade(grade) : DEFAULT_BRUSH[tool]
+
 export interface SeamMark {
   /** 대상 캔버스 px 점렬(2점 이상) */
   pts: Pt[]
@@ -34,9 +51,11 @@ export interface SeamMark {
   tool: Instr58
   /** 연필 등급(있으면 — 2B·HB·2H 갈래의 입력. 지시 「연필: 2B·HB·2H(등급에 따라)」) */
   grade?: string
-  /** web2-62 — 브러시 이름(엔진이 알면 도구 슬롯 대신 이 브러시로 · 고르개 견본·팔의 통로.
-   *  제품 굽기는 안 넣는다 — 저장 형식 무변: 획은 도구 표식(paint.i)뿐이다). */
+  /** 브러시 id(web2-62 — 고르개 견본·팔의 통로 → **web2-64: 제품 굽기도 넣는다**. 획이 `paint.br`로 브러시 id를
+   *  들고(64-1 · 원칙 a) 굽기가 그것을 싣는다. 없으면 엔진이 슬롯 조정(tune) → 기본 표로 떨어진다 — 옛 팔·작업대의 길). */
   preset?: string
+  /** web2-64 — 획의 불투명(0..1 · `paint.o`). 엔진의 불투명 배수에 곱한다. 없으면 1. */
+  opacityK?: number
   /** web2-62 — 엔진 설정 기준값 덮개(팔·실험실 전용 — 키는 엔진의 설정 이름). 제품 경로는 안 넣는다. */
   over?: Record<string, number>
   /** web2-63 — 팁 이름('none' = 팁 없음 · 절차 타원). 팔·고르개 견본의 통로 — 제품 굽기는 안 넣는다(슬롯의 팁은 기기 조정 tune). */
@@ -55,7 +74,7 @@ export interface ParamDesc {
 }
 
 export interface PaintRenderer {
-  /** 'p5brush'(61) · 'mypaint'(62) — 원장·진단이 어느 엔진이 그렸는지 값으로 남긴다 */
+  /** 'mypaint'(62) — 원장·진단이 어느 엔진이 그렸는지 값으로 남긴다(61의 'p5brush'는 64-6이 지웠다 — 렌더러는 하나다) */
   id: string
   draw(g: CanvasRenderingContext2D, m: SeamMark): void
   /** 묶음(굽기 최적화의 통로 — 없으면 이음매가 draw를 돈다). 그리는 차례는 목록 차례다. */

@@ -124,7 +124,8 @@ export function fullDocPlus() {
   const pw = hand(37, pt(700, 500), pt(760, 520), 5)
   d.strokes.push({
     id: app.nextId++, a: pw[0]!, b: pw[pw.length - 1]!,
-    paint: { f: d.faces[0]!.id, s: 1, uv: [0.1, 0.2, 0.5, 0.25, 0.9, 0.3], press: [40, 200, 120], w: 0.02 },
+    // web2-64: br(브러시 id)·o(불투명)가 늘었다 — 게이트 ②가 이 줄 없이는 빨개진다(43-1의 그 기계)
+    paint: { f: d.faces[0]!.id, s: 1, uv: [0.1, 0.2, 0.5, 0.25, 0.9, 0.3], press: [40, 200, 120], w: 0.02, br: 'deevad/liner', o: 0.6 },
     mat: { grade: 'HB' },
   })
   d.faces[0]!.cls = 'wall'
@@ -136,7 +137,7 @@ export function fullDocPlus() {
   // 테두리 슬롯 칠(web2-55 — e=1 · uv=(경계거리 s, 두께 u) · 쪽 없음)
   d.strokes.push({
     id: app.nextId++, a: pw[0]!, b: pw[pw.length - 1]!,
-    paint: { f: d.faces[0]!.id, e: 1, uv: [0.0, 0.01, 0.4, 0.05, 0.8, 0.02], w: 0.02, c: '#8a6238', i: 1 },
+    paint: { f: d.faces[0]!.id, e: 1, uv: [0.0, 0.01, 0.4, 0.05, 0.8, 0.02], w: 0.02, c: '#8a6238', i: 1, br: 'ramon/100%_Opaque' },
     mat: { grade: 'HB' },
   })
   // 재료 칠·면 재료(web2-46) — 같은 기계가 Stroke.m·Stroke.i를 빨강으로 잡았다(실측 —
@@ -148,7 +149,7 @@ export function fullDocPlus() {
   const mw = hand(41, pt(640, 470), pt(710, 495), 5)
   d.strokes.push({
     id: app.nextId++, a: mw[0]!, b: mw[mw.length - 1]!,
-    paint: { f: d.faces[0]!.id, s: -1, uv: [0.05, 0.1, 0.4, 0.18, 0.8, 0.22], c: '#c07a5b', i: 1, w: 0.05 },
+    paint: { f: d.faces[0]!.id, s: -1, uv: [0.05, 0.1, 0.4, 0.18, 0.8, 0.22], c: '#c07a5b', i: 1, w: 0.05, br: 'tanda/marker-01' },
     mat: { grade: 'HB' },
   })
   d.faces[0]!.mat = 'conc'
