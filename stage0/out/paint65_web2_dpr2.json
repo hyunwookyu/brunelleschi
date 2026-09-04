@@ -13,6 +13,7 @@
     "rows": [
       {
         "instr": "pencil",
+        "brush": "(슬롯 기본)",
         "appended": 6,
         "appends": 6,
         "bakes": 1,
@@ -29,6 +30,7 @@
       },
       {
         "instr": "brush",
+        "brush": "(슬롯 기본)",
         "appended": 6,
         "appends": 6,
         "bakes": 0,
@@ -45,6 +47,7 @@
       },
       {
         "instr": "marker",
+        "brush": "(슬롯 기본)",
         "appended": 6,
         "appends": 6,
         "bakes": 0,
@@ -61,6 +64,7 @@
       },
       {
         "instr": "cp",
+        "brush": "(슬롯 기본)",
         "appended": 6,
         "appends": 6,
         "bakes": 0,
@@ -74,16 +78,50 @@
         "screen_hash": 727053086,
         "screen_ink": 97200,
         "identical": true
+      },
+      {
+        "instr": "watercolor(smudge)",
+        "brush": "deevad/watercolor_expressive",
+        "appended": 6,
+        "appends": 6,
+        "bakes": 0,
+        "baked_strokes": 0,
+        "tex_hash": [
+          -1438129165
+        ],
+        "tex_ink": [
+          241520
+        ],
+        "screen_hash": -426721243,
+        "screen_ink": 134368,
+        "identical": true
+      },
+      {
+        "instr": "charcoal(거친 산포)",
+        "brush": "classic/charcoal",
+        "appended": 6,
+        "appends": 6,
+        "bakes": 0,
+        "baked_strokes": 0,
+        "tex_hash": [
+          -2052959280
+        ],
+        "tex_ink": [
+          270263
+        ],
+        "screen_hash": -616415501,
+        "screen_ink": 152781,
+        "identical": true
       }
     ],
     "falsify_append_break": {
       "tex_differs": true,
       "screen_differs": true,
       "broke_hash": [
-        -1235293588
+        825390697
       ],
       "ref_hash": [
-        -736172219
+        -630306996
       ]
     }
   },
@@ -137,7 +175,7 @@
     "upload_bytes_median_after_first": 103716
   },
   "g4_untouched": {
-    "note": "문서가 바뀌어도 칠은 안 굽는다 — 「그 파생이 의존하는 것」만 열쇠다(#110)",
+    "note": "문서가 바뀌어도 칠은 안 굽는다 — 「그 파생이 의존하는 것」만 열쇠다(#110). ⚠ 「의존하는 것」이 늘면(재료 = 축척) 같은 몸짓이 굽는다 — 아래 with_material이 그 갈림이다",
     "rows": [
       {
         "what": "치수 수정(2500 → 3000)",
@@ -167,7 +205,13 @@
     "tex_hash_same": true,
     "tex_ink": [
       30712
-    ]
+    ],
+    "with_material": {
+      "what": "재료를 붙이고 치수 3000 → 3500",
+      "bakes": 1,
+      "baked_strokes": 5,
+      "matches_full_bake": true
+    }
   },
   "g5_face_boundary": {
     "faces_after_erase": 0,
@@ -203,7 +247,7 @@
     "tex_reallocs": 1
   },
   "g5_triggers": {
-    "note": "무회귀 트리거 전수 — 「다시 굽는다」와 「낡은 그림 0」을 값으로",
+    "note": "무회귀 트리거 전수 — 「다시 굽는다」와 「낡은 그림 0」을 값으로. **캔버스와 화면 둘 다** 본다(리뷰어 [H4])",
     "rows": [
       {
         "what": "획 삭제(되돌리기)",
@@ -212,7 +256,9 @@
         "drops": 0,
         "entries": 1,
         "tex_reallocs": 0,
-        "matches_full_bake": true
+        "matches_full_bake": true,
+        "screen_matches_full_bake": true,
+        "screen_ink": 27150
       },
       {
         "what": "브러시 재바인딩(슬롯 조정)",
@@ -221,7 +267,9 @@
         "drops": 0,
         "entries": 1,
         "tex_reallocs": 0,
-        "matches_full_bake": true
+        "matches_full_bake": true,
+        "screen_matches_full_bake": true,
+        "screen_ink": 30789
       },
       {
         "what": "면 경계 변경(윗변을 지운다)",
@@ -230,7 +278,9 @@
         "drops": 1,
         "entries": 0,
         "tex_reallocs": 0,
-        "matches_full_bake": true
+        "matches_full_bake": true,
+        "screen_matches_full_bake": true,
+        "screen_ink": 24633
       },
       {
         "what": "그 모서리 되돌리기(면이 돌아온다)",
@@ -239,7 +289,9 @@
         "drops": 0,
         "entries": 1,
         "tex_reallocs": 1,
-        "matches_full_bake": true
+        "matches_full_bake": true,
+        "screen_matches_full_bake": true,
+        "screen_ink": 30789
       },
       {
         "what": "해상도 단계(줌 — 단계가 갈릴 때까지 줄인다)",
@@ -248,7 +300,9 @@
         "drops": 0,
         "entries": 1,
         "tex_reallocs": 1,
-        "matches_full_bake": true
+        "matches_full_bake": true,
+        "screen_matches_full_bake": true,
+        "screen_ink": 16131
       },
       {
         "what": "재료 변경",
@@ -257,7 +311,9 @@
         "drops": 0,
         "entries": 1,
         "tex_reallocs": 0,
-        "matches_full_bake": true
+        "matches_full_bake": true,
+        "screen_matches_full_bake": true,
+        "screen_ink": 220710
       },
       {
         "what": "해칭 변경(면 고정)",
@@ -266,11 +322,14 @@
         "drops": 0,
         "entries": 1,
         "tex_reallocs": 0,
-        "matches_full_bake": true
+        "matches_full_bake": true,
+        "screen_matches_full_bake": true,
+        "screen_ink": 220710
       }
     ],
     "all_rebaked": true,
-    "all_match_full_bake": true
+    "all_match_full_bake": true,
+    "all_screen_match_full_bake": true
   },
   "no_constants_snapshot": true,
   "constants_used": {
@@ -290,5 +349,57 @@
   ],
   "selfcheck_notes": {
     "zero_counters": "g3의 bakes·baked가 0인 것이 게이트 ③의 «통과»다(0 = 전량 재굽기 없음) — 카운터가 안 도는 것이 아니다. 자가 산다는 증거는 같은 원장의 g5(트리거마다 1)와 g6(누적 끔 → 14)이다"
+  },
+  "g4b_partial": {
+    "note": "부분 업로드 켬/끔의 대조(D-3) — 바이트는 갈리고 픽셀은 같다. ⚠ 이 자가 이 회차의 첫 판을 잡았다(SKIP × FLIP_Y로 화면이 갈렸다)",
+    "partial_on": {
+      "upload_bytes": 62016,
+      "uploads": 1,
+      "screen_hash": -883517248,
+      "screen_ink": 30052
+    },
+    "partial_off": {
+      "upload_bytes": 3751936,
+      "uploads": 1
+    },
+    "ratio_off_over_on": 60.5,
+    "screen_same_after_restore": true
+  },
+  "g4c_rep_zoom": {
+    "note": "재료 무늬의 선 굵기(rep.texelPerPx = 단계 ÷ 화면 크기)는 «줌의 연속값»이라 굽기 열쇠에 안 든다(넣으면 매 프레임 재굽기 — 49 규약). 그 대가가 이 표다",
+    "with_material": {
+      "now": [
+        2104374575
+      ],
+      "ref1": [
+        -186577108
+      ],
+      "ref2": [
+        -186577108
+      ],
+      "same": false,
+      "ref_stable": true
+    },
+    "persistence": {
+      "note": "상관없는 편집(하늘의 선 하나 — 굽기 트리거가 아니다) 뒤에도 그대로인가. **65는 열쇠가 좁아 안 낫는다** — 옛 코드는 어떤 문서 변경도 전량 재굽기였으므로 그 편집에서 나았다: 갈림 «자체»는 종전에도 있었고 65가 바꾼 것은 **지속 시간**이다(리뷰어 [H5]의 그 물음)",
+      "hash_after_unrelated_edit": [
+        2104374575
+      ],
+      "healed_by_unrelated_edit": false
+    }
+  },
+  "g4d_bare_zoom": {
+    "note": "④-c의 대조군 — 재료가 없으면 줌 뒤에도 갈림이 «없다». 즉 ④-c의 갈림은 무늬 굵기(texelPerPx)의 것이지 누적의 것이 아니다",
+    "now": [
+      -1158253257
+    ],
+    "ref": [
+      -1158253257
+    ],
+    "same": true,
+    "screen_same": true,
+    "ink": [
+      41053
+    ]
   }
 }

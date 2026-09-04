@@ -1035,12 +1035,9 @@
     "faces": 17,
     "paint_strokes": 30,
     "placed_after": 1,
-    "textures": 17,
-    "bytes_total": 3776512,
+    "textures": 14,
+    "bytes_total": 2654208,
     "levels": [
-      512,
-      512,
-      512,
       512,
       512,
       512,
@@ -1057,26 +1054,26 @@
       512
     ],
     "idle_ms": {
-      "median": 16.9,
-      "p90": 17.8
+      "median": 16.8,
+      "p90": 18
     },
     "idle2_ms": {
-      "median": 16.8,
+      "median": 16.9,
       "p90": 17.5
     },
     "noise_floor_ms": 0.1,
     "drafting_ms": {
       "median": 17.2,
-      "p90": 17.8,
-      "max": 18.5,
-      "first": 16.5,
+      "p90": 18.6,
+      "max": 19.5,
+      "first": 15.8,
       "frame_cost": {
         "n": 42,
-        "r3": 2.9000000059604645,
+        "r3": 3,
         "bs": 0,
         "d2": 0.19999998807907104,
-        "total": 3.0999999940395355,
-        "totalMax": 356.09999999403954
+        "total": 3.100000023841858,
+        "totalMax": 27.599999994039536
       },
       "draft_base_bytes_max": 96256,
       "draft_with_base_max": 1
@@ -1087,7 +1084,7 @@
       "base_bytes_max": 96256,
       "with_base_max": 1
     },
-    "draft_max_extra_ms": 1.7,
+    "draft_max_extra_ms": 2.7,
     "threshold_extra_ms": 12,
     "gate_condition": {
       "workers": 1,

@@ -123,7 +123,13 @@ test('① 자리 — 칠 패널이 세로바와 안 겹치고 화면 안이다',
     expect(p, '칠 패널이 떠 있다').not.toBeNull()
     expect(bar, '세로바가 있다').not.toBeNull()
     const overlap = p && bar ? Math.max(0, Math.min(p.right, bar.right) - Math.max(p.left, bar.left)) * Math.max(0, Math.min(p.bottom, bar.bottom) - Math.max(p.top, bar.top)) : -1
-    rows.push({ vw: w, vh: h, panel: p, sidebar: bar, overlap_px2: overlap })
+    // ⚠⚠ 리뷰어 [H6] — 세로바와의 겹침 0은 «답답함»의 답이지 **대가**의 값이 아니다.
+    // 패널은 도구를 든 «동안 항상» 뜨므로(64 R8) 그 사각만큼 **그릴 수 있는 화면이 준다** —
+    // 옛 자리(오른쪽)는 이미 세로바가 있던 띠였고 새 자리는 전에 비어 있던 화면이다.
+    // 밤 1차의 빨강 넷이 그 대가의 실측이었다(픽스처의 칠 셋이 패널에 먹혔다 — 놓인 획 30 → 27).
+    const coveredFrac = p ? +((p.w * p.h) / (w * h)).toFixed(4) : null
+    rows.push({ vw: w, vh: h, panel: p, sidebar: bar, overlap_px2: overlap,
+      covered_px2: p ? p.w * p.h : null, covered_frac_of_viewport: coveredFrac })
     expect(overlap, `폭 ${w}: 패널이 세로바와 안 겹친다`).toBe(0)
     expect(p!.left, `폭 ${w}: 왼쪽 가장자리 안`).toBeGreaterThanOrEqual(0)
     expect(p!.right, `폭 ${w}: 오른쪽 화면 안`).toBeLessThanOrEqual(w)
@@ -131,7 +137,9 @@ test('① 자리 — 칠 패널이 세로바와 안 겹치고 화면 안이다',
     expect(p!.bottom, `폭 ${w}: 아래 화면 안(34-6)`).toBeLessThanOrEqual(h)
   }
   await page.setViewportSize({ width: 1200, height: 800 })
-  OUT.p1_place = { note: '패널은 화면 «왼쪽 가장자리»다 — 작도 세로바(오른쪽)와 겹치는 넓이 0', rows }
+  OUT.p1_place = {
+    note: '패널은 화면 «왼쪽 가장자리»다 — 작도 세로바(오른쪽)와 겹치는 넓이 0. ⚠ 그 대신 «캔버스»를 그만큼 덮는다(covered_frac_of_viewport) — 그것이 이 자리의 대가이고, 사람이 그 자리에 못 긋는다는 뜻이다(리뷰어 [H6] · DEFERRED 65)',
+    rows }
 })
 
 test('② 즐겨찾기 여섯 — 그 브러시의 «실제 자국»이고 서로 픽셀로 다르다', async ({ page }) => {

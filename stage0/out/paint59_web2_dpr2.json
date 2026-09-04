@@ -1035,12 +1035,9 @@
     "faces": 17,
     "paint_strokes": 30,
     "placed_after": 1,
-    "textures": 17,
-    "bytes_total": 15077376,
+    "textures": 14,
+    "bytes_total": 10596352,
     "levels": [
-      1024,
-      1024,
-      1024,
       1024,
       1024,
       1024,
@@ -1057,37 +1054,37 @@
       1024
     ],
     "idle_ms": {
-      "median": 53.6,
-      "p90": 59.3
+      "median": 46.3,
+      "p90": 48.8
     },
     "idle2_ms": {
-      "median": 53.3,
-      "p90": 57.6
+      "median": 46.8,
+      "p90": 50.9
     },
-    "noise_floor_ms": 0.3,
+    "noise_floor_ms": 0.5,
     "drafting_ms": {
-      "median": 60.5,
-      "p90": 70.5,
-      "max": 78.6,
-      "first": 55.4,
+      "median": 56.9,
+      "p90": 64.9,
+      "max": 69.5,
+      "first": 51.1,
       "frame_cost": {
         "n": 43,
-        "r3": 8.099999994039536,
+        "r3": 8.199999988079071,
         "bs": 0,
-        "d2": 0.20000001788139343,
-        "total": 8.300000011920929,
-        "totalMax": 1388.5999999940395
+        "d2": 0.19999998807907104,
+        "total": 8.399999976158142,
+        "totalMax": 48.20000001788139
       },
       "draft_base_bytes_max": 385024,
       "draft_with_base_max": 1
     },
-    "draft_extra_ms": 7.2,
+    "draft_extra_ms": 10.6,
     "draft_memory": {
       "def": "그리는 중 사본(base) 바이트의 최대와 사본 든 텍스처 수의 최대(1차 [8] — 획은 주인 면 하나(54-1)라 1 · 고름이 있으면 그 수까지) · 커버리지 지도는 bbox×4바이트(획마다 해제)",
       "base_bytes_max": 385024,
       "with_base_max": 1
     },
-    "draft_max_extra_ms": 25.3,
+    "draft_max_extra_ms": 23.2,
     "threshold_extra_ms": 18,
     "gate_condition": {
       "workers": 1,

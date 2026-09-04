@@ -1,0 +1,53 @@
+{
+  "conditions": {
+    "project": "dpr1",
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/paint65.spec.ts (워커 1 — #99)"
+  },
+  "what": "web2-65 — 칠 성능 게이트: ①픽셀 항등(캔버스+화면 · 도구 전수) ③재굽힌 획 수 ④다른 변경 0 ⑤무회귀 트리거 전수 ⑥반증 ⑦메모리",
+  "note_pitfalls": "#110(파생의 캐시 열쇠는 «그 파생이 의존하는 것»으로 — docVersion은 무효화 신호다) · #107(해시는 확정본 캔버스 — 되돌림 무관) · #103(같은 장면을 두 번 읽는다 — ink가 장면 확인) · #12(도구 넷 · 트리거 여섯 — 동작점 하나로 주장하지 않는다) · #102(한 test 안에서 ?reset을 다시 안 부른다) · #99 · #101",
+  "note_meter": "캔버스 해시(paintTexHash)만으로는 ④ 부분 업로드의 결함이 «안 잡힌다» — 그 자는 CPU 캔버스를 읽는다. 그래서 ①은 화면(#gl) 픽셀도 같이 본다",
+  "scene": "paint50의 bigBox(오른쪽 벽 · 축척 2500)",
+  "no_constants_snapshot": true,
+  "constants_used": {
+    "note": "web2 라인은 constantsSnapshot 기계가 없다(라인 유보 — lens31·paint50의 no_constants_snapshot이 정본 · 그 기계는 web/test/constants.ts에만 있다)"
+  },
+  "pitfall_citations": [
+    12,
+    42,
+    99,
+    101,
+    102,
+    103,
+    105,
+    107,
+    108,
+    110
+  ],
+  "selfcheck_notes": {
+    "zero_counters": "g3의 bakes·baked가 0인 것이 게이트 ③의 «통과»다(0 = 전량 재굽기 없음) — 카운터가 안 도는 것이 아니다. 자가 산다는 증거는 같은 원장의 g5(트리거마다 1)와 g6(누적 끔 → 14)이다"
+  },
+  "g4c_rep_zoom": {
+    "note": "재료 무늬의 선 굵기(rep.texelPerPx = 단계 ÷ 화면 크기)는 «줌의 연속값»이라 굽기 열쇠에 안 든다(넣으면 매 프레임 재굽기 — 49 규약). 그 대가가 이 표다",
+    "with_material": {
+      "now": [
+        -273067694
+      ],
+      "ref1": [
+        -186577108
+      ],
+      "ref2": [
+        -186577108
+      ],
+      "same": false,
+      "ref_stable": true
+    },
+    "persistence": {
+      "note": "상관없는 편집(하늘의 선 하나 — 굽기 트리거가 아니다) 뒤에도 그대로인가. **65는 열쇠가 좁아 안 낫는다** — 옛 코드는 어떤 문서 변경도 전량 재굽기였으므로 그 편집에서 나았다: 갈림 «자체»는 종전에도 있었고 65가 바꾼 것은 **지속 시간**이다(리뷰어 [H5]의 그 물음)",
+      "hash_after_unrelated_edit": [
+        -186577108
+      ],
+      "healed_by_unrelated_edit": true
+    }
+  }
+}

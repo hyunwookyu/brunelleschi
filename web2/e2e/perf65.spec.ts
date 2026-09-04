@@ -128,6 +128,7 @@ async function paintStroke(page: Page, x0: number, y0: number) {
   await page.waitForTimeout(70)
 }
 
+const mean = (v: number[]): number => v.reduce((a, b) => a + b, 0) / Math.max(1, v.length)
 /** 값 무리의 «평평함» — 평균 대비 최대 벗어남의 몫(게이트 ②의 ±20%가 이 자다) */
 const spread = (v: number[]): number | null => {
   const mean = v.reduce((a, b) => a + b, 0) / v.length
@@ -168,11 +169,27 @@ test('(a)(b)(c) 커밋 한 번의 값 — 면 하나에 획 60까지', async ({ 
     points: [1, 10, 30, 60].map(n => ({ n, ms: at(n).ms, baked_strokes: at(n).bakedStrokes, bakes: at(n).bakes, appends: at(n).appends, upload_bytes: at(n).uploadBytes, drops: at(n).drops })),
     ms_ratio_60_over_1: at(1).ms > 0 ? +(at(60).ms / at(1).ms).toFixed(2) : null,
     baked_ratio_60_over_1: at(1).bakedStrokes > 0 ? +(at(60).bakedStrokes / at(1).bakedStrokes).toFixed(2) : null,
-    // 게이트 ②의 자 둘. **넷 전부**와 **첫 커밋을 뺀 셋**을 갈라 적는다:
-    // 획 1의 커밋은 «그 (면,쪽) 텍스처가 서는» 자리라 전량 굽기가 맞고(얹을 바탕이 아직 없다)
-    // 그 몫은 누적의 평평함과 다른 일이다. 지시의 ±20%가 묻는 것은 «누적 커밋»의 평평함이다.
-    ms_spread_frac: spread([1, 10, 30, 60].map(n => at(n).ms)),
-    ms_spread_frac_incremental: spread([10, 30, 60].map(n => at(n).ms)),
+    // ── 게이트 ②의 **자**(리뷰어 [H1]이 초판의 자를 반증했다) ─────────────────────
+    // ⚠ 네 «점»(획 1·10·30·60)의 벌어짐은 **N 의존이 아니라 픽스처 위상**을 잰다: 이 픽스처는
+    // 벽을 6열 격자로 채우므로 커밋 비용이 **주기 6**으로 오르내린다(같은 열의 다음 획이 앞 획과
+    // 겹쳐 더 큰 자국 상자를 만든다). 실측 진폭은 한 주기 안에서 2.3배다(dpr2 9.1~21.5 ms) —
+    // 네 점 중 어느 위상을 골랐느냐가 그 값을 지배한다. 초판이 그 자로 「±20% 안」을 주장했고
+    // 리뷰어가 「dpr2의 최대 편차점은 획 1(**가장 싼** 점)이다」로 그것을 뒤집었다.
+    // **고친 자**: 위상을 통째로 평균 내는 «구간 평균»을 처음·중간·끝에서 낸다(각 6획 = 한 주기).
+    // N 의존이 있으면 이 셋이 오른다 — 위상은 평균에서 지워진다.
+    ms_points_spread: spread([1, 10, 30, 60].map(n => at(n).ms)),          // 초판의 자 — 기록만(판정 ⛔)
+    ms_block_means: {
+      note: '한 주기(6획)씩 평균 — 처음(1~6) · 중간(25~30) · 끝(55~60). 게이트 ②의 판정자다',
+      head: +mean(rows.slice(0, 6).map(r => (r as unknown as Bake).ms)).toFixed(2),
+      mid: +mean(rows.slice(24, 30).map(r => (r as unknown as Bake).ms)).toFixed(2),
+      tail: +mean(rows.slice(54, 60).map(r => (r as unknown as Bake).ms)).toFixed(2),
+    },
+    ms_block_spread: spread([rows.slice(0, 6), rows.slice(24, 30), rows.slice(54, 60)]
+      .map(b => mean(b.map(r => (r as unknown as Bake).ms)))),
+    ms_period_amplitude: (() => {                                          // 위상이 실재한다는 값(#14)
+      const b = rows.slice(54, 60).map(r => (r as unknown as Bake).ms)
+      return { block_tail: b, ratio_max_min: +(Math.max(...b) / Math.max(0.01, Math.min(...b))).toFixed(2) }
+    })(),
   }
 })
 
@@ -196,7 +213,14 @@ test('(d) 궤도 중 프레임 — 획 60 · 면 셋', async ({ page }) => {
   await page.waitForTimeout(300)
   const fc = await page.evaluate(() => (window as any).__b2.diag.frameCost())
   const st = await bakeStat(page)
-  OUT.d_orbit = { faces: nf, painted, frame: fc, bake_during_orbit: st }
+  // 리뷰어 [M1] — 「최악 프레임의 몫 = 단계 재굽기」는 재굽기가 «있을 때»만 서는 귀속이다.
+  // 재굽기가 0인 판에서도 최악이 100 ms대면 다른 몫이 있다는 뜻이므로 그 사실을 값으로 남긴다.
+  OUT.d_orbit = {
+    faces: nf, painted, frame: fc, bake_during_orbit: st,
+    note_attribution: (st as unknown as Bake).bakes > 0
+      ? '이 실행은 궤도 중 단계 재굽기가 있었다 — 최악 프레임과 굽기 ms를 나란히 읽는다'
+      : '이 실행은 궤도 중 재굽기 0이다 — 최악 프레임은 굽기 밖의 몫이다(무엇인지는 이 팔이 안 가른다)',
+  }
 })
 
 test('(e) 면 셋에 각각 20획 — 면 수만큼 곱해지는가', async ({ page }) => {
@@ -220,8 +244,19 @@ test('(e) 면 셋에 각각 20획 — 면 수만큼 곱해지는가', async ({ p
   const painted = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length as number)
   expect(painted, '예순 획이 다 놓였다 — 장면이 pre와 같다(#103)').toBe(60)
   const last = rows[rows.length - 1] as unknown as Bake
+  // 리뷰어 [H3] — «마지막 한 점»으로 배수를 주장하지 않는다(#12). 면마다 분포를 낸다:
+  // 이 장면의 바닥은 텍스처 단계가 1024이고 시선이 스치는 각이라 한 획이 uv에서 아주 길다 —
+  // 같은 «얹기»라도 벽·왼쪽 벽보다 한 자릿수 비싸다. 그것이 이 표의 뜻이다.
+  const byFace: Record<string, unknown> = {}
+  for (const name of ['floor', 'wall', 'left']) {
+    const v = rows.filter(r => (r as { face: string }).face === name).map(r => (r as unknown as Bake).ms).sort((a, b) => a - b)
+    byFace[name] = { n: v.length, min: v[0], median: v[Math.floor(v.length / 2)], max: v[v.length - 1], sum: +v.reduce((a, b) => a + b, 0).toFixed(1) }
+  }
+  const all = rows.map(r => (r as unknown as Bake).ms)
   OUT.e_three_faces = {
     faces: nf, painted, rows,
+    by_face: byFace,
+    all_commits: { n: all.length, sum: +all.reduce((a, b) => a + b, 0).toFixed(1), max: Math.max(...all), median: [...all].sort((a, b) => a - b)[Math.floor(all.length / 2)] },
     last_commit: { ms: last.ms, baked_strokes: last.bakedStrokes, bakes: last.bakes, appends: last.appends, upload_bytes: last.uploadBytes, entries: last.entries },
   }
 })

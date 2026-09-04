@@ -32,8 +32,11 @@ const OUT: Record<string, unknown> = {
   pitfall_citations: [12, 42, 99, 101, 102, 103, 105, 107, 108, 110],
   selfcheck_notes: { zero_counters: 'g3의 bakes·baked가 0인 것이 게이트 ③의 «통과»다(0 = 전량 재굽기 없음) — 카운터가 안 도는 것이 아니다. 자가 산다는 증거는 같은 원장의 g5(트리거마다 1)와 g6(누적 끔 → 14)이다' },
 }
+/** `PRE65=1`이면 **수리 «전» 트리**에서 돌린 판을 따로 쓴다(perf65의 그 규약) — ④-c의 «지속»을
+ *  두 트리에서 같은 자로 재려면 파일이 갈려야 한다(post를 덮으면 대조가 사라진다). */
+const PRE = process.env.PRE65 === '1'
 const LEDGER_OF = (projectName: string) =>
-  resolve(HERE, `../../stage0/out/paint65_web2_dpr${projectName === 'dpr2' ? 2 : 1}.json`)
+  resolve(HERE, `../../stage0/out/paint65${PRE ? '_pre' : ''}_web2_dpr${projectName === 'dpr2' ? 2 : 1}.json`)
 test.afterEach(async ({}, info) => {
   const f = LEDGER_OF(info.project.name)
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
@@ -84,6 +87,18 @@ async function bigBox(page: Page) {
 
 const INSTRS = ['pencil', 'brush', 'marker', 'cp'] as const
 type Instr = typeof INSTRS[number]
+/** 게이트 ①이 도는 (슬롯, 브러시) — 리뷰어 [H7]: 슬롯 넷의 «기본»만으로는 좁다.
+ *  획 간 독립이 깨지기 가장 쉬운 족(스머지가 «앞 획»을 무는 브러시 · 산포가 큰 마른 매체)을 더한다:
+ *  `deevad/watercolor_expressive`(smudge > 0 — 즐겨찾기 여섯의 하나) · `classic/charcoal`(거친 산포).
+ *  브러시는 획이 든다(64-1) — 슬롯에 앉히는 대신 `paintSel.br`을 놓는다(고르개가 하는 그 일). */
+const G1_CASES: readonly { instr: Instr; br: string | null; tag: string }[] = [
+  { instr: 'pencil', br: null, tag: 'pencil' },
+  { instr: 'brush', br: null, tag: 'brush' },
+  { instr: 'marker', br: null, tag: 'marker' },
+  { instr: 'cp', br: null, tag: 'cp' },
+  { instr: 'brush', br: 'deevad/watercolor_expressive', tag: 'watercolor(smudge)' },
+  { instr: 'pencil', br: 'classic/charcoal', tag: 'charcoal(거친 산포)' },
+]
 async function pickPaint(page: Page, i: Instr = 'pencil', w = 18, hex = '#8a4a3a') {
   await page.evaluate(([i, w, h]) => {
     const b2 = (window as any).__b2
@@ -136,8 +151,10 @@ test('① ⛳ 픽셀 항등 — 누적 == 전량 재굽기(캔버스 해시 + �
   await bigBox(page)
   const rows: Record<string, unknown>[] = []
   let spot = 0
-  for (const instr of INSTRS) {
+  for (const cs of G1_CASES) {
+    const instr = cs.instr
     await pickPaint(page, instr)
+    if (cs.br) await page.evaluate((b) => { (window as any).__b2.app.paintSel.br = b }, cs.br)
     await bakeReset(page)
     for (let k = 0; k < 6; k++) { const [x, y] = wallSpot(spot++); await paintStroke(page, x, y) }
     const st = await bakeStat(page)
@@ -147,13 +164,13 @@ test('① ⛳ 픽셀 항등 — 누적 == 전량 재굽기(캔버스 해시 + �
     const refTex = await texHash(page)
     const refScr = await screenHash(page)
     // #103 — 장면이 비어 있지 않다(잉크가 그 확인). 자를 두 번 대고 값이 같아야 한다.
-    expect(accTex.length, `${instr}: 텍스처가 섰다`).toBeGreaterThan(0)
-    expect(accTex[0]!.ink, `${instr}: 굽힌 캔버스에 잉크가 있다`).toBeGreaterThan(0)
-    expect(accScr.ink, `${instr}: 화면에 잉크가 있다`).toBeGreaterThan(0)
-    expect(JSON.stringify(accTex), `${instr}: 누적 == 전량 재굽기(캔버스 픽셀)`).toBe(JSON.stringify(refTex))
-    expect(accScr.hash, `${instr}: 누적 == 전량 재굽기(화면 픽셀)`).toBe(refScr.hash)
+    expect(accTex.length, `${cs.tag}: 텍스처가 섰다`).toBeGreaterThan(0)
+    expect(accTex[0]!.ink, `${cs.tag}: 굽힌 캔버스에 잉크가 있다`).toBeGreaterThan(0)
+    expect(accScr.ink, `${cs.tag}: 화면에 잉크가 있다`).toBeGreaterThan(0)
+    expect(JSON.stringify(accTex), `${cs.tag}: 누적 == 전량 재굽기(캔버스 픽셀)`).toBe(JSON.stringify(refTex))
+    expect(accScr.hash, `${cs.tag}: 누적 == 전량 재굽기(화면 픽셀)`).toBe(refScr.hash)
     rows.push({
-      instr, appended: st.appendStrokes, appends: st.appends, bakes: st.bakes, baked_strokes: st.bakedStrokes,
+      instr: cs.tag, brush: cs.br ?? '(슬롯 기본)', appended: st.appendStrokes, appends: st.appends, bakes: st.bakes, baked_strokes: st.bakedStrokes,
       tex_hash: accTex.map(t => t.hash), tex_ink: accTex.map(t => t.ink),
       screen_hash: accScr.hash, screen_ink: accScr.ink, identical: JSON.stringify(accTex) === JSON.stringify(refTex) && accScr.hash === refScr.hash,
     })
@@ -245,7 +262,132 @@ test('④ 다른 변경이 칠을 안 건드린다 — 치수·상관없는 선�
   await step('그 선 되돌리기', async () => { await page.click('#btn-undo') })
   const after = await texHash(page)
   expect(JSON.stringify(after), '그 사이 그림은 한 픽셀도 안 바뀌었다').toBe(JSON.stringify(before))
-  OUT.g4_untouched = { note: '문서가 바뀌어도 칠은 안 굽는다 — 「그 파생이 의존하는 것」만 열쇠다(#110)', rows, tex_hash_same: JSON.stringify(after) === JSON.stringify(before), tex_ink: before.map(t => t.ink) }
+  // ⚠⚠ 리뷰어 [M5] — 위 셋은 «재료·해칭이 없는» 면이다. 재료가 붙으면 무늬의 실척이 축척에
+  // 매이므로 **치수 수정은 그때 굽어야 한다**(안 구우면 그것이 낡은 그림이다). 굽기 서명에
+  // `rep.mm`이 들어 있다는 것을 «값으로» 확인한다 — 같은 몸짓의 답이 면의 상태에 따라 갈린다.
+  const fid4 = await page.evaluate(() => (window as any).__b2.app.faces[0].id as number)
+  await page.evaluate((i) => (window as any).__b2.diag.cycleRep49(i), fid4)
+  await page.waitForTimeout(400)
+  await bakeReset(page)
+  await page.evaluate((i) => (window as any).__b2.diag.setDimForTest(i, 3500), postId)
+  await page.waitForTimeout(400)
+  const withRep = await bakeStat(page)
+  const repNow = await texHash(page)
+  await rebakeAndWait(page)
+  const repRef = await texHash(page)
+  expect(withRep.bakes, '재료가 붙은 면은 치수 수정에서 **굽는다**(무늬 실척이 축척에 매인다)').toBeGreaterThanOrEqual(1)
+  expect(JSON.stringify(repNow), '그리고 그 그림이 정본 굽기와 같다(낡은 그림 0)').toBe(JSON.stringify(repRef))
+  OUT.g4_untouched = {
+    note: '문서가 바뀌어도 칠은 안 굽는다 — 「그 파생이 의존하는 것」만 열쇠다(#110). ⚠ 「의존하는 것」이 늘면(재료 = 축척) 같은 몸짓이 굽는다 — 아래 with_material이 그 갈림이다',
+    rows, tex_hash_same: JSON.stringify(after) === JSON.stringify(before), tex_ink: before.map(t => t.ink),
+    with_material: { what: '재료를 붙이고 치수 3000 → 3500', bakes: withRep.bakes, baked_strokes: withRep.bakedStrokes, matches_full_bake: JSON.stringify(repNow) === JSON.stringify(repRef) },
+  }
+})
+
+test('④-b 부분 업로드 — 끄고 켠 판이 «화면으로 같다»(D-3 · 바이트만 다르다)', async ({ page }) => {
+  test.setTimeout(600_000)
+  await bigBox(page)
+  await pickPaint(page)
+  for (let i = 0; i < 6; i++) { const [x, y] = wallSpot(i); await paintStroke(page, x, y) }
+  // 켬 — 더티 사각만
+  await bakeReset(page)
+  {
+    const [x, y] = wallSpot(6); await paintStroke(page, x, y)
+  }
+  const on = await bakeStat(page)
+  const onScr = await screenHash(page)
+  const onTex = await texHash(page)
+  // 끔 — 같은 몸짓, 전량 업로드
+  await page.evaluate(() => { (window as any).__b2.diag.setPaintPartialOffForTest(true) })
+  await page.waitForTimeout(200)
+  await bakeReset(page)
+  {
+    const [x, y] = wallSpot(7); await paintStroke(page, x, y)
+  }
+  const off = await bakeStat(page)
+  // 같은 상태에서 두 판을 견주려면 «같은 문서»여야 한다 — 마지막 획을 되돌려 켬 판의 문서로 돌아간다
+  await page.click('#btn-undo'); await page.waitForTimeout(400)
+  await page.evaluate(() => { (window as any).__b2.diag.setPaintPartialOffForTest(false) })
+  await rebakeAndWait(page)
+  const backScr = await screenHash(page)
+  const backTex = await texHash(page)
+  expect(on.uploadBytes, '켬 — 더티 사각만 올린다').toBeLessThan(off.uploadBytes)
+  expect(JSON.stringify(backTex), '되돌린 뒤 캔버스가 켬 판과 같다').toBe(JSON.stringify(onTex))
+  expect(backScr.hash, '되돌린 뒤 **화면**이 켬 판과 같다 — 부분 업로드가 픽셀을 안 바꾼다').toBe(onScr.hash)
+  OUT.g4b_partial = {
+    note: '부분 업로드 켬/끔의 대조(D-3) — 바이트는 갈리고 픽셀은 같다. ⚠ 이 자가 이 회차의 첫 판을 잡았다(SKIP × FLIP_Y로 화면이 갈렸다)',
+    partial_on: { upload_bytes: on.uploadBytes, uploads: on.uploads, screen_hash: onScr.hash, screen_ink: onScr.ink },
+    partial_off: { upload_bytes: off.uploadBytes, uploads: off.uploads },
+    ratio_off_over_on: +(off.uploadBytes / Math.max(1, on.uploadBytes)).toFixed(1),
+    screen_same_after_restore: backScr.hash === onScr.hash,
+  }
+})
+
+test('④-c 재료 면의 «줌 뒤 갈림»과 그 지속 — 값으로(리뷰어 [H5])', async ({ page }) => {
+  test.setTimeout(600_000)
+  await bigBox(page)
+  await pickPaint(page)
+  for (let i = 0; i < 6; i++) { const [x, y] = wallSpot(i); await paintStroke(page, x, y) }
+  const fid = await page.evaluate(() => (window as any).__b2.app.faces[0].id as number)
+  const zoomIn = async () => {
+    await page.mouse.move(700, 480)
+    for (let k = 0; k < 6; k++) { await page.mouse.wheel(0, -240); await page.waitForTimeout(50) }
+    await page.waitForTimeout(300)
+  }
+  // ⚠ **차례가 값을 정한다**(실측): 재료는 **줌 «전»**에 붙어야 한다. 줌이 단계를 상한(1024)까지
+  // 올린 «뒤»에 붙이면 그 다음 줌이 단계를 못 갈라 재굽기가 아예 없고, 그러면 이 팔은 아무것도
+  // 안 잰다(초판이 그랬다 — now == ref == ref2로 «갈림 없음»이 나왔다).
+  // 그래서 이 팔은 **재료를 먼저 붙이고** 줌한다. 대조군(재료 없음)은 아래 ④-d가 든다.
+  await page.evaluate((i) => (window as any).__b2.diag.cycleRep49(i), fid)
+  await page.waitForTimeout(400)
+  await zoomIn()
+  const repNow = await texHash(page)
+  // ⚠⚠ **지속을 «재굽기 전»에 잰다**(자기참조 — §5.1 유형 3): 초판은 rebake 두 번 뒤에 편집하고
+  // 읽어서 «나았다»가 나왔는데, 그것은 편집이 아니라 **그 rebake가** 만든 값이었다(자가 제 행위를
+  // 되읽었다). 지속의 물음은 「트리거가 아닌 편집이 낡은 그림을 낫게 하는가」이므로 순서가 이렇다:
+  //   줌(갈림) → **상관없는 편집** → 읽는다 → 그제서야 rebake로 정본을 낸다.
+  await page.click('#btn-pencil')
+  await drawLine(page, 950, 150, 1100, 190)
+  await page.waitForTimeout(400)
+  const afterEdit = await texHash(page)
+  await page.click('#btn-paint'); await page.waitForTimeout(60)
+  await rebakeAndWait(page)
+  const repRef1 = await texHash(page)
+  await rebakeAndWait(page)
+  const repRef2 = await texHash(page)     // 재굽기 두 번이 서로 같은가(요동이 아님의 값)
+  OUT.g4c_rep_zoom = {
+    note: '재료 무늬의 선 굵기(rep.texelPerPx = 단계 ÷ 화면 크기)는 «줌의 연속값»이라 굽기 열쇠에 안 든다(넣으면 매 프레임 재굽기 — 49 규약). 그 대가가 이 표다',
+    with_material: { now: repNow.map(t => t.hash), ref1: repRef1.map(t => t.hash), ref2: repRef2.map(t => t.hash),
+      same: JSON.stringify(repNow) === JSON.stringify(repRef1), ref_stable: JSON.stringify(repRef1) === JSON.stringify(repRef2) },
+    persistence: { note: '상관없는 편집(하늘의 선 하나 — 굽기 트리거가 아니다) 뒤에도 그대로인가. **65는 열쇠가 좁아 안 낫는다** — 옛 코드는 어떤 문서 변경도 전량 재굽기였으므로 그 편집에서 나았다: 갈림 «자체»는 종전에도 있었고 65가 바꾼 것은 **지속 시간**이다(리뷰어 [H5]의 그 물음)',
+      hash_after_unrelated_edit: afterEdit.map(t => t.hash),
+      healed_by_unrelated_edit: JSON.stringify(afterEdit) !== JSON.stringify(repNow) },
+  }
+  expect(repNow.length, '텍스처가 섰다').toBeGreaterThan(0)
+  expect(JSON.stringify(repRef1), '재굽기 두 번이 서로 같다 — 요동이 아니다(요동이면 이 팔은 아무것도 안 잰다)').toBe(JSON.stringify(repRef2))
+})
+
+test('④-d 대조군 — 재료 «없는» 면은 줌 뒤에도 정본 굽기와 같다', async ({ page }) => {
+  test.setTimeout(600_000)
+  await bigBox(page)
+  await pickPaint(page)
+  for (let i = 0; i < 6; i++) { const [x, y] = wallSpot(i); await paintStroke(page, x, y) }
+  await page.mouse.move(700, 480)
+  for (let k = 0; k < 6; k++) { await page.mouse.wheel(0, -240); await page.waitForTimeout(50) }
+  await page.waitForTimeout(300)
+  const now = await texHash(page)
+  const nowScr = await screenHash(page)
+  await rebakeAndWait(page)
+  const ref = await texHash(page)
+  const refScr = await screenHash(page)
+  OUT.g4d_bare_zoom = {
+    note: '④-c의 대조군 — 재료가 없으면 줌 뒤에도 갈림이 «없다». 즉 ④-c의 갈림은 무늬 굵기(texelPerPx)의 것이지 누적의 것이 아니다',
+    now: now.map(t => t.hash), ref: ref.map(t => t.hash), same: JSON.stringify(now) === JSON.stringify(ref),
+    screen_same: nowScr.hash === refScr.hash, ink: now.map(t => t.ink),
+  }
+  expect(now.length, '텍스처가 섰다').toBeGreaterThan(0)
+  expect(JSON.stringify(now), '재료 «없는» 면은 줌 뒤에도 정본 굽기와 같다(캔버스)').toBe(JSON.stringify(ref))
+  expect(nowScr.hash, '화면도 같다').toBe(refScr.hash)
 })
 
 test('⑤ 무회귀 트리거가 «산다» — 여섯 전수', async ({ page }) => {
@@ -261,12 +403,18 @@ test('⑤ 무회귀 트리거가 «산다» — 여섯 전수', async ({ page })
     await page.waitForTimeout(400)
     const st = await bakeStat(page)
     const now = await texHash(page)
+    // ⚠⚠ 리뷰어 [H4] — **화면도 본다**. 이 회차가 실제로 겪은 결함 둘(부분 업로드 · GPU 크기)이
+    // 「굽힌 캔버스는 맞는데 화면이 다르다」였다. 캔버스만 대면 같은 유형이 그대로 샌다.
+    const nowScr = await screenHash(page)
     await rebakeAndWait(page)
     const ref = await texHash(page)
+    const refScr = await screenHash(page)
     const same = JSON.stringify(now) === JSON.stringify(ref)
-    rows.push({ what: name, bakes: st.bakes, baked_strokes: st.bakedStrokes, drops: st.drops, entries: st.entries, tex_reallocs: st.texReallocs, matches_full_bake: same })
+    const sameScr = nowScr.hash === refScr.hash
+    rows.push({ what: name, bakes: st.bakes, baked_strokes: st.bakedStrokes, drops: st.drops, entries: st.entries, tex_reallocs: st.texReallocs, matches_full_bake: same, screen_matches_full_bake: sameScr, screen_ink: nowScr.ink })
     if (expectBake) expect(st.bakes + st.drops, `${name}: 다시 굽거나 항목을 버린다`).toBeGreaterThanOrEqual(1)
-    expect(same, `${name}: 그 뒤 그림이 정본 굽기와 같다(낡은 그림 0)`).toBe(true)
+    expect(same, `${name}: 그 뒤 그림이 정본 굽기와 같다(낡은 그림 0 — 캔버스)`).toBe(true)
+    expect(sameScr, `${name}: 그 뒤 **화면**도 정본 굽기와 같다(낡은 그림 0 — 화면)`).toBe(true)
   }
   // ⚠⚠ **차례가 값을 정한다 — 실측 둘이 이 차례를 강제한다**:
   //  ① 줌은 화면 좌표를 바꾼다 → 좌표로 짚는 트리거(지우개)보다 «뒤»에 두면 엉뚱한 자리를 문다
@@ -337,9 +485,10 @@ test('⑤ 무회귀 트리거가 «산다» — 여섯 전수', async ({ page })
       box.dispatchEvent(new Event('change'))
     })
   })
-  OUT.g5_triggers = { note: '무회귀 트리거 전수 — 「다시 굽는다」와 「낡은 그림 0」을 값으로', rows,
+  OUT.g5_triggers = { note: '무회귀 트리거 전수 — 「다시 굽는다」와 「낡은 그림 0」을 값으로. **캔버스와 화면 둘 다** 본다(리뷰어 [H4])', rows,
     all_rebaked: rows.every(r => (r.bakes as number) + (r.drops as number) >= 1),
-    all_match_full_bake: rows.every(r => r.matches_full_bake === true) }
+    all_match_full_bake: rows.every(r => r.matches_full_bake === true),
+    all_screen_match_full_bake: rows.every(r => r.screen_matches_full_bake === true) }
 })
 
 test('⑥ 반증(D-3) — 누적을 끄면 pre의 O(N)이 돌아온다', async ({ page }) => {

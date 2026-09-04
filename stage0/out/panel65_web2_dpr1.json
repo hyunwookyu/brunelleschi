@@ -8,7 +8,7 @@
   "note_pitfalls": "#96(손잡이가 늘면 34-0 표를 그 라운드 안에서 다시 — paint64 ⑦이 그 자리) · #97(견본 캔버스는 position:static·flex-shrink 0) · #87(펼침은 화면에서 눌러 센다) · #12(폭 둘 · 칸 여섯 — 동작점 하나로 주장하지 않는다) · #99 · #101",
   "note_meter": "「잘렸다」 = ① 제 상자가 hidden·clip으로 자르는데 내용이 더 크다 ② 조상 중 hidden·clip 상자 밖으로 사각이 나갔다. overflow:visible의 넘침(글자는 다 보인다)과 auto·scroll(굴려서 닿는다)은 «잘린 것이 아니다» — 초판이 그 둘을 세어 거짓 양성을 냈고 실측이 고쳤다",
   "p1_place": {
-    "note": "패널은 화면 «왼쪽 가장자리»다 — 작도 세로바(오른쪽)와 겹치는 넓이 0",
+    "note": "패널은 화면 «왼쪽 가장자리»다 — 작도 세로바(오른쪽)와 겹치는 넓이 0. ⚠ 그 대신 «캔버스»를 그만큼 덮는다(covered_frac_of_viewport) — 그것이 이 자리의 대가이고, 사람이 그 자리에 못 긋는다는 뜻이다(리뷰어 [H6] · DEFERRED 65)",
     "rows": [
       {
         "vw": 1200,
@@ -33,7 +33,9 @@
           "vw": 1200,
           "vh": 800
         },
-        "overlap_px2": 0
+        "overlap_px2": 0,
+        "covered_px2": 77792,
+        "covered_frac_of_viewport": 0.081
       },
       {
         "vw": 800,
@@ -58,7 +60,9 @@
           "vw": 800,
           "vh": 800
         },
-        "overlap_px2": 0
+        "overlap_px2": 0,
+        "covered_px2": 77792,
+        "covered_frac_of_viewport": 0.1216
       }
     ]
   },

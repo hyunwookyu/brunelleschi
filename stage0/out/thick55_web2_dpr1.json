@@ -4,7 +4,7 @@
   "note_d3": "D-3 셋: ① t=200이 같은 상자를 실제로 바꾼다(항등 팔의 판별력) ② 예외 걷기가 픽셀을 실제로 바꾼다 ③ uv 1.5배가 화면 자국을 실제로 늘린다(미터 자의 반증)",
   "identity": {
     "def": "t=0 픽셀 항등: base ↔ (t=200 켰다 다시 0) 다른 바이트 0. ⚠ 이 0은 «측정»이다(렌더 결정론이 깨지면 실패한다 — roundsave ③의 그 성질) · 판별력 = base ↔ t200의 달라진 픽셀(D-3 ①). «착수 전 트리와 같다»는 별도 측정이다 — pre_tree 블록(55 갈래 부모 트리의 서명 대조 · 1차 [2])이 그 값을 든다",
-    "changed_px_at_t200": 1410,
+    "changed_px_at_t200": 1280,
     "box_px": 57600,
     "roundtrip_bytes": 0
   },
@@ -13,8 +13,8 @@
     "n_batch_200": 2,
     "n_batch_250": 1,
     "propagate_px": {
-      "wallA": 505,
-      "wallB": 779
+      "wallA": 378,
+      "wallB": 707
     },
     "ex_hold_px": 0,
     "floor_px": 0,
@@ -33,11 +33,11 @@
       "t": 0,
       "ex": false
     },
-    "falsify_clear_ex_px": 627
+    "falsify_clear_ex_px": 539
   },
   "paint_roundtrip": {
     "def": "칠(마커) 후 t 0→200→0: 복귀 바이트 차 0(칠이 같은 자리 — uv 불변의 픽셀판) · 중간(t=200)은 실제로 달랐다(이동의 실재)",
-    "mid_changed_px": 6355,
+    "mid_changed_px": 6031,
     "roundtrip_bytes": 0
   },
   "border_meter": {
@@ -62,9 +62,9 @@
   "perf": {
     "def": "두께 장면(면 셋 · 벽 200mm/바닥 150mm — 메시 3배)의 syncStrokes lastMs. 정본은 이 원장 필드 — 절대 ms는 기계 몫이라 회귀 비교는 같은 원장의 전값과 한다(#47)",
     "sync_ms": {
-      "median": 0.3,
+      "median": 0.2,
       "min": 0.1,
-      "max": 0.6
+      "max": 0.4
     }
   },
   "ui34_thick": {
@@ -155,8 +155,8 @@
     "batch_n": 19,
     "off": {
       "frame": {
-        "median": 16.7,
-        "p90": 19.2
+        "median": 16.9,
+        "p90": 18.1
       },
       "sync": 0.3,
       "r3d": {
@@ -171,8 +171,8 @@
     },
     "on": {
       "frame": {
-        "median": 16.5,
-        "p90": 17.9
+        "median": 16.8,
+        "p90": 18
       },
       "sync": 0.6,
       "r3d": {
@@ -185,7 +185,7 @@
         }
       }
     },
-    "frame_delta_median_ms": -0.2,
-    "heap_mb": 19.6
+    "frame_delta_median_ms": -0.1,
+    "heap_mb": 42.6
   }
 }
