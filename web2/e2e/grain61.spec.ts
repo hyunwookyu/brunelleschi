@@ -240,3 +240,42 @@ test('⑤ 넷이 갈린다 — 같은 압력·같은 도형의 통계', async ({
     def: '짝별로 세 축(p95·빈 몫·가장자리 sd) 중 최대 상대 차 — 그 최소가 «가장 닮은 짝»의 갈림' }
   expect(minPair, '어떤 짝도 완전히 같지 않다(신호 실재)').toBeGreaterThan(0)
 })
+test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 · 2배는 2배', async ({ page }) => {
+  await boot(page)
+  const widthOf = (i: Instr, wPx: number) =>
+    page.evaluate(([tool, w]) => {
+      const b2 = (window as any).__b2
+      b2.diag.markSampleForTest(tool, 'line', w)
+      const m = (window as any).__m61 as { v: number[]; w: number; h: number }
+      const W = m.w, H = m.h
+      const widths: number[] = []
+      for (let x = 60; x < W - 60; x += 2) {
+        let mx = 0
+        for (let y = 0; y < H; y++) mx = Math.max(mx, m.v[y * W + x]!)
+        if (mx < 20) continue
+        const th = mx / 2
+        let n = 0
+        for (let y = 0; y < H; y++) if (m.v[y * W + x]! > th) n++
+        widths.push(n)
+      }
+      widths.sort((a, b) => a - b)
+      return widths.length ? widths[Math.floor(widths.length / 2)]! : 0
+    }, [i, wPx] as const)
+  const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
+  const rows: Record<string, unknown> = {}
+  for (const i of ['pencil', 'cp', 'brush', 'marker'] as Instr[]) {
+    const w24 = await widthOf(i, 24)
+    const r = +(w24 / 24).toFixed(3)
+    rows[i] = { w24, ratio: r }
+    expect(Math.abs(r - 1), `${i} — 반최대 폭 ÷ 요청 24px이 허용 안`).toBeLessThanOrEqual(cs.PAINT61_SIZE_TOL)
+  }
+  const p48 = await widthOf('pencil', 48)
+  const doubling = +(p48 / (rows.pencil as { w24: number }).w24).toFixed(3)
+  OUT.size_honesty = {
+    rows, pencil_w48: p48, doubling,
+    def: '직선 견본(압력 0.5 상수)의 열별 반최대 폭 중앙값 ÷ 요청 굵기(px). 58 ⛔ 「크기 슬라이더」의 정직성 — 사다리(√2 파생)와 자가 보정(px/weight)이 실제로 px를 낸다는 실측. doubling = 연필 48 ÷ 24의 폭 비(기대 ~2)',
+    threshold: cs.PAINT61_SIZE_TOL,
+  }
+  expect(doubling, '연필 — 굵기 2배는 폭도 2배 대역').toBeGreaterThan(1.6)
+  expect(doubling, '연필 — 굵기 2배는 폭도 2배 대역').toBeLessThan(2.4)
+})

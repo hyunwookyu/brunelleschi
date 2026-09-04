@@ -87,7 +87,11 @@ const BASE_PARAMS: Record<string, Record<string, unknown>> = {
   // 팁(양 끝을 도장 열 번으로 강조)이 58의 사람 계약(「시작·끝 원형 강조가 매우 거슬린다」 —
   // 기본 팁 0 · D-2)과 정면 충돌한다. 46 선례 그대로 «내장에서 한 값만 바꾼» 파생이다.
   // 켠 판(marker46)은 실험실 후보이자 ③ 게이트의 반증 팔로 남는다.
-  marker61: { weight: 2, scatter: 0.2, sharpness: null, grain: null, opacity: 1, spacing: C.MARKER_SPACING, pressure: { curve: [0.35, 0.25], min_max: [1.2, 0.85] }, type: 'marker', markerTip: false },
+  // min_max [1,1] — p5 마커의 내장 «획 따라 굵기 감쇠»(1.2→0.85 · ±40% 테이퍼)도 끈다:
+  // 건축 마커는 균일 띠다(46 band·50 ④ 원근 게이트의 그 전제 — 실측 1.775 vs 기대 1.240이
+  // 이 테이퍼였다). 압력(펜 입력)은 점별 plot 압력으로 그대로 산다. 테이퍼 성격은
+  // marker46(실험실 후보)에 남는다.
+  marker61: { weight: 2, scatter: 0.2, sharpness: null, grain: null, opacity: 1, spacing: C.MARKER_SPACING, pressure: { curve: [0.35, 0.25], min_max: [1, 1] }, type: 'marker', markerTip: false },
 }
 
 /** BASE_PARAMS에만 있는 브러시(marker61)의 1회 등록 — 그리기 앞에서 부른다. */
@@ -112,39 +116,62 @@ function baseNameOf(tool: Instr58, grade?: string): string {
  *  등록하고, 획 weight는 사다리 안 잔차(0.84..1.19)만 든다 — 어느 크기에서나 같은 자국이
  *  비례로 커진다. 사람 조정 배수는 같은 등록에 함께 얹는다. */
 const derived = new Map<string, string>()   // `${기준}|${사다리 칸}|${배수들}` → 등록 이름
+const sizedW = new Map<string, number>()    // 등록 이름 → 실측 폭(px · weight 1) — 칸별 보정
 const LADDER = Math.SQRT2
+const MAX_KI = 24                            // 500px 상한(58 ⛔)이면 충분한 칸 수
+
+/** 칸 ki의 브러시를 (등록하고) 그 실측 폭을 돌려준다 — 캐시. */
+function stepBrush(tool: Instr58, base: string, ki: number): { name: string; wm: number } {
+  const t = tune[tool]
+  const key = `${base}|${ki}|${MUL_KEYS.map(mk => t?.[mk] ?? 1).join(',')}`
+  const hit = derived.get(key)
+  if (hit) return { name: hit, wm: sizedW.get(hit)! }
+  let name = base
+  if (ki !== 0 || !(!t || MUL_KEYS.every(mk => mk === 'weightK' || (t[mk] ?? 1) === 1))) {
+    const k = Math.pow(LADDER, ki)
+    const bp = BASE_PARAMS[base] ?? BASE_PARAMS.HB!
+    name = `s61-${derived.size}`
+    const num = (v: unknown): number | null => (typeof v === 'number' ? v : null)
+    const mul = (v: unknown, m: number): unknown => (num(v) === null ? v : num(v)! * m)
+    brush.add(name, {
+      ...bp,
+      // 크기의 몫 — 도장 지름·산포만 k배. ⚠ spacing은 **경로상 절대 px 걸음**(draw()의
+      // stepSize — 소스 실측)이라 k배 하면 도장 수가 1/k이 되어 자국이 사라진다(첫 판
+      // 사진이 잡았다). √k배(비용 절충)도 대 보았다 — 연필·색연필이 성긴 점열이 됐다(기각).
+      weight: mul(bp.weight, k),
+      scatter: mul(bp.scatter, k * (t?.scatterK ?? 1)),
+      spacing: Math.max(0.005, (num(bp.spacing) ?? 0.1) * (t?.spacingK ?? 1)),
+      opacity: mul(bp.opacity, t?.opacityK ?? 1),
+      grain: mul(bp.grain, t?.grainK ?? 1),
+      sharpness: mul(bp.sharpness, t?.sharpK ?? 1),
+    })
+  }
+  const wm = Math.max(0.5, measureWidth(name))
+  derived.set(key, name)
+  sizedW.set(name, wm)
+  return { name, wm }
+}
+
+/** **크기는 파생 브러시가 든다** — p5.brush의 산포·간격은 «획 weight × param»이라 획
+ *  weight로 굵기를 키우면 자국이 점구름이 된다(첫 판 사진). scaleBrushes의 셈(도장 지름·
+ *  산포 k배)을 √2 사다리 파생 브러시로 하고, **칸은 실측 폭이 요청 이하인 최대 칸**으로
+ *  고른다 — 잔차 u = 요청 ÷ 칸 실측 폭이 **1 이상**이어야 한다: p5의 도장 알파가
+ *  opacity/min(weight,1.3)이라 u<1이면 알파가 역으로 증폭돼 치맛단이 진해지고 반최대
+ *  폭이 부푼다(실측 — 크기 정직성 초판 3.2배·보정 2판 4.7배가 그 병이다). 칸 폭은
+ *  등록한 «그» 붓을 직접 재서(반최대 폭 — 게이트와 같은 자 #54) 캐시한다. */
 function sizedBrush(tool: Instr58, wPx: number, grade?: string): { name: string; u: number } {
   const t = tune[tool]
   const base = baseNameOf(tool, grade)
-  const w1 = calib(base)                                     // 기준 브러시의 실측 폭(px/weight)
-  const ki = Math.max(0, Math.round(Math.log(Math.max(1e-9, wPx / w1)) / Math.log(LADDER)))
-  const k = Math.pow(LADDER, ki)
-  const u = (wPx / (w1 * k)) * (t?.weightK ?? 1)
-  const noMul = !t || MUL_KEYS.every(mk => mk === 'weightK' || (t[mk] ?? 1) === 1)
-  if (ki === 0 && noMul) return { name: base, u }
-  const key = `${base}|${ki}|${MUL_KEYS.map(mk => t?.[mk] ?? 1).join(',')}`
-  const hit = derived.get(key)
-  if (hit) return { name: hit, u }
-  const bp = BASE_PARAMS[base] ?? BASE_PARAMS.HB!
-  const name = `s61-${derived.size}`
-  const num = (v: unknown): number | null => (typeof v === 'number' ? v : null)
-  const mul = (v: unknown, m: number): unknown => (num(v) === null ? v : num(v)! * m)
-  brush.add(name, {
-    ...bp,
-    // 크기의 몫 — 도장 지름·산포만 k배. ⚠ spacing은 **경로상 절대 px 걸음**(draw()의
-    // stepSize — 소스 실측)이라 k배 하면 도장 수가 1/k이 되어 자국이 사라진다(첫 판 사진이
-    // 잡았다). √k배(비용 절반 절충)도 대 보았다 — 연필·색연필이 눈에 띄게 성긴 점열이 됐다
-    // (사진 대조 · 기각). 도장 밀도는 내장 그대로 두고 비용은 문(⑥ dpr2 전용 문)이 든다.
-    weight: mul(bp.weight, k),
-    scatter: mul(bp.scatter, k * (t?.scatterK ?? 1)),
-    spacing: Math.max(0.005, (num(bp.spacing) ?? 0.1) * (t?.spacingK ?? 1)),
-    // 사람 조정 배수의 몫
-    opacity: mul(bp.opacity, t?.opacityK ?? 1),
-    grain: mul(bp.grain, t?.grainK ?? 1),
-    sharpness: mul(bp.sharpness, t?.sharpK ?? 1),
-  })
-  derived.set(key, name)
-  return { name, u }
+  const w1 = calib(base)
+  let ki = Math.max(0, Math.min(MAX_KI, Math.round(Math.log(Math.max(1e-9, wPx / w1)) / Math.log(LADDER))))
+  let sb = stepBrush(tool, base, ki)
+  while (sb.wm > wPx && ki > 0) { ki--; sb = stepBrush(tool, base, ki) }
+  while (ki < MAX_KI) {
+    const up = stepBrush(tool, base, ki + 1)
+    if (up.wm > wPx) break
+    ki++; sb = up
+  }
+  return { name: sb.name, u: Math.max(1, wPx / sb.wm) * (t?.weightK ?? 1) }
 }
 
 // ── px/weight 자가 보정 ────────────────────────────────────────────────────────
@@ -160,21 +187,28 @@ function measureWidth(name: string): number {
   brush.push()
   brush.translate(-BAKE / 2, -BAKE / 2)
   brush.set(name, '#000000', 1)
+  // 압력은 그리기 다리(press01의 0.5 입력값)와 같은 값 — 보정과 제품이 같은 조건을 본다
+  const pr = Math.min(1, Math.sqrt(C.PAINT51_WIDTH_FLOOR + C.PAINT51_WIDTH_SLOPE * 0.5))
   const pts: [number, number, number][] = []
-  for (let k = 0; k <= 16; k++) pts.push([100 + (k / 16) * 400, 200, 0.5])
+  for (let k = 0; k <= 16; k++) pts.push([100 + (k / 16) * 400, 380, pr])
   brush.spline(pts, 0)
   brush.pop()
   brush.render()
+  // 반최대 폭(게이트 grain61 ⑥과 같은 자 — #54): 열 최대 알파의 절반을 넘는 행 수의 중앙값
   const t = document.createElement('canvas')
-  t.width = 300; t.height = 160
+  t.width = 300; t.height = 700
   const g = t.getContext('2d')!
-  g.drawImage(c, 200, 120, 300, 160, 0, 0, 300, 160)
-  const d = g.getImageData(0, 0, 300, 160).data
+  g.drawImage(c, 200, 30, 300, 700, 0, 0, 300, 700)
+  const d = g.getImageData(0, 0, 300, 700).data
   const widths: number[] = []
   for (let x = 0; x < 300; x += 3) {
+    let mx = 0
+    for (let y = 0; y < 700; y++) mx = Math.max(mx, d[(y * 300 + x) * 4 + 3]!)
+    if (mx < 20) continue
+    const th = mx / 2
     let n = 0
-    for (let y = 0; y < 160; y++) if (d[(y * 300 + x) * 4 + 3]! > 25) n++
-    if (n > 0) widths.push(n)
+    for (let y = 0; y < 700; y++) if (d[(y * 300 + x) * 4 + 3]! > th) n++
+    widths.push(n)
   }
   widths.sort((a, b) => a - b)
   return widths.length ? widths[Math.floor(widths.length / 2)]! : 1
@@ -266,14 +300,19 @@ function press01(m: SeamMark, i: number): number {
 function drawGroup(g: CanvasRenderingContext2D, marks: SeamMark[]): void {
   ensureRegistered()
   const c = bakeCanvas()
+  // ⚠ 크기 해석(보정 렌더 포함)은 무리 그리기 «앞»에 — measureWidth가 제 push/translate·
+  // clear를 쓰므로 무리의 변환 안에서 부르면 이중 이동으로 캔버스 밖에 그려져 폭이 전부
+  // 1(빈 폴백)이 된다(실측 — 크기 정직성 게이트가 잡은 그 병의 뿌리).
+  const resolved = marks.map(m => sizedBrush(m.tool, m.wPx, m.grade))
   claimBrushTarget(c)
   brush.clear()
   brush.push()
   brush.translate(-BAKE / 2, -BAKE / 2)
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
   let wMax = 0
-  for (const m of marks) {
-    const { name, u } = sizedBrush(m.tool, m.wPx, m.grade)
+  for (let mi = 0; mi < marks.length; mi++) {
+    const m = marks[mi]!
+    const { name, u } = resolved[mi]!
     brush.seed(m.seed)
     brush.noiseSeed(m.seed)
     brush.set(name, m.color, u)

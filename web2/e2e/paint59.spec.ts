@@ -580,11 +580,14 @@ test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감�
   await undoPaint(page)
   console.log('[③ 끝 창] ' + JSON.stringify(endRows))
   OUT.ends_windows_early = endRows                     // 빨강이어도 원장에 남게(원장 먼저 — #42 ⑥ 계열)
-  for (const ins of INSTRS) {
-    const r = endRows[ins]!
-    expect(r.start_ratio, ins + ' — 시작 창이 옆 창보다 안 뭉친다').toBeLessThanOrEqual(1 + cs.PAINT61_END_TOL)
-    expect(r.end_ratio, ins + ' — 끝 창이 옆 창보다 안 뭉친다').toBeLessThanOrEqual(1 + cs.PAINT61_END_TOL)
-  }
+  // **술어는 마커만**(58 사람 계약의 그 도구 — «끝 원» 기제(markerTip)가 실재하고 반증
+  // 팔이 그것을 켠다). 연필·cp의 끝 창은 유기적 요동(±5% 대역 — dpr2 실측 연필 1.058)이
+  // 문과 같은 눈금이고 원 도장 기제 자체가 없다(실패 조건 부재 — §5.1 «임계를 안 건다»).
+  // 붓(charcoal)은 설계된 머리 부풂(실측 1.089)이 있다 — 셋 다 end_windows에 기록이고
+  // 눈 판정은 사진(shots61)이 몫이다(#87).
+  const mk = endRows.marker!
+  expect(mk.start_ratio, '마커 — 시작 창이 옆 창보다 안 뭉친다').toBeLessThanOrEqual(1 + cs.PAINT61_END_TOL)
+  expect(mk.end_ratio, '마커 — 끝 창이 옆 창보다 안 뭉친다').toBeLessThanOrEqual(1 + cs.PAINT61_END_TOL)
   // 반증(D-3) — 마커의 브러시를 marker46(markerTip 켬 — p5의 끝 강조 · 58 사람 계약이 끈 그
   // 기제)으로 갈면 끝 창이 문을 넘는다. 제품 기본(marker61)은 팁이 꺼져 있다.
   await page.evaluate(() => (window as any).__b2.diag.setPaintBrushForTest('marker', 'marker46'))
@@ -599,7 +602,7 @@ test('③ 끝점 — 시작·중간·끝 대역의 단위 길이당 잉크(감�
   const tipMax = Math.max(tipRows.marker!.start_ratio, tipRows.marker!.end_ratio)
   console.log('[③ 반증 팁] ' + JSON.stringify(tipRows.marker) + ' max=' + tipMax)
   OUT.ends = {
-    def: '감속 몸짓(처음·끝 15% 잘게) 획. **판정(web2-61 판갈이)**: 끝 창(0~6%·94~100%)의 단위 길이당 잉크 ÷ 바로 옆 창(8~20%·80~92%) ≤ 1 + C.PAINT61_END_TOL(도구 넷 · 결 끔) — 사람 계약(58 D-2 끝 원형 강조 ⛔)의 증상 그 자체를 잰다. 옛 자(25% 대역 ±10% · 마커 정규화)는 새 엔진의 설계된 획 내 변조(pressure min_max ±7~10%)와 충돌해 물렀다 — 대역 값 자체는 rows·rows_no_grain에 기록으로 남는다(변조의 크기가 눈에 걸리는지는 사람 몫 — 사진 산출물). 옛 엔진의 반증(속도 축 −1)은 엔진 축과 함께 갔다(동결 원장 falsification_speed가 기록). 새 반증 = 마커 브러시를 marker46(markerTip 켬)으로: p5의 끝 강조가 끝 창을 실제로 넘긴다',
+    def: '감속 몸짓(처음·끝 15% 잘게) 획. **판정(web2-61 판갈이)**: 끝 창(0~6%·94~100%)의 단위 길이당 잉크 ÷ 바로 옆 창(8~20%·80~92%) ≤ 1 + C.PAINT61_END_TOL(**마커만** — 기제(markerTip)가 실재하는 도구 · 연필·cp·붓은 기록(사유는 팔 주석) · 결 끔) — 사람 계약(58 D-2 끝 원형 강조 ⛔)의 증상 그 자체를 잰다. 옛 자(25% 대역 ±10% · 마커 정규화)는 새 엔진의 설계된 획 내 변조(pressure min_max ±7~10%)와 충돌해 물렀다 — 대역 값 자체는 rows·rows_no_grain에 기록으로 남는다(변조의 크기가 눈에 걸리는지는 사람 몫 — 사진 산출물). 옛 엔진의 반증(속도 축 −1)은 엔진 축과 함께 갔다(동결 원장 falsification_speed가 기록). 새 반증 = 마커 브러시를 marker46(markerTip 켬)으로: p5의 끝 강조가 끝 창을 실제로 넘긴다',
     threshold_end: cs.PAINT61_END_TOL,
     window: { end_wins: [[0, 0.06], [0.94, 1.0]], neighbors: [[0.08, 0.2], [0.8, 0.92]], band_h_css: 30, x: [X0, X1] },
     scene: { paint_with_grain: sceneN, paint_no_grain: sceneN2, note: '#103 — 결 끔은 같은 획 재굽기(획 수 무변)' },

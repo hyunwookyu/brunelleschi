@@ -3449,7 +3449,7 @@ const diag = {
     PAINT60_CP_BURNISH: C.PAINT60_CP_BURNISH, PAINT60_RIPPLE_MAX: C.PAINT60_RIPPLE_MAX,
     PAINT60_HOLE_SHARE_GAP: C.PAINT60_HOLE_SHARE_GAP, PAINT60_LAYER_CORR_MIN: C.PAINT60_LAYER_CORR_MIN,
     PAINT61_END_TOL: C.PAINT61_END_TOL, PAINT61_PAPER_CORR_MIN: C.PAINT61_PAPER_CORR_MIN,
-    PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS: C.PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS }),
+    PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS: C.PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS, PAINT61_SIZE_TOL: C.PAINT61_SIZE_TOL }),
   /** 저장물 원문(파일 저장과 같은 함수 — #54) — paint50 팔이 «텍스처가 파일에 없다»를 잰다 */
   serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
   corruptPaintTex: () => { const n = corruptPaintTexForTest(); invalidate(); return n },

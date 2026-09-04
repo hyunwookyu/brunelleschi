@@ -158,11 +158,20 @@ const blueColumnThickness = (page: Page, x: number, y: number, w: number, h: num
       t.width, t.height, 0, 0, t.width, t.height)
     const d = g.getImageData(0, 0, t.width, t.height).data
     const cols: number[] = []
+    // web2-61 판갈이: 문턱을 «열 최대의 절반»으로 — 새 엔진(p5.brush)의 마커는 가장자리가
+    // 부드러운 감쇠라, 고정 저문턱(α>16)이 옅은 치마까지 세어 원근 비를 부풀렸다(실측
+    // 1.775 vs 기대 1.240). 반최대 폭은 옛 엔진의 딱딱한 띠에서는 같은 수를 내던 자다.
     for (let c = 0; c < t.width; c++) {
+      let maxA = 0
+      for (let r = 0; r < t.height; r++) {
+        const i = (r * t.width + c) * 4
+        if (d[i + 2]! - d[i]! > 30 && d[i + 3]! > maxA) maxA = d[i + 3]!
+      }
+      const th = Math.max(16, maxA / 2)
       let rows = 0
       for (let r = 0; r < t.height; r++) {
         const i = (r * t.width + c) * 4
-        if (d[i + 3]! > 16 && d[i + 2]! - d[i]! > 30) rows++
+        if (d[i + 3]! > th && d[i + 2]! - d[i]! > 30) rows++
       }
       cols.push(rows)
     }
