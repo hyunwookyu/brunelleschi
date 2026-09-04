@@ -27781,7 +27781,7 @@ main의 onPaintTap은 51의 Injector도 같이 부른다(짚은 획 = 그 면 �
 
 **밤 실행 횟수(CLOSING ①)**: **2** — 1차 883e07a(빨강 2 → 단독 3/3 → 귀속) · 2차 3640ee4(리뷰어 대응이 제품 코드를 바꿈 · 빨강 0). 두 번을 넘지 않았다.
 
-**selfcheck**: `scan_pitfalls_table_last` 0 · 64 원장 플래그의 정체 — paint64 `roundtrip.migrated = 1`(이주한 획 수 — 픽스처의 칠 획이 하나) · `density.with_gain.cp@10.ratio = 1`(.2626/.2625 — 세 자리 반올림의 1 · 다른 열일곱 칸은 .954~1.02) · `wet.falsification_nothing_changed = 0`(반증의 «0이 정상» — 바탕만 두 번은 차 0) · paint63 `dry.falsification_same.distinct_pairs = 0`·`rotation.pencil.ratio1.width_ratio = 1`은 63과 같은 정체 · grain61 «정확히 1»(brush·marker — 보정표가 w = 2r 항등인 마커 · 62와 같음) · «상수 스냅샷 없음»은 web2 원장 종전 유보.
+**selfcheck**: `scan_pitfalls_table_last` 0 · 64 원장 플래그의 정체 — paint64 `roundtrip.migrated = 1`·`migration_tuned.migrated = 1`·`brs[0][0] = 1`(이주한 획 수 하나 · 슬롯 표식 1 = 마커 — 수·표식이지 비율이 아니다) · `density.with_gain.cp@10.ratio = 1`(.2626/.2625 — 세 자리 반올림의 1 · 다른 열일곱 칸은 .954~1.02) · `wet.falsification_nothing_changed = 0`(반증의 «0이 정상» — 바탕만 두 번은 차 0) · paint63 `dry.falsification_same.distinct_pairs = 0`·`rotation.pencil.ratio1.width_ratio = 1`은 63과 같은 정체 · grain61 «정확히 1»(brush·marker — 보정표가 w = 2r 항등인 마커 · 62와 같음) · «상수 스냅샷 없음»은 web2 원장 종전 유보.
 
 **도는 백그라운드 없음(실측 · #81 ㉤ · #95)**: 이 저장소 몫 node = vite 개발 서버 1(이 세션이 착수 시 띄운 5301 · preview — 마감 뒤 내린다) · playwright 잔존 0(wmic 전수) · 5xxx 리스너 = 5301(vite)·5040(svchost) · 세션 배경 작업(원장 사슬 5회 · 밤 2회 · 리뷰어 1회 · 단독 귀속 6회) 전부 completed · 대기 전부 상한부(#95 — 배포 루프 45s × 8).
 
@@ -27799,10 +27799,23 @@ main의 onPaintTap은 51의 Injector도 같이 부른다(짚은 획 = 그 면 �
 **배포 확인(⛳ 마감 규약 — 확인이 먼저 · 이 문장이 뒤다)**:
 
 ```
-(병합·푸시 뒤 deploy-check 출력이 여기 온다 — 문서 커밋에서 채운다)
+main 254ea6e · cd web2 && node tools/deploy-check.mjs 254ea6e
+$ git ls-remote origin main
+254ea6eeef288bd66a20d09d849cf62ced7ee2ff	refs/heads/main
+내 커밋   254ea6eeef288bd66a20d09d849cf62ced7ee2ff
+원격 main 254ea6eeef288bd66a20d09d849cf62ced7ee2ff
+✓ 원격 main == 내 커밋
+$ actions/runs?head_sha=254ea6e
+Pages 실행 completed / success (attempt 1) https://github.com/hyunwookyu/brunelleschi/actions/runs/33901658936
+화면 빌드 식별자 254ea6e
+✓ 화면 빌드 식별자 == 배포 커밋
+
+결과: 배포됨
 ```
 
-**⚠ 무엇이 초록인가(#89)**: 위 「마감 검증」 표가 정본이다 — 밤은 «한 번»(트리 3640ee4 · 751/760 · **빨강 0** · skip 9 (37.6m)). 1차의 빨강 2는 단독 3/3 초록(부하 귀속 — 표). CI(pages.yml)가 도는 e2e는 static_deploy 하나다 — 「Pages 초록 = 전량」으로 읽지 않는다.
+⚠ 이 뒤의 커밋은 **문서뿐**이다(NOTES·HANDOFF — web2/src·e2e·test 0개). 화면의 앱은 254ea6e의 것이다(문서 커밋도 Pages를 돌려 식별자만 바뀐다).
+
+**⚠ 무엇이 초록인가(#89)**: 위 「마감 검증」 표가 정본이다 — 밤은 «한 번»의 규약(트리 3640ee4 · 751/760 · **빨강 0** · skip 9 (37.6m)). 1차의 빨강 2는 단독 3/3 초록(부하 귀속 — 표). CI(pages.yml)가 도는 e2e는 static_deploy 하나다 — 「Pages 초록 = 전량」으로 읽지 않는다.
 
 **지운 것(전체 목록 — §4 표가 정본)**: 파일 넷(app/p5paint.ts 533줄 · e2e/bake61.spec.ts · e2e/shots61.spec.ts · tools/shots61-copy.mjs) · 진단 셋(setPaintEngineForTest · p5probeForTest · p5calibForTest) · vite 별칭 1 · 타입 선언 1 · shots62의 62-vs-61 블록 · 프리셋 세 칸(코드·CSS·mats52 ⑤ 팔·기기 열쇠 b2.brushPresets.v1 — 안 읽는다) · 재료 견본 줄 여덟(#swatch-* 24칸 · TONE_NAMES·MATERIALS import) · 칠통 도구 넷 단추·「브러시…」 단추 · #paint-wheel 줄 · .sizebtn CSS 2 · 상수 30(PAINT51_* 24 · PAINT58_STAMP_BAND_TOL · PAINT59_GRAIN_CORR_MIN · PAINT60_* 4) + 그 진단 노출 · onPaintInject 콜백(→ onPaintTap). **지운 시험**: 스펙 2(bake61 · shots61 — 밤 칸 bake61 2(dpr1·dpr2) + shots61 1(dpr1) + mats52 ⑤ 2 = 5칸) · 팔 1(mats52 ⑤) · 사진 블록 1(62-vs-61). 밤 칸 수: 63의 746 → **760**(paint64 16 + shots64 2 늘고 5 줄어 순 +14 — 실측 751 + 9 skip).
 
