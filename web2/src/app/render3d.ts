@@ -474,6 +474,32 @@ interface PaintTexEntry {
 let paintTexes = new Map<string, PaintTexEntry>()
 let paintKey = ''
 
+// ── web2-65 굽기 계수기(D-1 표식) — «언제 몇 획을 다시 굽는가»를 값으로 낸다 ───────────
+// 왜 여기인가: 지시 65의 진단이 「N번째 획 = N개 재굽기」이고, 그 주장은 **재굽힌 획 수**로만
+// 확인·반증된다(수리 전 판 = pre 원장 · 게이트 ③이 같은 자를 쓴다). 시간(ms)은 기기마다
+// 다르므로 «획 수»가 정본이고 ms는 곁값이다(#12 — 동작점 하나로 주장하지 않는다).
+export interface PaintBakeStat {
+  /** 전량 재굽기 횟수(bakeFaceTex 호출) */ bakes: number
+  /** 그 재굽기들이 다시 그린 획의 합 */ bakedStrokes: number
+  /** 누적 얹기(65) 횟수 — 수리 전에는 0이다 */ appends: number
+  /** 얹기로 그린 획 수 */ appendStrokes: number
+  /** 텍스처 업로드 횟수 */ uploads: number
+  /** 텍스처 업로드 바이트(전량 = w·h·4 · 부분 = 더티 사각) */ uploadBytes: number
+  /** 굽기·얹기에 든 시간(ms — 곁값) */ ms: number
+  /** 항목(메시·기하·재질·텍스처)을 버린 횟수 */ drops: number
+  /** 항목의 기하를 다시 세운 횟수 */ rebuilds: number
+  /** syncPaintTex가 실제로 일한 횟수(열쇠가 갈린 프레임) */ syncs: number
+}
+const zeroBakeStat = (): PaintBakeStat => ({
+  bakes: 0, bakedStrokes: 0, appends: 0, appendStrokes: 0,
+  uploads: 0, uploadBytes: 0, ms: 0, drops: 0, rebuilds: 0, syncs: 0,
+})
+let bakeStat: PaintBakeStat = zeroBakeStat()
+export function paintBakeStats(): PaintBakeStat & { entries: number } {
+  return { ...bakeStat, ms: Math.round(bakeStat.ms * 100) / 100, entries: paintTexes.size }
+}
+export function resetPaintBakeStats(): void { bakeStat = zeroBakeStat() }
+
 /** 이 (면, 쪽)의 칠 획들 — 굽기 입력. 차례는 문서 차례(그린 차례 = 쌓인 차례)다. */
 function paintStrokesOf(app: App, faceId: number, side: 1 | -1): Stroke[] {
   return app.doc.strokes.filter(s =>
@@ -511,11 +537,13 @@ function syncPaintTex(r: R3D, app: App) {
   const key = `${app.docVersion}|${getHatchMode()}|${draftOnlyTargets(app)}`
   if (key === paintKey) return
   paintKey = key
+  bakeStat.syncs++
   for (const e of paintTexes.values()) {
     r.paintGroup.remove(e.mesh)
     e.mesh.geometry.dispose()
     ;(e.mesh.material as THREE.Material).dispose()
     e.tex.dispose()
+    bakeStat.drops++
   }
   paintTexes = new Map()
   // 어느 (면, 쪽)에 텍스처가 서는가 — ① 칠 획이 있는 쪽 ② 면 고정 해칭(fill=1 ·
@@ -701,7 +729,13 @@ function gatePaintTex(r: R3D, app: App) {
         ? { face, spacingWorld: faceHatchSpacingWorld(app.lift.an, rf, hatchSpecOf(face).spacingPx) } : null
       const strokes = e.side === 'e' ? borderStrokesOf(app, e.faceId)
         : e.side === 0 ? [] : paintStrokesOf(app, e.faceId, e.side)
+      const t0 = performance.now()
       bakeFaceTex(e.canvas, rf, e.box, lv, strokes, e.side === 0 ? 1 : e.side, hatch, e.side === 'e' ? null : rep)
+      bakeStat.ms += performance.now() - t0
+      bakeStat.bakes++
+      bakeStat.bakedStrokes += strokes.length
+      bakeStat.uploads++
+      bakeStat.uploadBytes += e.canvas.width * e.canvas.height * 4
       e.tex.needsUpdate = true
       e.level = lv
       e.famBits = famBits

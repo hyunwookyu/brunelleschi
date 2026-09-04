@@ -17,7 +17,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintDraftClamped, paintDraftStats } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintDraftClamped, paintDraftStats, paintBakeStats, resetPaintBakeStats } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -3604,6 +3604,9 @@ const diag = {
   paintTex: () => paintTexStats(),
   /** web2-64 게이트 ① — 굽힌 텍스처의 픽셀 해시(면·쪽별) */
   paintTexHash: () => paintTexHashForTest(),
+  /** web2-65 — 굽기 계수기(D-1 표식 · 게이트 ②③④의 자): 재굽기 수·재굽힌 획 수·업로드 바이트·ms */
+  paintBake: () => paintBakeStats(),
+  paintBakeReset: () => { resetPaintBakeStats() },
   paint50Constants: () => ({ FACETEX_MIN_PX: C.FACETEX_MIN_PX, FACETEX_MAX_PX: C.FACETEX_MAX_PX,
     PAINT_MARKER_ALPHA: C.PAINT_MARKER_ALPHA, PAINT_CP_ALPHA: C.PAINT_CP_ALPHA,
     PAINT_W_FALLBACK_UNITS: C.PAINT_W_FALLBACK_UNITS,
