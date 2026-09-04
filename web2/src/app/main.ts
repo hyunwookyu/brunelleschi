@@ -2805,7 +2805,6 @@ import {
   setMarkerFlatForTest, setPaintOpaqueForTest, setPressFlatForTest, setGrainOffForTest,
 } from '../core/paintseam'
 import { p5PaintRenderer, p5probeForTest, p5calibForTest, p5grainTileForTest } from './p5paint'
-import { brushTargetSwitches } from './brushtarget'
 import { initTuneLab } from './tunelab'
 
 // 칠 렌더러 등록(web2-61) — 이음매의 주입 지점. 62는 이 한 줄을 갈아끼운다.
@@ -2853,7 +2852,6 @@ const diag = {
   p5probeForTest: () => p5probeForTest(),
   p5calibForTest: () => p5calibForTest(),
   p5grainTileForTest: () => p5grainTileForTest(),
-  brushTargetSwitches: () => brushTargetSwitches(),
   /** **자국 견본**(web2-61 게이트·사진의 자) — 흰 판(면 텍스처 규약)에 견본 도형 하나를
    *  제품과 같은 함수(paintMark — 이음매)로 긋고 어둡기 지도(0..255)를 window.__m61에
    *  남긴다. 화면·문서·dpr과 무관한 순수 px 판이라 원근이 자를 안 흐린다(#16 — 주기

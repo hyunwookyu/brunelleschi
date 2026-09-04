@@ -19,8 +19,7 @@
 // 조정(작업대 몫): 도구별 «내장 브러시 선택 + 매개변수 patch». 내장에서 출발하고 새로
 // 짓지 않는다(지시). patch는 brush.add(`t61-<도구>`, {…})로 파생 브러시를 만들어 싣는다.
 
-import * as brush from 'p5.brush/standalone'
-import { claimBrushTarget } from './brushtarget'
+import * as brush from 'p5.brush-paint'
 import {
   markerFlatForTest, paintOpaqueForTest, pressFlatForTest, grainOffForTest,
   type PaintRenderer, type SeamMark, type ParamDesc, type Instr58,
@@ -38,6 +37,9 @@ function bakeCanvas(): HTMLCanvasElement {
     bake.width = BAKE; bake.height = BAKE
     // 속성 선점 — 이후 load()의 getContext는 같은 컨텍스트를 돌려준다(속성 무시)
     bake.getContext('webgl2', { premultipliedAlpha: false, preserveDrawingBuffer: true })
+    // **한 번 싣고 끝** — 이 모듈은 p5.brush의 «칠 전용 사본»(p5.brush-paint 별칭 —
+    // vite.config 주석)이라 다른 소비자가 없다. 대상 전환이 구조로 없다(전환 비결정 실측의 답).
+    brush.load(bake)
   }
   return bake
 }
@@ -98,6 +100,9 @@ const BASE_PARAMS: Record<string, Record<string, unknown>> = {
 let registered = false
 function ensureRegistered(): void {
   if (registered) return
+  // 칠 사본에는 brushlayer의 등록이 없다 — marker46(46의 정의 · 실험실 후보/반증 팔)도
+  // 여기서 같은 값으로 등록한다(BASE_PARAMS가 그 값의 자리 — C.MARKER_SPACING 그대로).
+  brush.add('marker46', { ...BASE_PARAMS.marker46! })
   brush.add('marker61', { ...BASE_PARAMS.marker61! })
   registered = true
 }
@@ -180,7 +185,6 @@ const pxPerWeight = new Map<string, number>()
 function measureWidth(name: string): number {
   ensureRegistered()
   const c = bakeCanvas()
-  claimBrushTarget(c)
   brush.clear()
   brush.seed(1)
   brush.noiseSeed(1)
@@ -304,7 +308,6 @@ function drawGroup(g: CanvasRenderingContext2D, marks: SeamMark[]): void {
   // clear를 쓰므로 무리의 변환 안에서 부르면 이중 이동으로 캔버스 밖에 그려져 폭이 전부
   // 1(빈 폴백)이 된다(실측 — 크기 정직성 게이트가 잡은 그 병의 뿌리).
   const resolved = marks.map(m => sizedBrush(m.tool, m.wPx, m.grade))
-  claimBrushTarget(c)
   brush.clear()
   brush.push()
   brush.translate(-BAKE / 2, -BAKE / 2)
@@ -476,13 +479,8 @@ export function p5probeForTest(): Record<string, unknown> {
   const h1 = draw1(), h2 = draw1()
   out.deterministic = h1 === h2
 
-  const c2 = document.createElement('canvas')
-  c2.width = 256; c2.height = 256
-  c2.getContext('webgl2', { premultipliedAlpha: false, preserveDrawingBuffer: true })
-  const t0 = performance.now()
-  const ROUND = 4
-  for (let i = 0; i < ROUND; i++) { claimBrushTarget(c2); claimBrushTarget(c) }
-  out.switch_ms_per = +(((performance.now() - t0) / (ROUND * 2))).toFixed(2)
+  // 대상 전환은 구조로 없다(칠 전용 사본 — vite alias). 전환 비용 행은 소멸했다.
+  out.instances = 'separate (p5.brush-paint alias)'
 
   const face = document.createElement('canvas')
   face.width = 512; face.height = 512
