@@ -866,10 +866,14 @@ export const C = {
    *  색연필의 .39는 빗금 판의 방향성 · 원장 ac_lag1_60이 배열). */
   PAINT63_AC_MARGIN: 0.15,
   PAINT63_AC_MAX: 0.5,
-  /** 결이 종이(paint63 ③): 포화 몸통 어둡기 ↔ 결 타일의 픽셀 상관 상한(음수 — 골이 깊을수록 옅다 · paint59 ④의 자) ·
-   *  같은 자리 두 획(다른 시드)의 잔차 상관 하한. */
+  /** 결이 종이(paint63 ③): 포화 몸통 어둡기 ↔ 결 타일의 픽셀 상관 — 절대값(실측 −.86/−.92)은 «곱하는 자리»의 구조적 귀결이라
+   *  **기록**(1차 [M4] · §5.1 유형 3 — 부호만 단언). 단언은 셋: 굵기 2배의 상관 «비»(|비 − 1| ≤ TILE_RATIO_TOL · 실측 1.066 — 대상 px 고정) ·
+   *  팁 매체의 상관(≤ TILE_CORR_TIP_MAX · 실측 −.25~−.49) · 타일 이음매(1024 경계 열 차 ÷ 그 밖 평균 ≤ SEAM_RATIO_MAX).
+   *  SAMESPOT_CORR은 기록용(같은 자리 두 획의 잔차 상관 — 실측 .095 · 도장 잡음이 지배). */
   PAINT63_TILE_CORR_MAX: -0.3,
   PAINT63_TILE_CORR_TIP_MAX: -0.1,
+  PAINT63_TILE_RATIO_TOL: 0.2,
+  PAINT63_SEAM_RATIO_MAX: 2,
   PAINT63_SAMESPOT_CORR: 0.5,
   /** 회전·비율(paint63 ④): 비율 3에서 각 0/90의 몸통 폭 비 하한(반증 비율 1은 이 문 아래). */
   PAINT63_ASPECT_WIDTH_RATIO_MIN: 1.5,

@@ -3,7 +3,7 @@
     "canonical": "REF63=1 LEDGER=1 node tools/e2e.mjs ledger e2e/ref63.spec.ts --project=dpr1 (워커 1)"
   },
   "what": "63 ⑤의 기준 — 62 엔진(절차 타원 도장 · 61 값 잡음 결 타일 · paperK 기본)의 자국 해시(FNV-1a 32) + 자국 픽셀 수(> 8). 63은 같은 행을 「팁 없음 + 61 결」로 다시 그려 해시가 같음을 단언하고, 「새 종이 결」에서는 다름을 기록한다",
-  "tree_note": "뜬 트리 = 63 갈래 첫 커밋(엔진은 main 1f912bf의 62 그대로 — src/mypaint 무변)",
+  "tree_note": "뜬 트리 = 63 갈래 첫 커밋 4470fa7(엔진은 main 1f912bf의 62 그대로 — 1차 리뷰어 [M3]로 해시와 diff를 값으로 보탬 · 다시 뜰 수 없다: 이후 트리는 연필·색연필 슬롯에 팁이 든다)",
   "rows": {
     "liner_line": {
       "hash": 412139917,
@@ -93,5 +93,11 @@
       "shape": "wave",
       "w": 20
     }
-  ]
+  ],
+  "tree_check": {
+    "ref_commit": "4470fa7",
+    "engine_base": "1f912bf",
+    "git_diff_stat_1f912bf..4470fa7_engine_files": "web2/src/mypaint/tips.gen.ts              | 104 ++++++++++++++++++++++++++++++\n web2/src/mypaint/tips/chalk-chisel.png    | Bin 0 -> 97510 bytes\n web2/src/mypaint/tips/fine-grain.png      | Bin 0 -> 137826 bytes\n web2/src/mypaint/tips/paper001.png        | Bin 0 -> 887952 bytes\n web2/src/mypaint/tips/rock-pitted.png     | Bin 0 -> 155376 bytes\n web2/src/mypaint/tips/scratches-rough.png | Bin 0 -> 116178 bytes\n web2/src/mypaint/tips/scratches2.png      | Bin 0 -> 211907 bytes\n 7 files changed, 104 insertions(+)",
+    "def": "엔진 파일(src/mypaint · mypaintpaint.ts · paintseam.ts)의 차 — tips.gen.ts(자료 파일 추가)뿐이어야 한다"
+  }
 }

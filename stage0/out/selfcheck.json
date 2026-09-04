@@ -1,5 +1,5 @@
 {
-  "n_flags": 6537,
+  "n_flags": 6535,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -21829,6 +21829,11 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "paint59_web2_dpr2.json:preview_vs_commit.rows[0].mean_abs",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "paint59_web2_dpr2.json:preview_vs_commit.rows[1].mean_abs",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -21839,7 +21844,7 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint59_web2_dpr2.json:preview_vs_commit.rows[3].mean_abs",
+      "path": "paint59_web2_dpr2.json:preview_vs_commit.rows[4].mean_abs",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -21869,17 +21874,7 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "paint59_web2_dpr2.json:self_cross.rows.cp.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
       "path": "paint59_web2_dpr2.json:self_cross.rows_grain.marker.p95_ratio",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "paint59_web2_dpr2.json:self_cross.rows_press.cp.p0.5.p95_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -32864,11 +32859,6 @@
       "flag": "**성공률이 0인 자리가 있다**(#38) — 특정 팔·구도의 0이면 정상이고 원장이 그렇게 적어야 한다. **원장 전체가 0이면 그 하네스는 «깨지지 않고 죽은» 것이다**(18차에 `order_lock`이 실제로 그랬다: `camera_ok 0/300`인데 시험은 통과)"
     },
     {
-      "path": "web2/NOTES.md:마감 — web2-62",
-      "val": "「도는 백그라운드」 줄 없음",
-      "flag": "**마감 보고가 「도는 백그라운드 없음」을 값으로 안 적었다**(#95 · #81 ㉤) — 세션 끝에 도는 대기가 있으면 그 자체가 결함이다. 12시간 51분짜리 배포 대기가 그렇게 남았다"
-    },
-    {
       "path": "scan_citation_hashes",
       "val": [
         "assumptions.md:199 test_cost.json",
@@ -33172,7 +33162,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 665,
+      "files_scanned": 666,
       "exts_declared": [
         ".md",
         ".py",
@@ -33196,7 +33186,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 665,
+      "files_scanned": 666,
       "exts_declared": [
         ".md",
         ".py",
@@ -33260,7 +33250,7 @@
       "scan": "scan_unbounded_wait",
       "unit": "마감 블록·도구 파일",
       "targets": 18,
-      "hits": 1,
+      "hits": 0,
       "note": "⚠ **세션 안에서 즉석으로 만든 대기는 안 보인다** — 저장소에 없기 때문이다. 그 자리를 지키는 것은 **마감 보고의 「도는 백그라운드 없음」 한 줄**이다"
     },
     {

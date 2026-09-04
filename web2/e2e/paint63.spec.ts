@@ -27,6 +27,7 @@ const OUT: Record<string, unknown> = {
   what: 'web2-63 — 비트맵 팁·종이 결 게이트: ①마른 매체 갈림 ②도장 반복 없음 ③결이 종이 ④회전·비율 ⑤무회귀(62 해시) + 탐침',
   note_pitfalls: '#107(62 캡처 통로 그대로) · #105(팁 로드는 값 — tipsReady를 기다리고 잰다 · 보정 열쇠에 팁) · #103(⑤는 같은 행 정의를 두 트리에서) · #99 · #101 · #12(①은 다섯 × 열 쌍 · ②③은 도구 셋)',
   scene: '호출마다 markSample/markMulti가 새 캔버스를 만든다(문서·뷰 무관)',
+  note_dpr: '견본 판은 고정 px 캔버스(dpr 무관)라 dpr1·dpr2 원장이 시간 열 빼고 «같아야» 한다(같음이 곧 그 사실의 확인 — D-C3의 dpr 감시는 화면을 읽는 paint50·mats46·paint59가 진다 · 62 note_dpr 그대로 · 1차 [L4])',
 }
 const LEDGER_OF = (projectName: string) =>
   resolve(HERE, `../../stage0/out/paint63_web2_dpr${projectName === 'dpr2' ? 2 : 1}.json`)
@@ -127,11 +128,29 @@ const FLOORS = { roughness: 0.5, empty_share: 0.05, mean: 0.03, p95: 0.05 }
 test('① 마른 매체 다섯이 갈린다 — 열 쌍 전부 · 팁 끔(62 판) 재현 · 반증(같은 프리셋·같은 팁)', async ({ page }) => {
   await boot(page)
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
+  OUT.constants_snapshot = { PAINT63_DISTINCT_REL: cs.PAINT63_DISTINCT_REL, PAINT63_AC_MARGIN: cs.PAINT63_AC_MARGIN, PAINT63_AC_MAX: cs.PAINT63_AC_MAX,
+    PAINT63_TILE_CORR_MAX: cs.PAINT63_TILE_CORR_MAX, PAINT63_TILE_CORR_TIP_MAX: cs.PAINT63_TILE_CORR_TIP_MAX, PAINT63_TILE_RATIO_TOL: cs.PAINT63_TILE_RATIO_TOL,
+    PAINT63_SAMESPOT_CORR: cs.PAINT63_SAMESPOT_CORR, PAINT63_ASPECT_WIDTH_RATIO_MIN: cs.PAINT63_ASPECT_WIDTH_RATIO_MIN, PAINT63_SEAM_RATIO_MAX: cs.PAINT63_SEAM_RATIO_MAX,
+    note: '스냅샷-라이트(#42 ⑥ — web2 원장의 constantsSnapshot 기계 부재는 종전 유보 · 1차 [M7])' }
   const REL = cs.PAINT63_DISTINCT_REL as number
-  const on = await drawStats(page, DRY.map(d => ({ key: d.key, preset: d.preset })))
+  // 1차 [H1](#14): 시드 하나의 여유(.041)가 같은 자의 시드 요동(.07)보다 작았다 → 매체마다 시드 셋(63·64·65)의 통계를 «평균»해 쌍을 가른다 ·
+  // 시드별 min_rel도 함께 실어 요동 폭을 값으로 남긴다.
+  const SEEDS = [63, 64, 65]
+  const avg = (rows: Record<string, Stat>[]): Record<string, Stat> => {
+    const out: Record<string, Stat> = {}
+    for (const k of Object.keys(rows[0]!)) {
+      const acc = { ok: true, roughness: 0, empty_share: 0, mean: 0, p95: 0, body_h: 0 }
+      for (const r of rows) for (const f of ['roughness', 'empty_share', 'mean', 'p95', 'body_h'] as const) acc[f] += r[k]![f] / rows.length
+      out[k] = { ...acc, roughness: +acc.roughness.toFixed(3), empty_share: +acc.empty_share.toFixed(4), mean: +acc.mean.toFixed(4), p95: +acc.p95.toFixed(4), body_h: +acc.body_h.toFixed(1) }
+    }
+    return out
+  }
+  const onSeeds: Record<string, Stat>[] = [], offSeeds: Record<string, Stat>[] = []
+  for (const seed of SEEDS) onSeeds.push(await drawStats(page, DRY.map(d => ({ key: d.key, preset: d.preset, seed }))))
   await page.evaluate(() => (window as any).__b2.diag.setTipsOffForTest(true))
-  const off = await drawStats(page, DRY.map(d => ({ key: d.key, preset: d.preset })))
+  for (const seed of SEEDS) offSeeds.push(await drawStats(page, DRY.map(d => ({ key: d.key, preset: d.preset, seed }))))
   await page.evaluate(() => (window as any).__b2.diag.setTipsOffForTest(false))
+  const on = avg(onSeeds), off = avg(offSeeds)
   // 반증: 같은 프리셋(classic/pencil) · 같은 팁(fine-grain) · 시드만 다른 다섯
   const same = await drawStats(page, [1, 2, 3, 4, 5].map(k => ({ key: `s${k}`, preset: 'classic/pencil', tip: 'fine-grain', seed: 100 + k })))
   const pairs = (st: Record<string, Stat>) => {
@@ -141,11 +160,14 @@ test('① 마른 매체 다섯이 갈린다 — 열 쌍 전부 · 팁 끔(62 판
   }
   const pOn = pairs(on), pOff = pairs(off), pSame = pairs(same)
   const count = (p: Record<string, { rel: number }>) => Object.values(p).filter(x => x.rel > REL).length
+  const minRel = (p: Record<string, { rel: number }>) => Math.min(...Object.values(p).map(x => x.rel))
+  const perSeed = (rows: Record<string, Stat>[]) => rows.map((r, i) => ({ seed: SEEDS[i], distinct_pairs: count(pairs(r)), min_rel: minRel(pairs(r)) }))
   OUT.dry = {
-    def: `직선 w20 · 압력 .6 상수 · 시드 63 · 몸통 띠(열별 가장자리 중앙값 안쪽 3px)의 통계 넷: roughness = 위/아래 가장자리 − 9열 이동평균의 sd(px) · empty_share = 띠 안 어둡기 < 8 몫 · mean · p95(어둡기/255). 쌍의 갈림 rel = 특징 넷의 상대 차(바닥 ${JSON.stringify(FLOORS)})의 **둘째로 큰 값**(특징 둘이 함께 갈려야 — top은 첫째 · 기록) · 문 > ${REL}. tips_on = 63 · tips_off = 62 판(D-2 재현 — 62의 프리셋 다섯도 이 자로는 이미 갈린다면 그 사실을 그대로 적는다: 지시의 «다 비슷해 보인다»는 사람 눈의 말이고 이 자는 통계다 · 팁이 더한 것은 min_rel의 차) · same = 반증(classic/pencil + fine-grain × 시드 다섯)`,
+    def: `직선 w20 · 압력 .6 상수 · 시드 셋(63·64·65)의 통계 평균(1차 [H1] · #14 — 시드 하나는 여유 .041 < 요동 .07이었다 · per_seed가 시드별 값) · 몸통 띠(열별 가장자리 중앙값 안쪽 3px)의 통계 넷: roughness = 위/아래 가장자리 − 9열 이동평균의 sd(px) · empty_share = 띠 안 어둡기 < 8 몫 · mean · p95(어둡기/255). 쌍의 갈림 rel = 특징 넷의 상대 차(바닥 ${JSON.stringify(FLOORS)})의 **둘째로 큰 값**(특징 둘이 함께 갈려야 — top은 첫째 · 기록) · 문 > ${REL}. tips_on = 63 · tips_off = 62 판(D-2 재현 — 62의 프리셋 다섯도 이 자로는 이미 갈린다면 그 사실을 그대로 적는다: 지시의 «다 비슷해 보인다»는 사람 눈의 말이고 이 자는 통계다 · 팁이 더한 것은 min_rel의 차) · same = 반증(classic/pencil + fine-grain × 시드 다섯)`,
     threshold: { distinct_rel: REL },
-    tips_on: { stats: on, pairs: pOn, distinct_pairs: count(pOn), of: Object.keys(pOn).length, min_rel: Math.min(...Object.values(pOn).map(x => x.rel)) },
-    tips_off: { stats: off, pairs: pOff, distinct_pairs: count(pOff), of: Object.keys(pOff).length, min_rel: Math.min(...Object.values(pOff).map(x => x.rel)) },
+    seeds: SEEDS,
+    tips_on: { stats: on, pairs: pOn, distinct_pairs: count(pOn), of: Object.keys(pOn).length, min_rel: minRel(pOn), per_seed: perSeed(onSeeds) },
+    tips_off: { stats: off, pairs: pOff, distinct_pairs: count(pOff), of: Object.keys(pOff).length, min_rel: minRel(pOff), per_seed: perSeed(offSeeds) },
     falsification_same: { stats: same, pairs: pSame, distinct_pairs: count(pSame), of: Object.keys(pSame).length, max_rel: Math.max(...Object.values(pSame).map(x => x.rel)) },
     tip_defaults: await page.evaluate((rows) => Object.fromEntries((rows as string[]).map(p => [p, (window as any).__b2.diag.tipDefaultOfForTest(p)])), DRY.map(d => d.preset)),
   }
@@ -274,8 +296,22 @@ test('③ 결이 종이다 — 굵기 2배에서 타일 상관 불변 · 같은 
   await boot(page)
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const TILE_MAX = cs.PAINT63_TILE_CORR_MAX as number, SPOT = cs.PAINT63_SAMESPOT_CORR as number
-  const TIP_MAX = cs.PAINT63_TILE_CORR_TIP_MAX as number
+  const TIP_MAX = cs.PAINT63_TILE_CORR_TIP_MAX as number, RATIO_TOL = cs.PAINT63_TILE_RATIO_TOL as number, SEAM_MAX = cs.PAINT63_SEAM_RATIO_MAX as number
   const w26 = await grainCorr(page, 'brush', 26), w52 = await grainCorr(page, 'brush', 52)
+  // 1차 [M6] — 타일 이음매(1024 경계): 넓은 포화 자국(잉크펜 w120 · 판 1400×300)의 어둡기 열 차 |v(x) − v(x−1)|의 몸통 평균을 x = 1024에서와
+  // 그 밖(x 200..1300 · 경계 ±3 제외)에서 비교 — 이음매가 있으면 경계 열의 차가 튄다(비 > 문). 크롭(비정사각 원본의 1024²)이라 값으로 지킨다.
+  const seam = await page.evaluate(() => {
+    const b2 = (window as any).__b2
+    const W = 1400, H = 300
+    b2.diag.markMultiForTest([{ tool: 'brush', shape: 'line', wPx: 120, seed: 21, press: 0.9, color: '#2a2a30' }], W, H, false)
+    const v = ((window as any).__m61 as { v: number[] }).v
+    const colDiff = (x: number): number => { let s = 0, n = 0; for (let y = 0; y < H; y++) { const a = v[y * W + x]!, b = v[y * W + x - 1]!; if (a > 60 && b > 60) { s += Math.abs(a - b); n++ } } return n ? s / n : 0 }
+    const at1024 = colDiff(1024)
+    let s = 0, n = 0
+    for (let x = 200; x < 1300; x++) { if (Math.abs(x - 1024) <= 3) continue; const d = colDiff(x); if (d > 0) { s += d; n++ } }
+    const elsewhere = s / n
+    return { boundary_x: 1024, diff_at_boundary: +at1024.toFixed(3), diff_elsewhere_mean: +elsewhere.toFixed(3), ratio: +(at1024 / elsewhere).toFixed(3), cols: n }
+  })
   // 팁 매체(몸통 문턱 20 — 옅은 매체): 같은 타일이 팁 자국의 어둡기도 깎는가(«같은 봉우리에 얹힌다»의 값 — 타일이 둘의 공통 원인)
   const tipped: Record<string, unknown> = {}
   for (const [key, preset] of [['charcoal', 'classic/charcoal'], ['pencil', 'classic/pencil'], ['cp', 'ramon/B-pencil']] as const)
@@ -290,14 +326,17 @@ test('③ 결이 종이다 — 굵기 2배에서 타일 상관 불변 · 같은 
   await page.evaluate(() => (window as any).__b2.diag.setGrainOffForTest(false))
   OUT.paper = {
     def: `tile_corr = 몸통 어둡기와 결 타일(높이맵 1024² · 대상 px 접기 · 값 = 이빨 깊이)의 픽셀 상관. 포화 몸통(잉크펜 슬롯 · 어둡기 ≥ 60): 결이 대상 px 고정이면 굵기 26·52에서 같은 부호·같은 크기(문 ≤ ${TILE_MAX}) · 팁 매체(목탄·연필·색연필 w20 · 몸통 ≥ 20): 같은 타일이 팁 자국도 깎는다(문 ≤ ${TIP_MAX} — «같은 자리 = 같은 봉우리»의 값: 타일이 두 획의 공통 원인) · same_spot = 같은 경로·다른 시드 두 획의 11×11 잔차 상관(기록 — 팁 판이 시드로 갈려 도장 잡음이 잔차를 지배하므로 종이 몫이 작다: 첫 실측 목탄 .095) · 반증 = 결 끔(grain_off → 0 대역)`,
-    threshold: { tile_corr_max: TILE_MAX, tile_corr_tip_max: TIP_MAX, same_spot_min_record_only: SPOT },
+    threshold: { tile_corr_max_record_only: TILE_MAX, tile_corr_tip_max: TIP_MAX, tile_ratio_tol: RATIO_TOL, same_spot_min_record_only: SPOT, seam_ratio_max: SEAM_MAX },
+    note_structure: '포화 몸통의 절대 상관(−.86/−.92)은 «곱하는 자리»(1 − 깊이×타일)의 구조적 귀결이라 임계를 안 건다(§5.1 유형 3 · 1차 [M4]) — 이 게이트가 실제로 재는 비자명한 양은 ① w26 vs w52의 상관 비(대상 px 고정 = 굵기 무관 · 문 |비 − 1| ≤ tile_ratio_tol) ② 팁 매체의 상관(팁 판이 결 위에 «얹힌다» — 문 ≤ tile_corr_tip_max) ③ 타일 이음매(seam) 셋이다',
     tile_corr: { w26, w52, ratio: w26.corr && w52.corr ? +(w52.corr / w26.corr).toFixed(3) : null, tipped },
+    seam,
     same_spot_record: { charcoal: spotCharcoal },
     falsification_grain_off: { w26: w26off, tipped: tippedOff, same_spot_charcoal: spotOff },
   }
   expect(w26.source, '결 출처 = 높이맵').toBe('height')
-  expect(w26.corr!, '26px — 결과 음의 상관').toBeLessThanOrEqual(TILE_MAX)
-  expect(w52.corr!, '52px — 같은 결(굵기 무관)').toBeLessThanOrEqual(TILE_MAX)
+  expect(w26.corr!, '26px — 결과 음의 상관(구조 — 기록 · 부호만 단언)').toBeLessThan(0)
+  expect(Math.abs((w52.corr! / w26.corr!) - 1), '굵기 2배 — 같은 결(상관 비 ≈ 1 · 대상 px 고정)').toBeLessThanOrEqual(RATIO_TOL)
+  expect(seam.ratio, '타일 이음매(1024 경계)가 안 튄다').toBeLessThanOrEqual(SEAM_MAX)
   for (const key of ['charcoal', 'pencil', 'cp']) {
     const t = tipped[key] as { corr: number | null; n: number }
     expect(t.corr, `${key} — 팁 자국도 같은 타일에 깎인다`).not.toBeNull()
@@ -383,6 +422,7 @@ test('⑤ 무회귀 — 팁 없는 자국 + 61 결 = 62 기준 해시(ref63 원�
 })
 
 test('탐침 — 팁 로드·아틀라스 메모리·기본 팁·굽기 비용(팁 켬/끔)', async ({ page }) => {
+  test.setTimeout(180_000)          // 탐침 두 번(팁 켬/끔 — 보정 넷 + 스트레스 800획씩) · dpr1 58s · 밤 1차 dpr2 부하에서 60s 초과(빨강 1)
   await boot(page)
   const probe = await page.evaluate(() => {
     const b2 = (window as any).__b2

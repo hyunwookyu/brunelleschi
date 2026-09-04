@@ -181,20 +181,38 @@ const paper = manifest.paper
 {
   const p = readPng(readFileSync(join(SRC, paper.file)))
   if (p.ch !== 1) throw new Error('종이 변위 PNG는 회색이어야 한다')
-  const N = p.w
-  if (p.h !== N) throw new Error('종이 타일은 정사각')
-  const hist = new Uint32Array(256); for (let i = 0; i < N * N; i++) hist[p.data[i]]++
+  // 이음매(web2-63 1차 [M6] — 1024 크롭 그대로는 경계 열 차가 그 밖의 2.33배): 원본 크롭은 N + B(겹침 B = 48px)이고,
+  // 타일의 처음 B열·행을 «N 너머의 B열·행»과 스무드스텝으로 섞는다 → g(0) = t(N) · g(N−1) = t(N−1)이라 주기 N으로 이어진다.
+  const B = Number(paper.overlap ?? 48)
+  const N = p.w - B
+  if (p.h !== p.w) throw new Error('종이 크롭은 정사각')
+  const src = (x, y) => p.data[y * p.w + x]
+  const sm = t => t * t * (3 - 2 * t)
+  const tile = new Float32Array(N * N)
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const ax = x < B ? sm(x / B) : 1, ay = y < B ? sm(y / B) : 1
+    // x 방향 섞기(y도 같은 꼴 · 모서리는 둘의 곱)
+    const v00 = src(x, y), v10 = x < B ? src(x + N, y) : v00, v01 = y < B ? src(x, y + N) : v00, v11 = (x < B && y < B) ? src(x + N, y + N) : (x < B ? v10 : v01)
+    const vx0 = ax * v00 + (1 - ax) * v10, vx1 = ax * v01 + (1 - ax) * v11
+    tile[y * N + x] = ay * vx0 + (1 - ay) * vx1
+  }
+  const hist = new Uint32Array(256); for (let i = 0; i < N * N; i++) hist[Math.round(tile[i])]++
   const pct = q => { let acc = 0; for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= q * N * N) return v } return 255 }
   const lo = pct(0.01), hi = pct(0.99)
   const g = Buffer.alloc(N * N); let mean = 0
-  for (let i = 0; i < N * N; i++) { const t = Math.min(1, Math.max(0, (p.data[i] - lo) / (hi - lo))); const v = 1 - t; g[i] = Math.round(v * 255); mean += v }
+  for (let i = 0; i < N * N; i++) { const t = Math.min(1, Math.max(0, (tile[i] - lo) / (hi - lo))); const v = 1 - t; g[i] = Math.round(v * 255); mean += v }
   mean /= N * N
+  // 이음매 자기 검사(값): 경계 열(x = 0 vs N−1)의 평균 절대 차 vs 안쪽 이웃 열 평균
+  let seamD = 0, innerD = 0, innerN = 0
+  for (let y = 0; y < N; y++) seamD += Math.abs(g[y * N] - g[y * N + N - 1]) / N
+  for (let x = 1; x < N; x += 7) { let s = 0; for (let y = 0; y < N; y++) s += Math.abs(g[y * N + x] - g[y * N + x - 1]); innerD += s / N; innerN++ }
+  innerD /= innerN
   const png = writePngGray(N, N, g)
   writeFileSync(join(OUT_DIR, `${paper.name}.png`), png)
-  meta.push({ name: paper.name, frames: 1, size: N, src_frames: 1, src_size: `${p.w}x${p.h}`, mask_mode: `height→tooth(1−norm · 백분위 ${lo}..${hi})`,
+  meta.push({ name: paper.name, frames: 1, size: N, src_frames: 1, src_size: `${p.w}x${p.h}`, mask_mode: `height→tooth(1−norm · 백분위 ${lo}..${hi} · 겹침 ${B}px 섞음 · 경계 열 차 ${seamD.toFixed(2)} vs 안쪽 ${innerD.toFixed(2)})`,
     file: paper.file, source: paper.source, license: paper.license, license_check: paper.license_check, spacing_hint: null,
     mean: +mean.toFixed(4), fill: 1, png_bytes: png.length })
-  console.log(`paper ${paper.name}: ${N}² · 백분위 1/99 = ${lo}/${hi} · 평균 ${mean.toFixed(3)} · ${(png.length / 1024).toFixed(0)} KB`)
+  console.log(`paper ${paper.name}: ${N}²(크롭 ${p.w} · 겹침 ${B}) · 백분위 1/99 = ${lo}/${hi} · 평균 ${mean.toFixed(3)} · 경계 열 차 ${seamD.toFixed(2)} vs 안쪽 ${innerD.toFixed(2)} · ${(png.length / 1024).toFixed(0)} KB`)
 }
 const ts = `// 자동 생성 — tools/tips-gen.mjs (web2-63). 손으로 고치지 않는다. 원본은 tips/src/ · 출처·라이선스는 tips/src/tips.json.
 export interface TipMeta { name: string; frames: number; size: number; src_frames: number; src_size: string; mask_mode: string;

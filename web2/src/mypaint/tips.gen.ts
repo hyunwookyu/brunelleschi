@@ -97,16 +97,16 @@ export const TIPS: readonly TipMeta[] = [
     "frames": 1,
     "size": 1024,
     "src_frames": 1,
-    "src_size": "1024x1024",
-    "mask_mode": "height→tooth(1−norm · 백분위 94..221)",
-    "file": "ambientcg/Paper001_2K_Displacement_crop1024.png",
-    "source": "ambientCG Paper001 https://ambientcg.com/view?id=Paper001 (Paper001_2K-JPG.zip 16,201,816 B · 2048×1201 변위 맵 · 저장소에는 왼쪽 위 1024² 크롭을 회색 PNG로(값 무변 · PIL) — 원본 JPEG는 안 실음)",
+    "src_size": "1072x1072",
+    "mask_mode": "height→tooth(1−norm · 백분위 95..221 · 겹침 48px 섞음 · 경계 열 차 25.80 vs 안쪽 26.38)",
+    "file": "ambientcg/Paper001_2K_Displacement_crop1072.png",
+    "source": "ambientCG Paper001 https://ambientcg.com/view?id=Paper001 (Paper001_2K-JPG.zip 16,201,816 B · 2048×1201 변위 맵 · 저장소에는 왼쪽 위 1072²(= 1024 + 겹침 48) 크롭을 회색 PNG로(값 무변 · PIL) — 원본 JPEG는 안 실음 · 생성기가 겹침을 섞어 주기 1024² 타일로)",
     "license": "CC0 1.0 Universal",
     "license_check": "https://docs.ambientcg.com/license/ — «You can include the raw files in your project, for example a video game»",
     "spacing_hint": null,
-    "mean": 0.5272,
+    "mean": 0.5317,
     "fill": 1,
-    "png_bytes": 887952
+    "png_bytes": 911525
   }
 ] as const
 export const TIP_SIZE = 192

@@ -4167,5 +4167,6 @@ mypaint-brushes(CC0) 이식 — 둘 다 한다**(p5.brush로 충분한지 «보�
 - **자산은 여섯 파일만 싣는다**(tips/src — rubberduck 2 · Revoy 3 · ambientCG 1) · 확인 방법을 값으로(tips.json → tips.gen.ts): OGA 페이지의
   License 칸 · 번들 meta.xml의 `<meta:license>CC-0` · docs.ambientcg.com/license. Krita·GIMP 기존 파일·portnov·ShareTextures·.abr은 안 열었다.
   부족한 매체(콘테·크레용·굵은 목탄 등)는 ⚑ 실기기 항목(사람의 스캔)으로 올리고 이 회차는 멈추지 않았다(CHAIN5 ①).
+- **③의 문은 «비율·팁·이음매»에만 건다** — 포화 몸통과 타일의 절대 상관(−.86/−.92)은 «곱하는 자리»의 구조적 귀결이라 기록만(§5.1 유형 3 · 1차 리뷰어 [M4]); 단언은 굵기 2배의 상관 비(|비−1| ≤ .2) · 팁 매체의 상관(≤ −.1) · 1024 경계의 이음매(열 차 비 ≤ 2)다.
 - **로드는 비동기** — PNG 아틀라스(약 1.5 MB)를 부팅에서 풀고 준비되면 굽기 텍스처를 한 번 다시 굽는다. 준비 «전» 자국은 절차 타원으로
   떨어지되 그 상태가 값으로 보인다(tipsReady · missing 계수기 — #105 조용한 폴백 금지). 팔은 준비를 기다리고 잰다.

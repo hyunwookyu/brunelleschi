@@ -36,20 +36,20 @@
         "sat": 0.595
       },
       "yellow_0.35_grain_on": {
-        "hue": 200.1,
-        "sat": 0.507
+        "hue": 200.2,
+        "sat": 0.506
       },
       "yellow_0.5_grain_on": {
-        "hue": 173.6,
-        "sat": 0.339
+        "hue": 173.8,
+        "sat": 0.338
       },
       "yellow_0.65_grain_on": {
-        "hue": 125.4,
+        "hue": 125.7,
         "sat": 0.254
       },
       "yellow_0.8_grain_on": {
-        "hue": 84.1,
-        "sat": 0.398
+        "hue": 84.3,
+        "sat": 0.397
       }
     },
     "threshold": {
@@ -268,8 +268,8 @@
         238,
         238
       ],
-      "dark": 12.7,
-      "red_excess": 13.6,
+      "dark": 12.6,
+      "red_excess": 13.5,
       "stats": {
         "fromSnapshot": 36862,
         "liveTouched": 0,
@@ -282,7 +282,7 @@
         149,
         149
       ],
-      "dark": 106.2,
+      "dark": 105.9,
       "red_excess": 0,
       "stats": {
         "fromSnapshot": 0,
@@ -296,8 +296,8 @@
         239,
         239
       ],
-      "dark": 12,
-      "red_excess": 12.9,
+      "dark": 11.9,
+      "red_excess": 12.8,
       "stats": {
         "fromSnapshot": 0,
         "liveTouched": 36862,
@@ -307,13 +307,13 @@
     "falsification_self_sample_pixels": {
       "def": "스머지 cross 획(빨강 직선(중앙 아래 60px)을 첫 변이 가로지른 뒤 셋째 변이 제 트레일을 가로지름) — 제품(스냅숏 표집) vs 층 표집의 어둡기 지도 차: 차 > 8/255인 픽셀 수 · 평균 절대 차 · 최대. 계수기(liveTouched)가 아니라 «자국»이 갈린다는 실증(2차 [4]). smudge_length .85가 단언의 조건이고 기본값 .35(default_length)는 양동이가 빨리 잊어 «안 갈린다»(0) — 반증은 조건부다: 자기 오염이 실재하는 조건에서만 선다",
       "smudge_length": 0.85,
-      "differ_px_gt8": 1919,
-      "mean_abs_diff": 0.392,
+      "differ_px_gt8": 1911,
+      "mean_abs_diff": 0.39,
       "max_diff": 25,
       "default_length": {
         "smudge_length": 0.35,
         "differ_px_gt8": 0,
-        "mean_abs_diff": 0.074,
+        "mean_abs_diff": 0.073,
         "max_diff": 6
       }
     },
@@ -340,8 +340,8 @@
     "def": "196 견본(직선 12px · 시드 62 · 잉크펜 슬롯 · 층 알파) 통계 서명 {mean,p95,bare,edgeSd} — painted = 최대 알파 ≥ C.PAINT62_PAINTED_ALPHA인 것 · distinct2 = 두 자리(§5 유효 자릿수 — 술어) 고유 서명 수 · distinct4 = 네 자리(기록) · empty_reasons = 사유별 수(겹침 포함) · empty = 빈 층에 아무것도 안 남긴 것과 그 사유(값 — eraser · smudge≥.65(젖은 붓·물만·블렌더) · posterize · opaque≤.05 · lock_alpha · smudge_transparency · dabs_sparse(반지름당 도장 < .2 — splatter)) · unexplained = 사유 없는 빈 것(0이어야). 반증 = 같은 브러시 8번 → 서명 1",
     "total": 196,
     "painted": 154,
-    "distinct4": 145,
-    "distinct2": 142,
+    "distinct4": 144,
+    "distinct2": 141,
     "empty": {
       "Dieterle/Blender": "smudge≥.65",
       "Dieterle/Dissolver": "smudge≥.65+smudge_transparency",
@@ -394,42 +394,42 @@
       "opaque≤.05": 2
     },
     "unexplained": [],
-    "ms": 20786,
+    "ms": 20746,
     "falsification_same_brush_distinct": 1,
     "sample": {
       "Dieterle/8B_Pencil#1": {
         "mean": 0.0159,
-        "p95": 0.0679,
+        "p95": 0.0678,
         "bare": 0.3894,
         "edgeSd": 3.657
       },
       "Dieterle/arrow#1": {
-        "mean": 0.3076,
-        "p95": 0.8298,
+        "mean": 0.3069,
+        "p95": 0.8281,
         "bare": 0.0721,
         "edgeSd": 2.872
       },
       "Dieterle/Fan#1": {
-        "mean": 0.1315,
-        "p95": 0.1842,
+        "mean": 0.1312,
+        "p95": 0.1839,
         "bare": 0.0029,
         "edgeSd": 1.809
       },
       "Dieterle/Flat2#1": {
         "mean": 0.0254,
-        "p95": 0.0409,
+        "p95": 0.0408,
         "bare": 0,
         "edgeSd": 0.518
       },
       "Dieterle/Flight_Feathers": {
-        "mean": 0.0857,
-        "p95": 0.2993,
+        "mean": 0.0856,
+        "p95": 0.2987,
         "bare": 0.5087,
         "edgeSd": 4.686
       },
       "Dieterle/Fount-offset#1": {
-        "mean": 0.2966,
-        "p95": 0.832,
+        "mean": 0.2961,
+        "p95": 0.8304,
         "bare": 0,
         "edgeSd": 0.111
       }
@@ -466,20 +466,20 @@
     "def": "조합 ① 회색 바탕(140) 위 어두운 안료(#2a2a30) · 조합 ② 어두운 바탕(48) 위 밝은 안료(#d8d0c0) — 물결 22px. 층 알파 창(C.PAINT62_EDGE_ALPHA_LO..HI /255)의 픽셀(edge)에서 brighter = 배경+C.PAINT62_FRINGE_TOL보다 밝은 수(흰 테의 정의 · 조합 ①의 술어) · brighter0 = 관용 0으로 센 수(기록 — 8비트 반올림의 몫) · outside = 배경·안료 사이 창 밖(어느 쪽이든 · 조합 ②의 술어 — 안료보다 밝은 것이 흰 테) · maxOver = 창 위로 벗어난 최대. 도구 넷 + 프리셋 8(①) / 넷 + 4(②). 반증 fringeBreak = 그 픽셀의 rgb를 흰색(조합 ①)/검정(조합 ② — 어두운 쪽으로 새는 병)으로 — 두 조합 다 실제로 걸린다",
     "rows": {
       "pencil": {
-        "edge": 11689,
+        "edge": 11685,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 13141
+        "painted": 13139
       },
       "cp": {
-        "edge": 11951,
+        "edge": 11955,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 15191
+        "painted": 15206
       },
       "marker": {
         "edge": 93,
@@ -498,7 +498,7 @@
         "painted": 9725
       },
       "classic/pen": {
-        "edge": 593,
+        "edge": 595,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
@@ -506,39 +506,39 @@
         "painted": 11322
       },
       "deevad/airbrush": {
-        "edge": 14526,
+        "edge": 14523,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 15427
+        "painted": 15428
       },
       "Dieterle/Round#1": {
-        "edge": 4852,
+        "edge": 4870,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 12815
+        "painted": 12813
       },
       "tanda/watercolor-02-paint": {
-        "edge": 36906,
+        "edge": 36862,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 49875
+        "painted": 49806
       },
       "ramon/Pastel_1": {
-        "edge": 19324,
+        "edge": 19317,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 34916
+        "painted": 34908
       },
       "kaerhon_v1/paint_sm": {
-        "edge": 3181,
+        "edge": 3185,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
@@ -546,15 +546,15 @@
         "painted": 6939
       },
       "experimental/soft": {
-        "edge": 9549,
+        "edge": 9546,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
         "maxOver": 0,
-        "painted": 10171
+        "painted": 10170
       },
       "classic/knife": {
-        "edge": 3022,
+        "edge": 3026,
         "brighter": 0,
         "brighter0": 0,
         "outside": 0,
@@ -562,26 +562,26 @@
         "painted": 11129
       }
     },
-    "edge_total": 115985,
+    "edge_total": 115956,
     "brighter_total": 0,
     "brighter0_total": 0,
     "outside_total": 0,
     "rows_light": {
       "pencil": {
-        "edge": 11689,
+        "edge": 11685,
         "brighter": 10250,
-        "brighter0": 11689,
+        "brighter0": 11685,
         "outside": 0,
         "maxOver": 0,
-        "painted": 13141
+        "painted": 13139
       },
       "cp": {
-        "edge": 11951,
-        "brighter": 10106,
-        "brighter0": 11951,
+        "edge": 11955,
+        "brighter": 10109,
+        "brighter0": 11955,
         "outside": 0,
         "maxOver": 0,
-        "painted": 15191
+        "painted": 15206
       },
       "marker": {
         "edge": 93,
@@ -600,55 +600,55 @@
         "painted": 9725
       },
       "classic/pen": {
-        "edge": 593,
-        "brighter": 568,
-        "brighter0": 593,
+        "edge": 595,
+        "brighter": 570,
+        "brighter0": 595,
         "outside": 0,
         "maxOver": 0,
         "painted": 11322
       },
       "deevad/airbrush": {
-        "edge": 14526,
-        "brighter": 13449,
-        "brighter0": 14526,
+        "edge": 14523,
+        "brighter": 13443,
+        "brighter0": 14523,
         "outside": 0,
         "maxOver": 0,
-        "painted": 15427
+        "painted": 15428
       },
       "Dieterle/Round#1": {
-        "edge": 4852,
-        "brighter": 4585,
-        "brighter0": 4852,
+        "edge": 4870,
+        "brighter": 4603,
+        "brighter0": 4870,
         "outside": 0,
         "maxOver": 0,
-        "painted": 12815
+        "painted": 12813
       },
       "ramon/Pastel_1": {
-        "edge": 19324,
-        "brighter": 13999,
-        "brighter0": 19324,
+        "edge": 19317,
+        "brighter": 13995,
+        "brighter0": 19317,
         "outside": 0,
         "maxOver": 0,
-        "painted": 34916
+        "painted": 34908
       }
     },
-    "edge_total_light": 63327,
+    "edge_total_light": 63337,
     "outside_total_light": 0,
     "falsification_fringe_break": {
-      "edge": 11689,
-      "brighter": 9284,
-      "brighter0": 11362,
-      "outside": 9284,
+      "edge": 11685,
+      "brighter": 9276,
+      "brighter0": 11359,
+      "outside": 9276,
       "maxOver": 31,
-      "painted": 13141
+      "painted": 13139
     },
     "falsification_fringe_break_light": {
-      "edge": 11689,
+      "edge": 11685,
       "brighter": 0,
       "brighter0": 0,
-      "outside": 7718,
+      "outside": 7709,
       "maxOver": 0,
-      "painted": 13141
+      "painted": 13139
     },
     "threshold": {
       "fringe_tol": 2,
@@ -752,12 +752,12 @@
         "n": 20
       }
     ],
-    "markPx": 5915,
+    "markPx": 5907,
     "deterministic": true,
     "seed_differs": true,
-    "bake_stress_20faces_x40strokes_ms": 16312.6,
-    "bake_20faces_40strokes_total_ms": 1083.9,
-    "bake_perstroke_2x40_ms": 1495.4,
+    "bake_stress_20faces_x40strokes_ms": 16177.8,
+    "bake_20faces_40strokes_total_ms": 1073.5,
+    "bake_perstroke_2x40_ms": 1495.5,
     "calib": {
       "Dieterle/8B_Pencil#1|fine-grain": {
         "a": 0.2222222222222222,

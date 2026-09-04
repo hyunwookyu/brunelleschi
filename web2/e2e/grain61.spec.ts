@@ -390,7 +390,7 @@ test('⑥ 크기 정직성(58 ⛔ 계약) — 반최대 폭 ≈ 요청 굵기 ·
   const naiveDev = Math.max(...Object.values(naive).map(v => Math.abs(v - 1)))
   const naiveBinds = Object.fromEntries(Object.entries(naive).map(([k, v]) => [k, Math.abs(v - 1) > cs.PAINT61_SIZE_TOL]))
   ;(OUT.size_honesty as Record<string, unknown>).falsification_calib_off_binds = { def: '보정 끔이 게이트 값을 문 밖으로 밀어낸 도구(여기서만 반증이 섰다 — 2차 [7]). 마커(ramon/100%_Opaque)는 보정표가 w = 2r(a 2 · b 0)이라 «반지름 = 폭/2»와 같은 사상 = 항등이 맞다 · 잉크펜은 .917(문 안)', ...naiveBinds, n: Object.values(naiveBinds).filter(Boolean).length }
-  ;(OUT.size_honesty as Record<string, unknown>).falsification_calib_off = { def: '보정 끔(반지름 = 요청 폭/2)의 w24 반최대 폭 비 — 보정이 무엇인가를 «한다»의 실증(넷 중 최대 편차가 문 밖이어야 자가 산다). 보정과 게이트가 같은 자(반최대 폭)를 쓰는 것은 «자가 보정의 정의»이지 자기참조가 아니다 — 보정은 반지름 6·24 두 점의 직선 견본에서 폭을 재고, 게이트는 그 표로 «다른 요청 폭(24·48·100·250·500)»의 자국을 다시 잰다(보간·비례가 실제로 서는가)', rows: naive, max_dev: +naiveDev.toFixed(3) }
+  ;(OUT.size_honesty as Record<string, unknown>).falsification_calib_off = { def: '보정 끔(반지름 = 요청 폭/2)의 w24 폭 비(자는 게이트와 같다 — 팁 든 슬롯은 범위 25% · 아니면 반최대 · web2-63) — 보정이 무엇인가를 «한다»의 실증(넷 중 최대 편차가 문 밖이어야 자가 산다). 보정과 게이트가 같은 자(반최대 폭)를 쓰는 것은 «자가 보정의 정의»이지 자기참조가 아니다 — 보정은 반지름 6·24 두 점의 직선 견본에서 폭을 재고, 게이트는 그 표로 «다른 요청 폭(24·48·100·250·500)»의 자국을 다시 잰다(보간·비례가 실제로 서는가)', rows: naive, max_dev: +naiveDev.toFixed(3) }
   expect(naiveDev, '반증 — 보정을 끄면 어느 도구의 반최대 폭이 허용을 벗어난다(보정이 실제로 일한다)').toBeGreaterThan(cs.PAINT61_SIZE_TOL)
   expect(doubling, '연필 — 굵기 2배는 폭도 2배 대역').toBeGreaterThan(1.6)
   expect(doubling, '연필 — 굵기 2배는 폭도 2배 대역').toBeLessThan(2.4)

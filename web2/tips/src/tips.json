@@ -15,8 +15,8 @@
       "source": "OpenGameArt — rubberduck (위와 같음)", "license": "CC0 1.0", "license_check": "위와 같음(OGA 페이지)" }
   ],
   "paper": {
-    "name": "paper001", "file": "ambientcg/Paper001_2K_Displacement_crop1024.png",
-    "source": "ambientCG Paper001 https://ambientcg.com/view?id=Paper001 (Paper001_2K-JPG.zip 16,201,816 B · 2048×1201 변위 맵 · 저장소에는 왼쪽 위 1024² 크롭을 회색 PNG로(값 무변 · PIL) — 원본 JPEG는 안 실음)",
+    "name": "paper001", "file": "ambientcg/Paper001_2K_Displacement_crop1072.png", "overlap": 48,
+    "source": "ambientCG Paper001 https://ambientcg.com/view?id=Paper001 (Paper001_2K-JPG.zip 16,201,816 B · 2048×1201 변위 맵 · 저장소에는 왼쪽 위 1072²(= 1024 + 겹침 48) 크롭을 회색 PNG로(값 무변 · PIL) — 원본 JPEG는 안 실음 · 생성기가 겹침을 섞어 주기 1024² 타일로)",
     "license": "CC0 1.0 Universal", "license_check": "https://docs.ambientcg.com/license/ — «You can include the raw files in your project, for example a video game»"
   }
 }

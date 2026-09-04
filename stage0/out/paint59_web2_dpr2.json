@@ -49,8 +49,8 @@
         "px": 64000,
         "diff_frac": 0,
         "mean_abs": 0,
-        "ink_a": 4403,
-        "ink_b": 4403
+        "ink_a": 4380,
+        "ink_b": 4380
       },
       {
         "face": "floor",
@@ -85,8 +85,8 @@
         "px": 51200,
         "diff_frac": 0,
         "mean_abs": 0,
-        "ink_a": 22275,
-        "ink_b": 22275
+        "ink_a": 22263,
+        "ink_b": 22263
       },
       {
         "face": "wall",
@@ -121,8 +121,8 @@
         "px": 102400,
         "diff_frac": 0,
         "mean_abs": 0,
-        "ink_a": 7323,
-        "ink_b": 7323
+        "ink_a": 7283,
+        "ink_b": 7283
       },
       {
         "face": "floor",
@@ -156,8 +156,8 @@
         ],
         "px": 76800,
         "diff_frac": 0,
-        "mean_abs": 0.339,
-        "ink_a": 40626,
+        "mean_abs": 0.337,
+        "ink_a": 40595,
         "ink_b": 39588
       },
       {
@@ -193,8 +193,8 @@
         "px": 121600,
         "diff_frac": 0,
         "mean_abs": 0,
-        "ink_a": 9802,
-        "ink_b": 9802
+        "ink_a": 9761,
+        "ink_b": 9761
       },
       {
         "face": "floor",
@@ -229,8 +229,8 @@
         "px": 121600,
         "diff_frac": 0,
         "mean_abs": 0,
-        "ink_a": 65821,
-        "ink_b": 65821
+        "ink_a": 65804,
+        "ink_b": 65804
       }
     ],
     "falsification": {
@@ -265,9 +265,9 @@
       ],
       "px": 102400,
       "diff_frac": 0.1918,
-      "mean_abs": 12.438,
+      "mean_abs": 12.44,
       "ink_a": 19702,
-      "ink_b": 7828
+      "ink_b": 7799
     },
     "falsification_input": {
       "face": "wall",
@@ -300,10 +300,10 @@
         false
       ],
       "px": 102400,
-      "diff_frac": 0.0309,
-      "mean_abs": 0.962,
-      "ink_a": 5958,
-      "ink_b": 7903
+      "diff_frac": 0.0308,
+      "mean_abs": 0.96,
+      "ink_a": 5936,
+      "ink_b": 7882
     },
     "note_input_arm": "두 반증 — 매체(벡터 미리보기)와 입력(raw 끝 셋 뗌). 둘 다 diff > 문. rows의 0은 «같은 캔버스·같은 함수»의 구성(#5 — 보장)이고 자의 생존은 두 반증이 든다"
   },
@@ -472,25 +472,25 @@
     "rows_grain": {
       "brush": {
         "cross": {
-          "mass": 46597.2,
+          "mass": 46511.2,
           "p95": 154.3,
           "max": 165.7,
           "n": 1600
         },
         "body_l": {
-          "mass": 45130.1,
+          "mass": 45049.2,
           "p95": 159,
           "max": 168.7,
           "n": 1600
         },
         "body_r": {
-          "mass": 39720.6,
-          "p95": 153.3,
+          "mass": 39655,
+          "p95": 153,
           "max": 164.3,
           "n": 1600
         },
-        "p95_ratio": 0.9882,
-        "mass_ratio": 1.0983
+        "p95_ratio": 0.9891,
+        "mass_ratio": 1.0982
       },
       "marker": {
         "cross": {
@@ -516,46 +516,46 @@
       },
       "cp": {
         "cross": {
-          "mass": 8781.1,
+          "mass": 8773.2,
           "p95": 24,
           "max": 25.7,
           "n": 1600
         },
         "body_l": {
-          "mass": 8058.2,
+          "mass": 8050.4,
           "p95": 23,
           "max": 24.7,
           "n": 1600
         },
         "body_r": {
-          "mass": 7805.2,
+          "mass": 7800.8,
           "p95": 22.7,
           "max": 25,
           "n": 1600
         },
         "p95_ratio": 1.0503,
-        "mass_ratio": 1.1071
+        "mass_ratio": 1.1069
       },
       "pencil": {
         "cross": {
-          "mass": 8384,
+          "mass": 8379.8,
           "p95": 28.3,
           "max": 33.7,
           "n": 1600
         },
         "body_l": {
-          "mass": 6712.5,
-          "p95": 20.3,
+          "mass": 6710.2,
+          "p95": 20,
           "max": 25,
           "n": 1600
         },
         "body_r": {
-          "mass": 6971.7,
+          "mass": 6967,
           "p95": 21,
           "max": 25,
           "n": 1600
         },
-        "p95_ratio": 1.3705,
+        "p95_ratio": 1.3805,
         "mass_ratio": 1.2254
       }
     },
@@ -787,10 +787,10 @@
     },
     "rows": {
       "brush": {
-        "start": 241184.0000000007,
-        "mid": 222422.9999999991,
-        "end": 200977.00000000102,
-        "start_over_mid": 1.0843,
+        "start": 240736.25000000076,
+        "mid": 222006.83333333183,
+        "end": 200615.00000000102,
+        "start_over_mid": 1.0844,
         "end_over_mid": 0.9036
       },
       "marker": {
@@ -801,17 +801,17 @@
         "end_over_mid": 0.9183
       },
       "cp": {
-        "start": 59245.0000000003,
-        "mid": 57469.33333333326,
-        "end": 53126.74999999922,
-        "start_over_mid": 1.0309,
-        "end_over_mid": 0.9244
+        "start": 59181.583333333656,
+        "mid": 57412.24999999995,
+        "end": 53075.666666665915,
+        "start_over_mid": 1.0308,
+        "end_over_mid": 0.9245
       },
       "pencil": {
-        "start": 44891.49999999991,
-        "mid": 45950.41666666696,
-        "end": 43504.916666666395,
-        "start_over_mid": 0.977,
+        "start": 44852.58333333325,
+        "mid": 45912.08333333358,
+        "end": 43470.333333333154,
+        "start_over_mid": 0.9769,
         "end_over_mid": 0.9468
       }
     },
@@ -896,23 +896,23 @@
       "rows": [
         {
           "off": 0,
-          "start_over_mid": 0.9917,
-          "end_over_mid": 0.9414
+          "start_over_mid": 0.9916,
+          "end_over_mid": 0.9416
         },
         {
           "off": 2,
           "start_over_mid": 0.9896,
-          "end_over_mid": 0.961
+          "end_over_mid": 0.9611
         },
         {
           "off": 4,
           "start_over_mid": 1.0216,
-          "end_over_mid": 0.959
+          "end_over_mid": 0.9591
         },
         {
           "off": 6,
-          "start_over_mid": 0.9551,
-          "end_over_mid": 0.9637
+          "start_over_mid": 0.9552,
+          "end_over_mid": 0.9638
         },
         {
           "off": 8,
@@ -921,9 +921,9 @@
         }
       ],
       "start_mean": 0.9965,
-      "start_sd": 0.0253,
-      "end_mean": 0.9587,
-      "end_sd": 0.0092
+      "start_sd": 0.0252,
+      "end_mean": 0.9588,
+      "end_sd": 0.0091
     }
   },
   "grain_phase": {
@@ -931,15 +931,15 @@
     "threshold": 0.08,
     "corr_A": {
       "n": 19440,
-      "corr": -0.5968
+      "corr": -0.5969
     },
     "corr_A2": {
       "n": 19440,
-      "corr": -0.5968
+      "corr": -0.5969
     },
     "corr_B": {
       "n": 19440,
-      "corr": -0.5968
+      "corr": -0.5969
     },
     "falsification_grain_off": {
       "n": 19440,
@@ -1057,37 +1057,37 @@
       1024
     ],
     "idle_ms": {
-      "median": 47.1,
-      "p90": 52.1
+      "median": 47.3,
+      "p90": 49.2
     },
     "idle2_ms": {
-      "median": 48.9,
-      "p90": 52.2
+      "median": 48.2,
+      "p90": 51.2
     },
-    "noise_floor_ms": 1.8,
+    "noise_floor_ms": 0.9,
     "drafting_ms": {
-      "median": 61.3,
-      "p90": 69.2,
-      "max": 72.8,
-      "first": 47.5,
+      "median": 56.2,
+      "p90": 59.8,
+      "max": 66.1,
+      "first": 46.4,
       "frame_cost": {
         "n": 43,
-        "r3": 8.200000017881393,
+        "r3": 7.9000000059604645,
         "bs": 0,
         "d2": 0.19999998807907104,
-        "total": 8.5,
-        "totalMax": 1318.4000000059605
+        "total": 8.099999994039536,
+        "totalMax": 1293.5999999940395
       },
       "draft_base_bytes_max": 385024,
       "draft_with_base_max": 1
     },
-    "draft_extra_ms": 14.2,
+    "draft_extra_ms": 8.9,
     "draft_memory": {
       "def": "그리는 중 사본(base) 바이트의 최대와 사본 든 텍스처 수의 최대(1차 [8] — 획은 주인 면 하나(54-1)라 1 · 고름이 있으면 그 수까지) · 커버리지 지도는 bbox×4바이트(획마다 해제)",
       "base_bytes_max": 385024,
       "with_base_max": 1
     },
-    "draft_max_extra_ms": 25.7,
+    "draft_max_extra_ms": 18.8,
     "threshold_extra_ms": 18,
     "gate_condition": {
       "workers": 1,
