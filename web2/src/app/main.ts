@@ -2210,11 +2210,14 @@ function drawWheel(hsv: Hsv) {
   }
   const rc = svRect(WHEEL)
   if (wheelStepForTest > 0) {
+    // 반증 판은 정수 정렬로 굽는다 — 소수점 자리의 AA가 칸 경계마다 «중간색»을 만들어
+    // 색 수를 부풀리면(실측 11,135 — 연속판과 구분 불능) 이 반증은 아무것도 안 잰다(D-3).
     const step = wheelStepForTest
+    const bx = Math.round(rc.x), by = Math.round(rc.y)
     for (let y = 0; y < rc.h; y += step) {
       for (let x = 0; x < rc.w; x += step) {
         g.fillStyle = hexOfHsv({ h: hsv.h, s: x / rc.w, v: 1 - y / rc.h })
-        g.fillRect(rc.x + x, rc.y + y, step, step)
+        g.fillRect(bx + x, by + y, step, step)
       }
     }
   } else {
