@@ -1,0 +1,1826 @@
+{
+  "conditions": {
+    "project": "dpr1",
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/paint68.spec.ts (#99)"
+  },
+  "what": "web2-68 §2 — 경도 축: 후보 전수의 농도·반최대 폭 표 · 여섯+셋의 단조 · 반증 · 결정론",
+  "note_pitfalls": "#108(보간 키는 SETTINGS 존재 검증 · 단언 판과 반증 판이 같은 값이면 자를 의심 — 반증이 실제로 다른 값을 낸다) · #12(동작점 둘: 12·24px × 도형 둘) · #16(분모는 반최대 띠 안 픽셀 수 — 표에 든다) · #42",
+  "pitfall_citations": [
+    12,
+    16,
+    42,
+    108
+  ],
+  "selfcheck_notes": {
+    "identical_pairs": "결정론 판(같은 프리셋 두 번)의 «같음»은 63 게이트 ①의 규약 그대로(시드 고정 · Math.random 없음) — 반증(같은 프리셋을 두 자리)이 «다른 값»(false)을 낸다",
+    "zero_counters": "tanda/charcoal-blur1 행의 n_px·ink_px·density 0은 «축 밖(번짐 — smudge 1 · 안료 없음)»의 기록값이다(후보에서 뺐다 — 지시 §2 방법 4) · 보정 «켬»의 폭 이웃 차 ≈ 0은 58 크기 정직성의 뜻 그 자체다(요청 폭 == 반최대 폭 — 프리셋과 무관) — 폭 단조는 보정 «끔» 열이 잰다"
+  },
+  "candidates": {
+    "def": "후보 전수 × 도형 둘(hill 0.3→0.7→0.3 · line 0.5) × 크기 둘(12 · 24px) × 보정(cal 켬 = 제품 · raw 끔 = 프리셋 고유). density = 반최대 띠 안 (255−밝기)/255 평균 · width_half = 띠 행 수(px) · peak = 행 프로필 최대/255 · n_px = 분모(#16) · ink_px = 지도에서 > 8인 픽셀",
+    "rows": [
+      {
+        "preset": "classic/pencil",
+        "kind": "pencil",
+        "hill_12_cal": {
+          "density": 0.1298,
+          "width_half": 9,
+          "peak": 0.1576,
+          "n_px": 1728,
+          "ink_px": 4644,
+          "hash": -199335840
+        },
+        "hill_12_raw": {
+          "density": 0.1061,
+          "width_half": 7,
+          "peak": 0.1239,
+          "n_px": 1344,
+          "ink_px": 3407,
+          "hash": -1793806197
+        },
+        "hill_24_cal": {
+          "density": 0.1354,
+          "width_half": 18,
+          "peak": 0.1658,
+          "n_px": 3456,
+          "ink_px": 9462,
+          "hash": 996154307
+        },
+        "hill_24_raw": {
+          "density": 0.1068,
+          "width_half": 14,
+          "peak": 0.1298,
+          "n_px": 2688,
+          "ink_px": 6731,
+          "hash": 622162458
+        },
+        "line_12_cal": {
+          "density": 0.1009,
+          "width_half": 9,
+          "peak": 0.1241,
+          "n_px": 1728,
+          "ink_px": 4819,
+          "hash": -618317957
+        },
+        "line_12_raw": {
+          "density": 0.0782,
+          "width_half": 8,
+          "peak": 0.0971,
+          "n_px": 1536,
+          "ink_px": 3526,
+          "hash": 1067457880
+        },
+        "line_24_cal": {
+          "density": 0.1055,
+          "width_half": 18,
+          "peak": 0.1317,
+          "n_px": 3456,
+          "ink_px": 10003,
+          "hash": 440325388
+        },
+        "line_24_raw": {
+          "density": 0.083,
+          "width_half": 14,
+          "peak": 0.0993,
+          "n_px": 2688,
+          "ink_px": 7162,
+          "hash": 1143447165
+        }
+      },
+      {
+        "preset": "deevad/4H_pencil",
+        "kind": "pencil",
+        "hill_12_cal": {
+          "density": 0.0109,
+          "width_half": 11,
+          "peak": 0.0126,
+          "n_px": 2112,
+          "ink_px": 0,
+          "hash": -529025758
+        },
+        "hill_12_raw": {
+          "density": 0.0109,
+          "width_half": 11,
+          "peak": 0.0126,
+          "n_px": 2112,
+          "ink_px": 0,
+          "hash": -529025758
+        },
+        "hill_24_cal": {
+          "density": 0.0113,
+          "width_half": 20,
+          "peak": 0.0129,
+          "n_px": 3840,
+          "ink_px": 0,
+          "hash": -1759972364
+        },
+        "hill_24_raw": {
+          "density": 0.0113,
+          "width_half": 20,
+          "peak": 0.0129,
+          "n_px": 3840,
+          "ink_px": 0,
+          "hash": -1759972364
+        },
+        "line_12_cal": {
+          "density": 0.0087,
+          "width_half": 10,
+          "peak": 0.0104,
+          "n_px": 1920,
+          "ink_px": 0,
+          "hash": 213743345
+        },
+        "line_12_raw": {
+          "density": 0.0087,
+          "width_half": 10,
+          "peak": 0.0104,
+          "n_px": 1920,
+          "ink_px": 0,
+          "hash": 213743345
+        },
+        "line_24_cal": {
+          "density": 0.0089,
+          "width_half": 19,
+          "peak": 0.0105,
+          "n_px": 3648,
+          "ink_px": 0,
+          "hash": -1257855716
+        },
+        "line_24_raw": {
+          "density": 0.0089,
+          "width_half": 19,
+          "peak": 0.0105,
+          "n_px": 3648,
+          "ink_px": 0,
+          "hash": -1257855716
+        }
+      },
+      {
+        "preset": "deevad/2B_pencil",
+        "kind": "pencil",
+        "hill_12_cal": {
+          "density": 0.0662,
+          "width_half": 12,
+          "peak": 0.0743,
+          "n_px": 2304,
+          "ink_px": 4278,
+          "hash": 567375056
+        },
+        "hill_12_raw": {
+          "density": 0.0634,
+          "width_half": 11,
+          "peak": 0.0732,
+          "n_px": 2112,
+          "ink_px": 3588,
+          "hash": -397958713
+        },
+        "hill_24_cal": {
+          "density": 0.0662,
+          "width_half": 24,
+          "peak": 0.0754,
+          "n_px": 4608,
+          "ink_px": 8615,
+          "hash": 665576183
+        },
+        "hill_24_raw": {
+          "density": 0.0655,
+          "width_half": 20,
+          "peak": 0.0748,
+          "n_px": 3840,
+          "ink_px": 7193,
+          "hash": 1570326917
+        },
+        "line_12_cal": {
+          "density": 0.0515,
+          "width_half": 12,
+          "peak": 0.06,
+          "n_px": 2304,
+          "ink_px": 4404,
+          "hash": 2041113485
+        },
+        "line_12_raw": {
+          "density": 0.0508,
+          "width_half": 10,
+          "peak": 0.0597,
+          "n_px": 1920,
+          "ink_px": 3733,
+          "hash": 426428207
+        },
+        "line_24_cal": {
+          "density": 0.0531,
+          "width_half": 22,
+          "peak": 0.0612,
+          "n_px": 4224,
+          "ink_px": 8932,
+          "hash": 521802057
+        },
+        "line_24_raw": {
+          "density": 0.0515,
+          "width_half": 19,
+          "peak": 0.0604,
+          "n_px": 3648,
+          "ink_px": 7570,
+          "hash": -118708880
+        }
+      },
+      {
+        "preset": "ramon/B-pencil",
+        "kind": "pencil",
+        "hill_12_cal": {
+          "density": 0.2183,
+          "width_half": 10,
+          "peak": 0.2577,
+          "n_px": 1920,
+          "ink_px": 5082,
+          "hash": -1513895392
+        },
+        "hill_12_raw": {
+          "density": 0.1899,
+          "width_half": 6,
+          "peak": 0.2188,
+          "n_px": 1152,
+          "ink_px": 3113,
+          "hash": -1269341025
+        },
+        "hill_24_cal": {
+          "density": 0.2187,
+          "width_half": 20,
+          "peak": 0.2584,
+          "n_px": 3840,
+          "ink_px": 10719,
+          "hash": -608930855
+        },
+        "hill_24_raw": {
+          "density": 0.1885,
+          "width_half": 12,
+          "peak": 0.2162,
+          "n_px": 2304,
+          "ink_px": 6246,
+          "hash": -589721829
+        },
+        "line_12_cal": {
+          "density": 0.1533,
+          "width_half": 10,
+          "peak": 0.1802,
+          "n_px": 1920,
+          "ink_px": 5175,
+          "hash": -369374496
+        },
+        "line_12_raw": {
+          "density": 0.1308,
+          "width_half": 6,
+          "peak": 0.1515,
+          "n_px": 1152,
+          "ink_px": 3157,
+          "hash": 102240017
+        },
+        "line_24_cal": {
+          "density": 0.1552,
+          "width_half": 20,
+          "peak": 0.1818,
+          "n_px": 3840,
+          "ink_px": 10882,
+          "hash": 2093902819
+        },
+        "line_24_raw": {
+          "density": 0.1301,
+          "width_half": 12,
+          "peak": 0.1516,
+          "n_px": 2304,
+          "ink_px": 6431,
+          "hash": -1408158006
+        }
+      },
+      {
+        "preset": "ramon/2B_pencil",
+        "kind": "pencil",
+        "hill_12_cal": {
+          "density": 0.2206,
+          "width_half": 9,
+          "peak": 0.2707,
+          "n_px": 1728,
+          "ink_px": 4722,
+          "hash": 1053492327
+        },
+        "hill_12_raw": {
+          "density": 0.2609,
+          "width_half": 13,
+          "peak": 0.3051,
+          "n_px": 2496,
+          "ink_px": 6372,
+          "hash": -331018258
+        },
+        "hill_24_cal": {
+          "density": 0.2389,
+          "width_half": 16,
+          "peak": 0.2914,
+          "n_px": 3072,
+          "ink_px": 9423,
+          "hash": -388806350
+        },
+        "hill_24_raw": {
+          "density": 0.2669,
+          "width_half": 25,
+          "peak": 0.3203,
+          "n_px": 4800,
+          "ink_px": 12862,
+          "hash": 1119455437
+        },
+        "line_12_cal": {
+          "density": 0.1717,
+          "width_half": 9,
+          "peak": 0.2104,
+          "n_px": 1728,
+          "ink_px": 4777,
+          "hash": 1504738373
+        },
+        "line_12_raw": {
+          "density": 0.2004,
+          "width_half": 13,
+          "peak": 0.2336,
+          "n_px": 2496,
+          "ink_px": 6321,
+          "hash": -1069490472
+        },
+        "line_24_cal": {
+          "density": 0.1857,
+          "width_half": 16,
+          "peak": 0.2248,
+          "n_px": 3072,
+          "ink_px": 9561,
+          "hash": -48168081
+        },
+        "line_24_raw": {
+          "density": 0.2046,
+          "width_half": 25,
+          "peak": 0.2424,
+          "n_px": 4800,
+          "ink_px": 12814,
+          "hash": 316037107
+        }
+      },
+      {
+        "preset": "tanda/pencil-2b",
+        "kind": "pencil",
+        "hill_12_cal": {
+          "density": 0.0655,
+          "width_half": 11,
+          "peak": 0.0737,
+          "n_px": 2112,
+          "ink_px": 3931,
+          "hash": 954585293
+        },
+        "hill_12_raw": {
+          "density": 0.0634,
+          "width_half": 11,
+          "peak": 0.0736,
+          "n_px": 2112,
+          "ink_px": 3614,
+          "hash": 1518515142
+        },
+        "hill_24_cal": {
+          "density": 0.0658,
+          "width_half": 23,
+          "peak": 0.0752,
+          "n_px": 4416,
+          "ink_px": 8177,
+          "hash": 2105876302
+        },
+        "hill_24_raw": {
+          "density": 0.0656,
+          "width_half": 20,
+          "peak": 0.0749,
+          "n_px": 3840,
+          "ink_px": 7220,
+          "hash": 1800494737
+        },
+        "line_12_cal": {
+          "density": 0.0532,
+          "width_half": 10,
+          "peak": 0.0599,
+          "n_px": 1920,
+          "ink_px": 4021,
+          "hash": -1884018454
+        },
+        "line_12_raw": {
+          "density": 0.0509,
+          "width_half": 10,
+          "peak": 0.0597,
+          "n_px": 1920,
+          "ink_px": 3736,
+          "hash": 1855384137
+        },
+        "line_24_cal": {
+          "density": 0.0517,
+          "width_half": 22,
+          "peak": 0.061,
+          "n_px": 4224,
+          "ink_px": 8515,
+          "hash": -609307648
+        },
+        "line_24_raw": {
+          "density": 0.0515,
+          "width_half": 19,
+          "peak": 0.0605,
+          "n_px": 3648,
+          "ink_px": 7543,
+          "hash": -898378965
+        }
+      },
+      {
+        "preset": "tanda/pencil-8b",
+        "kind": "pencil",
+        "hill_12_cal": {
+          "density": 0.0942,
+          "width_half": 70,
+          "peak": 0.1212,
+          "n_px": 13440,
+          "ink_px": 15155,
+          "hash": 1024828176
+        },
+        "hill_12_raw": {
+          "density": 0.0274,
+          "width_half": 9,
+          "peak": 0.0395,
+          "n_px": 1728,
+          "ink_px": 752,
+          "hash": 1654455524
+        },
+        "hill_24_cal": {
+          "density": 0.1003,
+          "width_half": 108,
+          "peak": 0.1402,
+          "n_px": 20736,
+          "ink_px": 27509,
+          "hash": 593847373
+        },
+        "hill_24_raw": {
+          "density": 0.0263,
+          "width_half": 17,
+          "peak": 0.0385,
+          "n_px": 3264,
+          "ink_px": 1528,
+          "hash": -1788402138
+        },
+        "line_12_cal": {
+          "density": 0.043,
+          "width_half": 66,
+          "peak": 0.0626,
+          "n_px": 12672,
+          "ink_px": 14083,
+          "hash": -401392335
+        },
+        "line_12_raw": {
+          "density": 0.0132,
+          "width_half": 7,
+          "peak": 0.0165,
+          "n_px": 1344,
+          "ink_px": 668,
+          "hash": -108727542
+        },
+        "line_24_cal": {
+          "density": 0.0549,
+          "width_half": 81,
+          "peak": 0.0793,
+          "n_px": 15552,
+          "ink_px": 26509,
+          "hash": 130638066
+        },
+        "line_24_raw": {
+          "density": 0.0105,
+          "width_half": 20,
+          "peak": 0.0155,
+          "n_px": 3840,
+          "ink_px": 1294,
+          "hash": 2051480101
+        }
+      },
+      {
+        "preset": "Dieterle/8B_Pencil#1",
+        "kind": "pencil",
+        "hill_12_cal": {
+          "density": 0.0828,
+          "width_half": 15,
+          "peak": 0.1038,
+          "n_px": 2880,
+          "ink_px": 5184,
+          "hash": 1620716394
+        },
+        "hill_12_raw": {
+          "density": 0.2014,
+          "width_half": 2,
+          "peak": 0.2051,
+          "n_px": 384,
+          "ink_px": 1351,
+          "hash": -1503625161
+        },
+        "hill_24_cal": {
+          "density": 0.0535,
+          "width_half": 26,
+          "peak": 0.0684,
+          "n_px": 4992,
+          "ink_px": 7127,
+          "hash": 1111622932
+        },
+        "hill_24_raw": {
+          "density": 0.1102,
+          "width_half": 4,
+          "peak": 0.1262,
+          "n_px": 768,
+          "ink_px": 1816,
+          "hash": -1250185537
+        },
+        "line_12_cal": {
+          "density": 0.0624,
+          "width_half": 15,
+          "peak": 0.0795,
+          "n_px": 2880,
+          "ink_px": 5868,
+          "hash": -1711580633
+        },
+        "line_12_raw": {
+          "density": 0.1546,
+          "width_half": 2,
+          "peak": 0.1577,
+          "n_px": 384,
+          "ink_px": 1363,
+          "hash": -567280076
+        },
+        "line_24_cal": {
+          "density": 0.0403,
+          "width_half": 26,
+          "peak": 0.0517,
+          "n_px": 4992,
+          "ink_px": 8373,
+          "hash": 1707333569
+        },
+        "line_24_raw": {
+          "density": 0.0834,
+          "width_half": 4,
+          "peak": 0.096,
+          "n_px": 768,
+          "ink_px": 1893,
+          "hash": -1638336705
+        }
+      },
+      {
+        "preset": "Dieterle/Pencil-_Left_Handed",
+        "kind": "pencil",
+        "hill_12_cal": {
+          "density": 0.0094,
+          "width_half": 77,
+          "peak": 0.0148,
+          "n_px": 14784,
+          "ink_px": 3521,
+          "hash": 374139604
+        },
+        "hill_12_raw": {
+          "density": 0.0265,
+          "width_half": 10,
+          "peak": 0.037,
+          "n_px": 1920,
+          "ink_px": 656,
+          "hash": -1265907153
+        },
+        "hill_24_cal": {
+          "density": 0.0086,
+          "width_half": 48,
+          "peak": 0.0134,
+          "n_px": 9216,
+          "ink_px": 3561,
+          "hash": -696923867
+        },
+        "hill_24_raw": {
+          "density": 0.0141,
+          "width_half": 17,
+          "peak": 0.018,
+          "n_px": 3264,
+          "ink_px": 709,
+          "hash": 1072579607
+        },
+        "line_12_cal": {
+          "density": 0.0057,
+          "width_half": 89,
+          "peak": 0.0088,
+          "n_px": 17088,
+          "ink_px": 4422,
+          "hash": 225949789
+        },
+        "line_12_raw": {
+          "density": 0.0164,
+          "width_half": 10,
+          "peak": 0.0218,
+          "n_px": 1920,
+          "ink_px": 714,
+          "hash": -344583462
+        },
+        "line_24_cal": {
+          "density": 0.005,
+          "width_half": 67,
+          "peak": 0.0078,
+          "n_px": 12864,
+          "ink_px": 4408,
+          "hash": -481500303
+        },
+        "line_24_raw": {
+          "density": 0.0084,
+          "width_half": 19,
+          "peak": 0.0104,
+          "n_px": 3648,
+          "ink_px": 715,
+          "hash": -1245531866
+        }
+      },
+      {
+        "preset": "experimental/subtle_pencil",
+        "kind": "pencil",
+        "hill_12_cal": {
+          "density": 0.4288,
+          "width_half": 12,
+          "peak": 0.4828,
+          "n_px": 2304,
+          "ink_px": 5612,
+          "hash": 769252475
+        },
+        "hill_12_raw": {
+          "density": 0.3984,
+          "width_half": 14,
+          "peak": 0.4649,
+          "n_px": 2688,
+          "ink_px": 6320,
+          "hash": 719661131
+        },
+        "hill_24_cal": {
+          "density": 0.4163,
+          "width_half": 27,
+          "peak": 0.4807,
+          "n_px": 5184,
+          "ink_px": 11155,
+          "hash": -555013763
+        },
+        "hill_24_raw": {
+          "density": 0.3916,
+          "width_half": 27,
+          "peak": 0.4581,
+          "n_px": 5184,
+          "ink_px": 11678,
+          "hash": -1436741790
+        },
+        "line_12_cal": {
+          "density": 0.3473,
+          "width_half": 12,
+          "peak": 0.398,
+          "n_px": 2304,
+          "ink_px": 5536,
+          "hash": -2036422782
+        },
+        "line_12_raw": {
+          "density": 0.3243,
+          "width_half": 14,
+          "peak": 0.3837,
+          "n_px": 2688,
+          "ink_px": 6151,
+          "hash": -933034661
+        },
+        "line_24_cal": {
+          "density": 0.3444,
+          "width_half": 26,
+          "peak": 0.3952,
+          "n_px": 4992,
+          "ink_px": 11142,
+          "hash": 962993542
+        },
+        "line_24_raw": {
+          "density": 0.3296,
+          "width_half": 25,
+          "peak": 0.3823,
+          "n_px": 4800,
+          "ink_px": 11624,
+          "hash": -1036916143
+        }
+      },
+      {
+        "preset": "brunelleschi/pencil_4B",
+        "kind": "pencil",
+        "hill_12_cal": {
+          "density": 0.0641,
+          "width_half": 13,
+          "peak": 0.0733,
+          "n_px": 2496,
+          "ink_px": 4638,
+          "hash": -1442117660
+        },
+        "hill_12_raw": {
+          "density": 0.0601,
+          "width_half": 11,
+          "peak": 0.0703,
+          "n_px": 2112,
+          "ink_px": 3610,
+          "hash": -788855932
+        },
+        "hill_24_cal": {
+          "density": 0.0657,
+          "width_half": 26,
+          "peak": 0.0754,
+          "n_px": 4992,
+          "ink_px": 9562,
+          "hash": -1432771585
+        },
+        "hill_24_raw": {
+          "density": 0.0616,
+          "width_half": 20,
+          "peak": 0.0722,
+          "n_px": 3840,
+          "ink_px": 7134,
+          "hash": 1536433123
+        },
+        "line_12_cal": {
+          "density": 0.0505,
+          "width_half": 13,
+          "peak": 0.0593,
+          "n_px": 2496,
+          "ink_px": 4869,
+          "hash": 1187217037
+        },
+        "line_12_raw": {
+          "density": 0.0478,
+          "width_half": 10,
+          "peak": 0.0574,
+          "n_px": 1920,
+          "ink_px": 3776,
+          "hash": 656522372
+        },
+        "line_24_cal": {
+          "density": 0.0508,
+          "width_half": 26,
+          "peak": 0.0612,
+          "n_px": 4992,
+          "ink_px": 9985,
+          "hash": 923060652
+        },
+        "line_24_raw": {
+          "density": 0.0488,
+          "width_half": 19,
+          "peak": 0.0575,
+          "n_px": 3648,
+          "ink_px": 7540,
+          "hash": -669179983
+        }
+      },
+      {
+        "preset": "brunelleschi/pencil_6B",
+        "kind": "pencil",
+        "hill_12_cal": {
+          "density": 0.0632,
+          "width_half": 15,
+          "peak": 0.0735,
+          "n_px": 2880,
+          "ink_px": 5385,
+          "hash": 570653200
+        },
+        "hill_12_raw": {
+          "density": 0.0547,
+          "width_half": 11,
+          "peak": 0.0663,
+          "n_px": 2112,
+          "ink_px": 3296,
+          "hash": -29674299
+        },
+        "hill_24_cal": {
+          "density": 0.0638,
+          "width_half": 29,
+          "peak": 0.0759,
+          "n_px": 5568,
+          "ink_px": 10699,
+          "hash": 383351258
+        },
+        "hill_24_raw": {
+          "density": 0.053,
+          "width_half": 23,
+          "peak": 0.0645,
+          "n_px": 4416,
+          "ink_px": 6606,
+          "hash": -97217752
+        },
+        "line_12_cal": {
+          "density": 0.0505,
+          "width_half": 14,
+          "peak": 0.0587,
+          "n_px": 2688,
+          "ink_px": 5567,
+          "hash": -1804871225
+        },
+        "line_12_raw": {
+          "density": 0.0419,
+          "width_half": 11,
+          "peak": 0.0512,
+          "n_px": 2112,
+          "ink_px": 3512,
+          "hash": -352884018
+        },
+        "line_24_cal": {
+          "density": 0.0504,
+          "width_half": 28,
+          "peak": 0.0612,
+          "n_px": 5376,
+          "ink_px": 11110,
+          "hash": -1522406876
+        },
+        "line_24_raw": {
+          "density": 0.0414,
+          "width_half": 22,
+          "peak": 0.0508,
+          "n_px": 4224,
+          "ink_px": 6931,
+          "hash": -391126438
+        }
+      },
+      {
+        "preset": "classic/charcoal",
+        "kind": "charcoal",
+        "hill_12_cal": {
+          "density": 0.2296,
+          "width_half": 10,
+          "peak": 0.2654,
+          "n_px": 1920,
+          "ink_px": 4701,
+          "hash": -1793618857
+        },
+        "hill_12_raw": {
+          "density": 0.2399,
+          "width_half": 17,
+          "peak": 0.2902,
+          "n_px": 3264,
+          "ink_px": 7550,
+          "hash": 1408004881
+        },
+        "hill_24_cal": {
+          "density": 0.2345,
+          "width_half": 20,
+          "peak": 0.2796,
+          "n_px": 3840,
+          "ink_px": 9331,
+          "hash": -1218683533
+        },
+        "hill_24_raw": {
+          "density": 0.2452,
+          "width_half": 33,
+          "peak": 0.2965,
+          "n_px": 6336,
+          "ink_px": 15134,
+          "hash": -334238084
+        },
+        "line_12_cal": {
+          "density": 0.1614,
+          "width_half": 12,
+          "peak": 0.1972,
+          "n_px": 2304,
+          "ink_px": 4845,
+          "hash": 145016079
+        },
+        "line_12_raw": {
+          "density": 0.1715,
+          "width_half": 19,
+          "peak": 0.2115,
+          "n_px": 3648,
+          "ink_px": 7568,
+          "hash": -727992967
+        },
+        "line_24_cal": {
+          "density": 0.1724,
+          "width_half": 21,
+          "peak": 0.2066,
+          "n_px": 4032,
+          "ink_px": 9486,
+          "hash": 1440145335
+        },
+        "line_24_raw": {
+          "density": 0.1767,
+          "width_half": 37,
+          "peak": 0.2171,
+          "n_px": 7104,
+          "ink_px": 15236,
+          "hash": -2143734130
+        }
+      },
+      {
+        "preset": "tanda/charcoal-01",
+        "kind": "charcoal",
+        "hill_12_cal": {
+          "density": 0.2282,
+          "width_half": 29,
+          "peak": 0.3214,
+          "n_px": 5568,
+          "ink_px": 14802,
+          "hash": 1198968481
+        },
+        "hill_12_raw": {
+          "density": 0.1219,
+          "width_half": 12,
+          "peak": 0.1783,
+          "n_px": 2304,
+          "ink_px": 4211,
+          "hash": 450781421
+        },
+        "hill_24_cal": {
+          "density": 0.3303,
+          "width_half": 37,
+          "peak": 0.5029,
+          "n_px": 7104,
+          "ink_px": 29639,
+          "hash": 2032971957
+        },
+        "hill_24_raw": {
+          "density": 0.1406,
+          "width_half": 21,
+          "peak": 0.2105,
+          "n_px": 4032,
+          "ink_px": 8823,
+          "hash": 613137106
+        },
+        "line_12_cal": {
+          "density": 0.165,
+          "width_half": 24,
+          "peak": 0.229,
+          "n_px": 4608,
+          "ink_px": 14814,
+          "hash": -1148231379
+        },
+        "line_12_raw": {
+          "density": 0.0921,
+          "width_half": 10,
+          "peak": 0.1374,
+          "n_px": 1920,
+          "ink_px": 4257,
+          "hash": -1027282105
+        },
+        "line_24_cal": {
+          "density": 0.2479,
+          "width_half": 25,
+          "peak": 0.363,
+          "n_px": 4800,
+          "ink_px": 30876,
+          "hash": 1075015764
+        },
+        "line_24_raw": {
+          "density": 0.1144,
+          "width_half": 14,
+          "peak": 0.1696,
+          "n_px": 2688,
+          "ink_px": 8822,
+          "hash": 300652594
+        }
+      },
+      {
+        "preset": "tanda/charcoal-03",
+        "kind": "charcoal",
+        "hill_12_cal": {
+          "density": 0.282,
+          "width_half": 13,
+          "peak": 0.349,
+          "n_px": 2496,
+          "ink_px": 6623,
+          "hash": 122120087
+        },
+        "hill_12_raw": {
+          "density": 0.1877,
+          "width_half": 18,
+          "peak": 0.2454,
+          "n_px": 3456,
+          "ink_px": 6384,
+          "hash": -1763088517
+        },
+        "hill_24_cal": {
+          "density": 0.2727,
+          "width_half": 30,
+          "peak": 0.3416,
+          "n_px": 5760,
+          "ink_px": 13775,
+          "hash": -115344748
+        },
+        "hill_24_raw": {
+          "density": 0.2209,
+          "width_half": 32,
+          "peak": 0.2768,
+          "n_px": 6144,
+          "ink_px": 12769,
+          "hash": 1738982835
+        },
+        "line_12_cal": {
+          "density": 0.2671,
+          "width_half": 13,
+          "peak": 0.3269,
+          "n_px": 2496,
+          "ink_px": 7425,
+          "hash": 1510171259
+        },
+        "line_12_raw": {
+          "density": 0.1951,
+          "width_half": 16,
+          "peak": 0.2398,
+          "n_px": 3072,
+          "ink_px": 7004,
+          "hash": 1451884251
+        },
+        "line_24_cal": {
+          "density": 0.2599,
+          "width_half": 30,
+          "peak": 0.3324,
+          "n_px": 5760,
+          "ink_px": 15604,
+          "hash": 576497868
+        },
+        "line_24_raw": {
+          "density": 0.2123,
+          "width_half": 30,
+          "peak": 0.2671,
+          "n_px": 5760,
+          "ink_px": 14217,
+          "hash": 649315111
+        }
+      },
+      {
+        "preset": "tanda/charcoal-04",
+        "kind": "charcoal",
+        "hill_12_cal": {
+          "density": 0.089,
+          "width_half": 16,
+          "peak": 0.1104,
+          "n_px": 3072,
+          "ink_px": 6516,
+          "hash": -1500523935
+        },
+        "hill_12_raw": {
+          "density": 0.0629,
+          "width_half": 15,
+          "peak": 0.0837,
+          "n_px": 2880,
+          "ink_px": 4858,
+          "hash": -348408472
+        },
+        "hill_24_cal": {
+          "density": 0.0841,
+          "width_half": 33,
+          "peak": 0.1099,
+          "n_px": 6336,
+          "ink_px": 13862,
+          "hash": 251168031
+        },
+        "hill_24_raw": {
+          "density": 0.0587,
+          "width_half": 39,
+          "peak": 0.0773,
+          "n_px": 7488,
+          "ink_px": 10368,
+          "hash": -2050838469
+        },
+        "line_12_cal": {
+          "density": 0.072,
+          "width_half": 16,
+          "peak": 0.0892,
+          "n_px": 3072,
+          "ink_px": 6767,
+          "hash": -2049522731
+        },
+        "line_12_raw": {
+          "density": 0.0506,
+          "width_half": 15,
+          "peak": 0.0675,
+          "n_px": 2880,
+          "ink_px": 4928,
+          "hash": -1944107980
+        },
+        "line_24_cal": {
+          "density": 0.0672,
+          "width_half": 34,
+          "peak": 0.0874,
+          "n_px": 6528,
+          "ink_px": 14319,
+          "hash": -1401670556
+        },
+        "line_24_raw": {
+          "density": 0.0476,
+          "width_half": 39,
+          "peak": 0.0626,
+          "n_px": 7488,
+          "ink_px": 10581,
+          "hash": -364679904
+        }
+      },
+      {
+        "preset": "tanda/charcoal-blur1",
+        "kind": "charcoal(축 밖 — 번짐)",
+        "hill_12_cal": {
+          "density": 0,
+          "width_half": 0,
+          "peak": 0,
+          "n_px": 0,
+          "ink_px": 0,
+          "hash": 0
+        },
+        "hill_12_raw": {
+          "density": 0,
+          "width_half": 0,
+          "peak": 0,
+          "n_px": 0,
+          "ink_px": 0,
+          "hash": 0
+        },
+        "hill_24_cal": {
+          "density": 0,
+          "width_half": 0,
+          "peak": 0,
+          "n_px": 0,
+          "ink_px": 0,
+          "hash": 0
+        },
+        "hill_24_raw": {
+          "density": 0,
+          "width_half": 0,
+          "peak": 0,
+          "n_px": 0,
+          "ink_px": 0,
+          "hash": 0
+        },
+        "line_12_cal": {
+          "density": 0,
+          "width_half": 0,
+          "peak": 0,
+          "n_px": 0,
+          "ink_px": 0,
+          "hash": 0
+        },
+        "line_12_raw": {
+          "density": 0,
+          "width_half": 0,
+          "peak": 0,
+          "n_px": 0,
+          "ink_px": 0,
+          "hash": 0
+        },
+        "line_24_cal": {
+          "density": 0,
+          "width_half": 0,
+          "peak": 0,
+          "n_px": 0,
+          "ink_px": 0,
+          "hash": 0
+        },
+        "line_24_raw": {
+          "density": 0,
+          "width_half": 0,
+          "peak": 0,
+          "n_px": 0,
+          "ink_px": 0,
+          "hash": 0
+        }
+      }
+    ]
+  },
+  "verdict": {
+    "def": "경도 축의 단조 — 이웃 차 ≥ 상수(농도 PAINT68_GRADE_DENSITY_STEP_MIN · 폭 PAINT68_GRADE_WIDTH_STEP_MIN) · 폭 정직성(제품) = 요청 폭 대비 ±PAINT68_WIDTH_HONEST_TOL",
+    "pencil": {
+      "grades": [
+        "HB",
+        "B",
+        "2B",
+        "4B",
+        "6B",
+        "8B"
+      ],
+      "presets": [
+        "classic/pencil",
+        "ramon/B-pencil",
+        "tanda/pencil-2b",
+        "brunelleschi/pencil_4B",
+        "brunelleschi/pencil_6B",
+        "tanda/pencil-8b"
+      ],
+      "hill_12": {
+        "density_cal": [
+          0.1298,
+          0.2183,
+          0.0655,
+          0.0641,
+          0.0632,
+          0.0942
+        ],
+        "density_raw": [
+          0.1061,
+          0.1899,
+          0.0634,
+          0.0601,
+          0.0547,
+          0.0274
+        ],
+        "width_raw": [
+          7,
+          6,
+          11,
+          11,
+          11,
+          9
+        ],
+        "width_cal": [
+          9,
+          10,
+          11,
+          13,
+          15,
+          70
+        ],
+        "mono_density_cal": {
+          "ok": false,
+          "steps": [
+            0.0885,
+            -0.1528,
+            -0.0014,
+            -0.0009,
+            0.031
+          ]
+        },
+        "mono_density_raw": {
+          "ok": false,
+          "steps": [
+            0.0838,
+            -0.1265,
+            -0.0033,
+            -0.0054,
+            -0.0273
+          ]
+        },
+        "mono_width_raw": {
+          "ok": false,
+          "steps": [
+            -1,
+            5,
+            0,
+            0,
+            -2
+          ]
+        },
+        "width_honest_ratio": [
+          0.75,
+          0.833,
+          0.917,
+          1.083,
+          1.25,
+          5.833
+        ],
+        "width_honest_ok": false
+      },
+      "hill_24": {
+        "density_cal": [
+          0.1354,
+          0.2187,
+          0.0658,
+          0.0657,
+          0.0638,
+          0.1003
+        ],
+        "density_raw": [
+          0.1068,
+          0.1885,
+          0.0656,
+          0.0616,
+          0.053,
+          0.0263
+        ],
+        "width_raw": [
+          14,
+          12,
+          20,
+          20,
+          23,
+          17
+        ],
+        "width_cal": [
+          18,
+          20,
+          23,
+          26,
+          29,
+          108
+        ],
+        "mono_density_cal": {
+          "ok": false,
+          "steps": [
+            0.0833,
+            -0.1529,
+            -0.0001,
+            -0.0019,
+            0.0365
+          ]
+        },
+        "mono_density_raw": {
+          "ok": false,
+          "steps": [
+            0.0817,
+            -0.1229,
+            -0.004,
+            -0.0086,
+            -0.0267
+          ]
+        },
+        "mono_width_raw": {
+          "ok": false,
+          "steps": [
+            -2,
+            8,
+            0,
+            3,
+            -6
+          ]
+        },
+        "width_honest_ratio": [
+          0.75,
+          0.833,
+          0.958,
+          1.083,
+          1.208,
+          4.5
+        ],
+        "width_honest_ok": false
+      },
+      "line_12": {
+        "density_cal": [
+          0.1009,
+          0.1533,
+          0.0532,
+          0.0505,
+          0.0505,
+          0.043
+        ],
+        "density_raw": [
+          0.0782,
+          0.1308,
+          0.0509,
+          0.0478,
+          0.0419,
+          0.0132
+        ],
+        "width_raw": [
+          8,
+          6,
+          10,
+          10,
+          11,
+          7
+        ],
+        "width_cal": [
+          9,
+          10,
+          10,
+          13,
+          14,
+          66
+        ],
+        "mono_density_cal": {
+          "ok": false,
+          "steps": [
+            0.0524,
+            -0.1001,
+            -0.0027,
+            0,
+            -0.0075
+          ]
+        },
+        "mono_density_raw": {
+          "ok": false,
+          "steps": [
+            0.0526,
+            -0.0799,
+            -0.0031,
+            -0.0059,
+            -0.0287
+          ]
+        },
+        "mono_width_raw": {
+          "ok": false,
+          "steps": [
+            -2,
+            4,
+            0,
+            1,
+            -4
+          ]
+        },
+        "width_honest_ratio": [
+          0.75,
+          0.833,
+          0.833,
+          1.083,
+          1.167,
+          5.5
+        ],
+        "width_honest_ok": false
+      },
+      "line_24": {
+        "density_cal": [
+          0.1055,
+          0.1552,
+          0.0517,
+          0.0508,
+          0.0504,
+          0.0549
+        ],
+        "density_raw": [
+          0.083,
+          0.1301,
+          0.0515,
+          0.0488,
+          0.0414,
+          0.0105
+        ],
+        "width_raw": [
+          14,
+          12,
+          19,
+          19,
+          22,
+          20
+        ],
+        "width_cal": [
+          18,
+          20,
+          22,
+          26,
+          28,
+          81
+        ],
+        "mono_density_cal": {
+          "ok": false,
+          "steps": [
+            0.0497,
+            -0.1035,
+            -0.0009,
+            -0.0004,
+            0.0045
+          ]
+        },
+        "mono_density_raw": {
+          "ok": false,
+          "steps": [
+            0.0471,
+            -0.0786,
+            -0.0027,
+            -0.0074,
+            -0.0309
+          ]
+        },
+        "mono_width_raw": {
+          "ok": false,
+          "steps": [
+            -2,
+            7,
+            0,
+            3,
+            -2
+          ]
+        },
+        "width_honest_ratio": [
+          0.75,
+          0.833,
+          0.917,
+          1.083,
+          1.167,
+          3.375
+        ],
+        "width_honest_ok": false
+      }
+    },
+    "charcoal": {
+      "grades": [
+        "경",
+        "중",
+        "연"
+      ],
+      "presets": [
+        "tanda/charcoal-01",
+        "tanda/charcoal-03",
+        "tanda/charcoal-04"
+      ],
+      "hill_12": {
+        "density_cal": [
+          0.2282,
+          0.282,
+          0.089
+        ],
+        "density_raw": [
+          0.1219,
+          0.1877,
+          0.0629
+        ],
+        "width_raw": [
+          12,
+          18,
+          15
+        ],
+        "width_cal": [
+          29,
+          13,
+          16
+        ],
+        "mono_density_cal": {
+          "ok": false,
+          "steps": [
+            0.0538,
+            -0.193
+          ]
+        },
+        "mono_density_raw": {
+          "ok": false,
+          "steps": [
+            0.0658,
+            -0.1248
+          ]
+        },
+        "mono_width_raw": {
+          "ok": false,
+          "steps": [
+            6,
+            -3
+          ]
+        },
+        "width_honest_ratio": [
+          2.417,
+          1.083,
+          1.333
+        ],
+        "width_honest_ok": false
+      },
+      "hill_24": {
+        "density_cal": [
+          0.3303,
+          0.2727,
+          0.0841
+        ],
+        "density_raw": [
+          0.1406,
+          0.2209,
+          0.0587
+        ],
+        "width_raw": [
+          21,
+          32,
+          39
+        ],
+        "width_cal": [
+          37,
+          30,
+          33
+        ],
+        "mono_density_cal": {
+          "ok": false,
+          "steps": [
+            -0.0576,
+            -0.1886
+          ]
+        },
+        "mono_density_raw": {
+          "ok": false,
+          "steps": [
+            0.0803,
+            -0.1622
+          ]
+        },
+        "mono_width_raw": {
+          "ok": true,
+          "steps": [
+            11,
+            7
+          ]
+        },
+        "width_honest_ratio": [
+          1.542,
+          1.25,
+          1.375
+        ],
+        "width_honest_ok": false
+      },
+      "line_12": {
+        "density_cal": [
+          0.165,
+          0.2671,
+          0.072
+        ],
+        "density_raw": [
+          0.0921,
+          0.1951,
+          0.0506
+        ],
+        "width_raw": [
+          10,
+          16,
+          15
+        ],
+        "width_cal": [
+          24,
+          13,
+          16
+        ],
+        "mono_density_cal": {
+          "ok": false,
+          "steps": [
+            0.1021,
+            -0.1951
+          ]
+        },
+        "mono_density_raw": {
+          "ok": false,
+          "steps": [
+            0.103,
+            -0.1445
+          ]
+        },
+        "mono_width_raw": {
+          "ok": false,
+          "steps": [
+            6,
+            -1
+          ]
+        },
+        "width_honest_ratio": [
+          2,
+          1.083,
+          1.333
+        ],
+        "width_honest_ok": false
+      },
+      "line_24": {
+        "density_cal": [
+          0.2479,
+          0.2599,
+          0.0672
+        ],
+        "density_raw": [
+          0.1144,
+          0.2123,
+          0.0476
+        ],
+        "width_raw": [
+          14,
+          30,
+          39
+        ],
+        "width_cal": [
+          25,
+          30,
+          34
+        ],
+        "mono_density_cal": {
+          "ok": false,
+          "steps": [
+            0.012,
+            -0.1927
+          ]
+        },
+        "mono_density_raw": {
+          "ok": false,
+          "steps": [
+            0.0979,
+            -0.1647
+          ]
+        },
+        "mono_width_raw": {
+          "ok": true,
+          "steps": [
+            16,
+            9
+          ]
+        },
+        "width_honest_ratio": [
+          1.042,
+          1.25,
+          1.417
+        ],
+        "width_honest_ok": false
+      }
+    },
+    "gates": [
+      {
+        "name": "pencil hill_12 농도 단조(제품)",
+        "ok": false
+      },
+      {
+        "name": "pencil hill_12 폭 단조(고유)",
+        "ok": false
+      },
+      {
+        "name": "pencil hill_12 폭 정직성(제품)",
+        "ok": false
+      },
+      {
+        "name": "pencil hill_24 농도 단조(제품)",
+        "ok": false
+      },
+      {
+        "name": "pencil hill_24 폭 단조(고유)",
+        "ok": false
+      },
+      {
+        "name": "pencil hill_24 폭 정직성(제품)",
+        "ok": false
+      },
+      {
+        "name": "pencil line_12 농도 단조(제품)",
+        "ok": false
+      },
+      {
+        "name": "pencil line_12 폭 단조(고유)",
+        "ok": false
+      },
+      {
+        "name": "pencil line_12 폭 정직성(제품)",
+        "ok": false
+      },
+      {
+        "name": "pencil line_24 농도 단조(제품)",
+        "ok": false
+      },
+      {
+        "name": "pencil line_24 폭 단조(고유)",
+        "ok": false
+      },
+      {
+        "name": "pencil line_24 폭 정직성(제품)",
+        "ok": false
+      },
+      {
+        "name": "charcoal hill_12 농도 단조(제품)",
+        "ok": false
+      },
+      {
+        "name": "charcoal hill_12 폭 단조(고유)",
+        "ok": false
+      },
+      {
+        "name": "charcoal hill_12 폭 정직성(제품)",
+        "ok": false
+      },
+      {
+        "name": "charcoal hill_24 농도 단조(제품)",
+        "ok": false
+      },
+      {
+        "name": "charcoal hill_24 폭 단조(고유)",
+        "ok": true
+      },
+      {
+        "name": "charcoal hill_24 폭 정직성(제품)",
+        "ok": false
+      },
+      {
+        "name": "charcoal line_12 농도 단조(제품)",
+        "ok": false
+      },
+      {
+        "name": "charcoal line_12 폭 단조(고유)",
+        "ok": false
+      },
+      {
+        "name": "charcoal line_12 폭 정직성(제품)",
+        "ok": false
+      },
+      {
+        "name": "charcoal line_24 농도 단조(제품)",
+        "ok": false
+      },
+      {
+        "name": "charcoal line_24 폭 단조(고유)",
+        "ok": true
+      },
+      {
+        "name": "charcoal line_24 폭 정직성(제품)",
+        "ok": false
+      }
+    ]
+  },
+  "falsify_dup": {
+    "def": "D-3 — 같은 프리셋(HB)을 두 자리에: 이웃 차 0 < 최소 → 판정 false여야 자가 무언가를 잰다",
+    "values": [
+      0.1298,
+      0.1298,
+      0.0655
+    ],
+    "ok": false,
+    "steps": [
+      0,
+      -0.0643
+    ]
+  },
+  "determinism": {
+    "def": "같은 프리셋·같은 시드 두 번 == 같은 지도 해시(63 게이트 ① 규약) · 다른 시드는 다른 해시(자가 산다)",
+    "same": true,
+    "hashes": [
+      1024828176,
+      1024828176
+    ],
+    "other_seed_differs": true
+  },
+  "constants_used": {
+    "PAINT68_GRADE_DENSITY_STEP_MIN": 0.012,
+    "PAINT68_GRADE_WIDTH_STEP_MIN": 0.5,
+    "PAINT68_WIDTH_HONEST_TOL": 0.25
+  }
+}

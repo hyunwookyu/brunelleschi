@@ -447,7 +447,7 @@
        그 덤에 덤혀 단추들이 **보이긴 하는데 안 눌렸다**. 사람 눈에는 «고장난
        단추»로만 보였을 증상이다 — e2e가 「휠 캠버스가 마커 단추의 클릭을 가로채다」로
        잡았다(#73 ㉐의 친척: «문면상 이 규칙은 화면 겹의 것»이 아니라 실측이 정한다). */
-    /* (48-2의 이산 크기 칸 .sizebtn · 52-3의 프리셋 세 칸 .presetbtn의 CSS는 **web2-64 64-7이 지웠다** — 58-1이 슬라이더로, 64가 즐겨찾기로 대체) */
+    /* (48-2의 이산 크기 칸 .sizebtn · 52-3의 프리셋 세 칸 .presetbtn의 CSS는 **web2-64 64-7이 지웠다** — 58-1이 슬라이더로, 64가 칸 여섯(→ 68 필통)으로 대체) */
     /* ── 칠 패널(web2-64 §2) — 칠 도구를 든 «동안» 항상 뜬다(R8 정정 — DECISIONS). 통(tray)의 겹침 규칙(R2 · 왼쪽으로 겹쳐 뜬다)은
        그대로 쓰되 등록부 밖이다(바깥 누름으로 안 접힌다 · 도구를 놓아야 사라진다). 폭은 치수 리본의 내용 폭(208)에 맞춘다.
        #97: 줄은 flex-shrink 0(위 #painttray > * 규칙) · 견본 캔버스는 인라인 position:static. */
@@ -459,19 +459,17 @@
        동안만 · 설명은 호버). 흐름 밖(absolute)이라 줄 배치를 안 민다. */
     #paint-clamp-dot { position: absolute; top: 5px; right: 5px; width: 9px; height: 9px;
                        border-radius: 50%; background: #c4813a; pointer-events: auto; }
-    /* 지우개 고정 칸(web2-67 0-6) — 즐겨찾기 옆 한 줄: [지우개] [경도]. 68(필통)이 자리를 다시 볼 수 있다.
-       단추는 .ebtn(줄이 아니다 — .rrow 줄 셈(mats46 ①)을 오염시키면 안 된다). */
-    #paint-erase-row { display: flex; gap: 6px; align-items: stretch; }
+    /* 지우개 고정 칸(web2-67 0-6 → **68**: 필통의 여덟째 칸 · 맨 끝 고정 · 저장 밖). 경도(딱딱/부드럼)는 칸의
+       경도 글자 자리(.pcgrade — #paint-erase-soft). 단추는 .favbtn/.ebtn(줄이 아니다 — .rrow 줄 셈(mats46 ①)을 오염시키면 안 된다). */
     .ebtn { border: 1px solid rgba(60,56,49,.14); border-radius: 4px; background: rgba(255,255,255,.55);
             cursor: pointer; touch-action: none; font: 13px system-ui, sans-serif; color: #3c3831; }
-    #paint-erase { flex: 1; display: flex; align-items: center; gap: 6px; padding: 5px 8px; }
-    #paint-erase svg { width: 20px; height: 20px; }
-    #paint-erase-soft { flex-shrink: 0; padding: 5px 8px; font-size: 12px; }
+    .pcell { position: relative; display: flex; min-width: 0; }
+    .pcell > .favbtn { flex: 1; }
     #paint-erase.on, #paint-erase-soft.on { background: rgba(60, 56, 49, .14); }
     #painttray .rrow { box-shadow: none; background: transparent; }
     #painttray .rrow.on { background: rgba(60, 56, 49, .10); }
     #painttray .prow { padding-top: 4px; padding-bottom: 4px; }
-    #paint-brush-btn { align-items: center; gap: 8px; padding: 6px; border-radius: 4px; background: rgba(255,255,255,.6); }
+    #paint-brush-btn { align-items: center; gap: 8px; padding: 6px; border-radius: 4px; background: rgba(255,255,255,.6); }   /* 필통 머리(68) — 지금 브러시 */
     /* web2-65 §2 ④ — **자르지 않는다**(잘리면 이름이 아니다): 말줄임 대신 줄바꿈이다. */
     #paint-brush-name { font: 12px/1.25 system-ui, sans-serif; text-align: left; min-width: 0; white-space: normal; }
     #paint-brush-name b { font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
@@ -486,15 +484,29 @@
     #paint-wheelbox[hidden] { display: none; }
     #paint-wheel-cv { position: static; inset: auto; display: block; touch-action: none; cursor: crosshair; }
     #paint-hex { min-width: 0; font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #4a463f; }
-    /* 즐겨찾기 여섯(64 — 옛 도구 넷의 자리) — 3×2 격자 · **그 브러시의 실제 자국** + 이름(65 §2 ②).
-       그림(SLOT_SVG)이 아니라 자국인 이유: 여섯이 다 비슷한 연필 그림이라 구분이 안 됐다(사람 판정). */
-    #paint-favs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 4px 6px; }
-    .favbtn { display: flex; flex-direction: column; align-items: center; gap: 2px; background: rgba(255,255,255,.55); border: 1px solid rgba(60,56,49,.12);
-              border-radius: 4px; padding: 3px 2px; margin: 0; color: #4a463f; cursor: pointer; touch-action: none; min-width: 0; }
-    .favbtn svg { height: 22px; width: auto; }
-    /* 65 §2 ④ — 말줄임 ⛔. 두 줄까지 흐르고 그래도 넘치면 패널 폭이 틀린 것이다(게이트가 잡는다). */
-    .favbtn .favname { font: 10px/1.15 system-ui, sans-serif; white-space: normal; overflow-wrap: anywhere; max-width: 100%; text-align: center; }
+    /* 필통 여덟(web2-68 §1 — 옛 여섯 칸(64~67)의 자리) — 4×2 격자 · 칸 = 도구 그림(촉에 그 칸의 색) + 경도 글자(연필·목탄 —
+       위아래로 끌면 경도) + 아래 작은 숫자 둘(크기 px · 불투명 % · 9.5px — Feather 2.x 채록 §B-0). 견본 획이 아니라 도구 그림인
+       이유: 사람 판정 「필통 시스템으로」 — 칸은 «어느 도구인가»를 말하고 색·크기·불투명은 촉·숫자가 말한다. */
+    #paint-favs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 4px 4px; }
+    .favbtn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; background: rgba(255,255,255,.55); border: 1px solid rgba(60,56,49,.12);
+              border-radius: 4px; padding: 3px 2px 2px; margin: 0; color: #4a463f; cursor: pointer; touch-action: none; min-width: 0; min-height: 56px; }
+    .favbtn .pcpic { display: block; width: 32px; height: 32px; }
+    .favbtn .pcpic svg { width: 32px; height: 32px; display: block; }
+    .favbtn .pcgrade, .pcell .pcgrade { position: absolute; top: 2px; right: 3px; font: 600 10px/1 system-ui, sans-serif; color: #3c3831;
+                                        padding: 2px 3px; border-radius: 3px; background: rgba(255,255,255,.85); border: 1px solid rgba(60,56,49,.18);
+                                        cursor: ns-resize; touch-action: none; user-select: none; }
+    .favbtn .pcgrade[hidden] { display: none; }
+    .pcell .pcgrade { cursor: pointer; z-index: 1; }
+    .favbtn .pcnums { font: 9.5px/1.1 system-ui, sans-serif; color: #6b665c; white-space: nowrap; font-variant-numeric: tabular-nums; }
     .favbtn.on { background: rgba(60, 56, 49, .14); border-color: rgba(60,56,49,.4); }
+    /* 크기 눈금 표식(web2-68 §3-2) — 트랙 위 √2 등비 점. 점만 누를 수 있고 트랙의 끌기는 연속 그대로(58 R1 철회). */
+    #paint-size-tickwrap { position: relative; display: inline-block; flex-shrink: 0; width: 132px; }
+    #paint-size-tickwrap input[type=range] { width: 132px; margin: 0; }
+    #paint-size-ticks { position: absolute; left: 0; right: 0; top: -3px; height: 8px; cursor: pointer; touch-action: none; }
+    #paint-size-ticks .tick { position: absolute; top: 1px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%;
+                              background: #8d8880; pointer-events: none; }
+    /* 브러시 목록 두 칸(web2-68 §3-1) — 왼쪽 세트 열의 고른 세트 */
+    .brushpick-set.on { background: rgba(60,56,49,.12); font-weight: 600; }
     .rrow { display: flex; flex-direction: row; align-items: center; gap: 7px;
             font: 12px/1 system-ui, sans-serif; color: #4a463f; white-space: nowrap;
             background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);

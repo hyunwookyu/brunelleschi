@@ -25,7 +25,8 @@ export const DPR2_NEED_RE = /screenshot\(|getImageData|readPixels|toDataURL/
  *  (#99와 같은 뿌리). 초록 실행에서 빠지고 밤(e2e:night)·원장(e2e:ledger)에만 돈다. */
 export const MEASURE_SPECS = ['cost18', 'cost20', 'cost22', 'brushperf', 'perf65', 'perf66'] as const
 
-/** 조건이 낸 목록(2026-09-05 · web2-67: paint67·shots67·**gesture67**이 늘었다(화면 #gl
+/** 조건이 낸 목록(2026-09-05 · web2-68: **case68·shots68**이 늘었다(필통 칸의 촉 색·눈금·목록 견본의 픽셀 해시 — getImageData · 사진 screenshot) — 63 → 65 · paint68은 픽셀 API를 안 부른다(__m61 지도만 — paint63 선례) ·
+ *  web2-67: paint67·shots67·**gesture67**이 늘었다(화면 #gl
  *  getImageData — 지우개·낡은 그림·이음매 틈([M8] seam_gap)의 픽셀 자 · 사진 screenshot) —
  *  60 → 63. ⚠ gesture67은 첫 판에서 조건 밖이었는데(픽셀 자가 diag 통로뿐) 리뷰어 [M8]
  *  대응이 seam_gap(getImageData)을 넣어 조건이 도로 요구했다 — 「픽셀을 읽기 시작한 경우는
@@ -33,11 +34,11 @@ export const MEASURE_SPECS = ['cost18', 'cost20', 'cost22', 'brushperf', 'perf65
  *  web2-66: paint66이 늘었다(화면 #gl의 getImageData — 게이트 ④ bbox 자국·⑤ sha 항등의 자) · perf66은 계측이라 MEASURE_SPECS이고 픽셀 API를 안 부른다((e)의 픽셀 자는 paint66 ④가 들었다 — pre 값은 perf66_pre 원장에 동결) — 59 → 60 ·
  *  web2-65: paint65·panel65·shots65가 늘었다(화면 #gl의 getImageData · 즐겨찾기 견본 캔버스 — 부분 업로드의 결함은 캔버스 해시로는 안 잡힌다) · perf65는 계측이라 MEASURE_SPECS이고 픽셀 API를 안 부른다 — 56 → 59 · 2026-09-04 · web2-64: paint64·shots64가 늘고(getImageData·screenshot) bake61·shots61이 스펙째 갔다(옛 엔진의 팔 — 64-6·64-8) · web2-63: shots63이 늘었다 — 55 → 56 · paint63·ref63은 픽셀 API를 안 부른다(__m61 어둡기 지도만) · web2-62: paint62·shots62가 늘었다 — 53 → 55 · 61: shots61이 늘고 옛 엔진 축 스펙 셋(brush51·mark58·quality60)이 스펙과 함께 갔다) — 갱신은 조건을 다시 돌려서만 한다. */
 export const DPR2_SPECS = [
-  'axisproj', 'brush', 'dimwrite29', 'draftgate', 'drafting', 'draw',
+  'axisproj', 'brush', 'case68', 'dimwrite29', 'draftgate', 'drafting', 'draw',
   'entry17', 'extacq', 'eyelayer27', 'face', 'files43', 'flow', 'gesture', 'gesture67',
   'grain26', 'grain30', 'grain40', 'graphite', 'icons', 'inklayer', 'input',
   'join56', 'level', 'materials', 'mats46', 'mats52', 'nums47', 'own3d', 'paint45',
   'paint48', 'paint50', 'paint54', 'paint59', 'paint62', 'paint64', 'paint65', 'paint66', 'paint67', 'panel65', 'paper', 'papericon31', 'press26', 'rep49', 'rollpose',
-  'roundsave', 'shots62', 'shots63', 'shots64', 'shots65', 'shots66', 'shots67', 'slide40', 'snapghost', 'span57', 'thick55', 'turn31', 'ui34r7', 'underlay', 'view42',
+  'roundsave', 'shots62', 'shots63', 'shots64', 'shots65', 'shots66', 'shots67', 'shots68', 'slide40', 'snapghost', 'span57', 'thick55', 'turn31', 'ui34r7', 'underlay', 'view42',
   'waitfade', 'waitink37', 'yellow', 'yellowfree', 'zones',
 ] as const

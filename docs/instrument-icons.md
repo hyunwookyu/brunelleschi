@@ -382,3 +382,11 @@
 ```html
 <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="22" height="18"/><path d="M5 13 H27 M5 19 H27 M12 7 V13 M20 13 V19 M12 19 V25" stroke-width="1.1"/></svg>
 ```
+
+## 필통 칸의 도구 그림 (web2-68 §1 · 정본은 `web2/src/app/main.ts`의 `CASE_SVG`)
+
+일곱 + 지우개: **연필 · 목탄 · 색연필 · 마커 · 붓 · 잉크펜 · 지우개**. 선 문법 하나(fill:none · stroke:currentColor ·
+**stroke-width 1.75/32** — UX-FLOWS §G-5의 «둘의 중간» · round cap/join) · 32px 격자 · **촉/심(`.tip`)만 fill이 그 칸의 색**
+(Feather 2.x 채록 §B-2). 촉의 테두리는 늘 남긴다(밝은 색이면 온 굵기 1.75, 아니면 .9 — 흰 종이에서 사라지지 않게).
+우리 그림(라이선스 물음 없음). ⚠ 70(시각 시스템)이 이 그림을 24px 격자·아이콘 한 세트에 맞춘다 — 다시 그리지 않고 맞춘다.
+지우개는 67 0-6의 그 그림 그대로(색 없음).

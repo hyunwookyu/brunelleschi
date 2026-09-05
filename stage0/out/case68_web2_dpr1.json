@@ -1,0 +1,889 @@
+{
+  "conditions": {
+    "project": "dpr1",
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/case68.spec.ts (#99)"
+  },
+  "what": "web2-68 §1 필통 · §2 화면(경도 끌기) · §3 목록 두 칸·눈금 표식",
+  "note_pitfalls": "#109(옛 판 → 새 판 이주 한 번 · 옛 열쇠는 이주 원본으로만) · #96·#97(34-0 몫) · #54(칸 탭·끌기·목록 전부 pickBrush 하나) · #42",
+  "pitfall_citations": [
+    42,
+    54,
+    96,
+    97,
+    109
+  ],
+  "selfcheck_notes": {
+    "identical_pairs": "⑤ 견본 해시 «같음»은 «견본 = 그리는 그 함수»의 뜻 그 자체(62 규약) — 다른 입력(다른 hex)의 해시가 다르다(반증 열)",
+    "exact_ratio": "① 왕복 5/5 · ④ 획 br 일치는 구성 게이트(43 ② 선례) — 이주 시험이 «옛 저장물 → 새 판»을 값으로 든다",
+    "exact_one": "g01_case.migrated_count = 1은 «이주는 한 번»의 뜻 그 자체(#109 — 옛 판을 바꿔도 새 판이 정본인 것을 같은 시험이 든다) — 비율이 아니라 횟수"
+  },
+  "g01_case": {
+    "def": "필통 칸 수 8(도구 7 + 지우개 1 — 마지막 칸 id paint-erase · 끌어 바꿀 손잡이 없음) · 옛 판 여섯 → 새 판 앞 여섯(사양 포함) · 일곱째 기본(잉크펜) · 이주 «한 번»(새 판이 쓰인 뒤 옛 판은 다시 안 읽는다)",
+    "cells": [
+      {
+        "id": "paint-fav-1",
+        "kind": "marker",
+        "br": "tanda/marker-01"
+      },
+      {
+        "id": "paint-fav-2",
+        "kind": "pen",
+        "br": "deevad/liner"
+      },
+      {
+        "id": "paint-fav-3",
+        "kind": "charcoal",
+        "br": "classic/charcoal"
+      },
+      {
+        "id": "paint-fav-4",
+        "kind": "cp",
+        "br": "brunelleschi/colored_pencil"
+      },
+      {
+        "id": "paint-fav-5",
+        "kind": "pencil",
+        "br": "deevad/2B_pencil"
+      },
+      {
+        "id": "paint-fav-6",
+        "kind": "brush",
+        "br": "deevad/watercolor_expressive"
+      },
+      {
+        "id": "paint-fav-7",
+        "kind": "pen",
+        "br": "deevad/liner"
+      },
+      {
+        "id": "paint-erase",
+        "kind": "eraser",
+        "br": ""
+      }
+    ],
+    "migrated_count": 1,
+    "new_key_written": true,
+    "favs_after": [
+      {
+        "i": "marker",
+        "br": "tanda/marker-01",
+        "hex": "#112233",
+        "w": 21,
+        "o": 0.5
+      },
+      {
+        "i": "brush",
+        "br": "deevad/liner",
+        "hex": "#445566",
+        "w": 7,
+        "o": 1
+      },
+      {
+        "i": "pencil",
+        "br": "classic/charcoal"
+      },
+      {
+        "i": "cp",
+        "br": "brunelleschi/colored_pencil",
+        "hex": "#778899"
+      },
+      {
+        "i": "pencil",
+        "br": "deevad/2B_pencil",
+        "o": 0.3
+      },
+      {
+        "i": "brush",
+        "br": "deevad/watercolor_expressive",
+        "hex": "#aabbcc",
+        "w": 40,
+        "o": 0.9
+      },
+      {
+        "i": "brush",
+        "br": "deevad/liner"
+      }
+    ],
+    "old": [
+      {
+        "i": "marker",
+        "br": "tanda/marker-01",
+        "hex": "#112233",
+        "w": 21,
+        "o": 0.5
+      },
+      {
+        "i": "brush",
+        "br": "deevad/liner",
+        "hex": "#445566",
+        "w": 7
+      },
+      {
+        "i": "pencil",
+        "br": "classic/charcoal"
+      },
+      {
+        "i": "cp",
+        "br": "brunelleschi/colored_pencil",
+        "hex": "#778899"
+      },
+      {
+        "i": "pencil",
+        "br": "deevad/2B_pencil",
+        "o": 0.3
+      },
+      {
+        "i": "brush",
+        "br": "deevad/watercolor_expressive",
+        "hex": "#aabbcc",
+        "w": 40,
+        "o": 0.9
+      }
+    ]
+  },
+  "g02_tap_hold": {
+    "def": "탭 전수(칸 1~7 → paintSel == 칸) · 긴 누름(칸 4 ← 지금 {marker, br, #6a3c9e, 23, .55}) · adopt(크기 31 → 칸 4의 w)",
+    "taps": [
+      {
+        "k": 0,
+        "sel": {
+          "i": "pencil",
+          "br": "classic/pencil",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "cell": {
+          "i": "pencil",
+          "br": "classic/pencil",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "ok": true
+      },
+      {
+        "k": 1,
+        "sel": {
+          "i": "pencil",
+          "br": "brunelleschi/pencil_4B",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "cell": {
+          "i": "pencil",
+          "br": "brunelleschi/pencil_4B",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "ok": true
+      },
+      {
+        "k": 2,
+        "sel": {
+          "i": "pencil",
+          "br": "tanda/charcoal-03",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "cell": {
+          "i": "pencil",
+          "br": "tanda/charcoal-03",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "ok": true
+      },
+      {
+        "k": 3,
+        "sel": {
+          "i": "cp",
+          "br": "brunelleschi/colored_pencil",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "cell": {
+          "i": "cp",
+          "br": "brunelleschi/colored_pencil",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "ok": true
+      },
+      {
+        "k": 4,
+        "sel": {
+          "i": "marker",
+          "br": "brunelleschi/marker",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "cell": {
+          "i": "marker",
+          "br": "brunelleschi/marker",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "ok": true
+      },
+      {
+        "k": 5,
+        "sel": {
+          "i": "brush",
+          "br": "deevad/watercolor_expressive",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "cell": {
+          "i": "brush",
+          "br": "deevad/watercolor_expressive",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "ok": true
+      },
+      {
+        "k": 6,
+        "sel": {
+          "i": "brush",
+          "br": "deevad/liner",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "cell": {
+          "i": "brush",
+          "br": "deevad/liner",
+          "hex": "#5a5a5a",
+          "w": 10,
+          "o": 1
+        },
+        "ok": true
+      }
+    ],
+    "held": {
+      "i": "marker",
+      "br": "brunelleschi/marker",
+      "hex": "#6a3c9e",
+      "w": 23,
+      "o": 0.55
+    },
+    "now": {
+      "i": "marker",
+      "br": "brunelleschi/marker",
+      "hex": "#6a3c9e",
+      "w": 23,
+      "o": 0.55
+    },
+    "adopted_w": 31,
+    "initial": [
+      {
+        "i": "pencil",
+        "br": "classic/pencil"
+      },
+      {
+        "i": "pencil",
+        "br": "brunelleschi/pencil_4B"
+      },
+      {
+        "i": "pencil",
+        "br": "tanda/charcoal-03"
+      },
+      {
+        "i": "cp",
+        "br": "brunelleschi/colored_pencil"
+      },
+      {
+        "i": "marker",
+        "br": "brunelleschi/marker"
+      },
+      {
+        "i": "brush",
+        "br": "deevad/watercolor_expressive"
+      },
+      {
+        "i": "brush",
+        "br": "deevad/liner",
+        "hex": "#5a5a5a",
+        "w": 10,
+        "o": 1
+      }
+    ]
+  },
+  "g03_tip": {
+    "def": "칸마다 svg .tip의 fill == 칸 hex(칸에 색이 없으면 지금 색) · 반증: #c0392b → #1f6fd0에서 fill이 따라 바뀐다 · 밝은 색(#fafafa · v > .92)은 촉 테두리 온 굵기 · 경도 글자 == 칸 br의 경도 · 숫자 == 칸의 w·o",
+    "initial": [
+      {
+        "id": "paint-fav-1",
+        "kind": "pencil",
+        "br": "classic/pencil",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "HB",
+        "grade_hidden": false,
+        "nums": "10px · 100%",
+        "on": false
+      },
+      {
+        "id": "paint-fav-2",
+        "kind": "pencil",
+        "br": "brunelleschi/pencil_4B",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "4B",
+        "grade_hidden": false,
+        "nums": "10px · 100%",
+        "on": false
+      },
+      {
+        "id": "paint-fav-3",
+        "kind": "charcoal",
+        "br": "tanda/charcoal-03",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "중",
+        "grade_hidden": false,
+        "nums": "10px · 100%",
+        "on": false
+      },
+      {
+        "id": "paint-fav-4",
+        "kind": "cp",
+        "br": "brunelleschi/colored_pencil",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "",
+        "grade_hidden": true,
+        "nums": "10px · 100%",
+        "on": false
+      },
+      {
+        "id": "paint-fav-5",
+        "kind": "marker",
+        "br": "brunelleschi/marker",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "",
+        "grade_hidden": true,
+        "nums": "10px · 100%",
+        "on": false
+      },
+      {
+        "id": "paint-fav-6",
+        "kind": "brush",
+        "br": "deevad/watercolor_expressive",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "",
+        "grade_hidden": true,
+        "nums": "10px · 100%",
+        "on": false
+      },
+      {
+        "id": "paint-fav-7",
+        "kind": "pen",
+        "br": "deevad/liner",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "",
+        "grade_hidden": true,
+        "nums": "10px · 100%",
+        "on": true
+      },
+      {
+        "id": "paint-erase",
+        "kind": "eraser",
+        "br": "",
+        "hex": "",
+        "tip_fill": null,
+        "grade": "딱딱",
+        "grade_hidden": false,
+        "nums": "10px",
+        "on": false
+      }
+    ],
+    "after_red": {
+      "hex": "#c0392b",
+      "fill": "#c0392b"
+    },
+    "after_blue": {
+      "hex": "#1f6fd0",
+      "fill": "#1f6fd0"
+    },
+    "bright": {
+      "fill": "#fafafa",
+      "sw": "1.75"
+    },
+    "cells": [
+      {
+        "id": "paint-fav-1",
+        "kind": "pencil",
+        "br": "classic/pencil",
+        "hex": "#fafafa",
+        "tip_fill": "#fafafa",
+        "grade": "HB",
+        "grade_hidden": false,
+        "nums": "10px · 100%",
+        "on": true
+      },
+      {
+        "id": "paint-fav-2",
+        "kind": "pencil",
+        "br": "brunelleschi/pencil_4B",
+        "hex": "#fafafa",
+        "tip_fill": "#fafafa",
+        "grade": "4B",
+        "grade_hidden": false,
+        "nums": "10px · 100%",
+        "on": false
+      },
+      {
+        "id": "paint-fav-3",
+        "kind": "charcoal",
+        "br": "tanda/charcoal-03",
+        "hex": "#fafafa",
+        "tip_fill": "#fafafa",
+        "grade": "중",
+        "grade_hidden": false,
+        "nums": "10px · 100%",
+        "on": false
+      },
+      {
+        "id": "paint-fav-4",
+        "kind": "cp",
+        "br": "brunelleschi/colored_pencil",
+        "hex": "#fafafa",
+        "tip_fill": "#fafafa",
+        "grade": "",
+        "grade_hidden": true,
+        "nums": "10px · 100%",
+        "on": false
+      },
+      {
+        "id": "paint-fav-5",
+        "kind": "marker",
+        "br": "brunelleschi/marker",
+        "hex": "#fafafa",
+        "tip_fill": "#fafafa",
+        "grade": "",
+        "grade_hidden": true,
+        "nums": "10px · 100%",
+        "on": false
+      },
+      {
+        "id": "paint-fav-6",
+        "kind": "brush",
+        "br": "deevad/watercolor_expressive",
+        "hex": "#fafafa",
+        "tip_fill": "#fafafa",
+        "grade": "",
+        "grade_hidden": true,
+        "nums": "10px · 100%",
+        "on": false
+      },
+      {
+        "id": "paint-fav-7",
+        "kind": "pen",
+        "br": "deevad/liner",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "",
+        "grade_hidden": true,
+        "nums": "10px · 100%",
+        "on": false
+      },
+      {
+        "id": "paint-erase",
+        "kind": "eraser",
+        "br": "",
+        "hex": "",
+        "tip_fill": null,
+        "grade": "딱딱",
+        "grade_hidden": false,
+        "nums": "10px",
+        "on": false
+      }
+    ]
+  },
+  "g04_grade_drag": {
+    "def": "칸 1(HB)의 경도 글자를 21px 아래로 끌면 두 칸 무른 쪽(2B) → paintSel.br · 칸 br · 다음 펜 획의 paint.br 셋이 같다 · 50px 위로 끌면 끝(HB)에서 멈춘다 · 목탄 칸 3(중 → 연) · 제도 연필 app.grade 불변 · 반증: 축 밖 칸(마커)은 끌어도 br 불변",
+    "br0": "classic/pencil",
+    "after_drag": "tanda/pencil-2b",
+    "cell_br": "tanda/pencil-2b",
+    "grade_text": "2B",
+    "stroke_br": "tanda/pencil-2b",
+    "after_up": "classic/pencil",
+    "charcoal": "tanda/charcoal-04",
+    "app_grade": [
+      "HB",
+      "HB"
+    ],
+    "marker_falsify": [
+      "brunelleschi/marker",
+      "brunelleschi/marker"
+    ]
+  },
+  "g01_roundtrip": {
+    "def": "긴 누름(WRITE_HOLD_MS) → 새 판 저장 → 새로 고침 → 같은 칸 {i, br, hex, w, o}",
+    "rows": [
+      {
+        "k": 0,
+        "put": {
+          "i": "brush",
+          "br": "classic/brush",
+          "hex": "#203040",
+          "w": 10,
+          "o": 0.4
+        },
+        "got": {
+          "i": "brush",
+          "br": "classic/brush",
+          "hex": "#203040",
+          "w": 10,
+          "o": 0.4
+        },
+        "ok": true
+      },
+      {
+        "k": 1,
+        "put": {
+          "i": "brush",
+          "br": "classic/brush",
+          "hex": "#3a5b7c",
+          "w": 13,
+          "o": 0.5
+        },
+        "got": {
+          "i": "brush",
+          "br": "classic/brush",
+          "hex": "#3a5b7c",
+          "w": 13,
+          "o": 0.5
+        },
+        "ok": true
+      },
+      {
+        "k": 2,
+        "put": {
+          "i": "brush",
+          "br": "classic/brush",
+          "hex": "#5486b8",
+          "w": 16,
+          "o": 0.6
+        },
+        "got": {
+          "i": "brush",
+          "br": "classic/brush",
+          "hex": "#5486b8",
+          "w": 16,
+          "o": 0.6
+        },
+        "ok": true
+      },
+      {
+        "k": 3,
+        "put": {
+          "i": "brush",
+          "br": "classic/brush",
+          "hex": "#6eb1f4",
+          "w": 19,
+          "o": 0.7
+        },
+        "got": {
+          "i": "brush",
+          "br": "classic/brush",
+          "hex": "#6eb1f4",
+          "w": 19,
+          "o": 0.7
+        },
+        "ok": true
+      },
+      {
+        "k": 4,
+        "put": {
+          "i": "brush",
+          "br": "classic/brush",
+          "hex": "#88dd30",
+          "w": 22,
+          "o": 0.8
+        },
+        "got": {
+          "i": "brush",
+          "br": "classic/brush",
+          "hex": "#88dd30",
+          "w": 22,
+          "o": 0.8
+        },
+        "ok": true
+      }
+    ],
+    "pass": 5,
+    "n": 5
+  },
+  "g05_list": {
+    "def": "목록이 패널 오른쪽 가장자리에 붙는다(gap == FLYOUT_GAP_PX 8 · 화면 안) · 왼쪽 세트 열 = 최근 + 8 · 세트를 고르면 오른쪽에 그 세트만(hidden 아닌 details 1) · 행 높이 ≈ 48 · 견본 해시 == 같은 입력의 제품 함수(다른 hex는 다른 해시) · 최근: 9 고름 → 8 · 고른 순 · 재시작 생존",
+    "place": {
+      "panel_right": 278,
+      "pick_left": 286,
+      "pick_right": 708,
+      "gap": 8,
+      "vw": 1200,
+      "pick_top": 52,
+      "panel_top": 242
+    },
+    "sets": [
+      {
+        "id": "brushpick-set-recent",
+        "group": "최근",
+        "text": "최근 0"
+      },
+      {
+        "id": "brushpick-set-Brunelleschi",
+        "group": "Brunelleschi",
+        "text": "Brunelleschi 4"
+      },
+      {
+        "id": "brushpick-set-Dieterle",
+        "group": "Dieterle",
+        "text": "Dieterle 19"
+      },
+      {
+        "id": "brushpick-set-Classic",
+        "group": "Classic",
+        "text": "Classic 35"
+      },
+      {
+        "id": "brushpick-set-Deevad",
+        "group": "Deevad",
+        "text": "Deevad 36"
+      },
+      {
+        "id": "brushpick-set-Ramon",
+        "group": "Ramon",
+        "text": "Ramon 28"
+      },
+      {
+        "id": "brushpick-set-Experimental",
+        "group": "Experimental",
+        "text": "Experimental 23"
+      },
+      {
+        "id": "brushpick-set-Tanda",
+        "group": "Tanda",
+        "text": "Tanda 35"
+      },
+      {
+        "id": "brushpick-set-Kaerhon",
+        "group": "Kaerhon",
+        "text": "Kaerhon 20"
+      }
+    ],
+    "visible_after_tanda": [
+      "Tanda"
+    ],
+    "row_height": 55,
+    "sample": {
+      "row_hash": -789201600,
+      "fresh_hash": -789201600,
+      "other_hex_hash": 1710669138,
+      "tool": "brush",
+      "hex": "#5a5a5a",
+      "cw": 300,
+      "ch": 68
+    },
+    "picked": [
+      "tanda/pencil-2b",
+      "tanda/pencil-8b",
+      "tanda/charcoal-01",
+      "tanda/charcoal-03",
+      "tanda/charcoal-04",
+      "tanda/marker-01",
+      "tanda/marker-05",
+      "tanda/oil-mop",
+      "tanda/water-01"
+    ],
+    "recent": [
+      "tanda/water-01",
+      "tanda/oil-mop",
+      "tanda/marker-05",
+      "tanda/marker-01",
+      "tanda/charcoal-04",
+      "tanda/charcoal-03",
+      "tanda/charcoal-01",
+      "tanda/pencil-8b"
+    ],
+    "recent_rows": [
+      "tanda/water-01",
+      "tanda/oil-mop",
+      "tanda/marker-05",
+      "tanda/marker-01",
+      "tanda/charcoal-04",
+      "tanda/charcoal-03",
+      "tanda/charcoal-01",
+      "tanda/pencil-8b"
+    ],
+    "recent_after_reload": [
+      "tanda/water-01",
+      "tanda/oil-mop",
+      "tanda/marker-05",
+      "tanda/marker-01",
+      "tanda/charcoal-04",
+      "tanda/charcoal-03",
+      "tanda/charcoal-01",
+      "tanda/pencil-8b"
+    ],
+    "set_on_reopen": "Tanda"
+  },
+  "g06_ticks": {
+    "def": "눈금 값 = PAINT68_TICK_BASE × √2^k(≥ 최소 · ≤ 그 도구의 최대) · 점 탭 → w == 값 · input 17.5 → 17.5 그대로(연속 · step .5) · 슬롯 바꿈 → 눈금이 그 도구의 최대까지",
+    "ticks_brush": [
+      1.14,
+      1.61,
+      2.28,
+      3.22,
+      4.56,
+      6.45,
+      9.12,
+      12.9,
+      18.24,
+      25.8,
+      36.48,
+      51.59,
+      72.96,
+      103.18,
+      145.92,
+      206.36,
+      291.84,
+      412.72
+    ],
+    "ratios": [
+      1.412,
+      1.416,
+      1.412,
+      1.416,
+      1.414,
+      1.414,
+      1.414,
+      1.414,
+      1.414,
+      1.414,
+      1.414,
+      1.414,
+      1.414,
+      1.414,
+      1.414,
+      1.414,
+      1.414
+    ],
+    "pick": 25.8,
+    "w_after_tap": 25.8,
+    "w_after_drag": 17.5,
+    "step": "0.5",
+    "ticks_pencil": [
+      1.14,
+      1.61,
+      2.28,
+      3.22,
+      4.56,
+      6.45,
+      9.12,
+      12.9,
+      18.24,
+      25.8,
+      36.48
+    ],
+    "constants": {
+      "base": 0.57,
+      "ratio": 1.4142135623730951,
+      "max": {
+        "brush": 500,
+        "marker": 100,
+        "cp": 50,
+        "pencil": 50
+      }
+    }
+  },
+  "g07_census": {
+    "def": "34-0 몫 — 새 손잡이(필통 칸·지우개 칸·경도·눈금)의 툴팁(#96 · 기존 규약 — 눈금·경도 글자는 새 툴팁 없음(지시 ⛔))과 elementFromPoint 닿음(#97)",
+    "census": [
+      {
+        "id": "paint-fav-1",
+        "exists": true,
+        "hit": true,
+        "title": "필통 1 — 연필 HB · 연필 · 연필(원 이름 classic/pencil). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다) · 경도 글자를 위아래로 끌면 경도",
+        "rect": [
+          16,
+          397,
+          61,
+          56
+        ]
+      },
+      {
+        "id": "paint-fav-7",
+        "exists": true,
+        "hit": true,
+        "title": "필통 7 — 잉크펜 · 잉크펜 · 제도 라이너(원 이름 deevad/liner). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
+        "rect": [
+          144,
+          456,
+          61,
+          56
+        ]
+      },
+      {
+        "id": "paint-erase",
+        "exists": true,
+        "hit": true,
+        "title": "지우개 — 펜 한 붓이 칠의 덮임을 지운다 · 다시 누르면 붓으로 · 스타일러스 뒷꼭지도 지우개다",
+        "rect": [
+          207,
+          456,
+          61,
+          56
+        ]
+      },
+      {
+        "id": "paint-erase-soft",
+        "exists": true,
+        "hit": true,
+        "title": "지우개의 부드러움 — 경도 축 하나: 딱딱한(기본 — 마른 매체) / 부드러운",
+        "rect": [
+          237,
+          458,
+          28,
+          16
+        ]
+      },
+      {
+        "id": "paint-size-range",
+        "exists": true,
+        "hit": true,
+        "title": "자국 굵기(px) — 끌어서 조절한다",
+        "rect": [
+          80,
+          297,
+          96,
+          16
+        ]
+      }
+    ],
+    "tick": {
+      "hit": true,
+      "top": "paint-size-ticks"
+    },
+    "grade": {
+      "hit": true
+    }
+  }
+}

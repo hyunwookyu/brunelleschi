@@ -447,10 +447,10 @@ test('② 두 번 펼침 0 — 칠의 설정 전수(브러시·크기·불투명
   await page.click('#paint-brush-btn')
   await page.waitForTimeout(150)
   const pickOpen = await page.evaluate(() => (window as any).__b2.diag.openBoxes() as string[])
-  const firstGroup = await page.locator('#brushpick-list details').first()
-  await firstGroup.locator('summary').click()
+  // web2-68 §3-1 판갈이 — 목록이 두 칸이 됐다: 열리면 «지금 브러시의 세트»가 이미 펼쳐져 있다(details[open] 하나 · 나머지는 hidden).
+  // 옛 판은 첫 분류의 summary를 눌러 폈다 — 지금은 누를 것이 없다(한 단계 그대로 · 세트 열의 단추는 «같은 단계»의 다른 세트).
   await page.waitForTimeout(200)
-  const firstRow = await page.locator('#brushpick-list details[open] button[data-name]').first()
+  const firstRow = await page.locator('#brushpick-list details[open]:not([hidden]) button[data-name]').first()
   const rowId = await firstRow.getAttribute('id')
   const rowHit = await hit(page, rowId!)
   await page.click('#brushpick-close')

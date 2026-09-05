@@ -9,7 +9,7 @@
 import { C } from './constants'
 import type { Pt } from './vec'
 
-export type MarkShape = 'line' | 'wave' | 'cross'
+export type MarkShape = 'line' | 'wave' | 'cross' | 'hill'
 
 export interface MarkSample { pts: Pt[]; press: number[] }
 
@@ -41,6 +41,17 @@ export function markShape(shape: MarkShape, w: number, h: number): MarkSample {
     const pts: Pt[] = []
     for (let k = 0; k <= n; k++) pts.push({ x: 40 + (w - 80) * (k / n), y: h / 2 })
     return { pts, press: pts.map(() => 0.5 * C.PRESS_Q) }
+  }
+  // web2-68 §2 — 경도 축의 자: 직선 위 압력 0.3 → 0.7 → 0.3(지시 문면 · 삼각 프로필 — 난수 없음)
+  if (shape === 'hill') {
+    const pts: Pt[] = []
+    const press: number[] = []
+    for (let k = 0; k <= n; k++) {
+      const t = k / n
+      pts.push({ x: 40 + (w - 80) * t, y: h / 2 })
+      press.push((0.3 + 0.4 * (1 - Math.abs(2 * t - 1))) * C.PRESS_Q)
+    }
+    return { pts, press }
   }
   if (shape === 'wave') {
     const pts: Pt[] = []

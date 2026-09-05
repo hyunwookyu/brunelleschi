@@ -4,7 +4,7 @@
 // 규칙 셋:
 //   ① **원 이름은 안 없앤다.** 도움말(title)과 목록의 부제에 그대로 남는다 — 브러시를
 //      원문(mypaint-brushes · CC0)과 대조할 사람이 있고, 우리가 지은 이름은 «표시»일 뿐이다.
-//   ② **정확 표가 먼저다.** 앱이 슬롯 기본·즐겨찾기·팁 기본으로 실제로 쓰는 이름은 손으로 짓는다.
+//   ② **정확 표가 먼저다.** 앱이 슬롯 기본·필통 기본·팁 기본으로 실제로 쓰는 이름은 손으로 짓는다.
 //   ③ 나머지는 **낱말 사상**으로 옮기고, 아는 낱말이 하나도 없으면 **원 이름을 정돈해서 쓴다**
 //      (없는 뜻을 지어내지 않는다 — A-3 · 짓는 것보다 두는 것이 낫다).
 //
@@ -18,7 +18,7 @@ export const brushRawShort = (br: string): string =>
 export const brushGroup = (br: string): string => br.split('/')[0] ?? ''
 
 /** ② 정확 표 — 앱이 «실제로 앉히는» 이름들. 슬롯 기본(core/paintseam DEFAULT_BRUSH) ·
- *  즐겨찾기 기본 여섯 · 팁 기본 표(app/mypaintpaint TIP_EXACT)에 드는 것 전부가 여기 있다. */
+ *  필통 기본 일곱(68) · 팁 기본 표(app/mypaintpaint TIP_EXACT)에 드는 것 전부가 여기 있다. */
 export const BRUSH_LABEL_EXACT: Readonly<Record<string, string>> = {
   'classic/pencil': '연필',
   'classic/charcoal': '목탄',
@@ -37,7 +37,11 @@ export const BRUSH_LABEL_EXACT: Readonly<Record<string, string>> = {
   'deevad/watercolor_expressive': '수채',
   'brunelleschi/colored_pencil': '색연필',
   'brunelleschi/marker': '마커',              // web2-66 §2 — 납작한 촉(타원 도장 · 고정 각)의 앱 프리셋 · 새 기본
-
+  // web2-68 §2 — 경도 축(필통 칸의 경도 글자와 같은 이름 · core/grades68이 정본)
+  'tanda/pencil-2b': '연필 2B',
+  'tanda/pencil-8b': '연필 8B',
+  'brunelleschi/pencil_4B': '연필 4B',
+  'brunelleschi/pencil_6B': '연필 6B',
 }
 
 /** ③ 낱말 사상 — 긴 것부터 문다(watercolor가 water·color로 쪼개지지 않게). */

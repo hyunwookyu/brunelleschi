@@ -19,9 +19,39 @@
 //
 // 갈림의 판정은 paint64 ③(cp vs classic/pencil의 빈 픽셀 몫·가장자리 거칠기 — 63 ①의 자 그대로) · 사진 64-cp.png.
 
-import type { Preset } from '../mypaint/presets.gen'
+// ── web2-68 §2 — 경도 축의 «사이» 프리셋(연필 4B · 6B). 값을 짓지 않는다(A-3 · 62): 두 CC0 프리셋
+// (tanda/pencil-2b ↔ tanda/pencil-8b — mypaint-brushes CC0-1.0)의 base_value를 **선형 보간**하고 곡선은
+// 2b 것을 쓴다(지시 §2 방법 2 문면). 설정 키는 두 원본의 합집합에서만 나오고(모르는 키 생성 ⛔ — #108 ·
+// SETTINGS로 존재 검증 · 한쪽에만 있는 키는 libmypaint 기본값(settings.gen def)과 섞는다). 보간 위치(t)는
+// 원장 paint68(농도·반최대 폭 단조 표)이 정한다 — 아래 상수가 그 값이다.
+// 라이선스: 두 CC0의 사이 — 새 저작물의 «값»은 원본에서 왔고 이름(brunelleschi/…)만 앱의 것이다.
+
+import { PRESETS as MYPAINT_PRESETS, type Preset, type PresetSetting } from '../mypaint/presets.gen'
+import { SETTINGS } from '../mypaint/settings.gen'
 
 export const APP_GROUP = 'Brunelleschi'
+
+const PRESET_OF = new Map(MYPAINT_PRESETS.map(p => [p.name, p]))
+const SETTING_DEF = new Map(SETTINGS.map(s => [s.id, s.def]))
+
+/** 두 프리셋의 «사이» — base_value 선형 보간(t: 0 = a · 1 = b) · 곡선은 a의 것. */
+export function lerpPreset(name: string, aName: string, bName: string, t: number, desc: string): Preset {
+  const a = PRESET_OF.get(aName), b = PRESET_OF.get(bName)
+  if (!a || !b) throw new Error(`lerpPreset: 원본이 없다 — ${aName} · ${bName}`)
+  const s: Record<string, PresetSetting> = {}
+  for (const k of new Set([...Object.keys(a.s), ...Object.keys(b.s)])) {
+    const def = SETTING_DEF.get(k)
+    if (def === undefined) throw new Error(`lerpPreset: 모르는 설정 키 ${k}(#108)`)
+    const av = a.s[k]?.[0] ?? def, bv = b.s[k]?.[0] ?? def
+    const base = +(av + (bv - av) * t).toFixed(6)
+    const curves = a.s[k]?.[1]
+    s[k] = curves ? [base, curves] : [base]
+  }
+  return { name, group: APP_GROUP, desc, s }
+}
+
+/** 보간 위치 — 원장 paint68이 확정한 값(출발 배치는 지시 §2의 1/3 · 2/3). */
+export const PENCIL_LERP_T = { pencil_4B: 1 / 3, pencil_6B: 2 / 3 } as const
 
 export const APP_PRESETS: readonly Preset[] = [
   {
@@ -70,4 +100,9 @@ export const APP_PRESETS: readonly Preset[] = [
       stroke_holdtime: [10],
     },
   },
+  // ── 연필 4B · 6B(web2-68 §2) — tanda/pencil-2b ↔ tanda/pencil-8b의 사이(두 CC0의 사이 · 위 lerpPreset 주석).
+  lerpPreset('brunelleschi/pencil_4B', 'tanda/pencil-2b', 'tanda/pencil-8b', PENCIL_LERP_T.pencil_4B,
+    '연필 4B(web2-68) — tanda 2B와 8B의 사이(base_value 선형 보간 · 곡선은 2B) · 두 CC0 프리셋의 사이'),
+  lerpPreset('brunelleschi/pencil_6B', 'tanda/pencil-2b', 'tanda/pencil-8b', PENCIL_LERP_T.pencil_6B,
+    '연필 6B(web2-68) — tanda 2B와 8B의 사이(base_value 선형 보간 · 곡선은 2B) · 두 CC0 프리셋의 사이'),
 ]
