@@ -2,19 +2,24 @@
   "conditions": {
     "project": "dpr2",
     "workers": 1,
+    "viewport": "1200×800 (+ 800×700 base)",
+    "tree": "e636864",
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/inventory69.spec.ts (#99)"
   },
-  "what": "web2-69 §1 인벤토리 — 화면의 누를 것 전수(기본 · 도구별 · 카드별 · 개발) · §3 전수 왕복(표의 모든 id가 닿는다)",
-  "note_pitfalls": "#42 · #96/#97(툴팁·닿음 — 34-0 규약) · #12(상태 여섯 × 카드 넷 — 동작점이 하나가 아니다) · #91(«안 바뀌었는가»가 아니라 «닿는가»를 잰다)",
+  "what": "web2-69 §1 인벤토리 — 화면의 누를 것 전수(기본 · 도구별 · 카드별 · 통별 · 절차 · 개발) · §3 전수 왕복(표의 모든 id가 닿는다) · 격자 기본 꺼짐",
+  "note_pitfalls": "#42 · #96/#97(툴팁·닿음 — 34-0 규약) · #12(상태 열여덟 × 뷰포트 둘 — 동작점이 하나가 아니다) · #91(«안 바뀌었는가»가 아니라 «닿는가»를 잰다) · #109(옛 자리 비움 · 개발 메뉴 존재 셈 0/3 — 둘 다 살지 않는다) · #107(전부 0인 자리: 눈금 점 0은 표식의 뜻 · 면 +0은 재누름 통) · #108(표 == DOM은 같은 함수의 파생 — 낡음 검사이고 실질은 왕복·반증 ②)",
   "pitfall_citations": [
     12,
     42,
     91,
     96,
-    97
+    97,
+    107,
+    108,
+    109
   ],
   "census": {
-    "def": "«보이는 누를 것»(button·input·select·summary·role=button·a[href]·눈금 점·경도 글자 — rect > 0 · hidden 조상 없음) · 자리 = 첫 판 조상 · 기본 상태(?reset · 연필) · 도구별 «더» 나타난 것 · 카드별 «더» 나타난 것 · 개발 메뉴(?dev=1)",
+    "def": "«보이는 누를 것»(button·input·select·textarea·summary·role=button·a[href]·눈금 점·경도 글자·색상 휠 캔버스 — 가운데의 elementFromPoint가 자기) · 자리 = 첫 판 조상 · 기본 상태(?reset · 연필 — 「아무 도구도 안 든 상태」는 이 앱에 없다) · 상태마다 «더» 나타난 것(같은 id라도 자리가 다르면 새 것)",
     "base": {
       "total": 23,
       "by_zone": {
@@ -33,6 +38,7 @@
           "zone": "paperbar",
           "label": "작도",
           "has_icon": false,
+          "disabled": false,
           "title": "작도 — 작도 시점",
           "aria": "",
           "rect": [
@@ -49,6 +55,7 @@
           "zone": "paperbar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "지금 보고 있는 시점을 한 장으로 남긴다 — 시점 갱신은 탭을 길게 누른다",
           "aria": "시점 남기기",
           "rect": [
@@ -65,6 +72,7 @@
           "zone": "layerbar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "소실점 작도가 끝나야 얹을 수 있다",
           "aria": "",
           "rect": [
@@ -81,6 +89,7 @@
           "zone": "eyebar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "전체 화면 — 그림만 남긴다",
           "aria": "전체 화면",
           "rect": [
@@ -97,8 +106,9 @@
           "zone": "eyebar",
           "label": "",
           "has_icon": true,
-          "title": "표시 — 지평선·지면 격자·대기 획",
-          "aria": "표시",
+          "disabled": false,
+          "title": "보기 — 바닥면적 · 실 다이어그램 · 사람 놓기 · 스텐실",
+          "aria": "보기",
           "rect": [
             911,
             12,
@@ -113,6 +123,7 @@
           "zone": "pane-file",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "파일",
           "aria": "",
           "rect": [
@@ -129,6 +140,7 @@
           "zone": "pane-settings",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "설정",
           "aria": "",
           "rect": [
@@ -145,6 +157,7 @@
           "zone": "sidebar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "접기/펴기",
           "aria": "접기/펴기",
           "rect": [
@@ -161,6 +174,7 @@
           "zone": "sidebar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "작도 시점으로",
           "aria": "작도 시점",
           "rect": [
@@ -177,6 +191,7 @@
           "zone": "sidebar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "돋보기 — 대상에 맞춰 화면을 채운다",
           "aria": "돋보기",
           "rect": [
@@ -193,6 +208,7 @@
           "zone": "sidebar",
           "label": "",
           "has_icon": true,
+          "disabled": true,
           "title": "렌즈 — 화각을 바꾼다 (보기 전용) · 평행에서는 축척을 읽는다",
           "aria": "렌즈",
           "rect": [
@@ -209,6 +225,7 @@
           "zone": "sidebar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "실행취소 (Ctrl+Z)",
           "aria": "실행취소",
           "rect": [
@@ -225,6 +242,7 @@
           "zone": "sidebar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "다시실행 (Ctrl+Y)",
           "aria": "다시실행",
           "rect": [
@@ -241,6 +259,7 @@
           "zone": "sidebar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "자 — 오스냅 종류·반경",
           "aria": "자(스냅)",
           "rect": [
@@ -257,6 +276,7 @@
           "zone": "sidebar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "손 — 잡은 것을 다룬다 (복제 · 잠금 · 맺기 · 정면)",
           "aria": "손(잡기)",
           "rect": [
@@ -273,6 +293,7 @@
           "zone": "sidebar",
           "label": "HB",
           "has_icon": true,
+          "disabled": false,
           "title": "연필 — 누르면 연필통이 열린다",
           "aria": "연필",
           "rect": [
@@ -289,6 +310,7 @@
           "zone": "sidebar",
           "label": ".35",
           "has_icon": true,
+          "disabled": false,
           "title": "펜 — 누르면 촉통이 열린다",
           "aria": "펜",
           "rect": [
@@ -305,6 +327,7 @@
           "zone": "sidebar",
           "label": "6",
           "has_icon": true,
+          "disabled": false,
           "title": "연필 지우개 — 흑연만 지운다. 누르면 크기통이 열린다",
           "aria": "연필 지우개",
           "rect": [
@@ -321,6 +344,7 @@
           "zone": "sidebar",
           "label": "6",
           "has_icon": true,
+          "disabled": false,
           "title": "펜 지우개 — 잉크만 지운다. 누르면 크기통이 열린다",
           "aria": "펜 지우개",
           "rect": [
@@ -337,6 +361,7 @@
           "zone": "sidebar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "치수 — 리본 패널",
           "aria": "치수",
           "rect": [
@@ -353,6 +378,7 @@
           "zone": "sidebar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "소실점 작도가 끝나야 얹을 수 있다",
           "aria": "롤",
           "rect": [
@@ -369,6 +395,7 @@
           "zone": "sidebar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "면 — 둘러싸인 자리를 탭한다(다시 탭하면 없앤다)",
           "aria": "면",
           "rect": [
@@ -385,6 +412,7 @@
           "zone": "sidebar",
           "label": "",
           "has_icon": true,
+          "disabled": false,
           "title": "붓 — 면 위에 칠한다(톤은 지금 시점 그대로, 정확한 형태는 면 정면 뷰에서)",
           "aria": "붓(칠)",
           "rect": [
@@ -396,9 +424,44 @@
         }
       ]
     },
-    "tools": {
-      "btn-pencil": {
+    "base_800x700": {
+      "total": 21,
+      "by_zone": {
+        "paperbar": 2,
+        "layerbar": 1,
+        "eyebar": 2,
+        "pane-file": 1,
+        "pane-settings": 1,
+        "sidebar": 14
+      },
+      "ids": [
+        ".ptab",
+        "paper-add",
+        "layer-add",
+        "btn-fullscreen",
+        "btn-display",
+        ".t",
+        ".t",
+        "sidebar-toggle",
+        "btn-draw-view",
+        "btn-zoom-fit",
+        "btn-lens",
+        "btn-undo",
+        "btn-redo",
+        "btn-snap",
+        "btn-grip",
+        "btn-pencil",
+        "btn-pen",
+        "btn-eraser-pencil",
+        "btn-eraser-ink",
+        "dim-toggle",
+        "btn-roll"
+      ]
+    },
+    "states": {
+      "도구:연필": {
         "total": 29,
+        "taps_to_open": 1,
         "added": [
           "tray-2H",
           "tray-H",
@@ -407,7 +470,6 @@
           "tray-B",
           "tray-2B"
         ],
-        "removed": [],
         "added_items": [
           {
             "id": "tray-2H",
@@ -416,6 +478,7 @@
             "zone": "tray",
             "label": "2H",
             "has_icon": true,
+            "disabled": false,
             "title": "2H 연필",
             "aria": "2H 연필",
             "rect": [
@@ -432,6 +495,7 @@
             "zone": "tray",
             "label": "H",
             "has_icon": true,
+            "disabled": false,
             "title": "H 연필",
             "aria": "H 연필",
             "rect": [
@@ -448,6 +512,7 @@
             "zone": "tray",
             "label": "F",
             "has_icon": true,
+            "disabled": false,
             "title": "F 연필",
             "aria": "F 연필",
             "rect": [
@@ -464,6 +529,7 @@
             "zone": "tray",
             "label": "HB",
             "has_icon": true,
+            "disabled": false,
             "title": "HB 연필",
             "aria": "HB 연필",
             "rect": [
@@ -480,6 +546,7 @@
             "zone": "tray",
             "label": "B",
             "has_icon": true,
+            "disabled": false,
             "title": "B 연필",
             "aria": "B 연필",
             "rect": [
@@ -496,6 +563,7 @@
             "zone": "tray",
             "label": "2B",
             "has_icon": true,
+            "disabled": false,
             "title": "2B 연필",
             "aria": "2B 연필",
             "rect": [
@@ -505,10 +573,12 @@
               29
             ]
           }
-        ]
+        ],
+        "removed": []
       },
-      "btn-pen": {
+      "도구:펜": {
         "total": 28,
+        "taps_to_open": 1,
         "added": [
           "nib-0_18",
           "nib-0_25",
@@ -516,7 +586,6 @@
           "nib-0_5",
           "nib-0_7"
         ],
-        "removed": [],
         "added_items": [
           {
             "id": "nib-0_18",
@@ -525,6 +594,7 @@
             "zone": "pentray",
             "label": "0.18",
             "has_icon": true,
+            "disabled": false,
             "title": "0.18 mm 촉",
             "aria": "0.18 mm 촉",
             "rect": [
@@ -541,6 +611,7 @@
             "zone": "pentray",
             "label": "0.25",
             "has_icon": true,
+            "disabled": false,
             "title": "0.25 mm 촉",
             "aria": "0.25 mm 촉",
             "rect": [
@@ -557,6 +628,7 @@
             "zone": "pentray",
             "label": "0.35",
             "has_icon": true,
+            "disabled": false,
             "title": "0.35 mm 촉",
             "aria": "0.35 mm 촉",
             "rect": [
@@ -573,6 +645,7 @@
             "zone": "pentray",
             "label": "0.50",
             "has_icon": true,
+            "disabled": false,
             "title": "0.50 mm 촉",
             "aria": "0.50 mm 촉",
             "rect": [
@@ -589,6 +662,7 @@
             "zone": "pentray",
             "label": "0.70",
             "has_icon": true,
+            "disabled": false,
             "title": "0.70 mm 촉",
             "aria": "0.70 mm 촉",
             "rect": [
@@ -598,17 +672,18 @@
               29
             ]
           }
-        ]
+        ],
+        "removed": []
       },
-      "btn-eraser-pencil": {
+      "도구:연필 지우개": {
         "total": 27,
+        "taps_to_open": 1,
         "added": [
           "erase-5",
           "erase-12",
           "erase-27",
           "erase-60"
         ],
-        "removed": [],
         "added_items": [
           {
             "id": "erase-5",
@@ -617,6 +692,7 @@
             "zone": "etray",
             "label": "2",
             "has_icon": true,
+            "disabled": false,
             "title": "지름 2 mm 지우개",
             "aria": "지름 2 mm 지우개",
             "rect": [
@@ -633,6 +709,7 @@
             "zone": "etray",
             "label": "6",
             "has_icon": true,
+            "disabled": false,
             "title": "지름 6 mm 지우개",
             "aria": "지름 6 mm 지우개",
             "rect": [
@@ -649,6 +726,7 @@
             "zone": "etray",
             "label": "13",
             "has_icon": true,
+            "disabled": false,
             "title": "지름 13 mm 지우개",
             "aria": "지름 13 mm 지우개",
             "rect": [
@@ -665,6 +743,7 @@
             "zone": "etray",
             "label": "28",
             "has_icon": true,
+            "disabled": false,
             "title": "지름 28 mm 지우개",
             "aria": "지름 28 mm 지우개",
             "rect": [
@@ -674,17 +753,18 @@
               134
             ]
           }
-        ]
+        ],
+        "removed": []
       },
-      "btn-eraser-ink": {
+      "도구:펜 지우개": {
         "total": 27,
+        "taps_to_open": 1,
         "added": [
           "erase-5",
           "erase-12",
           "erase-27",
           "erase-60"
         ],
-        "removed": [],
         "added_items": [
           {
             "id": "erase-5",
@@ -693,6 +773,7 @@
             "zone": "etray",
             "label": "2",
             "has_icon": true,
+            "disabled": false,
             "title": "지름 2 mm 지우개",
             "aria": "지름 2 mm 지우개",
             "rect": [
@@ -709,6 +790,7 @@
             "zone": "etray",
             "label": "6",
             "has_icon": true,
+            "disabled": false,
             "title": "지름 6 mm 지우개",
             "aria": "지름 6 mm 지우개",
             "rect": [
@@ -725,6 +807,7 @@
             "zone": "etray",
             "label": "13",
             "has_icon": true,
+            "disabled": false,
             "title": "지름 13 mm 지우개",
             "aria": "지름 13 mm 지우개",
             "rect": [
@@ -741,6 +824,7 @@
             "zone": "etray",
             "label": "28",
             "has_icon": true,
+            "disabled": false,
             "title": "지름 28 mm 지우개",
             "aria": "지름 28 mm 지우개",
             "rect": [
@@ -750,16 +834,19 @@
               134
             ]
           }
-        ]
+        ],
+        "removed": []
       },
-      "btn-face": {
+      "도구:면": {
         "total": 23,
+        "taps_to_open": 1,
         "added": [],
-        "removed": [],
-        "added_items": []
+        "added_items": [],
+        "removed": []
       },
-      "btn-paint": {
+      "도구:칠": {
         "total": 46,
+        "taps_to_open": 1,
         "added": [
           "paint-brush-btn",
           "paint-size-range",
@@ -785,7 +872,6 @@
           "paint-erase-soft",
           "btn-paint-front"
         ],
-        "removed": [],
         "added_items": [
           {
             "id": "paint-brush-btn",
@@ -794,6 +880,7 @@
             "zone": "painttray",
             "label": "제도 라이너잉크펜 · deevad · lin",
             "has_icon": true,
+            "disabled": false,
             "title": "지금 브러시 «제도 라이너» — 원 이름 deevad/liner(잉크펜 족). 누르면 브러시 목록이 열린다",
             "aria": "",
             "rect": [
@@ -808,8 +895,9 @@
             "tag": "input",
             "type": "range",
             "zone": "painttray",
-            "label": "",
+            "label": "크기10px",
             "has_icon": false,
+            "disabled": false,
             "title": "자국 굵기(px) — 끌어서 조절한다",
             "aria": "",
             "rect": [
@@ -824,8 +912,9 @@
             "tag": "input",
             "type": "range",
             "zone": "painttray",
-            "label": "",
+            "label": "불투명1.00",
             "has_icon": false,
+            "disabled": false,
             "title": "불투명 — 끌어서 조절한다",
             "aria": "",
             "rect": [
@@ -842,6 +931,7 @@
             "zone": "painttray",
             "label": "",
             "has_icon": false,
+            "disabled": false,
             "title": "지금 색 #5a5a5a — 누르면 색상 휠이 열린다",
             "aria": "",
             "rect": [
@@ -858,6 +948,7 @@
             "zone": "painttray",
             "label": "",
             "has_icon": false,
+            "disabled": false,
             "title": "최근 색 — 비어 있다(색을 고르면 여기 남는다)",
             "aria": "",
             "rect": [
@@ -874,6 +965,7 @@
             "zone": "painttray",
             "label": "",
             "has_icon": false,
+            "disabled": false,
             "title": "최근 색 — 비어 있다(색을 고르면 여기 남는다)",
             "aria": "",
             "rect": [
@@ -890,6 +982,7 @@
             "zone": "painttray",
             "label": "",
             "has_icon": false,
+            "disabled": false,
             "title": "최근 색 — 비어 있다(색을 고르면 여기 남는다)",
             "aria": "",
             "rect": [
@@ -906,6 +999,7 @@
             "zone": "painttray",
             "label": "",
             "has_icon": false,
+            "disabled": false,
             "title": "최근 색 — 비어 있다(색을 고르면 여기 남는다)",
             "aria": "",
             "rect": [
@@ -922,6 +1016,7 @@
             "zone": "painttray",
             "label": "",
             "has_icon": false,
+            "disabled": false,
             "title": "최근 색 — 비어 있다(색을 고르면 여기 남는다)",
             "aria": "",
             "rect": [
@@ -938,6 +1033,7 @@
             "zone": "painttray",
             "label": "",
             "has_icon": false,
+            "disabled": false,
             "title": "최근 색 — 비어 있다(색을 고르면 여기 남는다)",
             "aria": "",
             "rect": [
@@ -954,6 +1050,7 @@
             "zone": "painttray",
             "label": "HB10px · 100%",
             "has_icon": true,
+            "disabled": false,
             "title": "필통 1 — 연필 HB · 연필 · 연필 HB(원 이름 brunelleschi/pencil_HB). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다) · 경도 글자를 위아래로 끌면 경도",
             "aria": "",
             "rect": [
@@ -970,6 +1067,7 @@
             "zone": "painttray",
             "label": "HB",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -986,6 +1084,7 @@
             "zone": "painttray",
             "label": "4B10px · 100%",
             "has_icon": true,
+            "disabled": false,
             "title": "필통 2 — 연필 4B · 연필 · 연필 4B(원 이름 brunelleschi/pencil_4B). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다) · 경도 글자를 위아래로 끌면 경도",
             "aria": "",
             "rect": [
@@ -1002,6 +1101,7 @@
             "zone": "painttray",
             "label": "4B",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1018,6 +1118,7 @@
             "zone": "painttray",
             "label": "중10px · 100%",
             "has_icon": true,
+            "disabled": false,
             "title": "필통 3 — 목탄 중 · 연필 · 목탄 중(원 이름 brunelleschi/charcoal_M). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다) · 경도 글자를 위아래로 끌면 경도",
             "aria": "",
             "rect": [
@@ -1034,6 +1135,7 @@
             "zone": "painttray",
             "label": "중",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1050,6 +1152,7 @@
             "zone": "painttray",
             "label": "10px · 100%",
             "has_icon": true,
+            "disabled": false,
             "title": "필통 4 — 색연필 · 색연필 · 색연필(원 이름 brunelleschi/colored_pencil). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
             "aria": "",
             "rect": [
@@ -1066,6 +1169,7 @@
             "zone": "painttray",
             "label": "10px · 100%",
             "has_icon": true,
+            "disabled": false,
             "title": "필통 5 — 마커 · 마커 · 마커(원 이름 brunelleschi/marker). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
             "aria": "",
             "rect": [
@@ -1082,6 +1186,7 @@
             "zone": "painttray",
             "label": "10px · 100%",
             "has_icon": true,
+            "disabled": false,
             "title": "필통 6 — 붓 · 잉크펜 · 수채(원 이름 deevad/watercolor_expressive). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
             "aria": "",
             "rect": [
@@ -1098,6 +1203,7 @@
             "zone": "painttray",
             "label": "10px · 100%",
             "has_icon": true,
+            "disabled": false,
             "title": "필통 7 — 잉크펜 · 잉크펜 · 제도 라이너(원 이름 deevad/liner). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
             "aria": "",
             "rect": [
@@ -1114,6 +1220,7 @@
             "zone": "painttray",
             "label": "10px",
             "has_icon": true,
+            "disabled": false,
             "title": "지우개 — 펜 한 붓이 칠의 덮임을 지운다 · 다시 누르면 붓으로 · 스타일러스 뒷꼭지도 지우개다",
             "aria": "",
             "rect": [
@@ -1130,6 +1237,7 @@
             "zone": "painttray",
             "label": "딱딱",
             "has_icon": false,
+            "disabled": false,
             "title": "지우개의 부드러움 — 경도 축 하나: 딱딱한(기본 — 마른 매체) / 부드러운",
             "aria": "",
             "rect": [
@@ -1146,6 +1254,7 @@
             "zone": "painttray",
             "label": "정면",
             "has_icon": true,
+            "disabled": false,
             "title": "정면은 면을 골라야 한다 — 칠 도구로 면을 탭해 고른 뒤 누른다",
             "aria": "",
             "rect": [
@@ -1155,12 +1264,12 @@
               33
             ]
           }
-        ]
-      }
-    },
-    "cards": {
-      "pane-file": {
+        ],
+        "removed": []
+      },
+      "카드:pane-file": {
         "total": 29,
+        "taps_to_open": 1,
         "added": [
           "doc-name",
           "btn-save",
@@ -1177,6 +1286,7 @@
             "zone": "pane-file",
             "label": "",
             "has_icon": false,
+            "disabled": false,
             "title": "이름을 바꾼다 — 내부 열쇠는 따로 있어서 그림·썸네일이 안 움직인다",
             "aria": "",
             "rect": [
@@ -1193,6 +1303,7 @@
             "zone": "pane-file",
             "label": "저장",
             "has_icon": false,
+            "disabled": false,
             "title": ".brnl 저장 — 이 앱에서 다시 열 수 있는 원본",
             "aria": "",
             "rect": [
@@ -1209,6 +1320,7 @@
             "zone": "pane-file",
             "label": "열기",
             "has_icon": false,
+            "disabled": false,
             "title": ".brnl 열기",
             "aria": "",
             "rect": [
@@ -1225,6 +1337,7 @@
             "zone": "pane-file",
             "label": "OBJ",
             "has_icon": false,
+            "disabled": false,
             "title": "OBJ 내보내기 — 다른 앱용. 이 앱으로 못 되돌아온다",
             "aria": "",
             "rect": [
@@ -1241,6 +1354,7 @@
             "zone": "pane-file",
             "label": "glTF",
             "has_icon": false,
+            "disabled": false,
             "title": "glTF 내보내기 — 다른 앱용. 이 앱으로 못 되돌아온다",
             "aria": "",
             "rect": [
@@ -1257,6 +1371,7 @@
             "zone": "pane-file",
             "label": "비우기",
             "has_icon": false,
+            "disabled": false,
             "title": "전부 지우고 처음부터 — 확인을 받는다",
             "aria": "",
             "rect": [
@@ -1266,10 +1381,12 @@
               27
             ]
           }
-        ]
+        ],
+        "removed": []
       },
-      "pane-settings": {
+      "카드:pane-settings": {
         "total": 38,
+        "taps_to_open": 1,
         "added": [
           "chk-press",
           "chk-grain",
@@ -1293,8 +1410,9 @@
             "tag": "input",
             "type": "checkbox",
             "zone": "pane-settings",
-            "label": "",
+            "label": "필압 보정",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1309,8 +1427,9 @@
             "tag": "input",
             "type": "checkbox",
             "zone": "pane-settings",
-            "label": "",
+            "label": "종이 결",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1327,6 +1446,7 @@
             "zone": "pane-settings",
             "label": "질감",
             "has_icon": false,
+            "disabled": false,
             "title": "종이 질감을 켜고 끈다",
             "aria": "",
             "rect": [
@@ -1341,8 +1461,9 @@
             "tag": "input",
             "type": "checkbox",
             "zone": "pane-settings",
-            "label": "",
+            "label": "지평선",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1357,8 +1478,9 @@
             "tag": "input",
             "type": "checkbox",
             "zone": "pane-settings",
-            "label": "",
+            "label": "지면 격자",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1373,8 +1495,9 @@
             "tag": "input",
             "type": "checkbox",
             "zone": "pane-settings",
-            "label": "",
+            "label": "다른 각도에서는 숨긴다",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1389,9 +1512,10 @@
             "tag": "input",
             "type": "checkbox",
             "zone": "pane-settings",
-            "label": "",
+            "label": "가린 선(은선)",
             "has_icon": false,
-            "title": "",
+            "disabled": false,
+            "title": "밑그림의 H 계열 — 가린 선을 그릴지",
             "aria": "",
             "rect": [
               605,
@@ -1405,9 +1529,10 @@
             "tag": "input",
             "type": "checkbox",
             "zone": "pane-settings",
-            "label": "",
+            "label": "해칭을 면에 붙인다",
             "has_icon": false,
-            "title": "",
+            "disabled": false,
+            "title": "해칭이 면에 붙는다 — 끄면 종이(화면)에 붙는다",
             "aria": "",
             "rect": [
               605,
@@ -1421,8 +1546,9 @@
             "tag": "input",
             "type": "range",
             "zone": "pane-settings",
-            "label": "",
+            "label": "머무름 직선화 0.35s",
             "has_icon": false,
+            "disabled": false,
             "title": "옐로에서 끝에 머무르면 획이 반듯해진다 — 그 대기 시간",
             "aria": "",
             "rect": [
@@ -1437,8 +1563,9 @@
             "tag": "input",
             "type": "range",
             "zone": "pane-settings",
-            "label": "",
+            "label": "글씨 꾹 누르기 0.45s",
             "has_icon": false,
+            "disabled": false,
             "title": "치수를 매길 선을 이만큼 누르면 글씨를 쓰는 상태가 된다",
             "aria": "",
             "rect": [
@@ -1455,6 +1582,7 @@
             "zone": "pane-settings",
             "label": "mmcmm",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1469,8 +1597,9 @@
             "tag": "input",
             "type": "checkbox",
             "zone": "pane-settings",
-            "label": "",
+            "label": "치수 스냅 151050100 mm",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1487,6 +1616,7 @@
             "zone": "pane-settings",
             "label": "151050100",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1501,8 +1631,9 @@
             "tag": "input",
             "type": "checkbox",
             "zone": "pane-settings",
-            "label": "",
+            "label": "소수점 그대로",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1517,8 +1648,9 @@
             "tag": "input",
             "type": "checkbox",
             "zone": "pane-settings",
-            "label": "",
+            "label": "잰 것을 도면에 남긴다",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1528,10 +1660,12 @@
               13
             ]
           }
-        ]
+        ],
+        "removed": []
       },
-      "display-pop": {
+      "카드:display-pop": {
         "total": 27,
+        "taps_to_open": 1,
         "added": [
           "btn-floor-area",
           "chk-rooms",
@@ -1546,6 +1680,7 @@
             "zone": "display-pop",
             "label": "바닥면적 · 부피",
             "has_icon": false,
+            "disabled": false,
             "title": "바닥면적·부피 — 근거가 된 면이 밝아진다. 축척이 없으면 숫자를 안 낸다",
             "aria": "",
             "rect": [
@@ -1560,9 +1695,10 @@
             "tag": "input",
             "type": "checkbox",
             "zone": "display-pop",
-            "label": "",
+            "label": "실 다이어그램",
             "has_icon": false,
-            "title": "",
+            "disabled": false,
+            "title": "벽으로 닫힌 영역(실)의 버블·연결 — 축척이 있으면 면적도",
             "aria": "",
             "rect": [
               728,
@@ -1578,6 +1714,7 @@
             "zone": "display-pop",
             "label": "사람 놓기",
             "has_icon": false,
+            "disabled": false,
             "title": "사람 놓기 — 다음으로 지면을 탭한 자리에 선다(한 번 놓으면 풀린다)",
             "aria": "",
             "rect": [
@@ -1594,6 +1731,7 @@
             "zone": "display-pop",
             "label": "사람 스텐실 그리기",
             "has_icon": false,
+            "disabled": false,
             "title": "사람 스텐실 — 가로선이 눈높이다. 눈을 거기 맞춰 그리면 놓았을 때 눈이 지평선에 얹힌다",
             "aria": "",
             "rect": [
@@ -1603,10 +1741,12 @@
               24
             ]
           }
-        ]
+        ],
+        "removed": []
       },
-      "dimpanel": {
+      "카드:dimpanel": {
         "total": 41,
+        "taps_to_open": 1,
         "added": [
           "button",
           "button",
@@ -1635,6 +1775,7 @@
             "zone": "dimpanel",
             "label": "7",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1651,6 +1792,7 @@
             "zone": "dimpanel",
             "label": "8",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1667,6 +1809,7 @@
             "zone": "dimpanel",
             "label": "9",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1683,6 +1826,7 @@
             "zone": "dimpanel",
             "label": "⌫",
             "has_icon": false,
+            "disabled": false,
             "title": "한 자리 지운다",
             "aria": "",
             "rect": [
@@ -1699,6 +1843,7 @@
             "zone": "dimpanel",
             "label": "4",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1715,6 +1860,7 @@
             "zone": "dimpanel",
             "label": "5",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1731,6 +1877,7 @@
             "zone": "dimpanel",
             "label": "6",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1747,6 +1894,7 @@
             "zone": "dimpanel",
             "label": "C",
             "has_icon": false,
+            "disabled": false,
             "title": "전부 지운다",
             "aria": "",
             "rect": [
@@ -1763,6 +1911,7 @@
             "zone": "dimpanel",
             "label": "1",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1779,6 +1928,7 @@
             "zone": "dimpanel",
             "label": "2",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1795,6 +1945,7 @@
             "zone": "dimpanel",
             "label": "3",
             "has_icon": false,
+            "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
@@ -1811,6 +1962,7 @@
             "zone": "dimpanel",
             "label": "적용",
             "has_icon": false,
+            "disabled": false,
             "title": "이 값을 지금 선의 치수로",
             "aria": "",
             "rect": [
@@ -1827,6 +1979,7 @@
             "zone": "dimpanel",
             "label": "0",
             "has_icon": false,
+            "disabled": false,
             "title": "0",
             "aria": "",
             "rect": [
@@ -1843,6 +1996,7 @@
             "zone": "dimpanel",
             "label": ".",
             "has_icon": false,
+            "disabled": false,
             "title": "소수점",
             "aria": "",
             "rect": [
@@ -1859,6 +2013,7 @@
             "zone": "dimpanel",
             "label": "종이에 쓰기",
             "has_icon": false,
+            "disabled": false,
             "title": "종이 위에 손으로 숫자를 써서 치수를 넣는다",
             "aria": "",
             "rect": [
@@ -1875,6 +2030,7 @@
             "zone": "dimpanel",
             "label": "재기",
             "has_icon": true,
+            "disabled": false,
             "title": "재기 — 두 점을 짚으면 길이가 나온다(도면에는 안 남는다)",
             "aria": "",
             "rect": [
@@ -1891,6 +2047,7 @@
             "zone": "dimpanel",
             "label": "지운다",
             "has_icon": false,
+            "disabled": false,
             "title": "쓴 것을 지운다",
             "aria": "",
             "rect": [
@@ -1907,6 +2064,7 @@
             "zone": "dimpanel",
             "label": "음성",
             "has_icon": false,
+            "disabled": false,
             "title": "음성 치수 — 켜져 있는 동안만 듣는다",
             "aria": "",
             "rect": [
@@ -1916,333 +2074,1326 @@
               20
             ]
           }
+        ],
+        "removed": []
+      },
+      "통:렌즈": {
+        "total": 25,
+        "taps_to_open": 1,
+        "added": [
+          "lens-range",
+          "btn-lens-reset"
+        ],
+        "added_items": [
+          {
+            "id": "lens-range",
+            "tag": "input",
+            "type": "range",
+            "zone": "lens-pop",
+            "label": "",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "화각",
+            "rect": [
+              976,
+              156,
+              110,
+              16
+            ]
+          },
+          {
+            "id": "btn-lens-reset",
+            "tag": "button",
+            "type": "button",
+            "zone": "lens-pop",
+            "label": "기본으로",
+            "has_icon": false,
+            "disabled": false,
+            "title": "보기 렌즈를 기본값으로 되돌린다",
+            "aria": "",
+            "rect": [
+              974,
+              204,
+              114,
+              20
+            ]
+          }
+        ],
+        "removed": []
+      },
+      "통:자": {
+        "total": 32,
+        "taps_to_open": 1,
+        "added": [
+          "input",
+          "input",
+          "input",
+          "input",
+          "input",
+          "input",
+          "input",
+          "input",
+          "osnap-radius"
+        ],
+        "added_items": [
+          {
+            "id": "input",
+            "tag": "input",
+            "type": "checkbox",
+            "zone": "snap-pop",
+            "label": "소실점",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              980,
+              237,
+              13,
+              13
+            ]
+          },
+          {
+            "id": "input",
+            "tag": "input",
+            "type": "checkbox",
+            "zone": "snap-pop",
+            "label": "정점",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              980,
+              259,
+              13,
+              13
+            ]
+          },
+          {
+            "id": "input",
+            "tag": "input",
+            "type": "checkbox",
+            "zone": "snap-pop",
+            "label": "끝점",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              980,
+              281,
+              13,
+              13
+            ]
+          },
+          {
+            "id": "input",
+            "tag": "input",
+            "type": "checkbox",
+            "zone": "snap-pop",
+            "label": "중점",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              980,
+              303,
+              13,
+              13
+            ]
+          },
+          {
+            "id": "input",
+            "tag": "input",
+            "type": "checkbox",
+            "zone": "snap-pop",
+            "label": "교차점",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              980,
+              325,
+              13,
+              13
+            ]
+          },
+          {
+            "id": "input",
+            "tag": "input",
+            "type": "checkbox",
+            "zone": "snap-pop",
+            "label": "undefined",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              980,
+              347,
+              13,
+              13
+            ]
+          },
+          {
+            "id": "input",
+            "tag": "input",
+            "type": "checkbox",
+            "zone": "snap-pop",
+            "label": "수선 발",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              980,
+              369,
+              13,
+              13
+            ]
+          },
+          {
+            "id": "input",
+            "tag": "input",
+            "type": "checkbox",
+            "zone": "snap-pop",
+            "label": "근처점",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              980,
+              391,
+              13,
+              13
+            ]
+          },
+          {
+            "id": "osnap-radius",
+            "tag": "input",
+            "type": "range",
+            "zone": "snap-pop",
+            "label": "반경",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              1006,
+              416,
+              80,
+              16
+            ]
+          }
+        ],
+        "removed": []
+      },
+      "통:손": {
+        "total": 34,
+        "taps_to_open": 1,
+        "added": [
+          "btn-grip-dup",
+          "btn-grip-lock",
+          "btn-grip-njoin",
+          "btn-grip-join",
+          "btn-grip-front",
+          "btn-grip-cls",
+          "btn-grip-thick",
+          "btn-grip-fill",
+          "btn-grip-fmat",
+          "btn-grip-rep",
+          "btn-grip-farea"
+        ],
+        "added_items": [
+          {
+            "id": "btn-grip-dup",
+            "tag": "button",
+            "type": "button",
+            "zone": "griptray",
+            "label": "복제",
+            "has_icon": true,
+            "disabled": false,
+            "title": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+            "aria": "",
+            "rect": [
+              1074,
+              246,
+              72,
+              33
+            ]
+          },
+          {
+            "id": "btn-grip-lock",
+            "tag": "button",
+            "type": "button",
+            "zone": "griptray",
+            "label": "잠금",
+            "has_icon": true,
+            "disabled": false,
+            "title": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+            "aria": "",
+            "rect": [
+              1074,
+              280,
+              72,
+              33
+            ]
+          },
+          {
+            "id": "btn-grip-njoin",
+            "tag": "button",
+            "type": "button",
+            "zone": "griptray",
+            "label": "접합",
+            "has_icon": true,
+            "disabled": false,
+            "title": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+            "aria": "",
+            "rect": [
+              1074,
+              313,
+              72,
+              33
+            ]
+          },
+          {
+            "id": "btn-grip-join",
+            "tag": "button",
+            "type": "button",
+            "zone": "griptray",
+            "label": "맺기",
+            "has_icon": true,
+            "disabled": false,
+            "title": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+            "aria": "",
+            "rect": [
+              1074,
+              347,
+              72,
+              33
+            ]
+          },
+          {
+            "id": "btn-grip-front",
+            "tag": "button",
+            "type": "button",
+            "zone": "griptray",
+            "label": "정면",
+            "has_icon": true,
+            "disabled": false,
+            "title": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+            "aria": "",
+            "rect": [
+              1074,
+              380,
+              72,
+              33
+            ]
+          },
+          {
+            "id": "btn-grip-cls",
+            "tag": "button",
+            "type": "button",
+            "zone": "griptray",
+            "label": "분류",
+            "has_icon": true,
+            "disabled": false,
+            "title": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+            "aria": "",
+            "rect": [
+              1074,
+              414,
+              72,
+              33
+            ]
+          },
+          {
+            "id": "btn-grip-thick",
+            "tag": "button",
+            "type": "button",
+            "zone": "griptray",
+            "label": "두께",
+            "has_icon": true,
+            "disabled": false,
+            "title": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+            "aria": "",
+            "rect": [
+              1074,
+              447,
+              72,
+              33
+            ]
+          },
+          {
+            "id": "btn-grip-fill",
+            "tag": "button",
+            "type": "button",
+            "zone": "griptray",
+            "label": "채움",
+            "has_icon": true,
+            "disabled": false,
+            "title": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+            "aria": "",
+            "rect": [
+              1074,
+              481,
+              72,
+              33
+            ]
+          },
+          {
+            "id": "btn-grip-fmat",
+            "tag": "button",
+            "type": "button",
+            "zone": "griptray",
+            "label": "재료",
+            "has_icon": true,
+            "disabled": false,
+            "title": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+            "aria": "",
+            "rect": [
+              1074,
+              514,
+              72,
+              33
+            ]
+          },
+          {
+            "id": "btn-grip-rep",
+            "tag": "button",
+            "type": "button",
+            "zone": "griptray",
+            "label": "표현",
+            "has_icon": true,
+            "disabled": false,
+            "title": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+            "aria": "",
+            "rect": [
+              1074,
+              548,
+              72,
+              33
+            ]
+          },
+          {
+            "id": "btn-grip-farea",
+            "tag": "button",
+            "type": "button",
+            "zone": "griptray",
+            "label": "면적",
+            "has_icon": true,
+            "disabled": false,
+            "title": "연필·펜을 든 채로 선·면을 꾹 눌러 잡은 뒤에 쓴다(면·칠·치수 도구로는 안 잡힌다)",
+            "aria": "",
+            "rect": [
+              1074,
+              581,
+              72,
+              33
+            ]
+          }
+        ],
+        "removed": []
+      },
+      "통:롤": {
+        "total": 25,
+        "taps_to_open": 1,
+        "added": [
+          "btn-roll-tracing",
+          "btn-roll-yellow"
+        ],
+        "added_items": [
+          {
+            "id": "btn-roll-tracing",
+            "tag": "button",
+            "type": "button",
+            "zone": "rolltray",
+            "label": "트레이싱지",
+            "has_icon": true,
+            "disabled": false,
+            "title": "트레이싱지를 한 장 얹는다",
+            "aria": "",
+            "rect": [
+              1038,
+              633,
+              108,
+              33
+            ]
+          },
+          {
+            "id": "btn-roll-yellow",
+            "tag": "button",
+            "type": "button",
+            "zone": "rolltray",
+            "label": "옐로",
+            "has_icon": true,
+            "disabled": false,
+            "title": "옐로를 한 장 얹는다",
+            "aria": "",
+            "rect": [
+              1074,
+              667,
+              72,
+              33
+            ]
+          }
+        ],
+        "removed": []
+      },
+      "통:브러시 목록": {
+        "total": 75,
+        "taps_to_open": 2,
+        "added": [
+          "brushpick-close",
+          "brushpick-tip-default",
+          "brushpick-tip-none",
+          "brushpick-tip-fine-grain",
+          "brushpick-tip-chalk-chisel",
+          "brushpick-tip-rock-pitted",
+          "brushpick-tip-scratches-rough",
+          "brushpick-tip-scratches2",
+          "brushpick-set-recent",
+          "brushpick-set-Brunelleschi",
+          "brushpick-set-Dieterle",
+          "brushpick-set-Classic",
+          "brushpick-set-Deevad",
+          "brushpick-set-Ramon",
+          "brushpick-set-Experimental",
+          "brushpick-set-Tanda",
+          "brushpick-set-Kaerhon",
+          "summary",
+          "brushpick-deevad_2B_pencil",
+          "brushpick-deevad_4H_pencil",
+          "brushpick-deevad_airbrush",
+          "brushpick-deevad_ballpen",
+          "brushpick-deevad_basic_digital_brush",
+          "brushpick-deevad_basic_digital_brush_smudging",
+          "brushpick-deevad_basic_digital_knife",
+          "brushpick-deevad_basic_digital_knife_smudging",
+          "brushpick-deevad_blending",
+          "brushpick-deevad_brush",
+          "brushpick-deevad_chalk"
+        ],
+        "added_items": [
+          {
+            "id": "brushpick-close",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "닫는다",
+            "has_icon": false,
+            "disabled": false,
+            "title": "고르개를 닫는다",
+            "aria": "",
+            "rect": [
+              641,
+              63,
+              56,
+              24
+            ]
+          },
+          {
+            "id": "brushpick-tip-default",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "기본",
+            "has_icon": false,
+            "disabled": false,
+            "title": "프리셋의 기본 팁(연필·목탄·파스텔·마른붓·색연필 계열은 팁 · 잉크·마커는 없음)",
+            "aria": "",
+            "rect": [
+              446,
+              131,
+              43,
+              24
+            ]
+          },
+          {
+            "id": "brushpick-tip-none",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "없음",
+            "has_icon": false,
+            "disabled": false,
+            "title": "절차 타원 도장(62 그대로)",
+            "aria": "",
+            "rect": [
+              492,
+              131,
+              43,
+              24
+            ]
+          },
+          {
+            "id": "brushpick-tip-fine-grain",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "fine-grain",
+            "has_icon": false,
+            "disabled": false,
+            "title": "fine-grain — tips/src/tips.json의 출처·라이선스(CC0)",
+            "aria": "",
+            "rect": [
+              539,
+              133,
+              72,
+              21
+            ]
+          },
+          {
+            "id": "brushpick-tip-chalk-chisel",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "chalk-chisel",
+            "has_icon": false,
+            "disabled": false,
+            "title": "chalk-chisel — tips/src/tips.json의 출처·라이선스(CC0)",
+            "aria": "",
+            "rect": [
+              297,
+              159,
+              86,
+              21
+            ]
+          },
+          {
+            "id": "brushpick-tip-rock-pitted",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "rock-pitted",
+            "has_icon": false,
+            "disabled": false,
+            "title": "rock-pitted — tips/src/tips.json의 출처·라이선스(CC0)",
+            "aria": "",
+            "rect": [
+              387,
+              159,
+              78,
+              21
+            ]
+          },
+          {
+            "id": "brushpick-tip-scratches-rough",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "scratches-rough",
+            "has_icon": false,
+            "disabled": false,
+            "title": "scratches-rough — tips/src/tips.json의 출처·라이선스(CC0)",
+            "aria": "",
+            "rect": [
+              469,
+              159,
+              112,
+              21
+            ]
+          },
+          {
+            "id": "brushpick-tip-scratches2",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "scratches2",
+            "has_icon": false,
+            "disabled": false,
+            "title": "scratches2 — tips/src/tips.json의 출처·라이선스(CC0)",
+            "aria": "",
+            "rect": [
+              584,
+              159,
+              80,
+              21
+            ]
+          },
+          {
+            "id": "brushpick-set-recent",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "최근 0",
+            "has_icon": false,
+            "disabled": false,
+            "title": "최근 세트(0) — 오른쪽에 그 브러시가 선다",
+            "aria": "",
+            "rect": [
+              297,
+              189,
+              96,
+              24
+            ]
+          },
+          {
+            "id": "brushpick-set-Brunelleschi",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "Brunelleschi 11",
+            "has_icon": false,
+            "disabled": false,
+            "title": "Brunelleschi 세트(11) — 오른쪽에 그 브러시가 선다",
+            "aria": "",
+            "rect": [
+              297,
+              215,
+              96,
+              24
+            ]
+          },
+          {
+            "id": "brushpick-set-Dieterle",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "Dieterle 19",
+            "has_icon": false,
+            "disabled": false,
+            "title": "Dieterle 세트(19) — 오른쪽에 그 브러시가 선다",
+            "aria": "",
+            "rect": [
+              297,
+              242,
+              96,
+              24
+            ]
+          },
+          {
+            "id": "brushpick-set-Classic",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "Classic 35",
+            "has_icon": false,
+            "disabled": false,
+            "title": "Classic 세트(35) — 오른쪽에 그 브러시가 선다",
+            "aria": "",
+            "rect": [
+              297,
+              268,
+              96,
+              24
+            ]
+          },
+          {
+            "id": "brushpick-set-Deevad",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "Deevad 36",
+            "has_icon": false,
+            "disabled": false,
+            "title": "Deevad 세트(36) — 오른쪽에 그 브러시가 선다",
+            "aria": "",
+            "rect": [
+              297,
+              295,
+              96,
+              24
+            ]
+          },
+          {
+            "id": "brushpick-set-Ramon",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "Ramon 28",
+            "has_icon": false,
+            "disabled": false,
+            "title": "Ramon 세트(28) — 오른쪽에 그 브러시가 선다",
+            "aria": "",
+            "rect": [
+              297,
+              321,
+              96,
+              24
+            ]
+          },
+          {
+            "id": "brushpick-set-Experimental",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "Experimental 23",
+            "has_icon": false,
+            "disabled": false,
+            "title": "Experimental 세트(23) — 오른쪽에 그 브러시가 선다",
+            "aria": "",
+            "rect": [
+              297,
+              347,
+              96,
+              39
+            ]
+          },
+          {
+            "id": "brushpick-set-Tanda",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "Tanda 35",
+            "has_icon": false,
+            "disabled": false,
+            "title": "Tanda 세트(35) — 오른쪽에 그 브러시가 선다",
+            "aria": "",
+            "rect": [
+              297,
+              388,
+              96,
+              24
+            ]
+          },
+          {
+            "id": "brushpick-set-Kaerhon",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "Kaerhon 20",
+            "has_icon": false,
+            "disabled": false,
+            "title": "Kaerhon 세트(20) — 오른쪽에 그 브러시가 선다",
+            "aria": "",
+            "rect": [
+              297,
+              415,
+              96,
+              24
+            ]
+          },
+          {
+            "id": "summary",
+            "tag": "summary",
+            "type": "summary",
+            "zone": "brushpick",
+            "label": "Deevad (36)",
+            "has_icon": false,
+            "disabled": false,
+            "title": "Deevad 세트",
+            "aria": "",
+            "rect": [
+              408,
+              189,
+              289,
+              22
+            ]
+          },
+          {
+            "id": "brushpick-deevad_2B_pencil",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "2B 연필2B_pencil",
+            "has_icon": true,
+            "disabled": false,
+            "title": "2B 연필 — 원 이름 deevad/2B_pencil. A digital pencil soft 2B. 누르면 잉크펜 자리에 앉는다",
+            "aria": "",
+            "rect": [
+              408,
+              213,
+              289,
+              48
+            ]
+          },
+          {
+            "id": "brushpick-deevad_4H_pencil",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "4H 연필4H_pencil",
+            "has_icon": true,
+            "disabled": false,
+            "title": "4H 연필 — 원 이름 deevad/4H_pencil. A digital pencil hard 4H. 누르면 잉크펜 자리에 앉는다",
+            "aria": "",
+            "rect": [
+              408,
+              264,
+              289,
+              48
+            ]
+          },
+          {
+            "id": "brushpick-deevad_airbrush",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "에어브러시airbrush",
+            "has_icon": true,
+            "disabled": false,
+            "title": "에어브러시 — 원 이름 deevad/airbrush. An airbrush. 누르면 잉크펜 자리에 앉는다",
+            "aria": "",
+            "rect": [
+              408,
+              315,
+              289,
+              48
+            ]
+          },
+          {
+            "id": "brushpick-deevad_ballpen",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "ballpenballpen",
+            "has_icon": true,
+            "disabled": false,
+            "title": "ballpen — 원 이름 deevad/ballpen. A ballpen. 누르면 잉크펜 자리에 앉는다",
+            "aria": "",
+            "rect": [
+              408,
+              366,
+              289,
+              48
+            ]
+          },
+          {
+            "id": "brushpick-deevad_basic_digital_brush",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "기본 digital 붓basic_digita",
+            "has_icon": true,
+            "disabled": false,
+            "title": "기본 digital 붓 — 원 이름 deevad/basic_digital_brush. A basic rounded digital brush. 누르면 잉크펜 자리에 앉는다",
+            "aria": "",
+            "rect": [
+              408,
+              417,
+              289,
+              48
+            ]
+          },
+          {
+            "id": "brushpick-deevad_basic_digital_brush_smudging",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "기본 digital 붓 smudgingbas",
+            "has_icon": true,
+            "disabled": false,
+            "title": "기본 digital 붓 smudging — 원 이름 deevad/basic_digital_brush_smudging. A basic rounded brush able to smudge color. 누르면 잉크펜 자리에 앉는다",
+            "aria": "",
+            "rect": [
+              408,
+              468,
+              289,
+              66
+            ]
+          },
+          {
+            "id": "brushpick-deevad_basic_digital_knife",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "기본 digital 나이프basic_digi",
+            "has_icon": true,
+            "disabled": false,
+            "title": "기본 digital 나이프 — 원 이름 deevad/basic_digital_knife. A flat brush attempting to emulate a paint-knife. 누르면 잉크펜 자리에 앉는다",
+            "aria": "",
+            "rect": [
+              408,
+              537,
+              289,
+              48
+            ]
+          },
+          {
+            "id": "brushpick-deevad_basic_digital_knife_smudging",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "기본 digital 나이프 smudgingb",
+            "has_icon": true,
+            "disabled": false,
+            "title": "기본 digital 나이프 smudging — 원 이름 deevad/basic_digital_knife_smudging. A flat brush attempting to emulate a paint-knife with smudging. 누르면 잉크펜 자리에 앉는다",
+            "aria": "",
+            "rect": [
+              408,
+              588,
+              289,
+              66
+            ]
+          },
+          {
+            "id": "brushpick-deevad_blending",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "섞기blending",
+            "has_icon": true,
+            "disabled": false,
+            "title": "섞기 — 원 이름 deevad/blending. A brush to blend colors on canvas. 누르면 잉크펜 자리에 앉는다",
+            "aria": "",
+            "rect": [
+              408,
+              657,
+              289,
+              48
+            ]
+          },
+          {
+            "id": "brushpick-deevad_brush",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "붓brush",
+            "has_icon": true,
+            "disabled": false,
+            "title": "붓 — 원 이름 deevad/brush. A brush changing diameters depending on pressure. 누르면 잉크펜 자리에 앉는다",
+            "aria": "",
+            "rect": [
+              408,
+              708,
+              289,
+              48
+            ]
+          },
+          {
+            "id": "brushpick-deevad_chalk",
+            "tag": "button",
+            "type": "button",
+            "zone": "brushpick",
+            "label": "분필chalk",
+            "has_icon": true,
+            "disabled": false,
+            "title": "분필 — 원 이름 deevad/chalk. A chalk brush attempt, using many tiny particles on canvas to simulate grain. 누르면 잉크펜 자리에 앉는다",
+            "aria": "",
+            "rect": [
+              408,
+              759,
+              289,
+              48
+            ]
+          }
+        ],
+        "removed": []
+      },
+      "통:색상 휠": {
+        "total": 47,
+        "taps_to_open": 2,
+        "added": [
+          "paint-wheel-cv"
+        ],
+        "added_items": [
+          {
+            "id": "paint-wheel-cv",
+            "tag": "canvas",
+            "type": "canvas",
+            "zone": "paint-wheelbox",
+            "label": "",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              20,
+              262,
+              244,
+              244
+            ]
+          }
+        ],
+        "removed": []
+      },
+      "절차:필압 보정": {
+        "total": 39,
+        "taps_to_open": 2,
+        "added": [
+          "btn-press-cancel"
+        ],
+        "added_items": [
+          {
+            "id": "btn-press-cancel",
+            "tag": "button",
+            "type": "button",
+            "zone": "press-calib",
+            "label": "그만둔다",
+            "has_icon": false,
+            "disabled": false,
+            "title": "보정을 그만둔다 — 옵션은 꺼진 채로 남는다",
+            "aria": "",
+            "rect": [
+              802,
+              105,
+              52,
+              27
+            ]
+          }
+        ],
+        "removed": []
+      },
+      "모달:스텐실": {
+        "total": 3,
+        "taps_to_open": 2,
+        "added": [
+          "stencil-save",
+          "stencil-clear",
+          "stencil-close"
+        ],
+        "added_items": [
+          {
+            "id": "stencil-save",
+            "tag": "button",
+            "type": "button",
+            "zone": "stencil-modal",
+            "label": "저장",
+            "has_icon": false,
+            "disabled": false,
+            "title": "그린 스텐실을 이 기기에 저장한다",
+            "aria": "",
+            "rect": [
+              424,
+              395,
+              48,
+              28
+            ]
+          },
+          {
+            "id": "stencil-clear",
+            "tag": "button",
+            "type": "button",
+            "zone": "stencil-modal",
+            "label": "지움",
+            "has_icon": false,
+            "disabled": false,
+            "title": "판을 비운다 — 저장된 스텐실은 저장을 다시 누를 때 바뀜다",
+            "aria": "",
+            "rect": [
+              480,
+              395,
+              48,
+              28
+            ]
+          },
+          {
+            "id": "stencil-close",
+            "tag": "button",
+            "type": "button",
+            "zone": "stencil-modal",
+            "label": "닫기",
+            "has_icon": false,
+            "disabled": false,
+            "title": "닫는다 — 저장하지 않은 변경은 버린다",
+            "aria": "",
+            "rect": [
+              536,
+              395,
+              48,
+              28
+            ]
+          }
+        ],
+        "removed": [
+          ".ptab",
+          "paper-add",
+          "layer-add",
+          "btn-fullscreen",
+          "btn-display",
+          ".t",
+          ".t",
+          "sidebar-toggle",
+          "btn-draw-view",
+          "btn-zoom-fit",
+          "btn-lens",
+          "btn-undo",
+          "btn-redo",
+          "btn-snap",
+          "btn-grip",
+          "btn-pencil",
+          "btn-pen",
+          "btn-eraser-pencil",
+          "btn-eraser-ink",
+          "dim-toggle",
+          "btn-roll",
+          "btn-face",
+          "btn-paint"
         ]
+      },
+      "개발(?dev=1)": {
+        "total": 41,
+        "taps_to_open": 1,
+        "added": [
+          "btn-diag",
+          "btn-tunelab",
+          "chk-own3d"
+        ],
+        "added_items": [
+          {
+            "id": "btn-diag",
+            "tag": "button",
+            "type": "button",
+            "zone": "devmenu",
+            "label": "진단",
+            "has_icon": false,
+            "disabled": false,
+            "title": "진단 — 기기 값·최근 획·파일 크기",
+            "aria": "",
+            "rect": [
+              601,
+              546,
+              26,
+              27
+            ]
+          },
+          {
+            "id": "btn-tunelab",
+            "tag": "button",
+            "type": "button",
+            "zone": "devmenu",
+            "label": "브러시 작업대",
+            "has_icon": false,
+            "disabled": false,
+            "title": "브러시 작업대 — 붓·마커·색연필·연필의 값을 손잡이로 열고 옆에서 바로 그어 본다. 「굳힌다」가 이 기기에 남긴다",
+            "aria": "",
+            "rect": [
+              631,
+              546,
+              83,
+              27
+            ]
+          },
+          {
+            "id": "chk-own3d",
+            "tag": "input",
+            "type": "checkbox",
+            "zone": "devmenu",
+            "label": "획이 위치를 소유한다",
+            "has_icon": false,
+            "disabled": false,
+            "title": "개정 3 — 카메라가 닫힌 뒤 사슬이 놓은 3D를 획이 소유한다",
+            "aria": "",
+            "rect": [
+              605,
+              576,
+              13,
+              13
+            ]
+          }
+        ],
+        "removed": []
+      }
+    },
+    "ticks_pressable": {
+      "dom": 18,
+      "pressable": 0,
+      "strip_hit": true
+    },
+    "drawer_draw": {
+      "def": "옮긴 카드(설정 서랍 · 보기 카드)가 열릴 때 그리는 양 — 노드 수 · canvas/svg/img 수 · 여는 전후 rAF 프레임 셈(diag.frameCountForTest가 없으면 null — 그때 «그리는 양»은 canvas 0으로 판정)",
+      "pane-settings": {
+        "nodes": 57,
+        "canvas": 0,
+        "svg": 3,
+        "img": 0,
+        "frames_after_open": null,
+        "frames_before_open": null
+      },
+      "display-pop": {
+        "nodes": 5,
+        "canvas": 0,
+        "svg": 0,
+        "img": 0,
+        "frames_after_open": null,
+        "frames_before_open": null
       }
     },
     "dev": {
-      "without_flag_ids": [],
-      "with_flag_total": 23,
-      "with_flag_added": [],
+      "without_flag_exists": 0,
+      "with_flag_exists": 3,
+      "with_flag_base_total": 23,
       "devmenu_ids": [
         "btn-diag",
         "btn-tunelab",
         "chk-own3d"
+      ]
+    },
+    "id_reconcile": {
+      "html_ids": 124,
+      "in_table": 57,
+      "not_pressable_tag": [
+        "boot",
+        "app",
+        "gl",
+        "ink",
+        "topleft",
+        "paperbar",
+        "layerbar",
+        "eyebar",
+        "pane-file",
+        "recent",
+        "pane-settings",
+        "press-calib",
+        "press-calib-step",
+        "hold-read",
+        "whold-read",
+        "devmenu-tpl",
+        "devmenu",
+        "diagctl",
+        "display-pop",
+        "tip",
+        "notice",
+        "buildid",
+        "diagpanel",
+        "dimpanel",
+        "dim-scale",
+        "dim-live",
+        "dim-skew",
+        "dim-measure",
+        "pad-read",
+        "pad-keys",
+        "dim-ink",
+        "dim-read",
+        "sidebar",
+        "sidebar-body",
+        "fold-lead-win",
+        "fold-lead-text",
+        "fold-lead",
+        "fold-nib-win",
+        "fold-nib-text",
+        "fold-nib",
+        "oldtools",
+        "lead-text",
+        "lead",
+        "nib",
+        "fold-erase-pencil-win",
+        "fold-erase-pencil-text",
+        "fold-erase-ink-win",
+        "fold-erase-ink-text",
+        "face-pop",
+        "tray",
+        "rolltray",
+        "griptray",
+        "painttray",
+        "stencil-modal",
+        "stencil-box",
+        "stencil-canvas",
+        "pentray",
+        "etray",
+        "lens-pop",
+        "lens-read",
+        "snap-pop",
+        "osnap-kinds",
+        "axis-snap-slot"
       ],
-      "open_total": 41,
-      "open_added": [
-        "chk-press",
-        "chk-grain",
-        "btn-brush",
-        "chk-horizon",
-        "chk-grid",
-        "chk-waitfade",
-        "chk-hidden",
-        "chk-hatchface",
-        "rng-hold",
-        "rng-whold",
-        "dim-unit",
-        "chk-dimsnap",
-        "dimsnap-step",
-        "chk-exact",
-        "chk-measure-keep",
-        "btn-diag",
-        "btn-tunelab",
-        "chk-own3d"
-      ],
-      "open_added_items": [
-        {
-          "id": "chk-press",
-          "tag": "input",
-          "type": "checkbox",
-          "zone": "pane-settings",
-          "label": "",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            605,
-            83,
-            13,
-            13
-          ]
-        },
-        {
-          "id": "chk-grain",
-          "tag": "input",
-          "type": "checkbox",
-          "zone": "pane-settings",
-          "label": "",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            605,
-            136,
-            13,
-            13
-          ]
-        },
-        {
-          "id": "btn-brush",
-          "tag": "button",
-          "type": "button",
-          "zone": "pane-settings",
-          "label": "질감",
-          "has_icon": false,
-          "title": "종이 질감을 켜고 끈다",
-          "aria": "",
-          "rect": [
-            601,
-            158,
-            253,
-            27
-          ]
-        },
-        {
-          "id": "chk-horizon",
-          "tag": "input",
-          "type": "checkbox",
-          "zone": "pane-settings",
-          "label": "",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            605,
-            222,
-            13,
-            13
-          ]
-        },
-        {
-          "id": "chk-grid",
-          "tag": "input",
-          "type": "checkbox",
-          "zone": "pane-settings",
-          "label": "",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            605,
-            247,
-            13,
-            13
-          ]
-        },
-        {
-          "id": "chk-waitfade",
-          "tag": "input",
-          "type": "checkbox",
-          "zone": "pane-settings",
-          "label": "",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            605,
-            272,
-            13,
-            13
-          ]
-        },
-        {
-          "id": "chk-hidden",
-          "tag": "input",
-          "type": "checkbox",
-          "zone": "pane-settings",
-          "label": "",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            605,
-            297,
-            13,
-            13
-          ]
-        },
-        {
-          "id": "chk-hatchface",
-          "tag": "input",
-          "type": "checkbox",
-          "zone": "pane-settings",
-          "label": "",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            605,
-            322,
-            13,
-            13
-          ]
-        },
-        {
-          "id": "rng-hold",
-          "tag": "input",
-          "type": "range",
-          "zone": "pane-settings",
-          "label": "",
-          "has_icon": false,
-          "title": "옐로에서 끝에 머무르면 획이 반듯해진다 — 그 대기 시간",
-          "aria": "",
-          "rect": [
-            719,
-            346,
-            129,
-            16
-          ]
-        },
-        {
-          "id": "rng-whold",
-          "tag": "input",
-          "type": "range",
-          "zone": "pane-settings",
-          "label": "",
-          "has_icon": false,
-          "title": "치수를 매길 선을 이만큼 누르면 글씨를 쓰는 상태가 된다",
-          "aria": "",
-          "rect": [
-            723,
-            372,
-            129,
-            16
-          ]
-        },
-        {
-          "id": "dim-unit",
-          "tag": "select",
-          "type": "select",
-          "zone": "pane-settings",
-          "label": "mmcmm",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            631,
-            424,
-            45,
-            19
-          ]
-        },
-        {
-          "id": "chk-dimsnap",
-          "tag": "input",
-          "type": "checkbox",
-          "zone": "pane-settings",
-          "label": "",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            605,
-            452,
-            13,
-            13
-          ]
-        },
-        {
-          "id": "dimsnap-step",
-          "tag": "select",
-          "type": "select",
-          "zone": "pane-settings",
-          "label": "151050100",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            685,
-            449,
-            45,
-            19
-          ]
-        },
-        {
-          "id": "chk-exact",
-          "tag": "input",
-          "type": "checkbox",
-          "zone": "pane-settings",
-          "label": "",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            605,
-            477,
-            13,
-            13
-          ]
-        },
-        {
-          "id": "chk-measure-keep",
-          "tag": "input",
-          "type": "checkbox",
-          "zone": "pane-settings",
-          "label": "",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            605,
-            502,
-            13,
-            13
-          ]
-        },
-        {
-          "id": "btn-diag",
-          "tag": "button",
-          "type": "button",
-          "zone": "devmenu",
-          "label": "진단",
-          "has_icon": false,
-          "title": "진단 — 기기 값·최근 획·파일 크기",
-          "aria": "",
-          "rect": [
-            601,
-            546,
-            26,
-            27
-          ]
-        },
-        {
-          "id": "btn-tunelab",
-          "tag": "button",
-          "type": "button",
-          "zone": "devmenu",
-          "label": "브러시 작업대",
-          "has_icon": false,
-          "title": "브러시 작업대 — 붓·마커·색연필·연필의 값을 손잡이로 열고 옆에서 바로 그어 본다. 「굳힌다」가 이 기기에 남긴다",
-          "aria": "",
-          "rect": [
-            631,
-            546,
-            83,
-            27
-          ]
-        },
-        {
-          "id": "chk-own3d",
-          "tag": "input",
-          "type": "checkbox",
-          "zone": "devmenu",
-          "label": "",
-          "has_icon": false,
-          "title": "",
-          "aria": "",
-          "rect": [
-            605,
-            576,
-            13,
-            13
-          ]
-        }
+      "pressable_not_seen": [
+        "fs-exit",
+        "btn-pencil-old",
+        "btn-pen-old",
+        "file-open"
       ]
     }
   },
   "roundtrip": {
-    "def": "§1 ② 표(INVENTORY.md)의 상태별 행 수 == 같은 함수로 다시 센 DOM 실측 · §3 전수 왕복: 표의 모든 id를 그 상태를 열고 elementFromPoint로 «닿는다» · 반증 ①: 표에서 한 행을 빼면 셈이 갈린다 · 반증 ②: 요소 하나를 감추면 닿지 않는다",
+    "def": "§1 ② 표(INVENTORY.md)의 상태별 행 수 == 같은 함수로 다시 센 DOM 실측(낡음 검사 — 표는 원장의 파생) · §3 전수 왕복: 표의 모든 id를 그 상태를 열고 elementFromPoint로 «닿는다»(실질) · 반증 ①: 표에서 한 행을 빼면 셈이 갈린다(파일이 읽힌다) · 반증 ②: 요소 하나를 감추면 닿지 않는다(자가 산다)",
+    "tree": "e636864",
     "counts": {
       "기본": {
         "table": 23,
@@ -2261,12 +3412,8 @@
         "dom": 4
       },
       "도구:펜 지우개": {
-        "table": 0,
-        "dom": 0
-      },
-      "도구:면": {
-        "table": 0,
-        "dom": 0
+        "table": 4,
+        "dom": 4
       },
       "도구:칠": {
         "table": 23,
@@ -2288,17 +3435,137 @@
         "table": 18,
         "dom": 18
       },
+      "통:렌즈": {
+        "table": 2,
+        "dom": 2
+      },
+      "통:자": {
+        "table": 9,
+        "dom": 9
+      },
+      "통:손": {
+        "table": 11,
+        "dom": 11
+      },
+      "통:롤": {
+        "table": 2,
+        "dom": 2
+      },
+      "통:브러시 목록": {
+        "table": 29,
+        "dom": 29
+      },
+      "통:색상 휠": {
+        "table": 1,
+        "dom": 1
+      },
+      "절차:필압 보정": {
+        "table": 1,
+        "dom": 1
+      },
+      "모달:스텐실": {
+        "table": 3,
+        "dom": 3
+      },
       "개발(?dev=1)": {
         "table": 3,
         "dom": 3
       }
     },
-    "rows_total": 107,
-    "reached": 107,
+    "rows_total": 169,
+    "reached": 169,
     "misses": [],
-    "max_taps_after": 2,
-    "taps_over_2": [],
+    "max_taps_after": 3,
+    "moved_rows": 46,
+    "moved_max_taps": 2,
+    "taps_over_2": [
+      "brushpick-close(통:브러시 목록) 3",
+      "brushpick-tip-default(통:브러시 목록) 3",
+      "brushpick-tip-none(통:브러시 목록) 3",
+      "brushpick-tip-fine-grain(통:브러시 목록) 3",
+      "brushpick-tip-chalk-chisel(통:브러시 목록) 3",
+      "brushpick-tip-rock-pitted(통:브러시 목록) 3",
+      "brushpick-tip-scratches-rough(통:브러시 목록) 3",
+      "brushpick-tip-scratches2(통:브러시 목록) 3",
+      "brushpick-set-recent(통:브러시 목록) 3",
+      "brushpick-set-Brunelleschi(통:브러시 목록) 3",
+      "brushpick-set-Dieterle(통:브러시 목록) 3",
+      "brushpick-set-Classic(통:브러시 목록) 3",
+      "brushpick-set-Deevad(통:브러시 목록) 3",
+      "brushpick-set-Ramon(통:브러시 목록) 3",
+      "brushpick-set-Experimental(통:브러시 목록) 3",
+      "brushpick-set-Tanda(통:브러시 목록) 3",
+      "brushpick-set-Kaerhon(통:브러시 목록) 3",
+      "summary(통:브러시 목록) 3",
+      "brushpick-deevad_2B_pencil(통:브러시 목록) 3",
+      "brushpick-deevad_4H_pencil(통:브러시 목록) 3",
+      "brushpick-deevad_airbrush(통:브러시 목록) 3",
+      "brushpick-deevad_ballpen(통:브러시 목록) 3",
+      "brushpick-deevad_basic_digital_brush(통:브러시 목록) 3",
+      "brushpick-deevad_basic_digital_brush_smudging(통:브러시 목록) 3",
+      "brushpick-deevad_basic_digital_knife(통:브러시 목록) 3",
+      "brushpick-deevad_basic_digital_knife_smudging(통:브러시 목록) 3",
+      "brushpick-deevad_blending(통:브러시 목록) 3",
+      "brushpick-deevad_brush(통:브러시 목록) 3",
+      "brushpick-deevad_chalk(통:브러시 목록) 3",
+      "paint-wheel-cv(통:색상 휠) 3",
+      "btn-press-cancel(절차:필압 보정) 3",
+      "stencil-save(모달:스텐실) 3",
+      "stencil-clear(모달:스텐실) 3",
+      "stencil-close(모달:스텐실) 3"
+    ],
     "falsify_table_mismatch": true,
     "falsify_hidden_unreached": true
+  },
+  "tree": "e636864",
+  "selfcheck_notes": {
+    "identical_pairs": "표 행 수 == DOM 실측은 «같은 함수의 파생»(표가 원장에서 만들어진다 — 낡음 검사 · [M4]) · dpr1 == dpr2는 요소 셈이 dpr 불변인 뜻(D-C3에서 이 자는 새 정보를 안 낸다 — 값으로 적는다)",
+    "zero_counters": "ticks_pressable 0은 «눈금 점은 표식이고 띠가 받는다»(68 §3-2)의 뜻 · dev.without_flag_exists 0은 «미생성»의 뜻(with_flag 3이 짝) · tools.btn-face +0은 재누름 통(face-pop)이라 «더» 나타나는 것이 없다"
+  },
+  "constants_used": {
+    "PAINT68_CASE_N": 7,
+    "PAINT68_GRADE_STEP_PX": 10,
+    "PAINT68_GRADE_DENSITY_STEP_MIN": 0.03,
+    "PAINT68_GRADE_WIDTH_STEP_MIN": 0.5,
+    "PAINT68_CHARCOAL_DENSITY_STEP_MIN": 0.04,
+    "PAINT68_GRADE_8B_TARGET": 0.45,
+    "PAINT68_GRADE_8B_TOL": 0.03,
+    "PAINT68_WIDTH_RATIO_8B_HB": 2,
+    "PAINT68_WIDTH_RATIO_TOL": 0.15,
+    "PAINT68_FIT_TOL": 0.01,
+    "PAINT68_FIT_MAX_ITER": 8,
+    "PAINT68_FIT_OPAQUE_TOL": 0.025,
+    "PAINT68_WIDTH_HONEST_TOL": 0.25,
+    "PAINT68_TICK_BASE": 0.57,
+    "PAINT68_TICK_RATIO": 1.4142135623730951,
+    "PAINT68_RECENT_N": 8,
+    "PAINT68_TIP_BRIGHT_V": 0.92,
+    "WRITE_HOLD_MS": 450,
+    "PAINT58_MIN_W": 1,
+    "PAINT58_MAX_W": {
+      "brush": 500,
+      "marker": 100,
+      "cp": 50,
+      "pencil": 50
+    }
+  },
+  "grid": {
+    "def": "새 문서(?reset · 저장 없음) 격자 표시 꺼짐(DIRECTION 「격자와 축만 기본 꺼짐」) · 사람이 켜면 b2-grid=on이 남고 새로 열어도 켜진 채 · 축 «표시»의 별도 토글은 없다(값 0 — 축은 격자 토글과 한 몸 · 71 §2 「chk-grid가 하는 그 함수(격자 표시 · 축)」) · 축 «스냅»은 토글이 없다(「항상 켜져 있다」 — 표시와 무관 · 자명하여 게이트가 아니라 기록 [M5])",
+    "fresh": {
+      "grid": false,
+      "box": false,
+      "saved": null,
+      "axis_snap": "항상 켜져 있다",
+      "axis_display_toggle": 0
+    },
+    "after_on": {
+      "grid": true,
+      "saved": "on"
+    },
+    "reopened": {
+      "grid": true,
+      "box": true,
+      "axis_snap": "항상 켜져 있다"
+    }
   }
 }

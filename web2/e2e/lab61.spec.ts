@@ -10,6 +10,7 @@
 //
 // 원장: stage0/out/lab61_web2_dpr{1,2}.json (LEDGER=1 · 병합-쓰기 #99)
 
+// web2-69 §3 — 브러시 작업대 단추는 개발 메뉴(?dev=1)에 있다 — dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { readFileSync } from 'node:fs'
@@ -37,11 +38,13 @@ test.afterEach(async ({}, info) => {
 })
 
 async function openLab(page: Page) {
-  await page.goto('/?reset')
+  await page.goto('/?reset&dev=1')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(300)
   await page.evaluate(() => {
+    // web2-69: 작업대 단추는 개발 메뉴(details#devmenu · ?dev=1이면 펼침) «안의» 설정 서랍 — 서랍도 편다(«열기» 한 줄 판갈이)
+    ;(document.getElementById('pane-settings') as HTMLDetailsElement).open = true
     const d = document.getElementById('btn-tunelab')?.closest('details') as HTMLDetailsElement | null
     if (d) d.open = true
   })

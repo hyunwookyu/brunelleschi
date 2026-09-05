@@ -3,10 +3,11 @@
     "project": "dpr1",
     "workers": 1,
     "viewport": "1200×800 (+ 800×700 base)",
-    "tree": "e636864",
+    "tree": "64f878e",
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/inventory69.spec.ts (#99)"
   },
-  "what": "web2-69 §1 인벤토리 — 화면의 누를 것 전수(기본 · 도구별 · 카드별 · 통별 · 절차 · 개발) · §3 전수 왕복(표의 모든 id가 닿는다) · 격자 기본 꺼짐",
+  "what": "web2-69 §1 «전» 셈 — 옮기기 전 트리(64f878e)에서 같은 스크립트로 잰 값(전/후 표의 «전» 열 · 리뷰어 [H5]) · 워크트리(../SKETCH2SPACE_pre69 · PW_PORT=5311)에서 돌렸다 · 이 트리에는 개발 메뉴가 없어 «?dev=1 없이 0» 단언은 빨강(예상 — 값만 쓴다)",
+  "tree": "64f878e",
   "note_pitfalls": "#42 · #96/#97(툴팁·닿음 — 34-0 규약) · #12(상태 열여덟 × 뷰포트 둘 — 동작점이 하나가 아니다) · #91(«안 바뀌었는가»가 아니라 «닿는가»를 잰다) · #109(옛 자리 비움 · 개발 메뉴 존재 셈 0/3 — 둘 다 살지 않는다) · #107(전부 0인 자리: 눈금 점 0은 표식의 뜻 · 면 +0은 재누름 통) · #108(표 == DOM은 같은 함수의 파생 — 낡음 검사이고 실질은 왕복·반증 ②)",
   "pitfall_citations": [
     12,
@@ -18,6 +19,10 @@
     108,
     109
   ],
+  "selfcheck_notes": {
+    "identical_pairs": "표 행 수 == DOM 실측은 «같은 함수의 파생»(표가 원장에서 만들어진다 — 낡음 검사 · [M4]) · dpr1 == dpr2는 요소 셈이 dpr 불변인 뜻(D-C3에서 이 자는 새 정보를 안 낸다 — 값으로 적는다)",
+    "zero_counters": "ticks_pressable 0은 «눈금 점은 표식이고 띠가 받는다»(68 §3-2)의 뜻 · dev.without_flag_exists 0은 «미생성»의 뜻(with_flag 3이 짝) · tools.btn-face +0은 재누름 통(face-pop)이라 «더» 나타나는 것이 없다"
+  },
   "census": {
     "def": "«보이는 누를 것»(button·input·select·textarea·summary·role=button·a[href]·눈금 점·경도 글자·색상 휠 캔버스 — 가운데의 elementFromPoint가 자기) · 자리 = 첫 판 조상 · 기본 상태(?reset · 연필 — 「아무 도구도 안 든 상태」는 이 앱에 없다) · 상태마다 «더» 나타난 것(같은 id라도 자리가 다르면 새 것)",
     "base": {
@@ -107,8 +112,8 @@
           "label": "",
           "has_icon": true,
           "disabled": false,
-          "title": "보기 — 바닥면적 · 실 다이어그램 · 사람 놓기 · 스텐실",
-          "aria": "보기",
+          "title": "표시 — 지평선·지면 격자·대기 획",
+          "aria": "표시",
           "rect": [
             911,
             12,
@@ -1268,7 +1273,7 @@
         "removed": []
       },
       "카드:pane-file": {
-        "total": 29,
+        "total": 30,
         "taps_to_open": 1,
         "added": [
           "doc-name",
@@ -1276,7 +1281,8 @@
           "btn-open",
           "btn-obj",
           "btn-gltf",
-          "btn-clear"
+          "btn-clear",
+          "btn-brush"
         ],
         "added_items": [
           {
@@ -1380,29 +1386,36 @@
               148,
               27
             ]
+          },
+          {
+            "id": "btn-brush",
+            "tag": "button",
+            "type": "button",
+            "zone": "pane-file",
+            "label": "질감",
+            "has_icon": false,
+            "disabled": false,
+            "title": "종이 질감을 켜고 끈다",
+            "aria": "",
+            "rect": [
+              706,
+              426,
+              148,
+              27
+            ]
           }
         ],
         "removed": []
       },
       "카드:pane-settings": {
-        "total": 38,
+        "total": 28,
         "taps_to_open": 1,
         "added": [
           "chk-press",
           "chk-grain",
-          "btn-brush",
-          "chk-horizon",
-          "chk-grid",
-          "chk-waitfade",
-          "chk-hidden",
-          "chk-hatchface",
-          "rng-hold",
-          "rng-whold",
-          "dim-unit",
-          "chk-dimsnap",
-          "dimsnap-step",
-          "chk-exact",
-          "chk-measure-keep"
+          "btn-diag",
+          "btn-stencil",
+          "btn-tunelab"
         ],
         "added_items": [
           {
@@ -1416,7 +1429,7 @@
             "title": "",
             "aria": "",
             "rect": [
-              605,
+              745,
               83,
               13,
               13
@@ -1433,42 +1446,95 @@
             "title": "",
             "aria": "",
             "rect": [
-              605,
+              745,
               136,
               13,
               13
             ]
           },
           {
-            "id": "btn-brush",
+            "id": "btn-diag",
             "tag": "button",
             "type": "button",
             "zone": "pane-settings",
-            "label": "질감",
+            "label": "진단",
             "has_icon": false,
             "disabled": false,
-            "title": "종이 질감을 켜고 끈다",
+            "title": "진단 — 기기 값·최근 획·파일 크기",
             "aria": "",
             "rect": [
-              601,
-              158,
-              253,
+              741,
+              186,
+              113,
               27
             ]
           },
           {
+            "id": "btn-stencil",
+            "tag": "button",
+            "type": "button",
+            "zone": "pane-settings",
+            "label": "사람 스텐실 그리기",
+            "has_icon": false,
+            "disabled": false,
+            "title": "사람 스텐실 — 가로선이 눈높이다. 눈을 거기 맞춰 그리면 놓았을 때 눈이 지평선에 얹힌다",
+            "aria": "",
+            "rect": [
+              741,
+              219,
+              113,
+              27
+            ]
+          },
+          {
+            "id": "btn-tunelab",
+            "tag": "button",
+            "type": "button",
+            "zone": "pane-settings",
+            "label": "브러시 작업대",
+            "has_icon": false,
+            "disabled": false,
+            "title": "브러시 작업대 — 붓·마커·색연필·연필의 값을 손잡이로 열고 옆에서 바로 그어 본다. 「굳힌다」가 이 기기에 남긴다",
+            "aria": "",
+            "rect": [
+              741,
+              252,
+              113,
+              27
+            ]
+          }
+        ],
+        "removed": []
+      },
+      "카드:display-pop": {
+        "total": 33,
+        "taps_to_open": 1,
+        "added": [
+          "chk-horizon",
+          "chk-grid",
+          "chk-waitfade",
+          "chk-hidden",
+          "chk-hatchface",
+          "btn-floor-area",
+          "chk-rooms",
+          "btn-person",
+          "rng-hold",
+          "rng-whold"
+        ],
+        "added_items": [
+          {
             "id": "chk-horizon",
             "tag": "input",
             "type": "checkbox",
-            "zone": "pane-settings",
+            "zone": "display-pop",
             "label": "지평선",
             "has_icon": false,
             "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
-              605,
-              222,
+              607,
+              61,
               13,
               13
             ]
@@ -1477,15 +1543,15 @@
             "id": "chk-grid",
             "tag": "input",
             "type": "checkbox",
-            "zone": "pane-settings",
+            "zone": "display-pop",
             "label": "지면 격자",
             "has_icon": false,
             "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
-              605,
-              247,
+              607,
+              87,
               13,
               13
             ]
@@ -1494,15 +1560,15 @@
             "id": "chk-waitfade",
             "tag": "input",
             "type": "checkbox",
-            "zone": "pane-settings",
+            "zone": "display-pop",
             "label": "다른 각도에서는 숨긴다",
             "has_icon": false,
             "disabled": false,
             "title": "",
             "aria": "",
             "rect": [
-              605,
-              272,
+              607,
+              113,
               13,
               13
             ]
@@ -1511,15 +1577,15 @@
             "id": "chk-hidden",
             "tag": "input",
             "type": "checkbox",
-            "zone": "pane-settings",
+            "zone": "display-pop",
             "label": "가린 선(은선)",
             "has_icon": false,
             "disabled": false,
             "title": "밑그림의 H 계열 — 가린 선을 그릴지",
             "aria": "",
             "rect": [
-              605,
-              297,
+              607,
+              139,
               13,
               13
             ]
@@ -1528,151 +1594,19 @@
             "id": "chk-hatchface",
             "tag": "input",
             "type": "checkbox",
-            "zone": "pane-settings",
+            "zone": "display-pop",
             "label": "해칭을 면에 붙인다",
             "has_icon": false,
             "disabled": false,
             "title": "해칭이 면에 붙는다 — 끄면 종이(화면)에 붙는다",
             "aria": "",
             "rect": [
-              605,
-              322,
+              607,
+              165,
               13,
               13
             ]
           },
-          {
-            "id": "rng-hold",
-            "tag": "input",
-            "type": "range",
-            "zone": "pane-settings",
-            "label": "머무름 직선화 0.35s",
-            "has_icon": false,
-            "disabled": false,
-            "title": "옐로에서 끝에 머무르면 획이 반듯해진다 — 그 대기 시간",
-            "aria": "",
-            "rect": [
-              719,
-              346,
-              129,
-              16
-            ]
-          },
-          {
-            "id": "rng-whold",
-            "tag": "input",
-            "type": "range",
-            "zone": "pane-settings",
-            "label": "글씨 꾹 누르기 0.45s",
-            "has_icon": false,
-            "disabled": false,
-            "title": "치수를 매길 선을 이만큼 누르면 글씨를 쓰는 상태가 된다",
-            "aria": "",
-            "rect": [
-              723,
-              372,
-              129,
-              16
-            ]
-          },
-          {
-            "id": "dim-unit",
-            "tag": "select",
-            "type": "select",
-            "zone": "pane-settings",
-            "label": "mmcmm",
-            "has_icon": false,
-            "disabled": false,
-            "title": "",
-            "aria": "",
-            "rect": [
-              631,
-              424,
-              45,
-              19
-            ]
-          },
-          {
-            "id": "chk-dimsnap",
-            "tag": "input",
-            "type": "checkbox",
-            "zone": "pane-settings",
-            "label": "치수 스냅 151050100 mm",
-            "has_icon": false,
-            "disabled": false,
-            "title": "",
-            "aria": "",
-            "rect": [
-              605,
-              452,
-              13,
-              13
-            ]
-          },
-          {
-            "id": "dimsnap-step",
-            "tag": "select",
-            "type": "select",
-            "zone": "pane-settings",
-            "label": "151050100",
-            "has_icon": false,
-            "disabled": false,
-            "title": "",
-            "aria": "",
-            "rect": [
-              685,
-              449,
-              45,
-              19
-            ]
-          },
-          {
-            "id": "chk-exact",
-            "tag": "input",
-            "type": "checkbox",
-            "zone": "pane-settings",
-            "label": "소수점 그대로",
-            "has_icon": false,
-            "disabled": false,
-            "title": "",
-            "aria": "",
-            "rect": [
-              605,
-              477,
-              13,
-              13
-            ]
-          },
-          {
-            "id": "chk-measure-keep",
-            "tag": "input",
-            "type": "checkbox",
-            "zone": "pane-settings",
-            "label": "잰 것을 도면에 남긴다",
-            "has_icon": false,
-            "disabled": false,
-            "title": "",
-            "aria": "",
-            "rect": [
-              605,
-              502,
-              13,
-              13
-            ]
-          }
-        ],
-        "removed": []
-      },
-      "카드:display-pop": {
-        "total": 27,
-        "taps_to_open": 1,
-        "added": [
-          "btn-floor-area",
-          "chk-rooms",
-          "btn-person",
-          "btn-stencil"
-        ],
-        "added_items": [
           {
             "id": "btn-floor-area",
             "tag": "button",
@@ -1684,9 +1618,9 @@
             "title": "바닥면적·부피 — 근거가 된 면이 밝아진다. 축척이 없으면 숫자를 안 낸다",
             "aria": "",
             "rect": [
-              724,
-              58,
-              130,
+              603,
+              188,
+              251,
               24
             ]
           },
@@ -1701,8 +1635,8 @@
             "title": "벽으로 닫힌 영역(실)의 버블·연결 — 축척이 있으면 면적도",
             "aria": "",
             "rect": [
-              728,
-              91,
+              607,
+              221,
               13,
               13
             ]
@@ -1718,34 +1652,51 @@
             "title": "사람 놓기 — 다음으로 지면을 탭한 자리에 선다(한 번 놓으면 풀린다)",
             "aria": "",
             "rect": [
-              724,
-              114,
-              130,
+              603,
+              244,
+              251,
               24
             ]
           },
           {
-            "id": "btn-stencil",
-            "tag": "button",
-            "type": "button",
+            "id": "rng-hold",
+            "tag": "input",
+            "type": "range",
             "zone": "display-pop",
-            "label": "사람 스텐실 그리기",
+            "label": "머무름 직선화 0.35s",
             "has_icon": false,
             "disabled": false,
-            "title": "사람 스텐실 — 가로선이 눈높이다. 눈을 거기 맞춰 그리면 놓았을 때 눈이 지평선에 얹힌다",
+            "title": "옐로에서 끝에 머무르면 획이 반듯해진다 — 그 대기 시간",
             "aria": "",
             "rect": [
-              724,
-              144,
-              130,
-              24
+              719,
+              276,
+              129,
+              16
+            ]
+          },
+          {
+            "id": "rng-whold",
+            "tag": "input",
+            "type": "range",
+            "zone": "display-pop",
+            "label": "글씨 꾹 누르기 0.45s",
+            "has_icon": false,
+            "disabled": false,
+            "title": "치수를 매길 선을 이만큼 누르면 글씨를 쓰는 상태가 된다",
+            "aria": "",
+            "rect": [
+              723,
+              304,
+              129,
+              16
             ]
           }
         ],
         "removed": []
       },
       "카드:dimpanel": {
-        "total": 41,
+        "total": 46,
         "taps_to_open": 1,
         "added": [
           "button",
@@ -1765,7 +1716,12 @@
           "btn-dim-write",
           "btn-measure",
           "dim-clear",
-          "btn-voice"
+          "btn-voice",
+          "dim-unit",
+          "chk-dimsnap",
+          "dimsnap-step",
+          "chk-exact",
+          "chk-measure-keep"
         ],
         "added_items": [
           {
@@ -2072,6 +2028,91 @@
               529,
               24,
               20
+            ]
+          },
+          {
+            "id": "dim-unit",
+            "tag": "select",
+            "type": "select",
+            "zone": "dimpanel",
+            "label": "mmcmm",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              914,
+              556,
+              45,
+              19
+            ]
+          },
+          {
+            "id": "chk-dimsnap",
+            "tag": "input",
+            "type": "checkbox",
+            "zone": "dimpanel",
+            "label": "치수 스냅 151050100 mm",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              888,
+              585,
+              13,
+              13
+            ]
+          },
+          {
+            "id": "dimsnap-step",
+            "tag": "select",
+            "type": "select",
+            "zone": "dimpanel",
+            "label": "151050100",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              968,
+              582,
+              45,
+              19
+            ]
+          },
+          {
+            "id": "chk-exact",
+            "tag": "input",
+            "type": "checkbox",
+            "zone": "dimpanel",
+            "label": "소수점 그대로",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              888,
+              611,
+              13,
+              13
+            ]
+          },
+          {
+            "id": "chk-measure-keep",
+            "tag": "input",
+            "type": "checkbox",
+            "zone": "dimpanel",
+            "label": "잰 것을 도면에 남긴다",
+            "has_icon": false,
+            "disabled": false,
+            "title": "",
+            "aria": "",
+            "rect": [
+              888,
+              637,
+              13,
+              13
             ]
           }
         ],
@@ -3104,7 +3145,7 @@
         "removed": []
       },
       "절차:필압 보정": {
-        "total": 39,
+        "total": 29,
         "taps_to_open": 2,
         "added": [
           "btn-press-cancel"
@@ -3218,66 +3259,10 @@
         ]
       },
       "개발(?dev=1)": {
-        "total": 41,
+        "total": 28,
         "taps_to_open": 1,
-        "added": [
-          "btn-diag",
-          "btn-tunelab",
-          "chk-own3d"
-        ],
-        "added_items": [
-          {
-            "id": "btn-diag",
-            "tag": "button",
-            "type": "button",
-            "zone": "devmenu",
-            "label": "진단",
-            "has_icon": false,
-            "disabled": false,
-            "title": "진단 — 기기 값·최근 획·파일 크기",
-            "aria": "",
-            "rect": [
-              601,
-              546,
-              26,
-              27
-            ]
-          },
-          {
-            "id": "btn-tunelab",
-            "tag": "button",
-            "type": "button",
-            "zone": "devmenu",
-            "label": "브러시 작업대",
-            "has_icon": false,
-            "disabled": false,
-            "title": "브러시 작업대 — 붓·마커·색연필·연필의 값을 손잡이로 열고 옆에서 바로 그어 본다. 「굳힌다」가 이 기기에 남긴다",
-            "aria": "",
-            "rect": [
-              631,
-              546,
-              83,
-              27
-            ]
-          },
-          {
-            "id": "chk-own3d",
-            "tag": "input",
-            "type": "checkbox",
-            "zone": "devmenu",
-            "label": "획이 위치를 소유한다",
-            "has_icon": false,
-            "disabled": false,
-            "title": "개정 3 — 카메라가 닫힌 뒤 사슬이 놓은 3D를 획이 소유한다",
-            "aria": "",
-            "rect": [
-              605,
-              576,
-              13,
-              13
-            ]
-          }
-        ],
+        "added": [],
+        "added_items": [],
         "removed": []
       }
     },
@@ -3289,35 +3274,31 @@
     "drawer_draw": {
       "def": "옮긴 카드(설정 서랍 · 보기 카드)가 열릴 때 그리는 양 — 노드 수 · canvas/svg/img 수 · 여는 전후 rAF 프레임 셈(diag.frameCountForTest가 없으면 null — 그때 «그리는 양»은 canvas 0으로 판정)",
       "pane-settings": {
-        "nodes": 57,
+        "nodes": 18,
         "canvas": 0,
-        "svg": 3,
+        "svg": 1,
         "img": 0,
         "frames_after_open": null,
         "frames_before_open": null
       },
       "display-pop": {
-        "nodes": 5,
+        "nodes": 26,
         "canvas": 0,
-        "svg": 0,
+        "svg": 2,
         "img": 0,
         "frames_after_open": null,
         "frames_before_open": null
       }
     },
     "dev": {
-      "without_flag_exists": 0,
+      "without_flag_exists": 3,
       "with_flag_exists": 3,
       "with_flag_base_total": 23,
-      "devmenu_ids": [
-        "btn-diag",
-        "btn-tunelab",
-        "chk-own3d"
-      ]
+      "devmenu_ids": []
     },
     "id_reconcile": {
-      "html_ids": 124,
-      "in_table": 57,
+      "html_ids": 122,
+      "in_table": 56,
       "not_pressable_tag": [
         "boot",
         "app",
@@ -3332,16 +3313,14 @@
         "pane-settings",
         "press-calib",
         "press-calib-step",
+        "display-pop",
         "hold-read",
         "whold-read",
-        "devmenu-tpl",
-        "devmenu",
-        "diagctl",
-        "display-pop",
         "tip",
         "notice",
         "buildid",
         "diagpanel",
+        "diagctl",
         "dimpanel",
         "dim-scale",
         "dim-live",
@@ -3385,161 +3364,12 @@
       ],
       "pressable_not_seen": [
         "fs-exit",
+        "chk-own3d",
         "btn-pencil-old",
         "btn-pen-old",
         "file-open"
       ]
     }
-  },
-  "roundtrip": {
-    "def": "§1 ② 표(INVENTORY.md)의 상태별 행 수 == 같은 함수로 다시 센 DOM 실측(낡음 검사 — 표는 원장의 파생) · §3 전수 왕복: 표의 모든 id를 그 상태를 열고 elementFromPoint로 «닿는다»(실질) · 반증 ①: 표에서 한 행을 빼면 셈이 갈린다(파일이 읽힌다) · 반증 ②: 요소 하나를 감추면 닿지 않는다(자가 산다)",
-    "tree": "e636864",
-    "counts": {
-      "기본": {
-        "table": 23,
-        "dom": 23
-      },
-      "도구:연필": {
-        "table": 6,
-        "dom": 6
-      },
-      "도구:펜": {
-        "table": 5,
-        "dom": 5
-      },
-      "도구:연필 지우개": {
-        "table": 4,
-        "dom": 4
-      },
-      "도구:펜 지우개": {
-        "table": 4,
-        "dom": 4
-      },
-      "도구:칠": {
-        "table": 23,
-        "dom": 23
-      },
-      "카드:pane-file": {
-        "table": 6,
-        "dom": 6
-      },
-      "카드:pane-settings": {
-        "table": 15,
-        "dom": 15
-      },
-      "카드:display-pop": {
-        "table": 4,
-        "dom": 4
-      },
-      "카드:dimpanel": {
-        "table": 18,
-        "dom": 18
-      },
-      "통:렌즈": {
-        "table": 2,
-        "dom": 2
-      },
-      "통:자": {
-        "table": 9,
-        "dom": 9
-      },
-      "통:손": {
-        "table": 11,
-        "dom": 11
-      },
-      "통:롤": {
-        "table": 2,
-        "dom": 2
-      },
-      "통:브러시 목록": {
-        "table": 29,
-        "dom": 29
-      },
-      "통:색상 휠": {
-        "table": 1,
-        "dom": 1
-      },
-      "절차:필압 보정": {
-        "table": 1,
-        "dom": 1
-      },
-      "모달:스텐실": {
-        "table": 3,
-        "dom": 3
-      },
-      "개발(?dev=1)": {
-        "table": 3,
-        "dom": 3
-      }
-    },
-    "rows_total": 169,
-    "reached": 169,
-    "misses": [],
-    "max_taps_after": 3,
-    "moved_rows": 46,
-    "moved_max_taps": 2,
-    "taps_over_2": [
-      "brushpick-close(통:브러시 목록) 3",
-      "brushpick-tip-default(통:브러시 목록) 3",
-      "brushpick-tip-none(통:브러시 목록) 3",
-      "brushpick-tip-fine-grain(통:브러시 목록) 3",
-      "brushpick-tip-chalk-chisel(통:브러시 목록) 3",
-      "brushpick-tip-rock-pitted(통:브러시 목록) 3",
-      "brushpick-tip-scratches-rough(통:브러시 목록) 3",
-      "brushpick-tip-scratches2(통:브러시 목록) 3",
-      "brushpick-set-recent(통:브러시 목록) 3",
-      "brushpick-set-Brunelleschi(통:브러시 목록) 3",
-      "brushpick-set-Dieterle(통:브러시 목록) 3",
-      "brushpick-set-Classic(통:브러시 목록) 3",
-      "brushpick-set-Deevad(통:브러시 목록) 3",
-      "brushpick-set-Ramon(통:브러시 목록) 3",
-      "brushpick-set-Experimental(통:브러시 목록) 3",
-      "brushpick-set-Tanda(통:브러시 목록) 3",
-      "brushpick-set-Kaerhon(통:브러시 목록) 3",
-      "summary(통:브러시 목록) 3",
-      "brushpick-deevad_2B_pencil(통:브러시 목록) 3",
-      "brushpick-deevad_4H_pencil(통:브러시 목록) 3",
-      "brushpick-deevad_airbrush(통:브러시 목록) 3",
-      "brushpick-deevad_ballpen(통:브러시 목록) 3",
-      "brushpick-deevad_basic_digital_brush(통:브러시 목록) 3",
-      "brushpick-deevad_basic_digital_brush_smudging(통:브러시 목록) 3",
-      "brushpick-deevad_basic_digital_knife(통:브러시 목록) 3",
-      "brushpick-deevad_basic_digital_knife_smudging(통:브러시 목록) 3",
-      "brushpick-deevad_blending(통:브러시 목록) 3",
-      "brushpick-deevad_brush(통:브러시 목록) 3",
-      "brushpick-deevad_chalk(통:브러시 목록) 3",
-      "paint-wheel-cv(통:색상 휠) 3",
-      "btn-press-cancel(절차:필압 보정) 3",
-      "stencil-save(모달:스텐실) 3",
-      "stencil-clear(모달:스텐실) 3",
-      "stencil-close(모달:스텐실) 3"
-    ],
-    "falsify_table_mismatch": true,
-    "falsify_hidden_unreached": true
-  },
-  "grid": {
-    "def": "새 문서(?reset · 저장 없음) 격자 표시 꺼짐(DIRECTION 「격자와 축만 기본 꺼짐」) · 사람이 켜면 b2-grid=on이 남고 새로 열어도 켜진 채 · 축 «표시»의 별도 토글은 없다(값 0 — 축은 격자 토글과 한 몸 · 71 §2 「chk-grid가 하는 그 함수(격자 표시 · 축)」) · 축 «스냅»은 토글이 없다(「항상 켜져 있다」 — 표시와 무관 · 자명하여 게이트가 아니라 기록 [M5])",
-    "fresh": {
-      "grid": false,
-      "box": false,
-      "saved": null,
-      "axis_snap": "항상 켜져 있다",
-      "axis_display_toggle": 0
-    },
-    "after_on": {
-      "grid": true,
-      "saved": "on"
-    },
-    "reopened": {
-      "grid": true,
-      "box": true,
-      "axis_snap": "항상 켜져 있다"
-    }
-  },
-  "tree": "e636864",
-  "selfcheck_notes": {
-    "identical_pairs": "표 행 수 == DOM 실측은 «같은 함수의 파생»(표가 원장에서 만들어진다 — 낡음 검사 · [M4]) · dpr1 == dpr2는 요소 셈이 dpr 불변인 뜻(D-C3에서 이 자는 새 정보를 안 낸다 — 값으로 적는다)",
-    "zero_counters": "ticks_pressable 0은 «눈금 점은 표식이고 띠가 받는다»(68 §3-2)의 뜻 · dev.without_flag_exists 0은 «미생성»의 뜻(with_flag 3이 짝) · tools.btn-face +0은 재누름 통(face-pop)이라 «더» 나타나는 것이 없다"
   },
   "constants_used": {
     "PAINT68_CASE_N": 7,
