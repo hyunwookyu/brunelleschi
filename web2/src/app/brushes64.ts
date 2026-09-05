@@ -50,8 +50,69 @@ export function lerpPreset(name: string, aName: string, bName: string, t: number
   return { name, group: APP_GROUP, desc, s }
 }
 
-/** 보간 위치 — 원장 paint68이 확정한 값(출발 배치는 지시 §2의 1/3 · 2/3). */
+/** (68 초판의 보간 위치 — 원장 paint68 1차가 «같은 값»(≤ .0015)으로 반증했다 · lerpPreset은 단위 시험·기록으로 남는다) */
 export const PENCIL_LERP_T = { pencil_4B: 1 / 3, pencil_6B: 2 / 3 } as const
+
+// ── web2-68 §2 개정(docs/instructions/web2-68-amend.md) — **경도 축은 한 뿌리 프리셋의 매개 가족이다.** 196 안에 경도 가족은
+// 없다(paint68 1차 표가 보였다 — classic .130 > tanda 축 .027~.066 · 보간 셋은 같은 값). 64-2(색연필)·66-2(마커)의 선례대로
+// 앱 프리셋(brunelleschi/)으로 등재하고 **뿌리와 매개를 값으로** 적는다. 매개는 셋만 움직인다 · 다른 설정은 뿌리 그대로(곡선 포함):
+//   opaque              농도 축 — «목표 농도»에 되먹임(이분법 · ≤ 8회 · 결정론)으로 맞춘 값을 상수로 굳힌다(런타임에 안 잰다)
+//   radius_logarithmic  폭 축   — 연필 HB 1.0 → 8B 2.0 등비(한 단 2^(1/5) → +ln2/5) · 목탄 ×.85 / 1 / ×1.2
+//   hardness            경계    — 연필 HB 뿌리 → 8B 뿌리 × .7 등차 · 목탄 ×1.15 / 1 / ×.8
+// 목표(같은 자 — 직선 · 압력 0.3→0.7→0.3 · 12px · 제품 보정 · 흰 판): HB .130(뿌리 그대로) · B .19 · 2B .25 · 4B .32 · 6B .39 · 8B .45
+// (8B 상한의 근거 = 196에서 가장 짙게 실측된 흑연 experimental/subtle_pencil .429 부근) · 목탄 중 = 뿌리 실측 · 경 = ×.75 · 연 = ×1.3.
+// 되먹임의 표(목표 · 도달 · opaque · 폭)는 원장 paint68_web2_dpr{1,2}.json(fit 절)이 정본이고 아래 상수가 그 도달값이다.
+// 라이선스: classic/pencil · classic/charcoal(mypaint-brushes CC0-1.0)의 파생 — 이름만 앱의 것.
+
+/** 뿌리 프리셋의 매개 셋을 바꾼 사본(곡선은 뿌리 그대로) */
+export function familyPreset(name: string, rootName: string, m: { opaque: number; radiusAdd: number; hardnessK: number }, desc: string): Preset {
+  const root = PRESET_OF.get(rootName)
+  if (!root) throw new Error(`familyPreset: 뿌리가 없다 — ${rootName}`)
+  const s: Record<string, PresetSetting> = {}
+  for (const [k, v] of Object.entries(root.s)) s[k] = v[1] ? [v[0], v[1]] : [v[0]]
+  const set = (k: string, base: number) => { const cur = s[k]; s[k] = cur && cur[1] ? [+base.toFixed(6), cur[1]] : [+base.toFixed(6)] }
+  const def = (k: string) => SETTING_DEF.get(k)!
+  set('opaque', m.opaque)
+  set('radius_logarithmic', (s.radius_logarithmic?.[0] ?? def('radius_logarithmic')) + m.radiusAdd)
+  set('hardness', (s.hardness?.[0] ?? def('hardness')) * m.hardnessK)
+  return { name, group: APP_GROUP, desc, s }
+}
+
+/** 연필 여섯의 매개 — opaque는 되먹임 도달값(원장 fit 절) · 폭·경계는 개정 문면의 등비·등차 */
+export const PENCIL_FAMILY = {
+  root: 'classic/pencil',
+  target: { HB: 0.13, B: 0.19, '2B': 0.25, '4B': 0.32, '6B': 0.39, '8B': 0.45 } as Readonly<Record<string, number>>,
+  /** 되먹임 도달 opaque(paint68 fit — HB는 뿌리 .7 그대로) — ⚠ 값은 원장이 정본 · 여기는 굳힌 상수 */
+  opaque: { HB: 0.7, B: 0.9481, '2B': 1.1338, '4B': 1.3503, '6B': 1.4586, '8B': 1.505 } as Readonly<Record<string, number>>,
+  /** 폭 축의 끝값(8B의 크기 배수) — 되먹임 도달값: 반지름 배수 2.0에서 반최대 폭 비가 2.33(hill 24px 제품)으로 «넓게» 나왔다
+   *  (무른 hardness가 반최대 띠를 더 벌린다) → 측정 폭 비 2.0이 되도록 배수를 낮춘다(원장 paint68 width_fit). 사이는 등비. */
+  sizeK8B: 1.714,
+  radiusAdd: (k: number) => Math.log(1.714) * k / 5,    // HB(k=0) 1.0 → 8B(k=5) sizeK8B 등비(측정 폭 비 2.0의 되먹임)
+  hardnessK: (k: number) => 1 - 0.3 * k / 5,            // HB 1 → 8B .7 등차
+} as const
+export const PENCIL_FAMILY_GRADES = ['HB', 'B', '2B', '4B', '6B', '8B'] as const
+
+/** 목탄 셋의 매개 — 중은 뿌리 그대로 · 경/연은 개정 문면 */
+export const CHARCOAL_FAMILY = {
+  root: 'classic/charcoal',
+  targetK: { H: 0.75, M: 1, S: 1.3 } as Readonly<Record<string, number>>,
+  opaque: { H: 0.2056, M: 0.4, S: 0.7625 } as Readonly<Record<string, number>>,   // 되먹임 도달값(원장 fit 절) — 중은 뿌리 .4
+  radiusK: { H: 0.85, M: 1, S: 1.2 } as Readonly<Record<string, number>>,
+  hardnessK: { H: 1.15, M: 1, S: 0.8 } as Readonly<Record<string, number>>,
+} as const
+export const CHARCOAL_FAMILY_GRADES = ['H', 'M', 'S'] as const
+
+/** **가족의 폭 축은 크기 배수다**(web2-68 §2 개정 · D-4 실측): 이 앱은 자국의 반지름을 프리셋의 radius_logarithmic가 아니라
+ *  «요청 폭»(크기 슬라이더 · 58 크기 정직성 — radiusLogFor)에서 정한다. 그래서 가족 프리셋의 radius 차이는 그대로 두면 화면에
+ *  **아무 일도 안 한다**(paint68 fit 1차 실측 — 여섯의 폭 전부 같음 · 8B/HB 비 1.0). 개정의 뜻(무른 심은 넓다 — 8B = HB × 2)을
+ *  «요청 폭에 곱하는 배수»로 싣는다: 반지름 = radiusFor(요청 폭 × 배수). 배수 = exp(radius_logarithmic − 뿌리의 것) — 프리셋 데이터
+ *  하나가 두 자리(설정 · 배수)를 정한다(#54). 뿌리·다른 프리셋은 배수 1(58 정직성 무변 — 정직성은 뿌리에 대해 서고 가족은 배수를
+ *  «선언»한다 · DECISIONS 68). mypaintpaint.configureMark가 읽는다. */
+export const FAMILY_SIZE_K: ReadonlyMap<string, number> = new Map<string, number>([
+  ...PENCIL_FAMILY_GRADES.map((g, k) => [`brunelleschi/pencil_${g}`, +Math.exp(PENCIL_FAMILY.radiusAdd(k)).toFixed(4)] as [string, number]),
+  ...CHARCOAL_FAMILY_GRADES.map(g => [`brunelleschi/charcoal_${g}`, CHARCOAL_FAMILY.radiusK[g]!] as [string, number]),
+])
+export const familySizeK = (preset: string): number => FAMILY_SIZE_K.get(preset) ?? 1
 
 export const APP_PRESETS: readonly Preset[] = [
   {
@@ -100,9 +161,11 @@ export const APP_PRESETS: readonly Preset[] = [
       stroke_holdtime: [10],
     },
   },
-  // ── 연필 4B · 6B(web2-68 §2) — tanda/pencil-2b ↔ tanda/pencil-8b의 사이(두 CC0의 사이 · 위 lerpPreset 주석).
-  lerpPreset('brunelleschi/pencil_4B', 'tanda/pencil-2b', 'tanda/pencil-8b', PENCIL_LERP_T.pencil_4B,
-    '연필 4B(web2-68) — tanda 2B와 8B의 사이(base_value 선형 보간 · 곡선은 2B) · 두 CC0 프리셋의 사이'),
-  lerpPreset('brunelleschi/pencil_6B', 'tanda/pencil-2b', 'tanda/pencil-8b', PENCIL_LERP_T.pencil_6B,
-    '연필 6B(web2-68) — tanda 2B와 8B의 사이(base_value 선형 보간 · 곡선은 2B) · 두 CC0 프리셋의 사이'),
+  // ── 경도 가족(web2-68 §2 개정) — 연필 여섯(뿌리 classic/pencil) · 목탄 셋(뿌리 classic/charcoal). 매개·목표는 위 주석.
+  ...PENCIL_FAMILY_GRADES.map((g, k) => familyPreset(`brunelleschi/pencil_${g}`, PENCIL_FAMILY.root,
+    { opaque: PENCIL_FAMILY.opaque[g]!, radiusAdd: PENCIL_FAMILY.radiusAdd(k), hardnessK: PENCIL_FAMILY.hardnessK(k) },
+    `연필 ${g}(web2-68 §2 개정) — 뿌리 classic/pencil(CC0)의 매개 가족: opaque ${PENCIL_FAMILY.opaque[g]}(되먹임 · 목표 농도 ${PENCIL_FAMILY.target[g]}) · 반지름 ×${(2 ** (k / 5)).toFixed(3)} · hardness ×${PENCIL_FAMILY.hardnessK(k).toFixed(2)}`)),
+  ...CHARCOAL_FAMILY_GRADES.map(g => familyPreset(`brunelleschi/charcoal_${g}`, CHARCOAL_FAMILY.root,
+    { opaque: CHARCOAL_FAMILY.opaque[g]!, radiusAdd: Math.log(CHARCOAL_FAMILY.radiusK[g]!), hardnessK: CHARCOAL_FAMILY.hardnessK[g]! },
+    `목탄 ${g === 'H' ? '경' : g === 'M' ? '중' : '연'}(web2-68 §2 개정) — 뿌리 classic/charcoal(CC0)의 매개 가족: opaque ${CHARCOAL_FAMILY.opaque[g]}(되먹임 · 목표 = 중 농도 × ${CHARCOAL_FAMILY.targetK[g]}) · 반지름 ×${CHARCOAL_FAMILY.radiusK[g]} · hardness ×${CHARCOAL_FAMILY.hardnessK[g]}`)),
 ]

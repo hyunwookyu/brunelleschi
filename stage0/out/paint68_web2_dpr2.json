@@ -4,17 +4,19 @@
     "workers": 1,
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/paint68.spec.ts (#99)"
   },
-  "what": "web2-68 §2 — 경도 축: 후보 전수의 농도·반최대 폭 표 · 여섯+셋의 단조 · 반증 · 결정론",
-  "note_pitfalls": "#108(보간 키는 SETTINGS 존재 검증 · 단언 판과 반증 판이 같은 값이면 자를 의심 — 반증이 실제로 다른 값을 낸다) · #12(동작점 둘: 12·24px × 도형 둘) · #16(분모는 반최대 띠 안 픽셀 수 — 표에 든다) · #42",
+  "what": "web2-68 §2 개정 — 경도 가족(뿌리 classic/pencil · classic/charcoal): opaque 되먹임(fit) · 가족 표 · 단조 게이트 · 반증 · 결정론",
+  "note_pitfalls": "#108(가족 프리셋의 키는 뿌리의 키 집합 그대로 — 단위 grades68 ②) · #12(동작점: 12·24px × hill·line) · #16(분모 n_px가 표에 든다) · #42 · #54(자는 1차와 같은 함수 — markSampleForTest)",
   "pitfall_citations": [
     12,
     16,
     42,
+    54,
     108
   ],
   "selfcheck_notes": {
-    "identical_pairs": "결정론 판(같은 프리셋 두 번)의 «같음»은 63 게이트 ①의 규약 그대로(시드 고정 · Math.random 없음) — 반증(같은 프리셋을 두 자리)이 «다른 값»(false)을 낸다",
-    "zero_counters": "tanda/charcoal-blur1 행의 n_px·ink_px·density 0은 «축 밖(번짐 — smudge 1 · 안료 없음)»의 기록값이다(후보에서 뺐다 — 지시 §2 방법 4) · 보정 «켬»의 폭 이웃 차 ≈ 0은 58 크기 정직성의 뜻 그 자체다(요청 폭 == 반최대 폭 — 프리셋과 무관) — 폭 단조는 보정 «끔» 열이 잰다"
+    "identical_pairs": "결정론 판(같은 프리셋 두 번)의 «같음»은 63 게이트 ①의 규약 그대로 — 반증(같은 프리셋 둘)이 «다른 값»(false)을 낸다",
+    "zero_counters": "보정 «켬»(cal)의 8B/HB 폭 비 ≈ 1은 58 크기 정직성의 뜻 그 자체(요청 폭 == 반최대 폭) — 폭 축의 게이트는 보정 «끔»(raw) 열이 든다(AS-C200)",
+    "exact_one": "fit.*.iters가 8인 것은 이분법 상한(개정 문면 «최대 8회»)이고 state가 그 뜻을 든다(converged/maxiter)"
   },
   "candidates": {
     "def": "후보 전수 × 도형 둘(hill 0.3→0.7→0.3 · line 0.5) × 크기 둘(12 · 24px) × 보정(cal 켬 = 제품 · raw 끔 = 프리셋 고유). density = 반최대 띠 안 (255−밝기)/255 평균 · width_half = 띠 행 수(px) · peak = 행 프로필 최대/255 · n_px = 분모(#16) · ink_px = 지도에서 > 8인 픽셀",
@@ -1178,621 +1180,379 @@
     ]
   },
   "verdict": {
-    "def": "경도 축의 단조 — 이웃 차 ≥ 상수(농도 PAINT68_GRADE_DENSITY_STEP_MIN · 폭 PAINT68_GRADE_WIDTH_STEP_MIN) · 폭 정직성(제품) = 요청 폭 대비 ±PAINT68_WIDTH_HONEST_TOL",
-    "pencil": {
-      "grades": [
-        "HB",
-        "B",
-        "2B",
-        "4B",
-        "6B",
-        "8B"
+    "def": "개정 게이트 — 연필: 농도 단조(이웃 ≥ .03) · 8B .45 ± .03 · 폭 단조(고유) · 8B/HB 폭 비 2.0 ± .15(고유) — hill·line 둘 · 목탄: 농도(이웃 ≥ .04)·폭 단조 · 굳힌 opaque == fit",
+    "pencil_hill": {
+      "density_cal": [
+        0.1298,
+        0.1977,
+        0.2407,
+        0.3209,
+        0.3989,
+        0.451
       ],
-      "presets": [
-        "classic/pencil",
-        "ramon/B-pencil",
-        "tanda/pencil-2b",
-        "brunelleschi/pencil_4B",
-        "brunelleschi/pencil_6B",
-        "tanda/pencil-8b"
+      "density_raw": [
+        0.1061,
+        0.1475,
+        0.2055,
+        0.2819,
+        0.3553,
+        0.4013
       ],
-      "hill_12": {
-        "density_cal": [
-          0.1298,
-          0.2183,
-          0.0655,
-          0.0641,
-          0.0632,
-          0.0942
-        ],
-        "density_raw": [
-          0.1061,
-          0.1899,
-          0.0634,
-          0.0601,
-          0.0547,
-          0.0274
-        ],
-        "width_raw": [
-          7,
-          6,
-          11,
-          11,
-          11,
-          9
-        ],
-        "width_cal": [
-          9,
-          10,
-          11,
-          13,
-          15,
-          70
-        ],
-        "mono_density_cal": {
-          "ok": false,
-          "steps": [
-            0.0885,
-            -0.1528,
-            -0.0014,
-            -0.0009,
-            0.031
-          ]
-        },
-        "mono_density_raw": {
-          "ok": false,
-          "steps": [
-            0.0838,
-            -0.1265,
-            -0.0033,
-            -0.0054,
-            -0.0273
-          ]
-        },
-        "mono_width_raw": {
-          "ok": false,
-          "steps": [
-            -1,
-            5,
-            0,
-            0,
-            -2
-          ]
-        },
-        "width_honest_ratio": [
-          0.75,
-          0.833,
-          0.917,
-          1.083,
-          1.25,
-          5.833
-        ],
-        "width_honest_ok": false
+      "width_raw_24": [
+        14,
+        16,
+        18,
+        21,
+        24,
+        30
+      ],
+      "width_cal_24": [
+        18,
+        21,
+        23,
+        26,
+        30,
+        34
+      ],
+      "mono_density": {
+        "ok": true,
+        "steps": [
+          0.0679,
+          0.043,
+          0.0802,
+          0.078,
+          0.0521
+        ]
       },
-      "hill_24": {
-        "density_cal": [
-          0.1354,
-          0.2187,
-          0.0658,
-          0.0657,
-          0.0638,
-          0.1003
-        ],
-        "density_raw": [
-          0.1068,
-          0.1885,
-          0.0656,
-          0.0616,
-          0.053,
-          0.0263
-        ],
-        "width_raw": [
-          14,
-          12,
-          20,
-          20,
-          23,
-          17
-        ],
-        "width_cal": [
-          18,
-          20,
-          23,
-          26,
-          29,
-          108
-        ],
-        "mono_density_cal": {
-          "ok": false,
-          "steps": [
-            0.0833,
-            -0.1529,
-            -0.0001,
-            -0.0019,
-            0.0365
-          ]
-        },
-        "mono_density_raw": {
-          "ok": false,
-          "steps": [
-            0.0817,
-            -0.1229,
-            -0.004,
-            -0.0086,
-            -0.0267
-          ]
-        },
-        "mono_width_raw": {
-          "ok": false,
-          "steps": [
-            -2,
-            8,
-            0,
-            3,
-            -6
-          ]
-        },
-        "width_honest_ratio": [
-          0.75,
-          0.833,
-          0.958,
-          1.083,
-          1.208,
-          4.5
-        ],
-        "width_honest_ok": false
+      "mono_width_raw": {
+        "ok": true,
+        "steps": [
+          2,
+          2,
+          3,
+          3,
+          6
+        ]
       },
-      "line_12": {
-        "density_cal": [
-          0.1009,
-          0.1533,
-          0.0532,
-          0.0505,
-          0.0505,
-          0.043
-        ],
-        "density_raw": [
-          0.0782,
-          0.1308,
-          0.0509,
-          0.0478,
-          0.0419,
-          0.0132
-        ],
-        "width_raw": [
-          8,
-          6,
-          10,
-          10,
-          11,
-          7
-        ],
-        "width_cal": [
-          9,
-          10,
-          10,
-          13,
-          14,
-          66
-        ],
-        "mono_density_cal": {
-          "ok": false,
-          "steps": [
-            0.0524,
-            -0.1001,
-            -0.0027,
-            0,
-            -0.0075
-          ]
-        },
-        "mono_density_raw": {
-          "ok": false,
-          "steps": [
-            0.0526,
-            -0.0799,
-            -0.0031,
-            -0.0059,
-            -0.0287
-          ]
-        },
-        "mono_width_raw": {
-          "ok": false,
-          "steps": [
-            -2,
-            4,
-            0,
-            1,
-            -4
-          ]
-        },
-        "width_honest_ratio": [
-          0.75,
-          0.833,
-          0.833,
-          1.083,
-          1.167,
-          5.5
-        ],
-        "width_honest_ok": false
+      "ratio_8B_HB_raw": 2.143,
+      "ratio_8B_HB_cal": 1.889,
+      "width_honest_ratio": [
+        0.75,
+        0.875,
+        0.958,
+        1.083,
+        1.25,
+        1.417
+      ]
+    },
+    "charcoal_hill": {
+      "density_cal": [
+        0.1661,
+        0.2294,
+        0.3023
+      ],
+      "width_raw_24": [
+        28,
+        33,
+        38
+      ],
+      "width_cal_24": [
+        18,
+        20,
+        22
+      ],
+      "mono_density": {
+        "ok": true,
+        "steps": [
+          0.0633,
+          0.0729
+        ]
       },
-      "line_24": {
-        "density_cal": [
-          0.1055,
-          0.1552,
-          0.0517,
-          0.0508,
-          0.0504,
-          0.0549
-        ],
-        "density_raw": [
-          0.083,
-          0.1301,
-          0.0515,
-          0.0488,
-          0.0414,
-          0.0105
-        ],
-        "width_raw": [
-          14,
-          12,
-          19,
-          19,
-          22,
-          20
-        ],
-        "width_cal": [
-          18,
-          20,
-          22,
-          26,
-          28,
-          81
-        ],
-        "mono_density_cal": {
-          "ok": false,
-          "steps": [
-            0.0497,
-            -0.1035,
-            -0.0009,
-            -0.0004,
-            0.0045
-          ]
-        },
-        "mono_density_raw": {
-          "ok": false,
-          "steps": [
-            0.0471,
-            -0.0786,
-            -0.0027,
-            -0.0074,
-            -0.0309
-          ]
-        },
-        "mono_width_raw": {
-          "ok": false,
-          "steps": [
-            -2,
-            7,
-            0,
-            3,
-            -2
-          ]
-        },
-        "width_honest_ratio": [
-          0.75,
-          0.833,
-          0.917,
-          1.083,
-          1.167,
-          3.375
-        ],
-        "width_honest_ok": false
+      "mono_width_raw": {
+        "ok": true,
+        "steps": [
+          5,
+          5
+        ]
       }
     },
-    "charcoal": {
-      "grades": [
-        "경",
-        "중",
-        "연"
+    "pencil_line": {
+      "density_cal": [
+        0.1009,
+        0.1506,
+        0.1782,
+        0.2133,
+        0.2398,
+        0.2458
       ],
-      "presets": [
-        "tanda/charcoal-01",
-        "tanda/charcoal-03",
-        "tanda/charcoal-04"
+      "density_raw": [
+        0.0782,
+        0.1166,
+        0.1515,
+        0.1861,
+        0.2178,
+        0.2238
       ],
-      "hill_12": {
-        "density_cal": [
-          0.2282,
-          0.282,
-          0.089
-        ],
-        "density_raw": [
-          0.1219,
-          0.1877,
-          0.0629
-        ],
-        "width_raw": [
-          12,
-          18,
-          15
-        ],
-        "width_cal": [
-          29,
-          13,
-          16
-        ],
-        "mono_density_cal": {
-          "ok": false,
-          "steps": [
-            0.0538,
-            -0.193
-          ]
-        },
-        "mono_density_raw": {
-          "ok": false,
-          "steps": [
-            0.0658,
-            -0.1248
-          ]
-        },
-        "mono_width_raw": {
-          "ok": false,
-          "steps": [
-            6,
-            -3
-          ]
-        },
-        "width_honest_ratio": [
-          2.417,
-          1.083,
-          1.333
-        ],
-        "width_honest_ok": false
+      "width_raw_24": [
+        14,
+        17,
+        19,
+        21,
+        23,
+        26
+      ],
+      "width_cal_24": [
+        18,
+        20,
+        23,
+        26,
+        27,
+        31
+      ],
+      "mono_density": {
+        "ok": false,
+        "steps": [
+          0.0497,
+          0.0276,
+          0.0351,
+          0.0265,
+          0.006
+        ]
       },
-      "hill_24": {
-        "density_cal": [
-          0.3303,
-          0.2727,
-          0.0841
-        ],
-        "density_raw": [
-          0.1406,
-          0.2209,
-          0.0587
-        ],
-        "width_raw": [
-          21,
-          32,
-          39
-        ],
-        "width_cal": [
-          37,
-          30,
-          33
-        ],
-        "mono_density_cal": {
-          "ok": false,
-          "steps": [
-            -0.0576,
-            -0.1886
-          ]
-        },
-        "mono_density_raw": {
-          "ok": false,
-          "steps": [
-            0.0803,
-            -0.1622
-          ]
-        },
-        "mono_width_raw": {
-          "ok": true,
-          "steps": [
-            11,
-            7
-          ]
-        },
-        "width_honest_ratio": [
-          1.542,
-          1.25,
-          1.375
-        ],
-        "width_honest_ok": false
-      },
-      "line_12": {
-        "density_cal": [
-          0.165,
-          0.2671,
-          0.072
-        ],
-        "density_raw": [
-          0.0921,
-          0.1951,
-          0.0506
-        ],
-        "width_raw": [
-          10,
-          16,
-          15
-        ],
-        "width_cal": [
-          24,
-          13,
-          16
-        ],
-        "mono_density_cal": {
-          "ok": false,
-          "steps": [
-            0.1021,
-            -0.1951
-          ]
-        },
-        "mono_density_raw": {
-          "ok": false,
-          "steps": [
-            0.103,
-            -0.1445
-          ]
-        },
-        "mono_width_raw": {
-          "ok": false,
-          "steps": [
-            6,
-            -1
-          ]
-        },
-        "width_honest_ratio": [
+      "mono_width_raw": {
+        "ok": true,
+        "steps": [
+          3,
           2,
-          1.083,
-          1.333
-        ],
-        "width_honest_ok": false
+          2,
+          2,
+          3
+        ]
       },
-      "line_24": {
-        "density_cal": [
-          0.2479,
-          0.2599,
-          0.0672
-        ],
-        "density_raw": [
-          0.1144,
-          0.2123,
-          0.0476
-        ],
-        "width_raw": [
-          14,
-          30,
-          39
-        ],
-        "width_cal": [
-          25,
-          30,
-          34
-        ],
-        "mono_density_cal": {
-          "ok": false,
-          "steps": [
-            0.012,
-            -0.1927
-          ]
-        },
-        "mono_density_raw": {
-          "ok": false,
-          "steps": [
-            0.0979,
-            -0.1647
-          ]
-        },
-        "mono_width_raw": {
-          "ok": true,
-          "steps": [
-            16,
-            9
-          ]
-        },
-        "width_honest_ratio": [
-          1.042,
-          1.25,
-          1.417
-        ],
-        "width_honest_ok": false
+      "ratio_8B_HB_raw": 1.857,
+      "ratio_8B_HB_cal": 1.722,
+      "width_honest_ratio": [
+        0.75,
+        0.833,
+        0.958,
+        1.083,
+        1.125,
+        1.292
+      ]
+    },
+    "charcoal_line": {
+      "density_cal": [
+        0.1164,
+        0.1612,
+        0.2189
+      ],
+      "width_raw_24": [
+        30,
+        37,
+        41
+      ],
+      "width_cal_24": [
+        20,
+        21,
+        24
+      ],
+      "mono_density": {
+        "ok": true,
+        "steps": [
+          0.0448,
+          0.0577
+        ]
+      },
+      "mono_width_raw": {
+        "ok": true,
+        "steps": [
+          7,
+          4
+        ]
       }
     },
     "gates": [
       {
-        "name": "pencil hill_12 농도 단조(제품)",
-        "ok": false
+        "name": "연필 hill 농도 단조(이웃 ≥ 0.03)",
+        "ok": true,
+        "value": [
+          0.0679,
+          0.043,
+          0.0802,
+          0.078,
+          0.0521
+        ]
       },
       {
-        "name": "pencil hill_12 폭 단조(고유)",
-        "ok": false
+        "name": "연필 hill 폭 단조(고유 · 이웃 ≥ 0.5)",
+        "ok": true,
+        "value": [
+          2,
+          2,
+          3,
+          3,
+          6
+        ]
       },
       {
-        "name": "pencil hill_12 폭 정직성(제품)",
-        "ok": false
+        "name": "연필 8B/HB 폭 비 2 ± 0.15(hill 24px 제품)",
+        "ok": true,
+        "value": 1.889
       },
       {
-        "name": "pencil hill_24 농도 단조(제품)",
-        "ok": false
+        "name": "연필 8B 농도 0.45 ± 0.03",
+        "ok": true,
+        "value": 0.451
       },
       {
-        "name": "pencil hill_24 폭 단조(고유)",
-        "ok": false
+        "name": "굳힌 연필 B 농도 == 목표 0.19 ± 0.01",
+        "ok": true,
+        "value": 0.1977
       },
       {
-        "name": "pencil hill_24 폭 정직성(제품)",
-        "ok": false
+        "name": "굳힌 연필 2B 농도 == 목표 0.25 ± 0.01",
+        "ok": true,
+        "value": 0.2407
       },
       {
-        "name": "pencil line_12 농도 단조(제품)",
-        "ok": false
+        "name": "굳힌 연필 4B 농도 == 목표 0.32 ± 0.01",
+        "ok": true,
+        "value": 0.3209
       },
       {
-        "name": "pencil line_12 폭 단조(고유)",
-        "ok": false
+        "name": "굳힌 연필 6B 농도 == 목표 0.39 ± 0.01",
+        "ok": true,
+        "value": 0.3989
       },
       {
-        "name": "pencil line_12 폭 정직성(제품)",
-        "ok": false
+        "name": "굳힌 연필 8B 농도 == 목표 0.45 ± 0.01",
+        "ok": true,
+        "value": 0.451
       },
       {
-        "name": "pencil line_24 농도 단조(제품)",
-        "ok": false
+        "name": "목탄 hill 농도 단조(이웃 ≥ 0.04)",
+        "ok": true,
+        "value": [
+          0.0633,
+          0.0729
+        ]
       },
       {
-        "name": "pencil line_24 폭 단조(고유)",
-        "ok": false
+        "name": "목탄 hill 폭 단조(고유)",
+        "ok": true,
+        "value": [
+          5,
+          5
+        ]
       },
       {
-        "name": "pencil line_24 폭 정직성(제품)",
-        "ok": false
+        "name": "굳힌 목탄 H 농도 == 목표 0.1722 ± 0.01",
+        "ok": true,
+        "value": 0.1661
       },
       {
-        "name": "charcoal hill_12 농도 단조(제품)",
-        "ok": false
+        "name": "굳힌 목탄 S 농도 == 목표 0.2985 ± 0.01",
+        "ok": true,
+        "value": 0.3023
       },
       {
-        "name": "charcoal hill_12 폭 단조(고유)",
-        "ok": false
+        "name": "연필 line 농도 단조(이웃 ≥ 0.001)",
+        "ok": true,
+        "value": [
+          0.0497,
+          0.0276,
+          0.0351,
+          0.0265,
+          0.006
+        ]
       },
       {
-        "name": "charcoal hill_12 폭 정직성(제품)",
-        "ok": false
+        "name": "연필 line 폭 단조(고유 · 이웃 ≥ 0.5)",
+        "ok": true,
+        "value": [
+          3,
+          2,
+          2,
+          2,
+          3
+        ]
       },
       {
-        "name": "charcoal hill_24 농도 단조(제품)",
-        "ok": false
+        "name": "연필 line 8B/HB 폭 비 > 1.5(방향 — 수치 문은 hill)",
+        "ok": true,
+        "value": 1.722
       },
       {
-        "name": "charcoal hill_24 폭 단조(고유)",
-        "ok": true
+        "name": "목탄 line 농도 단조(이웃 ≥ 0.001)",
+        "ok": true,
+        "value": [
+          0.0448,
+          0.0577
+        ]
       },
       {
-        "name": "charcoal hill_24 폭 정직성(제품)",
-        "ok": false
+        "name": "목탄 line 폭 단조(고유)",
+        "ok": true,
+        "value": [
+          7,
+          4
+        ]
       },
       {
-        "name": "charcoal line_12 농도 단조(제품)",
-        "ok": false
+        "name": "굳힌 opaque == fit — 연필 B",
+        "ok": true,
+        "value": [
+          0.9481,
+          0.9481
+        ]
       },
       {
-        "name": "charcoal line_12 폭 단조(고유)",
-        "ok": false
+        "name": "굳힌 opaque == fit — 연필 2B",
+        "ok": true,
+        "value": [
+          1.1338,
+          1.1338
+        ]
       },
       {
-        "name": "charcoal line_12 폭 정직성(제품)",
-        "ok": false
+        "name": "굳힌 opaque == fit — 연필 4B",
+        "ok": true,
+        "value": [
+          1.3503,
+          1.3503
+        ]
       },
       {
-        "name": "charcoal line_24 농도 단조(제품)",
-        "ok": false
+        "name": "굳힌 opaque == fit — 연필 6B",
+        "ok": true,
+        "value": [
+          1.4586,
+          1.4586
+        ]
       },
       {
-        "name": "charcoal line_24 폭 단조(고유)",
-        "ok": true
+        "name": "굳힌 opaque == fit — 연필 8B",
+        "ok": true,
+        "value": [
+          1.505,
+          1.505
+        ]
       },
       {
-        "name": "charcoal line_24 폭 정직성(제품)",
-        "ok": false
+        "name": "굳힌 opaque == fit — 목탄 H",
+        "ok": true,
+        "value": [
+          0.2056,
+          0.2056
+        ]
+      },
+      {
+        "name": "굳힌 opaque == fit — 목탄 S",
+        "ok": true,
+        "value": [
+          0.7625,
+          0.7625
+        ]
       }
     ]
   },
@@ -1801,26 +1561,1032 @@
     "values": [
       0.1298,
       0.1298,
-      0.0655
+      0.2407
     ],
     "ok": false,
     "steps": [
       0,
-      -0.0643
+      0.1109
     ]
   },
   "determinism": {
-    "def": "같은 프리셋·같은 시드 두 번 == 같은 지도 해시(63 게이트 ① 규약) · 다른 시드는 다른 해시(자가 산다)",
+    "def": "같은 프리셋·같은 시드 두 번 == 같은 지도 해시(63 게이트 ①) · 다른 시드는 다른 해시",
     "same": true,
     "hashes": [
-      1024828176,
-      1024828176
+      1724932063,
+      1724932063
     ],
     "other_seed_differs": true
   },
   "constants_used": {
-    "PAINT68_GRADE_DENSITY_STEP_MIN": 0.012,
+    "PAINT68_CASE_N": 7,
+    "PAINT68_GRADE_STEP_PX": 10,
+    "PAINT68_GRADE_DENSITY_STEP_MIN": 0.03,
     "PAINT68_GRADE_WIDTH_STEP_MIN": 0.5,
-    "PAINT68_WIDTH_HONEST_TOL": 0.25
+    "PAINT68_CHARCOAL_DENSITY_STEP_MIN": 0.04,
+    "PAINT68_GRADE_8B_TARGET": 0.45,
+    "PAINT68_GRADE_8B_TOL": 0.03,
+    "PAINT68_WIDTH_RATIO_8B_HB": 2,
+    "PAINT68_WIDTH_RATIO_TOL": 0.15,
+    "PAINT68_FIT_TOL": 0.01,
+    "PAINT68_FIT_MAX_ITER": 8,
+    "PAINT68_FIT_OPAQUE_TOL": 0.025,
+    "PAINT68_WIDTH_HONEST_TOL": 0.25,
+    "PAINT68_TICK_BASE": 0.57,
+    "PAINT68_TICK_RATIO": 1.4142135623730951,
+    "PAINT68_RECENT_N": 8,
+    "PAINT68_TIP_BRIGHT_V": 0.92,
+    "WRITE_HOLD_MS": 450,
+    "PAINT58_MIN_W": 1,
+    "PAINT58_MAX_W": {
+      "brush": 500,
+      "marker": 100,
+      "cp": 50,
+      "pencil": 50
+    }
+  },
+  "fit": {
+    "def": "opaque 되먹임(이분법 [.02, 2] · ≤ PAINT68_FIT_MAX_ITER · |농도 − 목표| ≤ PAINT68_FIT_TOL) — 자 = hill(0.3→0.7→0.3) 12px 제품 보정 · 뿌리는 되먹임 없음(root) · baked = brushes64에 굳힌 상수(원장이 정본 · 둘의 차 ≤ tol이 게이트)",
+    "pencil_HB": {
+      "target": 0.13,
+      "reached": 0.1298,
+      "opaque": 0.7,
+      "iters": 0,
+      "state": "root"
+    },
+    "pencil_B": {
+      "target": 0.19,
+      "opaque": 0.9481,
+      "reached": 0.1973,
+      "iters": 5,
+      "state": "converged",
+      "trace": [
+        [
+          1.01,
+          0.2109
+        ],
+        [
+          0.515,
+          0.0917
+        ],
+        [
+          0.7625,
+          0.1457
+        ],
+        [
+          0.8862,
+          0.1765
+        ],
+        [
+          0.9481,
+          0.1973
+        ]
+      ],
+      "baked": 0.9481
+    },
+    "pencil_2B": {
+      "target": 0.25,
+      "opaque": 1.1338,
+      "reached": 0.2407,
+      "iters": 4,
+      "state": "converged",
+      "trace": [
+        [
+          1.01,
+          0.2076
+        ],
+        [
+          1.505,
+          0.424
+        ],
+        [
+          1.2575,
+          0.28
+        ],
+        [
+          1.1338,
+          0.2407
+        ]
+      ],
+      "baked": 1.1338
+    },
+    "pencil_4B": {
+      "target": 0.32,
+      "opaque": 1.3503,
+      "reached": 0.3214,
+      "iters": 6,
+      "state": "converged",
+      "trace": [
+        [
+          1.01,
+          0.2062
+        ],
+        [
+          1.505,
+          0.419
+        ],
+        [
+          1.2575,
+          0.2789
+        ],
+        [
+          1.3813,
+          0.3363
+        ],
+        [
+          1.3194,
+          0.306
+        ],
+        [
+          1.3503,
+          0.3214
+        ]
+      ],
+      "baked": 1.3503
+    },
+    "pencil_6B": {
+      "target": 0.39,
+      "opaque": 1.4586,
+      "reached": 0.3981,
+      "iters": 7,
+      "state": "converged",
+      "trace": [
+        [
+          1.01,
+          0.1996
+        ],
+        [
+          1.505,
+          0.4375
+        ],
+        [
+          1.2575,
+          0.2686
+        ],
+        [
+          1.3813,
+          0.3191
+        ],
+        [
+          1.4431,
+          0.3764
+        ],
+        [
+          1.4741,
+          0.4147
+        ],
+        [
+          1.4586,
+          0.3981
+        ]
+      ],
+      "baked": 1.4586
+    },
+    "pencil_8B": {
+      "target": 0.45,
+      "opaque": 1.505,
+      "reached": 0.4502,
+      "iters": 2,
+      "state": "converged",
+      "trace": [
+        [
+          1.01,
+          0.2063
+        ],
+        [
+          1.505,
+          0.4502
+        ]
+      ],
+      "baked": 1.505
+    },
+    "charcoal_M": {
+      "target": 0.2296,
+      "reached": 0.2296,
+      "opaque": 0.4,
+      "iters": 0,
+      "state": "root"
+    },
+    "charcoal_H": {
+      "target": 0.1722,
+      "opaque": 0.2056,
+      "reached": 0.1662,
+      "iters": 5,
+      "state": "converged",
+      "trace": [
+        [
+          1.01,
+          0.4025
+        ],
+        [
+          0.515,
+          0.269
+        ],
+        [
+          0.2675,
+          0.1872
+        ],
+        [
+          0.1438,
+          0.1475
+        ],
+        [
+          0.2056,
+          0.1662
+        ]
+      ],
+      "baked": 0.2056
+    },
+    "charcoal_S": {
+      "target": 0.2985,
+      "opaque": 0.7625,
+      "reached": 0.3011,
+      "iters": 3,
+      "state": "converged",
+      "trace": [
+        [
+          1.01,
+          0.3688
+        ],
+        [
+          0.515,
+          0.2409
+        ],
+        [
+          0.7625,
+          0.3011
+        ]
+      ],
+      "baked": 0.7625
+    }
+  },
+  "family": {
+    "def": "가족 아홉 + 뿌리 둘 × 도형 둘(hill 0.3→0.7→0.3 · line 0.5) × 크기 둘(12 · 24px) × 보정(cal 제품 · raw 고유). density = 반최대 띠 안 (255−밝기)/255 평균 · width_half = 띠 행 수(px) · n_px = 분모(#16)",
+    "rows": [
+      {
+        "preset": "brunelleschi/pencil_HB",
+        "kind": "pencil",
+        "grade": "HB",
+        "hill_12_cal": {
+          "density": 0.1298,
+          "width_half": 9,
+          "peak": 0.1576,
+          "n_px": 1728,
+          "ink_px": 4644,
+          "hash": -199335840
+        },
+        "hill_12_raw": {
+          "density": 0.1061,
+          "width_half": 7,
+          "peak": 0.1239,
+          "n_px": 1344,
+          "ink_px": 3407,
+          "hash": -1793806197
+        },
+        "hill_24_cal": {
+          "density": 0.1354,
+          "width_half": 18,
+          "peak": 0.1658,
+          "n_px": 3456,
+          "ink_px": 9462,
+          "hash": 996154307
+        },
+        "hill_24_raw": {
+          "density": 0.1068,
+          "width_half": 14,
+          "peak": 0.1298,
+          "n_px": 2688,
+          "ink_px": 6731,
+          "hash": 622162458
+        },
+        "line_12_cal": {
+          "density": 0.1009,
+          "width_half": 9,
+          "peak": 0.1241,
+          "n_px": 1728,
+          "ink_px": 4819,
+          "hash": -618317957
+        },
+        "line_12_raw": {
+          "density": 0.0782,
+          "width_half": 8,
+          "peak": 0.0971,
+          "n_px": 1536,
+          "ink_px": 3526,
+          "hash": 1067457880
+        },
+        "line_24_cal": {
+          "density": 0.1055,
+          "width_half": 18,
+          "peak": 0.1317,
+          "n_px": 3456,
+          "ink_px": 10003,
+          "hash": 440325388
+        },
+        "line_24_raw": {
+          "density": 0.083,
+          "width_half": 14,
+          "peak": 0.0993,
+          "n_px": 2688,
+          "ink_px": 7162,
+          "hash": 1143447165
+        }
+      },
+      {
+        "preset": "brunelleschi/pencil_B",
+        "kind": "pencil",
+        "grade": "B",
+        "hill_12_cal": {
+          "density": 0.1977,
+          "width_half": 10,
+          "peak": 0.2378,
+          "n_px": 1920,
+          "ink_px": 5832,
+          "hash": -1278549941
+        },
+        "hill_12_raw": {
+          "density": 0.1475,
+          "width_half": 9,
+          "peak": 0.1875,
+          "n_px": 1728,
+          "ink_px": 4401,
+          "hash": 1652902909
+        },
+        "hill_24_cal": {
+          "density": 0.1907,
+          "width_half": 21,
+          "peak": 0.2394,
+          "n_px": 4032,
+          "ink_px": 11900,
+          "hash": -1772278933
+        },
+        "hill_24_raw": {
+          "density": 0.1585,
+          "width_half": 16,
+          "peak": 0.1916,
+          "n_px": 3072,
+          "ink_px": 8812,
+          "hash": -1291623157
+        },
+        "line_12_cal": {
+          "density": 0.1506,
+          "width_half": 10,
+          "peak": 0.1833,
+          "n_px": 1920,
+          "ink_px": 6056,
+          "hash": 335571033
+        },
+        "line_12_raw": {
+          "density": 0.1166,
+          "width_half": 8,
+          "peak": 0.1406,
+          "n_px": 1536,
+          "ink_px": 4613,
+          "hash": -1362872251
+        },
+        "line_24_cal": {
+          "density": 0.1478,
+          "width_half": 20,
+          "peak": 0.1838,
+          "n_px": 3840,
+          "ink_px": 12392,
+          "hash": -193722748
+        },
+        "line_24_raw": {
+          "density": 0.1178,
+          "width_half": 17,
+          "peak": 0.145,
+          "n_px": 3264,
+          "ink_px": 9202,
+          "hash": 613852696
+        }
+      },
+      {
+        "preset": "brunelleschi/pencil_2B",
+        "kind": "pencil",
+        "grade": "2B",
+        "hill_12_cal": {
+          "density": 0.2407,
+          "width_half": 11,
+          "peak": 0.2898,
+          "n_px": 2112,
+          "ink_px": 6800,
+          "hash": -1971096033
+        },
+        "hill_12_raw": {
+          "density": 0.2055,
+          "width_half": 9,
+          "peak": 0.2455,
+          "n_px": 1728,
+          "ink_px": 5335,
+          "hash": 248489177
+        },
+        "hill_24_cal": {
+          "density": 0.2428,
+          "width_half": 23,
+          "peak": 0.2987,
+          "n_px": 4416,
+          "ink_px": 13937,
+          "hash": -404209938
+        },
+        "hill_24_raw": {
+          "density": 0.2045,
+          "width_half": 18,
+          "peak": 0.2504,
+          "n_px": 3456,
+          "ink_px": 10724,
+          "hash": 1284963296
+        },
+        "line_12_cal": {
+          "density": 0.1782,
+          "width_half": 11,
+          "peak": 0.2148,
+          "n_px": 2112,
+          "ink_px": 6973,
+          "hash": 738192349
+        },
+        "line_12_raw": {
+          "density": 0.1515,
+          "width_half": 9,
+          "peak": 0.1817,
+          "n_px": 1728,
+          "ink_px": 5498,
+          "hash": -1327129994
+        },
+        "line_24_cal": {
+          "density": 0.1804,
+          "width_half": 23,
+          "peak": 0.2263,
+          "n_px": 4416,
+          "ink_px": 14354,
+          "hash": 1085578701
+        },
+        "line_24_raw": {
+          "density": 0.1474,
+          "width_half": 19,
+          "peak": 0.1851,
+          "n_px": 3648,
+          "ink_px": 11146,
+          "hash": -2081685349
+        }
+      },
+      {
+        "preset": "brunelleschi/pencil_4B",
+        "kind": "pencil",
+        "grade": "4B",
+        "hill_12_cal": {
+          "density": 0.3209,
+          "width_half": 12,
+          "peak": 0.3757,
+          "n_px": 2304,
+          "ink_px": 7743,
+          "hash": 309774245
+        },
+        "hill_12_raw": {
+          "density": 0.2819,
+          "width_half": 10,
+          "peak": 0.338,
+          "n_px": 1920,
+          "ink_px": 6277,
+          "hash": 2066243974
+        },
+        "hill_24_cal": {
+          "density": 0.3099,
+          "width_half": 26,
+          "peak": 0.3797,
+          "n_px": 4992,
+          "ink_px": 15928,
+          "hash": -569872692
+        },
+        "hill_24_raw": {
+          "density": 0.2728,
+          "width_half": 21,
+          "peak": 0.336,
+          "n_px": 4032,
+          "ink_px": 12631,
+          "hash": -485050826
+        },
+        "line_12_cal": {
+          "density": 0.2133,
+          "width_half": 13,
+          "peak": 0.2608,
+          "n_px": 2496,
+          "ink_px": 7936,
+          "hash": 723626381
+        },
+        "line_12_raw": {
+          "density": 0.1861,
+          "width_half": 11,
+          "peak": 0.2297,
+          "n_px": 2112,
+          "ink_px": 6468,
+          "hash": 1288051451
+        },
+        "line_24_cal": {
+          "density": 0.2147,
+          "width_half": 26,
+          "peak": 0.2676,
+          "n_px": 4992,
+          "ink_px": 16230,
+          "hash": 1958899302
+        },
+        "line_24_raw": {
+          "density": 0.1859,
+          "width_half": 21,
+          "peak": 0.2325,
+          "n_px": 4032,
+          "ink_px": 13099,
+          "hash": -1290994830
+        }
+      },
+      {
+        "preset": "brunelleschi/pencil_6B",
+        "kind": "pencil",
+        "grade": "6B",
+        "hill_12_cal": {
+          "density": 0.3989,
+          "width_half": 14,
+          "peak": 0.4705,
+          "n_px": 2688,
+          "ink_px": 8705,
+          "hash": 1779253207
+        },
+        "hill_12_raw": {
+          "density": 0.3553,
+          "width_half": 12,
+          "peak": 0.4252,
+          "n_px": 2304,
+          "ink_px": 7184,
+          "hash": 860841242
+        },
+        "hill_24_cal": {
+          "density": 0.3912,
+          "width_half": 30,
+          "peak": 0.482,
+          "n_px": 5760,
+          "ink_px": 17839,
+          "hash": -727311487
+        },
+        "hill_24_raw": {
+          "density": 0.37,
+          "width_half": 24,
+          "peak": 0.4468,
+          "n_px": 4608,
+          "ink_px": 14666,
+          "hash": -580784079
+        },
+        "line_12_cal": {
+          "density": 0.2398,
+          "width_half": 13,
+          "peak": 0.2836,
+          "n_px": 2496,
+          "ink_px": 8846,
+          "hash": 77156610
+        },
+        "line_12_raw": {
+          "density": 0.2178,
+          "width_half": 11,
+          "peak": 0.259,
+          "n_px": 2112,
+          "ink_px": 7326,
+          "hash": 691382406
+        },
+        "line_24_cal": {
+          "density": 0.2407,
+          "width_half": 27,
+          "peak": 0.2973,
+          "n_px": 5184,
+          "ink_px": 18293,
+          "hash": 767623315
+        },
+        "line_24_raw": {
+          "density": 0.2199,
+          "width_half": 23,
+          "peak": 0.2732,
+          "n_px": 4416,
+          "ink_px": 14920,
+          "hash": -266645398
+        }
+      },
+      {
+        "preset": "brunelleschi/pencil_8B",
+        "kind": "pencil",
+        "grade": "8B",
+        "hill_12_cal": {
+          "density": 0.451,
+          "width_half": 16,
+          "peak": 0.5272,
+          "n_px": 3072,
+          "ink_px": 9961,
+          "hash": -686747954
+        },
+        "hill_12_raw": {
+          "density": 0.4013,
+          "width_half": 14,
+          "peak": 0.4779,
+          "n_px": 2688,
+          "ink_px": 8105,
+          "hash": 293727327
+        },
+        "hill_24_cal": {
+          "density": 0.4281,
+          "width_half": 34,
+          "peak": 0.5198,
+          "n_px": 6528,
+          "ink_px": 19692,
+          "hash": 43130610
+        },
+        "hill_24_raw": {
+          "density": 0.405,
+          "width_half": 30,
+          "peak": 0.494,
+          "n_px": 5760,
+          "ink_px": 16665,
+          "hash": -954840762
+        },
+        "line_12_cal": {
+          "density": 0.2458,
+          "width_half": 16,
+          "peak": 0.31,
+          "n_px": 3072,
+          "ink_px": 10098,
+          "hash": -436581994
+        },
+        "line_12_raw": {
+          "density": 0.2238,
+          "width_half": 13,
+          "peak": 0.2699,
+          "n_px": 2496,
+          "ink_px": 8309,
+          "hash": 292491328
+        },
+        "line_24_cal": {
+          "density": 0.2478,
+          "width_half": 31,
+          "peak": 0.313,
+          "n_px": 5952,
+          "ink_px": 20257,
+          "hash": 1054261402
+        },
+        "line_24_raw": {
+          "density": 0.227,
+          "width_half": 26,
+          "peak": 0.2785,
+          "n_px": 4992,
+          "ink_px": 16956,
+          "hash": -483978357
+        }
+      },
+      {
+        "preset": "brunelleschi/charcoal_H",
+        "kind": "charcoal",
+        "grade": "경",
+        "hill_12_cal": {
+          "density": 0.1661,
+          "width_half": 10,
+          "peak": 0.1995,
+          "n_px": 1920,
+          "ink_px": 4036,
+          "hash": -186472458
+        },
+        "hill_12_raw": {
+          "density": 0.1645,
+          "width_half": 15,
+          "peak": 0.1998,
+          "n_px": 2880,
+          "ink_px": 6253,
+          "hash": -706165248
+        },
+        "hill_24_cal": {
+          "density": 0.1721,
+          "width_half": 18,
+          "peak": 0.2055,
+          "n_px": 3456,
+          "ink_px": 7983,
+          "hash": -1239629278
+        },
+        "hill_24_raw": {
+          "density": 0.174,
+          "width_half": 28,
+          "peak": 0.2096,
+          "n_px": 5376,
+          "ink_px": 12403,
+          "hash": 1797268954
+        },
+        "line_12_cal": {
+          "density": 0.1164,
+          "width_half": 11,
+          "peak": 0.1402,
+          "n_px": 2112,
+          "ink_px": 4062,
+          "hash": 1691027970
+        },
+        "line_12_raw": {
+          "density": 0.1174,
+          "width_half": 16,
+          "peak": 0.1405,
+          "n_px": 3072,
+          "ink_px": 6287,
+          "hash": 1140556773
+        },
+        "line_24_cal": {
+          "density": 0.1207,
+          "width_half": 20,
+          "peak": 0.1469,
+          "n_px": 3840,
+          "ink_px": 8038,
+          "hash": 1671742333
+        },
+        "line_24_raw": {
+          "density": 0.1218,
+          "width_half": 30,
+          "peak": 0.1495,
+          "n_px": 5760,
+          "ink_px": 12562,
+          "hash": 292038463
+        }
+      },
+      {
+        "preset": "brunelleschi/charcoal_M",
+        "kind": "charcoal",
+        "grade": "중",
+        "hill_12_cal": {
+          "density": 0.2294,
+          "width_half": 10,
+          "peak": 0.2653,
+          "n_px": 1920,
+          "ink_px": 4701,
+          "hash": -2024355521
+        },
+        "hill_12_raw": {
+          "density": 0.2399,
+          "width_half": 17,
+          "peak": 0.2902,
+          "n_px": 3264,
+          "ink_px": 7550,
+          "hash": 1408004881
+        },
+        "hill_24_cal": {
+          "density": 0.2343,
+          "width_half": 20,
+          "peak": 0.2795,
+          "n_px": 3840,
+          "ink_px": 9330,
+          "hash": 1351810774
+        },
+        "hill_24_raw": {
+          "density": 0.2452,
+          "width_half": 33,
+          "peak": 0.2965,
+          "n_px": 6336,
+          "ink_px": 15134,
+          "hash": -334238084
+        },
+        "line_12_cal": {
+          "density": 0.1612,
+          "width_half": 12,
+          "peak": 0.1971,
+          "n_px": 2304,
+          "ink_px": 4844,
+          "hash": -1214833104
+        },
+        "line_12_raw": {
+          "density": 0.1715,
+          "width_half": 19,
+          "peak": 0.2115,
+          "n_px": 3648,
+          "ink_px": 7568,
+          "hash": -727992967
+        },
+        "line_24_cal": {
+          "density": 0.1722,
+          "width_half": 21,
+          "peak": 0.2065,
+          "n_px": 4032,
+          "ink_px": 9485,
+          "hash": -864644433
+        },
+        "line_24_raw": {
+          "density": 0.1767,
+          "width_half": 37,
+          "peak": 0.2171,
+          "n_px": 7104,
+          "ink_px": 15236,
+          "hash": -2143734130
+        }
+      },
+      {
+        "preset": "brunelleschi/charcoal_S",
+        "kind": "charcoal",
+        "grade": "연",
+        "hill_12_cal": {
+          "density": 0.3023,
+          "width_half": 12,
+          "peak": 0.3666,
+          "n_px": 2304,
+          "ink_px": 5660,
+          "hash": 710211546
+        },
+        "hill_12_raw": {
+          "density": 0.3752,
+          "width_half": 20,
+          "peak": 0.4464,
+          "n_px": 3840,
+          "ink_px": 9212,
+          "hash": 655262723
+        },
+        "hill_24_cal": {
+          "density": 0.3344,
+          "width_half": 22,
+          "peak": 0.4057,
+          "n_px": 4224,
+          "ink_px": 11513,
+          "hash": 378751502
+        },
+        "hill_24_raw": {
+          "density": 0.3776,
+          "width_half": 38,
+          "peak": 0.4656,
+          "n_px": 7296,
+          "ink_px": 18667,
+          "hash": 1215165657
+        },
+        "line_12_cal": {
+          "density": 0.2189,
+          "width_half": 14,
+          "peak": 0.2718,
+          "n_px": 2688,
+          "ink_px": 5775,
+          "hash": 824331035
+        },
+        "line_12_raw": {
+          "density": 0.2836,
+          "width_half": 21,
+          "peak": 0.3373,
+          "n_px": 4032,
+          "ink_px": 9291,
+          "hash": -417089272
+        },
+        "line_24_cal": {
+          "density": 0.2448,
+          "width_half": 24,
+          "peak": 0.3044,
+          "n_px": 4608,
+          "ink_px": 11632,
+          "hash": -1655557126
+        },
+        "line_24_raw": {
+          "density": 0.2783,
+          "width_half": 41,
+          "peak": 0.339,
+          "n_px": 7872,
+          "ink_px": 18839,
+          "hash": -1458484416
+        }
+      },
+      {
+        "preset": "classic/pencil",
+        "kind": "root",
+        "grade": "(뿌리 HB)",
+        "hill_12_cal": {
+          "density": 0.1298,
+          "width_half": 9,
+          "peak": 0.1576,
+          "n_px": 1728,
+          "ink_px": 4644,
+          "hash": -199335840
+        },
+        "hill_12_raw": {
+          "density": 0.1061,
+          "width_half": 7,
+          "peak": 0.1239,
+          "n_px": 1344,
+          "ink_px": 3407,
+          "hash": -1793806197
+        },
+        "hill_24_cal": {
+          "density": 0.1354,
+          "width_half": 18,
+          "peak": 0.1658,
+          "n_px": 3456,
+          "ink_px": 9462,
+          "hash": 996154307
+        },
+        "hill_24_raw": {
+          "density": 0.1068,
+          "width_half": 14,
+          "peak": 0.1298,
+          "n_px": 2688,
+          "ink_px": 6731,
+          "hash": 622162458
+        },
+        "line_12_cal": {
+          "density": 0.1009,
+          "width_half": 9,
+          "peak": 0.1241,
+          "n_px": 1728,
+          "ink_px": 4819,
+          "hash": -618317957
+        },
+        "line_12_raw": {
+          "density": 0.0782,
+          "width_half": 8,
+          "peak": 0.0971,
+          "n_px": 1536,
+          "ink_px": 3526,
+          "hash": 1067457880
+        },
+        "line_24_cal": {
+          "density": 0.1055,
+          "width_half": 18,
+          "peak": 0.1317,
+          "n_px": 3456,
+          "ink_px": 10003,
+          "hash": 440325388
+        },
+        "line_24_raw": {
+          "density": 0.083,
+          "width_half": 14,
+          "peak": 0.0993,
+          "n_px": 2688,
+          "ink_px": 7162,
+          "hash": 1143447165
+        }
+      },
+      {
+        "preset": "classic/charcoal",
+        "kind": "root",
+        "grade": "(뿌리 중)",
+        "hill_12_cal": {
+          "density": 0.2294,
+          "width_half": 10,
+          "peak": 0.2653,
+          "n_px": 1920,
+          "ink_px": 4701,
+          "hash": -2024355521
+        },
+        "hill_12_raw": {
+          "density": 0.2399,
+          "width_half": 17,
+          "peak": 0.2902,
+          "n_px": 3264,
+          "ink_px": 7550,
+          "hash": 1408004881
+        },
+        "hill_24_cal": {
+          "density": 0.2343,
+          "width_half": 20,
+          "peak": 0.2795,
+          "n_px": 3840,
+          "ink_px": 9330,
+          "hash": 1351810774
+        },
+        "hill_24_raw": {
+          "density": 0.2452,
+          "width_half": 33,
+          "peak": 0.2965,
+          "n_px": 6336,
+          "ink_px": 15134,
+          "hash": -334238084
+        },
+        "line_12_cal": {
+          "density": 0.1612,
+          "width_half": 12,
+          "peak": 0.1971,
+          "n_px": 2304,
+          "ink_px": 4844,
+          "hash": -1214833104
+        },
+        "line_12_raw": {
+          "density": 0.1715,
+          "width_half": 19,
+          "peak": 0.2115,
+          "n_px": 3648,
+          "ink_px": 7568,
+          "hash": -727992967
+        },
+        "line_24_cal": {
+          "density": 0.1722,
+          "width_half": 21,
+          "peak": 0.2065,
+          "n_px": 4032,
+          "ink_px": 9485,
+          "hash": -864644433
+        },
+        "line_24_raw": {
+          "density": 0.1767,
+          "width_half": 37,
+          "peak": 0.2171,
+          "n_px": 7104,
+          "ink_px": 15236,
+          "hash": -2143734130
+        }
+      }
+    ]
+  },
+  "charcoal_grades_map": {
+    "H": "경",
+    "M": "중",
+    "S": "연"
   }
 }

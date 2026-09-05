@@ -149,14 +149,14 @@
         "k": 0,
         "sel": {
           "i": "pencil",
-          "br": "classic/pencil",
+          "br": "brunelleschi/pencil_HB",
           "hex": "#5a5a5a",
           "w": 10,
           "o": 1
         },
         "cell": {
           "i": "pencil",
-          "br": "classic/pencil",
+          "br": "brunelleschi/pencil_HB",
           "hex": "#5a5a5a",
           "w": 10,
           "o": 1
@@ -185,14 +185,14 @@
         "k": 2,
         "sel": {
           "i": "pencil",
-          "br": "tanda/charcoal-03",
+          "br": "brunelleschi/charcoal_M",
           "hex": "#5a5a5a",
           "w": 10,
           "o": 1
         },
         "cell": {
           "i": "pencil",
-          "br": "tanda/charcoal-03",
+          "br": "brunelleschi/charcoal_M",
           "hex": "#5a5a5a",
           "w": 10,
           "o": 1
@@ -290,7 +290,7 @@
     "initial": [
       {
         "i": "pencil",
-        "br": "classic/pencil"
+        "br": "brunelleschi/pencil_HB"
       },
       {
         "i": "pencil",
@@ -298,7 +298,7 @@
       },
       {
         "i": "pencil",
-        "br": "tanda/charcoal-03"
+        "br": "brunelleschi/charcoal_M"
       },
       {
         "i": "cp",
@@ -327,7 +327,7 @@
       {
         "id": "paint-fav-1",
         "kind": "pencil",
-        "br": "classic/pencil",
+        "br": "brunelleschi/pencil_HB",
         "hex": "#5a5a5a",
         "tip_fill": "#5a5a5a",
         "grade": "HB",
@@ -349,7 +349,7 @@
       {
         "id": "paint-fav-3",
         "kind": "charcoal",
-        "br": "tanda/charcoal-03",
+        "br": "brunelleschi/charcoal_M",
         "hex": "#5a5a5a",
         "tip_fill": "#5a5a5a",
         "grade": "중",
@@ -429,7 +429,7 @@
       {
         "id": "paint-fav-1",
         "kind": "pencil",
-        "br": "classic/pencil",
+        "br": "brunelleschi/pencil_HB",
         "hex": "#fafafa",
         "tip_fill": "#fafafa",
         "grade": "HB",
@@ -451,7 +451,7 @@
       {
         "id": "paint-fav-3",
         "kind": "charcoal",
-        "br": "tanda/charcoal-03",
+        "br": "brunelleschi/charcoal_M",
         "hex": "#fafafa",
         "tip_fill": "#fafafa",
         "grade": "중",
@@ -518,13 +518,13 @@
   },
   "g04_grade_drag": {
     "def": "칸 1(HB)의 경도 글자를 21px 아래로 끌면 두 칸 무른 쪽(2B) → paintSel.br · 칸 br · 다음 펜 획의 paint.br 셋이 같다 · 50px 위로 끌면 끝(HB)에서 멈춘다 · 목탄 칸 3(중 → 연) · 제도 연필 app.grade 불변 · 반증: 축 밖 칸(마커)은 끌어도 br 불변",
-    "br0": "classic/pencil",
-    "after_drag": "tanda/pencil-2b",
-    "cell_br": "tanda/pencil-2b",
+    "br0": "brunelleschi/pencil_HB",
+    "after_drag": "brunelleschi/pencil_2B",
+    "cell_br": "brunelleschi/pencil_2B",
     "grade_text": "2B",
-    "stroke_br": "tanda/pencil-2b",
-    "after_up": "classic/pencil",
-    "charcoal": "tanda/charcoal-04",
+    "stroke_br": "brunelleschi/pencil_2B",
+    "after_up": "brunelleschi/pencil_HB",
+    "charcoal": "brunelleschi/charcoal_S",
     "app_grade": [
       "HB",
       "HB"
@@ -651,7 +651,7 @@
       {
         "id": "brushpick-set-Brunelleschi",
         "group": "Brunelleschi",
-        "text": "Brunelleschi 4"
+        "text": "Brunelleschi 11"
       },
       {
         "id": "brushpick-set-Dieterle",
@@ -821,10 +821,10 @@
         "id": "paint-fav-1",
         "exists": true,
         "hit": true,
-        "title": "필통 1 — 연필 HB · 연필 · 연필(원 이름 classic/pencil). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다) · 경도 글자를 위아래로 끌면 경도",
+        "title": "필통 1 — 연필 HB · 연필 · 연필 HB(원 이름 brunelleschi/pencil_HB). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다) · 경도 글자를 위아래로 끌면 경도",
         "rect": [
           16,
-          397,
+          410,
           61,
           56
         ]
@@ -836,7 +836,7 @@
         "title": "필통 7 — 잉크펜 · 잉크펜 · 제도 라이너(원 이름 deevad/liner). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
         "rect": [
           144,
-          456,
+          469,
           61,
           56
         ]
@@ -848,7 +848,7 @@
         "title": "지우개 — 펜 한 붓이 칠의 덮임을 지운다 · 다시 누르면 붓으로 · 스타일러스 뒷꼭지도 지우개다",
         "rect": [
           207,
-          456,
+          469,
           61,
           56
         ]
@@ -860,7 +860,7 @@
         "title": "지우개의 부드러움 — 경도 축 하나: 딱딱한(기본 — 마른 매체) / 부드러운",
         "rect": [
           237,
-          458,
+          471,
           28,
           16
         ]
@@ -872,7 +872,7 @@
         "title": "자국 굵기(px) — 끌어서 조절한다",
         "rect": [
           80,
-          297,
+          310,
           96,
           16
         ]

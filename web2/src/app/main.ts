@@ -3220,7 +3220,7 @@ import {
   mypaintRenderer, mypaintProbeForTest, calibForTest as mypaintCalibForTest, presetMappingForTest,
   lastLayerAlphaForTest, smudgeStatsForTest, resetSmudgeStatsForTest, premulViolationsForTest, layerStatsForTest, lastStrokeCapForTest, presetBaseForTest,
   setCapOffForTest, setSmudgeSelfSampleForTest, setPremulBreakForTest, setFringeBreakForTest,
-  setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET,
+  setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET, setPresetBaseForTest,
   setTipsOffForTest, setTipFrameLockForTest, tipsReadyForTest, tipStatsForTest, resetTipStatsForTest, tipDefaultOfForTest, onTipAssetsLoaded,
   setPaintAppendBreakForTest,
   unknownBrushIdsForTest, setTipGainOffForTest, presetStatsForTest, resetCpTilesForTest, setCpThresholdOffForTest,
@@ -3303,6 +3303,8 @@ const diag = {
   constantsForTest: () => ({
     PAINT68_CASE_N: C.PAINT68_CASE_N, PAINT68_GRADE_STEP_PX: C.PAINT68_GRADE_STEP_PX,
     PAINT68_GRADE_DENSITY_STEP_MIN: C.PAINT68_GRADE_DENSITY_STEP_MIN, PAINT68_GRADE_WIDTH_STEP_MIN: C.PAINT68_GRADE_WIDTH_STEP_MIN,
+    PAINT68_CHARCOAL_DENSITY_STEP_MIN: C.PAINT68_CHARCOAL_DENSITY_STEP_MIN, PAINT68_GRADE_8B_TARGET: C.PAINT68_GRADE_8B_TARGET, PAINT68_GRADE_8B_TOL: C.PAINT68_GRADE_8B_TOL,
+    PAINT68_WIDTH_RATIO_8B_HB: C.PAINT68_WIDTH_RATIO_8B_HB, PAINT68_WIDTH_RATIO_TOL: C.PAINT68_WIDTH_RATIO_TOL, PAINT68_FIT_TOL: C.PAINT68_FIT_TOL, PAINT68_FIT_MAX_ITER: C.PAINT68_FIT_MAX_ITER, PAINT68_FIT_OPAQUE_TOL: C.PAINT68_FIT_OPAQUE_TOL,
     PAINT68_WIDTH_HONEST_TOL: C.PAINT68_WIDTH_HONEST_TOL, PAINT68_TICK_BASE: C.PAINT68_TICK_BASE, PAINT68_TICK_RATIO: C.PAINT68_TICK_RATIO,
     PAINT68_RECENT_N: C.PAINT68_RECENT_N, PAINT68_TIP_BRIGHT_V: C.PAINT68_TIP_BRIGHT_V, WRITE_HOLD_MS: C.WRITE_HOLD_MS,
     PAINT58_MIN_W: C.PAINT58_MIN_W, PAINT58_MAX_W: C.PAINT58_MAX_W,
@@ -3410,6 +3412,8 @@ const diag = {
   /** web2-64 — 필통·최근 색 읽기(기기 저장 — 값으로) · 68: 이주 횟수(favMigrated)도 값으로 */
   paintFavsForTest: () => readFavs(),
   paintCaseMigratedForTest: () => favMigrated,
+  /** web2-68 §2 개정 — 되먹임 통로(프리셋 기준값 + 보정 캐시 비움) · 돌려주는 값은 이전 기준값 */
+  setPresetBaseForTest: (name: string, key: string, value: number) => { const prev = setPresetBaseForTest(name, key, value); rebakePaintTexForTest(); return prev },
   /** web2-68 §3-1 게이트 — 견본은 «그리는 그 함수»다: 같은 입력으로 새 캔버스에 drawBrushSample을 돌려 픽셀 해시를 낸다(목록 행의 캔버스와 대조) */
   brushSampleHashForTest: (tool: Instr58, preset: string, hex: string, w = 150, h = 34): number => {
     const cv = document.createElement('canvas'); cv.width = w * 2; cv.height = h * 2

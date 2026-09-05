@@ -257,6 +257,9 @@ tanda/pencil-8b는 크기 보정 폭주(요청 12 → 폭 70)까지 든다 — �
      문면. 지시문 `docs/instructions/web2-68.md`가 오면 그것이 정본).
    ▶ ⛔ **68 멈춤 — 갈래 web2-68에 §0·§1·§3 완료(미배포) · §2 경도 축의 값은 CHAIN6 ①로 사람 판정 대기**(2026-09-05 ·
      NOTES 68 §2 표 · AS-C199 · DEFERRED 68). 69·70·71은 68 배포 뒤에 간다(사슬 순서 무변).
+   ▶ **68 §2 개정 등재**(2026-09-05 · `docs/instructions/web2-68-amend.md` — 사람 판정: 경도 축은 한 뿌리(classic/pencil ·
+     classic/charcoal)의 매개 가족 · opaque를 목표 농도에 되먹임 · 게이트는 개정 문서의 것 · DIRECTION 두 줄 되살림 · §0 규칙 1 —
+     같은 커밋에서 이 대기열 갱신). 멈춤 ①이 닫혔다 — 68 마감(CLOSING)으로 간다.
    ▶ **사슬 6 착수(CHAIN6 — 68 → 69 → 70 → 71 · Fable 한 세션)** (2026-09-05 · 갈래 web2-68 · §0 규칙 1 — 지시문
      `docs/instructions/CHAIN6.md`·`web2-68.md`(필통)·`web2-69.md`(인벤토리)·`web2-70.md`(시각 시스템)·`web2-71.md`(몸짓) 등재 —
      같은 커밋에서 이 대기열 갱신). **68 §0(문서 먼저)**: 사람의 두 문서가 들어왔다 — **`docs/DIRECTION.md` 교체본의 새 절

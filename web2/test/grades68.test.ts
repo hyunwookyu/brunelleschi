@@ -9,7 +9,7 @@
 import { describe, it, expect } from 'vitest'
 import { PENCIL_GRADES68, CHARCOAL_GRADES68, PENCIL_PRESET_OF_GRADE, CHARCOAL_PRESET_OF_GRADE, GRADE_PRESETS68, gradeOfPreset, shiftGrade } from '../src/core/grades68'
 import { PRESETS, PRESET_BY_NAME } from '../src/app/mypaintpaint'
-import { lerpPreset, PENCIL_LERP_T } from '../src/app/brushes64'
+import { lerpPreset, PENCIL_LERP_T, PENCIL_FAMILY, familySizeK } from '../src/app/brushes64'
 import { SETTINGS } from '../src/mypaint/settings.gen'
 import { BRUSH_LABEL_EXACT } from '../src/core/brushnames'
 
@@ -21,22 +21,32 @@ describe('web2-68 §2 — 경도 축', () => {
     expect(PENCIL_GRADES68.length).toBe(6); expect(CHARCOAL_GRADES68.length).toBe(3)
   })
 
-  it('② 보간 프리셋 — 키는 SETTINGS·두 원본 안(#108) · base_value가 두 원본 사이 · 곡선은 2b 것', () => {
-    const a = PRESET_BY_NAME.get('tanda/pencil-2b')!, b = PRESET_BY_NAME.get('tanda/pencil-8b')!
+  it('② 가족 프리셋(개정) — 뿌리의 설정 전부를 물려받고 매개 셋만 다르다 · 키는 SETTINGS 안(#108)', () => {
     const known = new Set(SETTINGS.map(s => s.id))
-    const union = new Set([...Object.keys(a.s), ...Object.keys(b.s)])
-    for (const [name, t] of [['brunelleschi/pencil_4B', PENCIL_LERP_T.pencil_4B], ['brunelleschi/pencil_6B', PENCIL_LERP_T.pencil_6B]] as const) {
-      const p = PRESET_BY_NAME.get(name)!
-      expect(p, `${name}이 카탈로그에 있다`).toBeTruthy()
-      for (const [k, v] of Object.entries(p.s)) {
-        expect(known.has(k), `${name}.${k}는 libmypaint 설정이다`).toBe(true)
-        expect(union.has(k), `${name}.${k}는 두 원본 중 하나에 있다`).toBe(true)
-        const def = SETTINGS.find(s => s.id === k)!.def
-        const av = a.s[k]?.[0] ?? def, bv = b.s[k]?.[0] ?? def
-        expect(v[0], `${name}.${k} base가 사이`).toBeCloseTo(av + (bv - av) * t, 5)
-        if (a.s[k]?.[1]) expect(v[1], `${name}.${k} 곡선은 2b 것`).toEqual(a.s[k]![1])
+    for (const [root, names] of [['classic/pencil', GRADE_PRESETS68.slice(0, 6)], ['classic/charcoal', GRADE_PRESETS68.slice(6)]] as const) {
+      const r = PRESET_BY_NAME.get(root)!
+      for (const name of names) {
+        const p = PRESET_BY_NAME.get(name)!
+        expect(p, `${name}이 카탈로그에 있다`).toBeTruthy()
+        expect(Object.keys(p.s).sort(), `${name}: 설정 키 집합이 뿌리와 같다`).toEqual(Object.keys(r.s).sort())
+        for (const [k, v] of Object.entries(p.s)) {
+          expect(known.has(k), `${name}.${k}는 libmypaint 설정이다`).toBe(true)
+          if (!['opaque', 'radius_logarithmic', 'hardness'].includes(k)) expect(v, `${name}.${k}는 뿌리 그대로`).toEqual(r.s[k])
+          else if (r.s[k]?.[1]) expect(v[1], `${name}.${k} 곡선은 뿌리 것`).toEqual(r.s[k]![1])
+        }
       }
     }
+    // 반지름 등비(HB → 8B sizeK8B — 측정 폭 비 2.0의 되먹임 끝값 · AS-C201) · hardness 등차(× .7) · 크기 배수 = exp(반지름 차)
+    const hb = PRESET_BY_NAME.get('brunelleschi/pencil_HB')!, b8 = PRESET_BY_NAME.get('brunelleschi/pencil_8B')!
+    expect(Math.exp(b8.s.radius_logarithmic![0] - hb.s.radius_logarithmic![0])).toBeCloseTo(PENCIL_FAMILY.sizeK8B, 3)
+    expect(familySizeK('brunelleschi/pencil_8B')).toBeCloseTo(PENCIL_FAMILY.sizeK8B, 3)
+    expect(familySizeK('brunelleschi/pencil_HB')).toBe(1)
+    expect(familySizeK('classic/pencil'), '뿌리·다른 프리셋은 배수 1(58 정직성 무변)').toBe(1)
+    expect(familySizeK('brunelleschi/charcoal_S')).toBeCloseTo(1.2, 6)
+    expect(b8.s.hardness![0] / hb.s.hardness![0]).toBeCloseTo(0.7, 3)
+    // (초판 lerpPreset은 기록으로 남는다 — 키가 두 원본 안이라는 규약)
+    const l = lerpPreset('brunelleschi/x_lerp', 'tanda/pencil-2b', 'tanda/pencil-8b', PENCIL_LERP_T.pencil_4B, '')
+    for (const k of Object.keys(l.s)) expect(known.has(k)).toBe(true)
   })
 
   it('③ shiftGrade — 아래(+)로 무른 쪽 · 끝에서 멈춤 · 축 밖은 그대로', () => {
@@ -47,6 +57,8 @@ describe('web2-68 §2 — 경도 축', () => {
     expect(shiftGrade(CHARCOAL_PRESET_OF_GRADE['경'], 1)).toBe(CHARCOAL_PRESET_OF_GRADE['중'])
     expect(shiftGrade(CHARCOAL_PRESET_OF_GRADE['연'], 1)).toBe(CHARCOAL_PRESET_OF_GRADE['연'])
     expect(shiftGrade('deevad/liner', 3)).toBe('deevad/liner')
+    expect(gradeOfPreset('classic/pencil'), '옛 획의 뿌리는 HB로 읽힌다').toEqual({ kind: 'pencil', grade: 'HB' })
+    expect(shiftGrade('classic/pencil', 1), '뿌리에서 끌면 가족의 B').toBe(PENCIL_PRESET_OF_GRADE.B)
     expect(gradeOfPreset('deevad/liner')).toBeNull()
     expect(gradeOfPreset(PENCIL_PRESET_OF_GRADE['4B'])).toEqual({ kind: 'pencil', grade: '4B' })
   })

@@ -37,11 +37,10 @@ export const BRUSH_LABEL_EXACT: Readonly<Record<string, string>> = {
   'deevad/watercolor_expressive': '수채',
   'brunelleschi/colored_pencil': '색연필',
   'brunelleschi/marker': '마커',              // web2-66 §2 — 납작한 촉(타원 도장 · 고정 각)의 앱 프리셋 · 새 기본
-  // web2-68 §2 — 경도 축(필통 칸의 경도 글자와 같은 이름 · core/grades68이 정본)
-  'tanda/pencil-2b': '연필 2B',
-  'tanda/pencil-8b': '연필 8B',
-  'brunelleschi/pencil_4B': '연필 4B',
-  'brunelleschi/pencil_6B': '연필 6B',
+  // web2-68 §2 개정 — 경도 축(필통 칸의 경도 글자와 같은 이름 · core/grades68이 정본 · 뿌리의 매개 가족)
+  'brunelleschi/pencil_HB': '연필 HB', 'brunelleschi/pencil_B': '연필 B', 'brunelleschi/pencil_2B': '연필 2B',
+  'brunelleschi/pencil_4B': '연필 4B', 'brunelleschi/pencil_6B': '연필 6B', 'brunelleschi/pencil_8B': '연필 8B',
+  'brunelleschi/charcoal_H': '목탄 경', 'brunelleschi/charcoal_M': '목탄 중', 'brunelleschi/charcoal_S': '목탄 연',
 }
 
 /** ③ 낱말 사상 — 긴 것부터 문다(watercolor가 water·color로 쪼개지지 않게). */
