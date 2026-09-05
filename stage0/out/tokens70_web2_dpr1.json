@@ -2,12 +2,12 @@
   "conditions": {
     "project": "dpr1",
     "workers": 1,
-    "tree": "b60b808",
+    "tree": "5f03682",
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/tokens70.spec.ts (#99)"
   },
-  "run_id": "b60b808-0-mtostt",
+  "run_id": "5f03682-0-mtov9b",
   "what": "web2-70 시각 시스템 게이트 — §1 토큰(16진수 0 · 토큰 수 · dark 덮음) · §2 강조색 대비(값) · 상태 셋(클래스만 · 못 누름 .35 실측) · §3 아이콘(이모지 0 · 글자만인 도구 단추 0 · 선 굵기 하나 · 세트 잔존 0 · 라이선스) · §4 판(둥글기 1종 · 여백 8의 배수 · 글자 크기 3종) · 반증 넷",
-  "tree": "b60b808",
+  "tree": "5f03682",
   "pitfall_citations": [
     109,
     108,
@@ -33,7 +33,7 @@
   },
   "s1_tokens": {
     "def": "16진수 색 리터럴 = HEX_RE(뒤에 글자·하이픈이 오면 id — 안 센다) · 주석은 뺀 셈(n)과 든 셈(n_with_comments)을 갈라 적는다 · 예외 파일은 HEX_EXCEPTIONS(그림 재료·논리·진단 상수)",
-    "files_scanned": 87,
+    "files_scanned": 88,
     "rows": [
       {
         "file": "index.html",
@@ -459,7 +459,7 @@
     "def": "이모지 = \\p{Extended_Pictographic} 전수(index.html + src) · 글자만인 단추 = svg/canvas/img 없는 button(예외: 숫자판·종이 탭·경도 글자·개발 작업대 — 값) · 선 굵기 = svg.ico 첫 도형의 computed stroke-width(non-scaling-stroke) · 세트 = lucide-* 클래스 수 · 256격자(옛 세트) 0",
     "emoji_count": 0,
     "emoji": [],
-    "emoji_in_src_strings": 175,
+    "emoji_in_src_strings": 176,
     "emoji_def_note": "Emoji_Presentation(그림 이모지) — index.html 본문(주석 뺀) + 화면 글자(DOM) · src 문자열(주석 포함)은 같은 자로 따로(emoji_in_src_strings) · Extended_Pictographic으로 세면 주석의 ⚠·⛔가 1064 걸린다(자의 뜻이 다르다 — 값 · [M4])",
     "buttons": 113,
     "text_only": [

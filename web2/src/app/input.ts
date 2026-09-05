@@ -24,6 +24,7 @@ import { newHoldGate, tickHold, yellowEnd, driftAllowPx } from '../core/hold'
 import { filmSplit } from './filmlayer'
 import { C } from '../core/constants'
 import { isParallel } from '../core/camera'
+import { createGestures71 } from './gestures71'   // web2-71 — 손가락 두드림(§1·§2·§3)
 import {
   cubeGeom, cubeHit, poseForElem, cubeBasis, arrowHit, orientIn, turnOrient, poseForOrient,
   parallelAllowed, parallelPose, perspectivePose,
@@ -95,6 +96,12 @@ export interface InputCallbacks {
    *  반환 = **실제로 실었는가**. 못 실었으면(짚은 칠 획 없음) 몸짓을 안 삼킨다 — 느린
    *  손끝의 탭이 450ms를 넘겨도 뗄 때 «고르기»로 산다(#93의 노출을 좁힌다 — 리뷰어 [H5]). */
   onPaintFingerHold: (p: Pt) => boolean
+  /** web2-71 — 손가락 n개 두드림 «한 번»(2 = 되돌리기 · 3 = 다시하기 · 1 = 67의 탭이 이미 처리한다) */
+  onGestureTap: (fingers: number, p: Pt) => void
+  /** 같은 손가락 수의 두드림 «두 번»(350ms 안): 3 = 격자·축 토글(첫 번째의 다시하기를 되물린다) · 1 = 정사 스냅 */
+  onGestureDouble: (fingers: number, p: Pt) => void
+  /** 두 손가락 누르고 있기 — 250ms마다 되돌리기 */
+  onGestureHold: (fingers: number) => void
 }
 
 export function initInput(
@@ -148,6 +155,30 @@ export function initInput(
   const eraseKind = () => (app.tipErase ? 'eraser-pencil' as const : undefined)
 
   const touches = new Map<number, Pt>()
+  // web2-71 — 두드림 판정 하나(§1·§2·§3 공용 · gestures71.ts). 화면 좌표로 넣고 문서 좌표로 돌려준다(두드림 자리는 화면의 것).
+  const g71 = createGestures71({
+    onTap: (n, sp) => cb.onGestureTap(n, screenToDoc(app, pt(sp.x, sp.y))),
+    onDouble: (n, sp) => cb.onGestureDouble(n, screenToDoc(app, pt(sp.x, sp.y))),
+    onHoldRepeat: n => cb.onGestureHold(n),
+  })
+  // §5 칠 획 끝 멈춤 — 떼지 않고 400ms(≤ 3px) 멈추면 시작점→끝점 직선 띠 · 계속 끌면 끝점이 따라온다 · 떼면 확정(같은 raw 두 점 — 저장 형식 무변)
+  let paintHold: { sp: Pt; t: number; timer: number | undefined } | null = null
+  let paintStraight = false
+  let paintHoldMsOverride: number | null = null   // 반증 손잡이(D-3 · setGesture71ForTest) — 제품 경로에서는 null
+  const clearPaintHold = () => { if (paintHold?.timer !== undefined) window.clearTimeout(paintHold.timer); paintHold = null; paintStraight = false }
+  const paintHoldTick = (sp: Pt, cur: Pt) => {
+    if (paintStraight) return
+    if (!paintHold || Math.hypot(sp.x - paintHold.sp.x, sp.y - paintHold.sp.y) > C.GESTURE71_PAINT_HOLD_PX) {
+      if (paintHold?.timer !== undefined) window.clearTimeout(paintHold.timer)
+      paintHold = { sp, t: performance.now(), timer: window.setTimeout(() => {
+        if (!draft || !paintActive(app) || paintStraight || app.gestureSplitOff) return
+        paintStraight = true
+        draft.raw = [draft.raw[0]!, cur]
+        draft.end = cur
+        cb.onDraftChange(draft)
+      }, paintHoldMsOverride ?? C.GESTURE71_PAINT_HOLD_MS) }
+    }
+  }
   let lastTouchMid: Pt | null = null
   let lastTouchDist = 0
   // ── 손가락 탭(web2-67 §1 — 칠 도구에서만) ──────────────────────────────────────
@@ -338,6 +369,8 @@ export function initInput(
     // 칠(web2-45) — 자유 점렬 그대로다: 오스냅·축·머무름 직선화 전부 없음(칠은 톤이지
     // 선이 아니다). 정본은 raw이고 미리보기는 render2d의 점렬 갈래가 그린다.
     if (paintActive(app)) {
+      if (!app.gestureSplitOff) { const r0 = canvas.getBoundingClientRect(); paintHoldTick(pt(e.clientX - r0.left, e.clientY - r0.top), cur) }
+      if (paintStraight) draft.raw = [draft.raw[0]!, cur]   // §5 — 끝점이 따라온다(미리보기 == 확정본 · 두 점)
       draft.end = cur
       draft.label = null
       draft.endSnap = null
@@ -457,6 +490,7 @@ export function initInput(
     // 칠(web2-45)도 같다 — 칠은 톤이라 아무것에도 안 붙는다.
     const oh = yellowActive(app) || paintActive(app)
       ? null : resolveStart(app.lift, app.pose, p, osnapSet(), app.extAcq.acquired)
+    clearPaintHold()   // web2-71 §5 — 새 획
     draft = {
       start: oh ? oh.p : p,
       end: oh ? oh.p : p,
@@ -490,6 +524,7 @@ export function initInput(
   }
 
   function endDraft() {
+    clearPaintHold()   // web2-71 §5
     if (!draft) return
     const d = draft
     draft = null
@@ -640,6 +675,7 @@ export function initInput(
     if (e.pointerType === 'touch') {
       if (penDown) return // 팜 리젝션(26) — 그 배선 그대로: 펜이 닿아 있는 동안 손가락은 없다
       if (touches.size === 0 && tryCube(toScreen(e))) return
+      { const sp = toScreen(e); g71.down(e.pointerId, sp.x, sp.y) }   // web2-71
       if (fingerTap) cancelFingerTap()   // 둘째 손가락 — 그 몸짓은 팬+줌이다(탭 후보를 접는다)
       touches.set(e.pointerId, toScreen(e))
       lastTouchMid = null
@@ -774,6 +810,7 @@ export function initInput(
       if (penDown) return
       if (!touches.has(e.pointerId)) return
       touches.set(e.pointerId, toScreen(e))
+      { const sp = toScreen(e); g71.move(e.pointerId, sp.x, sp.y) }   // web2-71
       // 손가락 탭 후보(web2-67 §1) — 문턱 안이면 잠잠(궤도 시작 ⛔ · lastTouchMid도 안
       // 만진다) · 긴 누름이 이미 소진했으면 이 몸짓은 끝났다 · 문턱을 넘으면 후보를 접고
       // 아래 궤도가 «이 자리부터» 시작한다(lastTouchMid가 null이라 이번 이동은 기준점만 선다).
@@ -900,6 +937,7 @@ export function initInput(
         cancelFingerTap()
         if (!ft.held && e.type === 'pointerup') cb.onPaintFingerTap(ft.p)
       }
+      g71.up(e.pointerId, e.type !== 'pointerup')   // web2-71 — 마지막 손가락이 떨어질 때 판정(cancel은 두드림이 아니다)
       touches.delete(e.pointerId)
       lastTouchMid = null
       lastTouchDist = 0
@@ -989,5 +1027,5 @@ export function initInput(
   canvas.addEventListener('contextmenu', (e) => e.preventDefault())
 
   // 진단·원장 통로(1-a·1-f) — 패널과 e2e가 같은 값을 읽는다
-  return { strokeStats: () => ({ ...capStats }) }
+  return { strokeStats: () => ({ ...capStats }), gesture71ForTest: () => g71.lastForTest(), gesture71Reset: () => g71.resetForTest(), paintStraightForTest: () => paintStraight, draftForTest: () => draft, setPaintHoldMsForTest: (ms: number | null) => { paintHoldMsOverride = ms } }
 }

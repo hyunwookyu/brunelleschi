@@ -727,6 +727,9 @@
        우하단이라 다른 버튼을 겨눈 손이 이것을 눌렀다(사람 관측). 진단의 여닫이는
        **설정 패널의 「진단」**으로 옮겼다 — 태블릿의 유일한 판독 통로라 없애진 않는다
        (web2-10 지시 4). 닿는 넓이를 키우던 패딩도 뜻을 잃어 줄였다. */
+    #ortho-mark { position: fixed; left: 50%; bottom: var(--gap); transform: translateX(-50%); z-index: 9; pointer-events: none;
+      font: var(--fs-num) var(--font-mono); color: var(--ink-2-paper); letter-spacing: .1em; }
+    #ortho-mark[hidden] { display: none; }
     #buildid {
       position: fixed; right: 6px; bottom: 4px; z-index: 12;
       font: var(--fs-num) var(--font-mono); color: var(--ink-2-paper); opacity: var(--muted);
@@ -1012,6 +1015,7 @@
          숫자로 보여도 **즉시 안 바꾸고** 여기 뜬다. 무시하면 그냥 그린 선으로 남는다. -->
     <div id="tip" hidden></div>
     <div id="notice"></div>
+    <div id="ortho-mark" hidden aria-hidden="true">—×—</div>   <!-- web2-71 §3 — 정사에서만(Feather §A-1) · 70 토큰 -->
     <div id="buildid"></div>
     <div id="diagpanel" hidden></div>
     <!-- 자립 깃발(3-a·대응표 §3) — 설정에서 **진단**으로 왔다(없애지 않는다 — A-4로 옛

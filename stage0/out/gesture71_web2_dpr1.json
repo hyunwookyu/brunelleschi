@@ -1,0 +1,247 @@
+{
+  "conditions": {
+    "project": "dpr1",
+    "workers": 1,
+    "tree": "5f03682",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/gesture71.spec.ts (#99)"
+  },
+  "run_id": "5f03682-mtov2x",
+  "what": "web2-71 몸짓 게이트 — §1 두드림(2=되돌리기·3=다시하기·누르고 있기 반복) · §2 세 손가락 두 번(상쇄+격자) · §3 정사 스냅(±14 안 · ±16 밖) · §4 재누름 표 · §5 칠 멈춤 직선(픽셀 항등·두 점·끝점 이동·결정론) · 반증 셋",
+  "tree": "5f03682",
+  "pitfall_citations": [
+    111,
+    109,
+    108,
+    107,
+    42,
+    54,
+    93
+  ],
+  "constants_used": {
+    "GESTURE71_TOUCH_SYNC_MS": 80,
+    "GESTURE71_TAP_MOVE_PX": 8,
+    "GESTURE71_TAP_MS": 250,
+    "GESTURE71_DOUBLE_MS": 350,
+    "GESTURE71_HOLD_MS": 400,
+    "GESTURE71_HOLD_REPEAT_MS": 250,
+    "GESTURE71_ORTHO_SNAP_DEG": 15,
+    "GESTURE71_PAINT_HOLD_MS": 400,
+    "GESTURE71_PAINT_HOLD_PX": 3
+  },
+  "s1": {
+    "def": "손가락 n개 두드림 = 동시(80ms) · 이동 ≤ 8px · ≤ 250ms · CDP touchPoints n개 · 판정은 gestures71.lastForTest",
+    "strokes0": 8,
+    "undo0": 8,
+    "faces0": 1,
+    "drag_verdict": {
+      "fingers": 2,
+      "durationMs": 238,
+      "maxMovePx": 30,
+      "syncMs": 0,
+      "verdict": "none",
+      "why": "move 10.0px > 8",
+      "at": 1788642896524
+    },
+    "two_tap": {
+      "fingers": 2,
+      "durationMs": 87,
+      "maxMovePx": 0,
+      "syncMs": 0,
+      "verdict": "tap",
+      "why": null,
+      "at": 1788642896685
+    },
+    "undo_opacity_after_first_undo": 1,
+    "hold": {
+      "before": 8,
+      "after": 5,
+      "repeats": 3,
+      "verdict": {
+        "fingers": 2,
+        "durationMs": 984,
+        "maxMovePx": 0,
+        "syncMs": 0,
+        "verdict": "hold",
+        "why": null,
+        "at": 1788642899336
+      }
+    },
+    "falsify_move": {
+      "fingers": 2,
+      "durationMs": 118,
+      "maxMovePx": 9,
+      "syncMs": 0,
+      "verdict": "none",
+      "why": "move 9.0px > 8",
+      "at": 1788642899836
+    },
+    "falsify_duration": {
+      "fingers": 2,
+      "durationMs": 334,
+      "maxMovePx": 0,
+      "syncMs": 0,
+      "verdict": "none",
+      "why": "duration 334ms > 250",
+      "at": 1788642900652
+    },
+    "mouse_double_click_strokes": [
+      5,
+      5
+    ],
+    "log": [
+      "tap2",
+      "tap3",
+      "tap3",
+      "hold2",
+      "hold2",
+      "hold2"
+    ]
+  },
+  "s2": {
+    "def": "세 손가락 두드림 둘이 350ms 안 → 첫 번째의 다시하기를 undo로 되물리고 격자 토글 — 순서는 log",
+    "strokes0": 7,
+    "grid0": false,
+    "after_first_tap": {
+      "strokes": null,
+      "log": [
+        "tap3"
+      ],
+      "redoLeft": 1
+    },
+    "after_double": {
+      "grid": true,
+      "log": [
+        "tap3",
+        "double3:redo-undone,grid"
+      ],
+      "undo": 6,
+      "redo": 2,
+      "two_taps_span_ms": 328
+    },
+    "strokes_after": 7,
+    "hash": [
+      null,
+      null
+    ],
+    "outside_350": {
+      "grid": true,
+      "strokes": 8,
+      "log": [
+        "tap3",
+        "double3:redo-undone,grid",
+        "tap3",
+        "tap3"
+      ]
+    }
+  },
+  "s3": {
+    "def": "정사 스냅 = 여섯 정사 축 중 가장 가까운 것과의 각 ≤ 15°일 때 그 정사(parallelPose · glide) · 「—×—」는 isParallel일 때만",
+    "off0": 0,
+    "orbitApi": true,
+    "deg_14": {
+      "before": {
+        "off": 0,
+        "ortho": false
+      },
+      "after": {
+        "off": 0,
+        "ortho": true,
+        "mark": true
+      },
+      "log": [
+        "tap1",
+        "double1:ortho"
+      ]
+    },
+    "deg_16": {
+      "before": {
+        "off": 0,
+        "ortho": true
+      },
+      "after": {
+        "off": 0,
+        "ortho": true,
+        "mark": true
+      },
+      "log": [
+        "tap1",
+        "double1:ortho",
+        "tap1",
+        "double1:ortho"
+      ]
+    },
+    "cube_view": "정면",
+    "mark_in_ortho": true
+  },
+  "s4": {
+    "def": "도구를 «다시» 누르면 그 도구의 통이 열리고(연필통·촉통·크기통·브러시 목록·면 카드) 다시 누르면 닫힌다 · 다른 손잡이를 누르면 닫힌다(R7)",
+    "rows": [
+      {
+        "btn": "btn-pencil",
+        "box": "tray",
+        "after_select": true,
+        "after_repress": false,
+        "after_repress_again": true,
+        "after_other": false
+      },
+      {
+        "btn": "btn-pen",
+        "box": "pentray",
+        "after_select": true,
+        "after_repress": false,
+        "after_repress_again": true,
+        "after_other": false
+      },
+      {
+        "btn": "btn-eraser-pencil",
+        "box": "etray",
+        "after_select": true,
+        "after_repress": false,
+        "after_repress_again": true,
+        "after_other": false
+      },
+      {
+        "btn": "btn-eraser-ink",
+        "box": "etray",
+        "after_select": true,
+        "after_repress": false,
+        "after_repress_again": true,
+        "after_other": false
+      },
+      {
+        "btn": "btn-paint",
+        "box": "brushpick",
+        "after_select": false,
+        "after_repress": true,
+        "after_repress_again": false,
+        "after_other": false
+      },
+      {
+        "btn": "btn-face",
+        "box": "face-pop",
+        "after_select": false,
+        "after_repress": true,
+        "after_repress_again": false,
+        "after_other": false
+      }
+    ]
+  },
+  "s5": {
+    "def": "칠 도구에서 떼지 않고 400ms(≤ 3px) 멈추면 draft.raw = [start, cur] · 이후 이동은 끝점 갱신 · 떼면 그대로 확정(onPaint 같은 경로) · 제도 연필·펜에는 없다",
+    "free_points": 21,
+    "straight_during_hold": true,
+    "end_follows": {
+      "n": 2,
+      "end": {
+        "x": 860,
+        "y": 580
+      }
+    },
+    "held_points": 2,
+    "stroke_json_len": 76,
+    "falsify": {
+      "hold_ms": 0,
+      "points": 2
+    }
+  }
+}

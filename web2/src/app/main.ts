@@ -14,6 +14,8 @@ import { tok, setTheme, tokensForTest } from '../ui/tokens'   // web2-70 — 토
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
 import { initInput } from './input'
+import { orbitBy, ORBIT_RAD_PER_PX } from './state'   // web2-71 — 정사 픽스처(orbitByForTest)
+import { cubeBasis, orientIn, poseForOrient, parallelPose, toCubeLocal } from '../core/viewcube'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
@@ -39,10 +41,10 @@ import { initDimPanel } from './dimpanel'
 import { registerBox, closeOtherBoxes, openBoxIds, setBoxAwayModeForTest } from './boxes'
 import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
-import { add3, mul3 } from '../core/vec'
+import { add3, mul3, quatRotate, v3 } from '../core/vec'
 import { borderQuads } from '../core/border'
 import { DEFAULT_CLS } from '../core/clsdef'
-import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS, WRITE_HOLD_MS_MIN, WRITE_HOLD_MS_MAX } from '../core/constants'
+import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS, WRITE_HOLD_MS_MIN, WRITE_HOLD_MS_MAX, TURN_ANIM_MS } from '../core/constants'
 import { WAIT_INK, setWaitInkMode, waitInkMode, type WaitInkMode } from '../core/waitfade'
 import {
   lensAllowed, lensStops, lensF, lensK, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX,
@@ -98,7 +100,7 @@ if (DEV_MENU) {
 //    없애지 않은 이유: 태블릿에는 콘솔이 없어 이 길이 유일한 판독 통로다.
 import { initDiagPanel } from './diagpanel'
 import type { StrokeCapStats } from './input'
-let inputApi: { strokeStats: () => StrokeCapStats } | null = null
+let inputApi: ReturnType<typeof initInput> | null = null
 /** 지금 문서의 .brnl 크기 — 저장 버튼과 같은 직렬화라 «저장하면 이 크기»다(1-f) */
 const brnlBytes = () =>
   new Blob([serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView })]).size
@@ -565,6 +567,14 @@ inputApi = initInput(ink, app, {
     }
     return inj !== null
   },
+  // web2-71 — 몸짓은 «그 함수»를 부른다(#54): 되돌리기 = undoOrExplain · 다시하기 = redo · 격자 = setGrid(chk-grid의 그 함수) · 정사 = orthoSnap
+  onGestureTap(n) { if (n === 2) undoOrExplain(); else if (n === 3) redo(app); gesture71Log.push(`tap${n}`) },
+  onGestureDouble(n, p) {
+    if (n === 3) { undo(app); setGrid(!app.grid); gesture71Log.push('double3:redo-undone,grid') }   // 첫 두드림의 다시하기를 되물리고(undo) 격자·축 토글
+    else if (n === 1) { orthoSnap(); gesture71Log.push('double1:ortho') }
+    void p
+  },
+  onGestureHold(n) { if (n === 2) { undoOrExplain(); gesture71Log.push('hold2') } },
   onPaint(pts, press) {
     const r = commitPaint(app, pts, press)
     // 알림은 오류가 있을 때만(4-b) — 얹혔으면 화면이 말한다. 통째로 허공이면 이유를.
@@ -939,7 +949,7 @@ for (const k of Object.keys(toolBtn) as (keyof typeof toolBtn)[]) {
     // 늘린다(지시 4-e ⚠). 다른 도구는 종전 그대로다.
     if (k === 'face' && app.tool === 'face') { toggleFacePop(); return }
     // 붓을 **다시** 누르면 — web2-64: 패널은 도구를 든 동안 늘 떠 있으므로 여닫을 것이 없다(옛 «재누름이 칠통을 연다»는 걷었다).
-    if (k === 'paint' && app.tool === 'paint') { setPainttrayOpen(true); return }
+    if (k === 'paint' && app.tool === 'paint') { setPainttrayOpen(true); document.getElementById('paint-brush-btn')!.click(); return }   // web2-71 §4 — 재누름 = 그 도구의 통(브러시 목록 여닫기 · 「여닫을 것이 없다」를 바꾼다)
     // 재기는 **토글**이다 — 다시 누르면 연필로 돌아온다(재는 일은 잠깐 하는 일이다)
     if (k === 'measure' && app.tool === 'measure') { setTool('pencil'); return }
     // 지우개 둘 — **도구를 먼저 바꾸고 크기통을 연다**(web2-34 3번). 연필·펜 단추가
@@ -1264,11 +1274,14 @@ const GRID_KEY = 'b2-grid'
 try { const g = localStorage.getItem(GRID_KEY); if (g === 'on' || g === 'off') app.grid = g === 'on' } catch { /* 기본(꺼짐) */ }
 const gridBox = document.getElementById('chk-grid') as HTMLInputElement
 gridBox.checked = app.grid
-gridBox.addEventListener('change', () => {
-  app.grid = gridBox.checked
+/** 격자·축 표시 — chk-grid가 하는 «그 함수»(web2-71 §2의 세 손가락 두 번도 이것을 부른다 · #54) */
+function setGrid(on: boolean) {
+  app.grid = on
+  gridBox.checked = on
   try { localStorage.setItem(GRID_KEY, app.grid ? 'on' : 'off') } catch { /* 세션 한정 */ }
   invalidate()
-})
+}
+gridBox.addEventListener('change', () => setGrid(gridBox.checked))
 // 지평선 토글(web2-12 7번 → web2-17 5부: **자동 숨김**) — 체크박스는 실제 표시 상태를
 // 비춘다(자동으로 꺼지면 체크가 풀린다 — 그래야 켜는 법이 보인다). 사람이 만지면
 // `horizonPref`가 굳고 자동이 더는 안 건드린다 — 판별자는 `change` 사건이다(프로그램
@@ -3049,6 +3062,38 @@ void filePanel.boot()
 // 새 진입로에서는 첫 획이 곧 소실점 획인 경우가 흔해 «되돌리기가 아무 일도 안 하는» 장면이
 // 자주 보인다 — 그때 한 줄로 말한다. 조건: 스택이 비었는데 마지막 획이 작도 획일 때만
 // (내용 획만 남은 상태 — 파일에서 연 문서 등 — 는 종전대로 조용한 무동작이다).
+const gesture71Log: string[] = []
+/** 지금 자세와 가장 가까운 정사 축(여섯) 사이의 각(도) — 큐브 틀(cubeBasis)이 없으면 null(카메라 전) */
+function orthoSnapOffDeg(): number | null {
+  const basis = cubeBasis(app.lift.an)
+  if (!basis) return null
+  const backLocal = toCubeLocal(basis, quatRotate(app.pose.q, v3(0, 0, 1)))
+  const o = orientIn(basis, app.pose)
+  const d = Math.max(-1, Math.min(1, backLocal.x * o.back.x + backLocal.y * o.back.y + backLocal.z * o.back.z))
+  return Math.acos(d) * 180 / Math.PI
+}
+/** 한 손가락 두 번 두드림 / 마우스 더블클릭 = 정사 스냅(Feather) — 여섯 정사 축 ±15° 안에서만 · 「정면」(54-3)이 쓰는 그 전환(parallelPose·glide) */
+function orthoSnap(): boolean {
+  const off = orthoSnapOffDeg()
+  if (off === null) { status('정사 스냅은 카메라가 선 뒤에'); return false }
+  if (off > C.GESTURE71_ORTHO_SNAP_DEG) { status(`정사에서 ${off.toFixed(0)}° 넘게 벗어나 있다`); return false }
+  const basis = cubeBasis(app.lift.an)!
+  const pivot = orbitPivot(app)
+  const dist = Math.max(1, Math.hypot(app.pose.p.x - pivot.x, app.pose.p.y - pivot.y, app.pose.p.z - pivot.z))
+  const pose = poseForOrient(basis, orientIn(basis, app.pose), pivot, dist)
+  const to = parallelAllowed(app.lift.an) ? parallelPose(pose, pivot) : pose
+  if (to.proj) resetViewLens(app)   // 렌즈는 평행에서 뜻이 없다 — 들어가면서 버린다(42-3 · tryCube의 그 줄 #54)
+  autolevel.glide(to)
+  // 2점 문서에서는 주점이 화면 밖에 있어(실측 x 1833 — 두 소실점의 가정) 평행에서 피벗이 그 자리에 선다 → 그림이 화면 밖으로 간다(71 실측: 끝점 sx 1417~2149).
+  // 보간이 끝나면 «시점 맞춤»(31-3 돋보기의 그 함수 zoomFit — 새 기제 ⛔)으로 화면 안에 든다. 원근 큐브 면 경로도 같은 형태를 안고 있다(DEFERRED 71 ⚑).
+  window.setTimeout(() => { if (isParallel(app.pose)) { zoomFit(app, { W: r3d.W, H: r3d.H }); invalidate() } }, TURN_ANIM_MS + 30)
+  status('정사 — 돌리면 나온다')
+  return true
+}
+let lastPtrType = ''
+ink.addEventListener('pointerdown', (e) => { lastPtrType = e.pointerType }, { capture: true })
+ink.addEventListener('dblclick', () => { if (lastPtrType === 'mouse') orthoSnap() })   // 마우스 더블클릭 = 같은 뜻(데스크톱 관습) · 펜·손가락의 dblclick은 아니다(장치가 뜻을 든다 — 67)
+const orthoMark = document.getElementById('ortho-mark')!
 function undoOrExplain() {
   if (app.undoStack.length === 0 && app.doc.strokes.length > 0) {
     const last = app.doc.strokes[app.doc.strokes.length - 1]!
@@ -3181,6 +3226,7 @@ function frameCostQ() {
 let paintDraftPerturb = false
 function frame() {
   syncUndoRedoMuted()   // web2-70 [H2]
+  orthoMark.hidden = !isParallel(app.pose)   // web2-71 §3 — 정사에서만(Feather §A-1 「—×—」)
   autolevel.tick()   // 접힐 때가 됐으면 여기서 포즈가 움직인다(setPose가 다시 그리게 한다)
   // 정착 전이(web2-37 2번) — 색이 시간의 함수인 «그 창 동안만» 계속 그린다. 창이 닫히면
   // 이 항은 false라 프레임 고리가 평소의 «바뀔 때만»으로 돌아간다(평소에는 조용하다).
@@ -3335,6 +3381,15 @@ const diag = {
   /** web2-68 — 판정에 드는 상수를 원장이 스스로 든다(#88 · constants_used) */
   /** web2-70 — 테마(밝은 판/어두운 판) · 토큰 캐시(프레임마다 getComputedStyle을 안 부른다는 값) */
   setThemeForTest: (t: 'light' | 'dark') => { setTheme(t); invalidate() },
+  /** web2-71 — 몸짓 표식(D-1): 마지막 두드림의 손가락 수·지속·최대 이동·판정·«왜 아님» · 호출 순서 기록 · 정사 상태 · 칠 멈춤 */
+  gesture71ForTest: () => ({ last: inputApi.gesture71ForTest(), log: [...gesture71Log], ortho: isParallel(app.pose), orthoOff: orthoSnapOffDeg(), grid: app.grid, undo: app.undoStack.length, redo: app.redoStack.length, paintStraight: inputApi.paintStraightForTest() }),
+  gesture71ResetForTest: () => { inputApi.gesture71Reset(); gesture71Log.length = 0 },
+  orthoSnapForTest: () => orthoSnap(),
+  orbitByForTest: (yawDeg: number, pitchDeg: number) => { orbitBy(app, yawDeg * Math.PI / 180 / ORBIT_RAD_PER_PX, pitchDeg * Math.PI / 180 / ORBIT_RAD_PER_PX); invalidate() },
+  viewNameForTest: () => viewName(app.lift.an, app.pose),
+  draftForTest: () => inputApi.draftForTest(),
+  /** 반증 손잡이(D-3) — 칠 멈춤 문턱 덮개(ms · null = 상수로) · 제품 경로 ⛔ */
+  setGesture71ForTest: (o: { paintHoldMs?: number | null }) => inputApi.setPaintHoldMsForTest(o.paintHoldMs ?? null),
   tokensForTest: () => ({ theme: tokensForTest.theme(), cacheSize: tokensForTest.cacheSize(), reads: tokensForTest.reads(), accent: tok('--accent'), panel: tok('--panel'), ink: tok('--ink') }),
   constantsForTest: () => ({
     PAINT68_CASE_N: C.PAINT68_CASE_N, PAINT68_GRADE_STEP_PX: C.PAINT68_GRADE_STEP_PX,
