@@ -72,6 +72,9 @@ export class StrokeSurface implements DabSurface {
   private opts: StrokeOpts | null = null
   private strokeBox: Bbox = emptyBox()
   private lastStrokeBox: Bbox = emptyBox()
+  /** web2-66 — 마지막 takePendingBox 이후 도장이 닿은 사각(초안 세션의 프레임 더티 사각).
+   *  strokeBox(획 전체)와 달리 «가져가면 비워진다» — 합성·부분 업로드가 이 사각만 만진다. */
+  private pendingBox: Bbox = emptyBox()
   private readonly snapshot = new Map<number, Float32Array>()
   private readonly touched = new Set<number>()
   /** 63 진단 — 이 표면이 찍은 팁 도장 수 · 판 히스토그램(길이 = 최대 판 수 8) */
@@ -92,6 +95,10 @@ export class StrokeSurface implements DabSurface {
   dabs = 0
   /** 진단 — 이 획의 덮임 캡 최대(결 «전» 목표 × 도구 캡) = «획 불투명도»(게이트 ④의 자) */
   maxCap = 0
+  /** web2-66 진단(게이트 ①의 자 — 값 변화 없음) — 켜져 있으면 실제로 그려진 도장의
+   *  (x, y, radius)를 차례로 쌓는다. 팔이 프레임 n·n+1의 앞자리를 대조해 «이미 그려진
+   *  도장의 이동량»을 값으로 낸다. 제품 경로는 null(안 쌓는다). */
+  dabLog: number[] | null = null
 
   constructor(layer: Layer) {
     this.layer = layer
@@ -106,9 +113,17 @@ export class StrokeSurface implements DabSurface {
       for (let y = b.y0; y <= b.y1; y++) this.coverage.fill(0, y * this.layer.w + b.x0, y * this.layer.w + b.x1 + 1)
     }
     this.strokeBox = emptyBox()
+    this.pendingBox = emptyBox()
     this.snapshot.clear()
     this.touched.clear()
     this.maxCap = 0
+  }
+
+  /** web2-66 — 쌓인 더티 사각을 가져가고 비운다(초안 세션의 프레임 걸음). */
+  takePendingBox(): Bbox {
+    const b = this.pendingBox
+    this.pendingBox = emptyBox()
+    return b
   }
 
   /** 획 끝 — 상자를 돌려주고 rgb ≤ a를 단언한다(DEV에서 던진다 — 층은 그대로 둔다). */
@@ -304,6 +319,7 @@ export class StrokeSurface implements DabSurface {
     }
     if (!box) return false
     this.dabs++
+    if (this.dabLog) this.dabLog.push(x, y, radius)
     // 스냅숏(닿는 타일) — 초안이거나 스머지 표집이 켜진 획
     const W = this.layer.w
     for (let ty = box.y0 >> TILE_SHIFT; ty <= box.y1 >> TILE_SHIFT; ty++) {
@@ -317,6 +333,10 @@ export class StrokeSurface implements DabSurface {
     if (box.y0 < this.strokeBox.y0) this.strokeBox.y0 = box.y0
     if (box.x1 > this.strokeBox.x1) this.strokeBox.x1 = box.x1
     if (box.y1 > this.strokeBox.y1) this.strokeBox.y1 = box.y1
+    if (box.x0 < this.pendingBox.x0) this.pendingBox.x0 = box.x0
+    if (box.y0 < this.pendingBox.y0) this.pendingBox.y0 = box.y0
+    if (box.x1 > this.pendingBox.x1) this.pendingBox.x1 = box.x1
+    if (box.y1 > this.pendingBox.y1) this.pendingBox.y1 = box.y1
 
     // 캡의 목표(선형화 «전» opaque × 배수 × 도구 캡)
     // 도구 캡: 색연필은 «상한»(min — 프리셋의 제 불투명이 낮으면 그것이 산다) · 마커는 «목표»(46의 한 획 알파 .55 —
