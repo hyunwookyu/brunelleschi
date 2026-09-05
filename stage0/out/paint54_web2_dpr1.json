@@ -27,7 +27,7 @@
       "wallB": 12
     },
     "px_delta": {
-      "floor": 127,
+      "floor": 139,
       "wallA": 0,
       "wallB": 0
     }
@@ -43,7 +43,7 @@
       "wallB": 12
     },
     "px_delta": {
-      "wallA": 170,
+      "wallA": 229,
       "floor": 0,
       "wallB": 0
     }
@@ -60,8 +60,8 @@
       "wallB": 12
     },
     "px_delta": {
-      "wallA": 170,
-      "wallB": 83,
+      "wallA": 229,
+      "wallB": 109,
       "floor": 0
     }
   },
@@ -75,13 +75,13 @@
   },
   "ui34": {
     "def": "#96/#97/34-6 — 툴팁 두 상태 · R6 고름 수 · 정면 줄 rect(화면 안 — 값) · elementFromPoint(가로채는 겹 없음 — 행위 #94) · 칠통 넘침(scrollWH==clientWH — mats52 ⑤와 같은 자 · 리뷰어 [10])",
-    "blocked_title": "정면은 면을 골라야 한다 — 연필을 든 채로 면 안쪽을 꾹 눌러 고른 뒤 칠로 돌아온다",
+    "blocked_title": "정면은 면을 골라야 한다 — 칠 도구로 면을 탭해 고른 뒤 누른다",
     "ok_title": "정면 — 마지막에 고른 면을 정면으로 본다(평행)",
     "label": "정면 · 면 2장 고름",
     "rect": {
-      "x": 999.4,
-      "y": 289,
-      "w": 145.6,
+      "x": 12,
+      "y": 526.6,
+      "w": 260,
       "h": 32.5
     },
     "viewport": {
@@ -90,10 +90,10 @@
     },
     "clickable": true,
     "overflow": {
-      "sw": 150,
-      "cw": 150,
-      "sh": 639,
-      "ch": 639
+      "sw": 272,
+      "cw": 272,
+      "sh": 329,
+      "ch": 329
     }
   }
 }

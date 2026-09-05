@@ -13,76 +13,76 @@
       "marker": {
         "a": "ramon/100%_Opaque",
         "b": "tanda/marker-01",
-        "ink_a": 5936,
+        "ink_a": 5299,
         "same_after_b": true,
         "falsification_idoff_same": false,
         "back_same": true,
         "hashes": {
           "a": [
-            -160297813
+            982921130
           ],
           "b": [
-            -160297813
+            982921130
           ],
           "off": [
-            -684548287
+            -841163469
           ]
         }
       },
       "pencil": {
         "a": "classic/pencil",
         "b": "deevad/2B_pencil",
-        "ink_a": 11567,
+        "ink_a": 10263,
         "same_after_b": true,
         "falsification_idoff_same": false,
         "back_same": true,
         "hashes": {
           "a": [
-            -235127981
+            -1059832218
           ],
           "b": [
-            -235127981
+            -1059832218
           ],
           "off": [
-            1071354903
+            -148107222
           ]
         }
       },
       "cp": {
         "a": "ramon/B-pencil",
         "b": "classic/charcoal",
-        "ink_a": 16589,
+        "ink_a": 14745,
         "same_after_b": true,
         "falsification_idoff_same": false,
         "back_same": true,
         "hashes": {
           "a": [
-            -70569332
+            -2075133628
           ],
           "b": [
-            -70569332
+            -2075133628
           ],
           "off": [
-            697280513
+            -403900693
           ]
         }
       },
       "brush": {
         "a": "deevad/liner",
         "b": "classic/pen",
-        "ink_a": 22541,
+        "ink_a": 20068,
         "same_after_b": true,
         "falsification_idoff_same": false,
         "back_same": true,
         "hashes": {
           "a": [
-            1238912060
+            -192260507
           ],
           "b": [
-            1238912060
+            -192260507
           ],
           "off": [
-            1603266731
+            -1034562632
           ]
         }
       }
@@ -1510,7 +1510,7 @@
         "hit": true,
         "rect": [
           12,
-          263,
+          242,
           260,
           42
         ],
@@ -1522,7 +1522,7 @@
         "hit": true,
         "rect": [
           18,
-          270,
+          249,
           122,
           28
         ],
@@ -1534,7 +1534,7 @@
         "hit": true,
         "rect": [
           82,
-          314,
+          293,
           96,
           16
         ],
@@ -1546,7 +1546,7 @@
         "hit": true,
         "rect": [
           187,
-          316,
+          295,
           38,
           12
         ],
@@ -1558,7 +1558,7 @@
         "hit": true,
         "rect": [
           82,
-          345,
+          324,
           96,
           16
         ],
@@ -1570,7 +1570,7 @@
         "hit": true,
         "rect": [
           187,
-          347,
+          326,
           38,
           12
         ],
@@ -1582,7 +1582,7 @@
         "hit": true,
         "rect": [
           21,
-          374,
+          353,
           30,
           30
         ],
@@ -1594,7 +1594,7 @@
         "hit": true,
         "rect": [
           59,
-          381,
+          360,
           16,
           16
         ],
@@ -1606,7 +1606,7 @@
         "hit": true,
         "rect": [
           18,
-          415,
+          394,
           81,
           40
         ],
@@ -1618,7 +1618,7 @@
         "hit": true,
         "rect": [
           102,
-          415,
+          394,
           81,
           40
         ],
@@ -1630,7 +1630,7 @@
         "hit": true,
         "rect": [
           185,
-          415,
+          394,
           81,
           40
         ],
@@ -1642,7 +1642,7 @@
         "hit": true,
         "rect": [
           18,
-          458,
+          437,
           81,
           40
         ],
@@ -1654,7 +1654,7 @@
         "hit": true,
         "rect": [
           102,
-          458,
+          437,
           81,
           40
         ],
@@ -1666,7 +1666,7 @@
         "hit": true,
         "rect": [
           185,
-          458,
+          437,
           81,
           40
         ],
@@ -1678,7 +1678,7 @@
         "hit": true,
         "rect": [
           12,
-          504,
+          527,
           260,
           33
         ],
@@ -1710,10 +1710,10 @@
         "exists": true,
         "hit": true,
         "rect": [
-          295,
-          381,
-          132,
-          132
+          20,
+          259,
+          244,
+          244
         ],
         "top": "paint-wheel-cv"
       }
@@ -1724,21 +1724,21 @@
     "overflow": {
       "sw": 272,
       "cw": 272,
-      "sh": 286,
-      "ch": 286,
+      "sh": 329,
+      "ch": 329,
       "vh": 800,
-      "bottom": 543,
-      "top": 257
+      "bottom": 565,
+      "top": 236
     },
     "viewport700": {
       "overflow": {
         "sw": 272,
         "cw": 272,
-        "sh": 286,
-        "ch": 286,
+        "sh": 329,
+        "ch": 329,
         "vh": 700,
-        "bottom": 493,
-        "top": 207
+        "bottom": 515,
+        "top": 186
       },
       "zero_stage_missing": []
     },
@@ -1782,13 +1782,13 @@
     "no_title": [],
     "fav3": {
       "i": "marker",
-      "br": "ramon/100%_Opaque"
+      "br": "brunelleschi/marker"
     },
     "sel_after_fav3": {
       "hex": "#5a5a5a",
       "i": "marker",
       "w": 10,
-      "br": "ramon/100%_Opaque",
+      "br": "brunelleschi/marker",
       "o": 1
     },
     "sel_after_pick": {
@@ -1806,11 +1806,17 @@
       },
       {
         "i": "brush",
-        "br": "deevad/liner"
+        "br": "deevad/liner",
+        "hex": "#5a5a5a",
+        "w": 10,
+        "o": 1
       },
       {
         "i": "marker",
-        "br": "ramon/100%_Opaque"
+        "br": "brunelleschi/marker",
+        "hex": "#5a5a5a",
+        "w": 10,
+        "o": 1
       },
       {
         "i": "cp",
@@ -1822,7 +1828,10 @@
       },
       {
         "i": "marker",
-        "br": "tanda/marker-01"
+        "br": "tanda/marker-01",
+        "hex": "#5a5a5a",
+        "w": 10,
+        "o": 1
       }
     ],
     "favs_after_reload": [
@@ -1832,11 +1841,17 @@
       },
       {
         "i": "brush",
-        "br": "deevad/liner"
+        "br": "deevad/liner",
+        "hex": "#5a5a5a",
+        "w": 10,
+        "o": 1
       },
       {
         "i": "marker",
-        "br": "ramon/100%_Opaque"
+        "br": "brunelleschi/marker",
+        "hex": "#5a5a5a",
+        "w": 10,
+        "o": 1
       },
       {
         "i": "cp",
@@ -1848,7 +1863,10 @@
       },
       {
         "i": "marker",
-        "br": "tanda/marker-01"
+        "br": "tanda/marker-01",
+        "hex": "#1e7fd0",
+        "w": 10,
+        "o": 1
       }
     ],
     "recent": [
@@ -1859,28 +1877,28 @@
     ]
   },
   "face_tap": {
-    "def": "칠 도구의 한 붓이 raw bbox 대각 ≤ C.PAINT64_TAP_MAX_PX(6 · 화면 px)이면 탭 = 면 고르기(+51 Injector) · 넘으면 칠. 경계 양쪽(문턱 −2 · +4)에서 잰다 · 빈 곳 탭 = 풀기 · 반증 = 연필 도구의 같은 탭은 안 고른다(작도 중에는 옛 뜻 그대로)",
+    "def": "**마우스**의 한 붓이 raw bbox 대각 ≤ C.PAINT67_MOUSE_TAP_MAX_PX(12 · 화면 px)이면 탭 = 면 고르기(+51 Injector) · 넘으면 칠. 경계 양쪽(문턱 −2 · +1 · +4)에서 잰다 · 빈 곳 탭 = 풀기 · 반증 = 연필 도구의 같은 탭은 안 고른다(작도 중에는 옛 뜻 그대로). ⚠ 67 §1 판갈이: 펜은 이 문턱을 안 지난다(언제나 칠 — gesture67 ①이 그 자)",
     "threshold": {
-      "registered": "C.PAINT64_TAP_MAX_PX",
-      "value": 6,
-      "origin": "세션이 정했다(2026-09-04 · 첫 실행 «전») — 아래 = 펜 끝 떨림의 탭 문 TAP_MAX_PX 2(AS-C79) · 위 = 쓸모 있는 최소 자국(점 하나 ≈ 굵기 · 기본 10px)의 절반 대역. 6px 아래의 «점 찍기»는 칠이 아니라 고르기다(대가 — AS-C189 · 실기기 손가락 떨림이 판정)"
+      "registered": "C.PAINT67_MOUSE_TAP_MAX_PX",
+      "value": 12,
+      "origin": "web2-67 지시 문면(6 → 12 — 마우스는 손가락이 없어 고르기와 그리기를 한 장치가 진다). 옛 6은 64 세션의 값(AS-C189 — 펜에 걸려 «그리려는데 골라지는» 충돌을 냈고 §1이 장치로 갈랐다)"
     },
-    "threshold_px": 6,
+    "threshold_px": 12,
     "sel_pencil_tap": 0,
     "sel_after_tap": 1,
     "strokes_delta_tap": 0,
     "under": {
-      "diag_px": 4.2,
+      "diag_px": 9.9,
       "sel": 1,
       "strokes_delta": 0
     },
     "just_over": {
-      "diag_px": 6.4,
+      "diag_px": 13.5,
       "sel": 1,
       "strokes_delta": 1
     },
     "over": {
-      "diag_px": 9.9,
+      "diag_px": 15.6,
       "sel": 1,
       "strokes_delta": 1
     },
@@ -1890,7 +1908,7 @@
   "constants_snapshot": {
     "PAINT64_DENSITY_TOL": 0.05,
     "PAINT64_WET_MIN_PX": 40,
-    "PAINT64_TAP_MAX_PX": 6,
+    "PAINT67_MOUSE_TAP_MAX_PX": 12,
     "PAINT63_DISTINCT_REL": 0.25,
     "PAINT62_PAINTED_ALPHA": 0.008,
     "note": "스냅샷-라이트(web2 원장의 constantsSnapshot 기계 부재는 종전 유보 · 값은 constants.ts가 정본 — 리뷰어 [M5])"

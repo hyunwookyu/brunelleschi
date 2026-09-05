@@ -380,9 +380,10 @@ test('⑥ 0-6 지우개 — 알파 감소·다른 면 무변 · 순서 · undo �
   test.setTimeout(600_000)
   await bigBox(page, true)                                   // 바닥 면 = «다른 면 무변»의 대조군
   await pickPaint(page, 'pencil', 20, '#33383f')
-  // 바닥에도 표본 칠 하나(대조군)
-  await page.mouse.move(480, 640); await page.mouse.down()
-  await page.mouse.move(560, 632, { steps: 4 }); await page.mouse.up(); await page.waitForTimeout(100)
+  // 바닥에도 표본 칠 하나(대조군) — ⚠ x<500에서만: 벽의 화면 폴리곤이 y~686까지 내려와
+  // (480,640) 같은 자리의 꼬리가 벽에 붙는다(D-2 실측 — 첫 판의 대조군이 그래서 비었다)
+  await page.mouse.move(300, 635); await page.mouse.down()
+  await page.mouse.move(380, 630, { steps: 4 }); await page.mouse.up(); await page.waitForTimeout(100)
   // 벽에 칠 셋
   for (let k = 0; k < 3; k++) { const [x, y] = wallSpot(k); await paintStroke(page, x, y) }
   const inkOf = async () => {
@@ -390,8 +391,17 @@ test('⑥ 0-6 지우개 — 알파 감소·다른 면 무변 · 순서 · undo �
     return Object.fromEntries(t.map(e => [e.key, e.ink])) as Record<string, number>
   }
   const before = await inkOf()
-  const wallKey = Object.keys(before).sort((a, b) => before[b]! - before[a]!)[0]!   // 잉크 최대 = 벽
-  const floorKey = Object.keys(before).find(k => k !== wallKey)
+  // 면의 정체는 획이 든 f가 정본이다(#54 — «잉크 최대 = 벽» 휴리스틱은 바닥 텍스처의 텍셀
+  // 잉크(스치는 각 — 세계로 길다)가 더 커서 뒤집혔다: D-2가 잡았다). 첫 획 = 바닥 표본.
+  const ids = await page.evaluate(() => {
+    const ss = (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint)
+    return { floor: `${ss[0].paint.f}:${ss[0].paint.s}`, wall: `${ss[1].paint.f}:${ss[1].paint.s}` }
+  })
+  const wallKey = ids.wall
+  const floorKey = ids.floor
+  expect(wallKey !== floorKey, '벽·바닥이 다른 (면,쪽)이다(#103)').toBe(true)
+  expect(before[wallKey], '벽 텍스처가 섰다(#103)').toBeGreaterThan(0)
+  expect(before[floorKey], '대조군(바닥 텍스처)이 실제로 섰다(#103 — 비면 「다른 면 무변」이 아무것도 안 잰다)').toBeGreaterThan(0)
   const r0 = await regionHash(page, 525, 350, 60, 22)        // spot0 대역
   const rCtl = await regionHash(page, 640, 350, 60, 22)      // spot2(안 지울 자리) — 대조
   // ── 지우개 켬(패널 고정 칸 — 실제 클릭) ─────────────────────────────────
@@ -400,6 +410,23 @@ test('⑥ 0-6 지우개 — 알파 감소·다른 면 무변 · 순서 · undo �
   const est = await page.evaluate(() => (window as any).__b2.diag.paintEraseForTest())
   expect(est.on, '지우개 칸이 켜졌다').toBe(true)
   expect(est.soft, '기본은 딱딱한(마른 매체)').toBe(false)
+  // 34-0 몫(§1 게이트 ⑧ · CLOSING 상시 규칙 「손잡이를 더하면 그 라운드 안에서 표를 다시 돌린다」) —
+  // 이 라운드가 더한 손잡이 둘의 툴팁(#96)·닿음(#97 elementFromPoint)
+  const census = await page.evaluate(() => {
+    const out: Record<string, { title: string | null; hit: boolean }> = {}
+    for (const id of ['paint-erase', 'paint-erase-soft']) {
+      const el = document.getElementById(id)!
+      const r = el.getBoundingClientRect()
+      const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+      out[id] = { title: el.getAttribute('title'), hit: el === at || el.contains(at) }
+    }
+    return out
+  })
+  OUT.g06_census = { def: '34-0 몫 — 새 손잡이 둘(지우개 칸·경도)의 툴팁·elementFromPoint(#96·#97)', census }
+  for (const [id, c] of Object.entries(census)) {
+    expect(c.title && c.title.length > 4, `${id} — 툴팁(#96)`).toBe(true)
+    expect(c.hit, `${id} — 닿는다(#97)`).toBe(true)
+  }
   await page.evaluate(() => { (window as any).__b2.app.eraseSel.w = 26 })
   // ① 지운 자리의 덮임이 빠진다 — spot0 획을 가로질러 지운다
   await paintStroke(page, 528, 352)

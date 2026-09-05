@@ -1,0 +1,121 @@
+{
+  "conditions": {
+    "project": "dpr1",
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/gesture67.spec.ts (#99)"
+  },
+  "what": "web2-67 §1 — 몸짓 가르기: 펜=칠 · 손가락 탭=고르기 · 손가락 긴 누름=Injector · 마우스=문턱 12",
+  "note_pitfalls": "#93(탭 판정은 «움직인 거리»다 — 시간이 아니다: 문턱 경계 양쪽을 잰다) · #99 · #101 · #102(한 test 안 ?reset 재부름 ⛔) · #103(장면 확인 — 잉크·면 수) · #111 판별 ①(입력 하나에 전부를 다시 만드는가 — 이 라운드는 입력 «배정»만 바꿨고 미리보기 기제 무변)",
+  "note_d3": "⑦ gestureSplitOff가 반증이다 — 켜면 옛 판(펜도 6px 탭 판정 · 손가락 탭 무위)이 같은 장면에서 실제로 돌아온다",
+  "pitfall_citations": [
+    42,
+    93,
+    99,
+    101,
+    102,
+    103,
+    111
+  ],
+  "selfcheck_notes": {
+    "zero_counters": "①의 sel_after(0)·⑤의 delta(전부 0)는 «아무 일도 안 한다» 게이트의 통과값이다 — 카운터 죽음이 아니라 그 짝(②의 sel 1·2, ⑦의 옛 충돌 sel 1)이 같은 자로 양수를 낸다"
+  },
+  "g1_pen_dot": {
+    "note": "펜 점 하나 → 획 1 · 잉크 증가 · faceSel 0 (슬롯 전수)",
+    "rows": [
+      {
+        "instr": "pencil",
+        "stroke_delta": 1,
+        "ink_delta": 108,
+        "sel_after": 0
+      },
+      {
+        "instr": "brush",
+        "stroke_delta": 1,
+        "ink_delta": 360,
+        "sel_after": 0
+      },
+      {
+        "instr": "marker",
+        "stroke_delta": 1,
+        "ink_delta": 299,
+        "sel_after": 0
+      },
+      {
+        "instr": "cp",
+        "stroke_delta": 1,
+        "ink_delta": 531,
+        "sel_after": 0
+      }
+    ]
+  },
+  "g2_finger_tap": {
+    "note": "탭 → 1 · 다른 면 탭 → 2 · 같은 면 재탭 → 2 · 긴 누름 = Injector(고름 불변) · 빈 곳 → 0 · 획 증가 0",
+    "sel": [
+      1,
+      2,
+      2,
+      2,
+      0
+    ],
+    "stroke_delta": 0,
+    "injected": {
+      "i": "marker",
+      "hex": "#1e66c0",
+      "w_px": 13.7
+    }
+  },
+  "g3_threshold": {
+    "note": "경계 양쪽(#93) — 아래(FT−2): 탭·화면 불변 · 위(FT+6): 궤도(화면 변화 값)·고름 불변",
+    "under": {
+      "diag_px": 9.9,
+      "sel": 1,
+      "view_moved": 0,
+      "pose_moved": 0
+    },
+    "over": {
+      "diag_px": 18.4,
+      "sel_delta": 0,
+      "moved": 11.1708
+    }
+  },
+  "g4_across": {
+    "note": "고른 두 벽판에만 조각이 남는다 — 바닥(집합 밖)은 0 · 54-2의 그 기제(paint54 ④와 같은 자)",
+    "ids": {
+      "floor": 10,
+      "wallA": 11,
+      "wallB": 12
+    },
+    "by_face": {
+      "11": 1,
+      "12": 1
+    }
+  },
+  "g5_drafting": {
+    "sel_after_tap": 0,
+    "stroke_delta": 0,
+    "view_delta": [
+      0,
+      0
+    ]
+  },
+  "g67_mouse_falsify": {
+    "note": "⑥ 마우스: 탭=고르기 · 문턱+6 획=칠(경계 양쪽 전수는 paint64 ⑥) · ⑦ 반증: 끄면 짧은 펜 획이 고르기(옛 충돌) · 손가락 탭 무위",
+    "mouse": {
+      "threshold": 12,
+      "sel_after_click": 1,
+      "paint_delta_over": 1
+    },
+    "falsify": {
+      "sel_before": 0,
+      "new_world": {
+        "paint_delta": 1,
+        "sel": 0
+      },
+      "old_world": {
+        "paint_delta": 0,
+        "sel": 1,
+        "finger_sel": 1
+      }
+    }
+  }
+}

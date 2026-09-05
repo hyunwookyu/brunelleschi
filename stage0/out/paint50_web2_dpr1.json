@@ -7,7 +7,7 @@
     "no_brighter": {
       "brighter": 0,
       "maxUp": 0,
-      "darkSum": 259689
+      "darkSum": 134895
     },
     "edge_ramp": [
       {
@@ -173,45 +173,45 @@
       },
       {
         "a": 1,
-        "r": 194,
-        "g": 145,
-        "b": 129,
-        "lum": 157.8
+        "r": 201,
+        "g": 146,
+        "b": 123,
+        "lum": 159.8
       },
       {
         "a": 1,
-        "r": 131,
-        "g": 132,
-        "b": 152,
-        "lum": 134
+        "r": 198,
+        "g": 142,
+        "b": 120,
+        "lum": 156.2
       },
       {
         "a": 1,
-        "r": 94,
-        "g": 114,
-        "b": 143,
-        "lum": 111.3
+        "r": 164,
+        "g": 107,
+        "b": 86,
+        "lum": 121.6
       },
       {
         "a": 1,
-        "r": 95,
-        "g": 121,
-        "b": 151,
-        "lum": 116.6
+        "r": 174,
+        "g": 123,
+        "b": 106,
+        "lum": 136.3
       },
       {
         "a": 1,
-        "r": 103,
-        "g": 128,
-        "b": 157,
-        "lum": 123.8
+        "r": 149,
+        "g": 134,
+        "b": 141,
+        "lum": 139.3
       },
       {
         "a": 1,
-        "r": 100,
+        "r": 107,
         "g": 126,
-        "b": 155,
-        "lum": 121.5
+        "b": 153,
+        "lum": 123.4
       },
       {
         "a": 1,
@@ -243,52 +243,52 @@
       },
       {
         "a": 1,
-        "r": 89,
+        "r": 90,
         "g": 114,
         "b": 144,
-        "lum": 109.9
+        "lum": 110.2
       },
       {
         "a": 1,
-        "r": 87,
+        "r": 108,
         "g": 112,
-        "b": 142,
-        "lum": 107.9
+        "b": 136,
+        "lum": 113.5
       },
       {
         "a": 1,
-        "r": 88,
-        "g": 113,
-        "b": 144,
-        "lum": 109.1
+        "r": 151,
+        "g": 106,
+        "b": 97,
+        "lum": 118.4
       },
       {
         "a": 1,
-        "r": 89,
-        "g": 114,
-        "b": 145,
-        "lum": 110.1
+        "r": 165,
+        "g": 109,
+        "b": 89,
+        "lum": 123.5
       },
       {
         "a": 1,
-        "r": 91,
-        "g": 114,
-        "b": 144,
-        "lum": 110.5
+        "r": 165,
+        "g": 109,
+        "b": 89,
+        "lum": 123.5
       },
       {
         "a": 1,
-        "r": 112,
-        "g": 111,
-        "b": 131,
-        "lum": 113.6
+        "r": 160,
+        "g": 104,
+        "b": 84,
+        "lum": 118.5
       },
       {
         "a": 1,
-        "r": 163,
+        "r": 164,
         "g": 108,
-        "b": 88,
-        "lum": 122.2
+        "b": 87,
+        "lum": 122.3
       },
       {
         "a": 1,
@@ -336,15 +336,15 @@
     "ramp_max_lum": 166.1,
     "paper_lum": 243,
     "under_pattern": {
-      "bandPx": 7162,
-      "contrastPx": 182
+      "bandPx": 3657,
+      "contrastPx": 94
     },
     "under_pattern_over": {
-      "bandPx": 6305,
+      "bandPx": 3111,
       "contrastPx": 0
     },
     "under_pattern_opaque": {
-      "bandPx": 8237,
+      "bandPx": 4297,
       "contrastPx": 0
     },
     "under_pattern_norep": {
@@ -354,9 +354,9 @@
     "line_under_band_dark": 96,
     "note_52": "52 이식 — 비침의 기제 = 획 알파 0.55(층이 같은 캔버스여도 45%가 비친다 — over 대비 ≈ 출하 대비가 그 실측). ② 반증 = 불투명 재굽기(underOpaque — 비침 술어의 반전. contrastPx의 정확한 0은 분모(bandPx)가 산 채로 대비만 죽은 측정값이다 — 자명 항등 아님) · norep는 대상 확인(분모째 주는 자명 항등 — 기록·문 없음, 52 1차 [1]) · 합성 반증 = ①의 밝아짐",
     "falsify_over": {
-      "brighter": 115218,
-      "maxUp": 8.5,
-      "darkSum": 198961
+      "brighter": 119367,
+      "maxUp": 8.6,
+      "darkSum": 100725
     },
     "dom_canvas": {
       "before": 18,
@@ -378,27 +378,27 @@
     "reachability_source": "이 파일의 falsify_over ↔ no_brighter · under_pattern_over ↔ under_pattern"
   },
   "orbit": {
-    "before": 4254,
+    "before": 2317,
     "during": [
-      3852,
-      3449,
-      3046,
-      2662,
-      2284
+      2085,
+      1871,
+      1652,
+      1430,
+      1236
     ],
-    "after": 2284,
+    "after": 1236,
     "note_d3": "D-3 반증 스위치 없음 — «궤도 중 소실»을 되살릴 옛 경로(48-6의 타일 제외)가 삭제됐다. 이 팔이 재는 것은 궤도 «행위» 중의 픽셀이고(문면 아님 — #94), 부정 대조는 paint48 ⑥의 tileStats.paintFrames == 0(옛 절이 안 도는 것)이다"
   },
   "foreshorten_clip": {
     "def": "경계를 일부러 지나는 마커 획 — 열별 파란 띠 두께(물리 px · ±2열 평균). near=545css · far=855css · 밖=488/915css. 기대 비 = 벽 투영 높이 비(픽스처에서 유도 — #88)",
-    "near_px": 18.6,
-    "far_px": 14,
-    "ratio": 1.329,
+    "near_px": 15.6,
+    "far_px": 11.8,
+    "ratio": 1.322,
     "ruler": "(62 판갈이) 열별 «색상 차(b−r)의 열 최대 절반» 문턱의 행 수 — 61 자(알파 반최대 ∧ b−r>30 고정)는 alpha_halfmax 열에 기록",
     "alpha_halfmax": {
-      "near_px": 18.8,
-      "far_px": 14,
-      "ratio": 1.343
+      "near_px": 16,
+      "far_px": 12.2,
+      "ratio": 1.311
     },
     "expected_ratio": 1.24,
     "tol_registered": "C.PAINT50_FORESHORTEN_TOL",
@@ -418,10 +418,10 @@
     "reachability_source": "이 파일의 ratio ↔ expected_ratio"
   },
   "side": {
-    "before": 4254,
+    "before": 2317,
     "behind": 0,
     "scene_ink_behind": 171771,
-    "restored": 4254,
+    "restored": 2317,
     "tex_behind": [
       {
         "key": "9:1",
@@ -458,11 +458,11 @@
     "note_d3": "D-3 — 반증 스위치 없음: 쪽 게이트를 끄는 손잡이를 안 만들었다(paintVisible 계열의 단위 반증은 test/mats46 ④가 든다). 건너편 0의 귀속(쪽 때문 — 밀도·미배치 아님)은 장면 잉크 > 0과 tex의 visible=false가 가른다"
   },
   "derived": {
-    "hash_base": 945361627,
-    "hash_corrupted": 404737360,
-    "hash_rebaked": 945361627,
+    "hash_base": 1847534066,
+    "hash_corrupted": 2595777631,
+    "hash_rebaked": 1847534066,
     "textures": 1,
-    "file_bytes": 4028,
+    "file_bytes": 4030,
     "note_identity": "rebaked == base(정확 일치)는 **설계 보장**이다(§5.1 유형 3 — 결정론 굽기의 항등 · 임계 아님). 이 팔의 측정은 가운데 단계다: corrupted ≠ base(오염이 화면에 실제로 보였다 — 이것이 없으면 회복 항등은 아무것도 안 잰다 · D-3)"
   },
   "tex_budget": {
@@ -537,23 +537,23 @@
     ],
     "max_level_zoomed_out": 128,
     "max_level": 512,
-    "cap": 1024,
+    "cap": 2048,
     "min": 64,
     "before_ms": {
-      "median": 16.69999998807907,
-      "p90": 19
+      "median": 16.80000001192093,
+      "p90": 18.799999982118607
     },
     "before2_ms": {
       "median": 16.899999976158142,
       "p90": 17.900000005960464
     },
-    "noise_floor_ms": 0.2,
+    "noise_floor_ms": 0.1,
     "after_ms": {
-      "median": 16.80000001192093,
-      "p90": 17.700000017881393
+      "median": 16.899999976158142,
+      "p90": 17.900000005960464
     },
-    "delta_median_ms": -0.1,
-    "delta_p90_ms": -0.2,
+    "delta_median_ms": 0,
+    "delta_p90_ms": 0,
     "note_cap": "상한 1024의 근거 — 장당 최악 1024²×4=4.19MB(2048이면 16.7MB — 4배)이고 이 장면의 실제 합은 bytes_total이다(긴 변만 단계라 장당 그보다 작다). «상한을 올리면 커진다»는 **clamped가 참인 장에만** 걸리는 산술이다(2차 [8]) — 이 장면은 clamped 합이 그 판정이다(0이면 상한 증설에 불변 · dpr2의 단일 1024도 포화가 아니라 올림 양자화일 수 있다 — screen_px_prequant가 가른다). 상한을 실제로 누르는 것은 큰 면·줌 인 장면이고 실기기 관측 판정자다(DEFERRED)",
     "note_89": "목표 «스무 면»에 못 미치면 faces 값이 그 사실이다 — 상한을 조용히 줄이지 않는다(rep49 note_89 그대로 · 같은 픽스처가 세운 면이 17이다)",
     "note_levels": "기본 줌의 levels가 전부 같은 값인 것은 이 장면의 셀들이 비슷한 화면 크기라서다 — «작으면 낮게»의 실측은 levels_zoomed_out(줌 아웃에서 단계 하강)이 든다",
