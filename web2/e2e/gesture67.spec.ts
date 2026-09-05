@@ -26,7 +26,13 @@ const OUT: Record<string, unknown> = {
   what: 'web2-67 §1 — 몸짓 가르기: 펜=칠 · 손가락 탭=고르기 · 손가락 긴 누름=Injector · 마우스=문턱 12',
   note_pitfalls: '#93(탭 판정은 «움직인 거리»다 — 시간이 아니다: 문턱 경계 양쪽을 잰다) · #99 · #101 · #102(한 test 안 ?reset 재부름 ⛔) · #103(장면 확인 — 잉크·면 수) · #111 판별 ①(입력 하나에 전부를 다시 만드는가 — 이 라운드는 입력 «배정»만 바꿨고 미리보기 기제 무변)',
   note_d3: '⑦ gestureSplitOff가 반증이다 — 켜면 옛 판(펜도 6px 탭 판정 · 손가락 탭 무위)이 같은 장면에서 실제로 돌아온다',
+  note_dpr: 'dpr2 판은 ①(잉크 픽셀)만 dpr이 실리고 나머지(고름 수·문턱 판정·면 배정)는 css px 판정이라 dpr1과 비트 동일이다 — 같음이 곧 그 사실의 확인이지 독립 표본이 아니다(paint64 note_dpr의 그 규약 · 리뷰어 [M1])',
+  note_time_entry: '⚠ 손가락 «긴 누름 = Injector»는 시간 진입이다(#93의 그 형태 — 지시 67-1 문면이 정한 자리 · 39·44 꾹 누름과 같은 대역 writeHoldMs). 노출을 좁힌 수리([H5]): «실었을 때만» 몸짓을 삼킨다 — 못 실은 느린 탭은 뗄 때 고르기로 산다(g2.hold_no_target). 남는 노출(짚을 획 «위»의 느린 탭이 Injector가 되는 경우)은 실기기 판정 — AS-C197·DEFERRED',
   pitfall_citations: [42, 93, 99, 101, 102, 103, 111],
+  constants_used: {
+    PAINT67_FINGER_TAP_MAX_PX: 12, PAINT67_MOUSE_TAP_MAX_PX: 12, PAINT67_DOT_FRAC: 0.35, PAINT67_DOT_MIN_PX: 2,
+    note: '판정 전 실행이 diag.paint50Constants()와 대조한다(① 첫 줄) — 여기 수는 사람 눈용 사본이다(#88: 정본은 앱 상수)',
+  },
   selfcheck_notes: { zero_counters: '①의 sel_after(0)·⑤의 delta(전부 0)는 «아무 일도 안 한다» 게이트의 통과값이다 — 카운터 죽음이 아니라 그 짝(②의 sel 1·2, ⑦의 옛 충돌 sel 1)이 같은 자로 양수를 낸다' },
 }
 const LEDGER_OF = (projectName: string) =>
@@ -187,11 +193,19 @@ test('② 손가락 탭 — 하나 → 더해짐(다른 면) → 빈 곳 풀림 
   const pick = await page.evaluate(() => ({ ...(window as any).__b2.app.paintSel }))
   await finger(page, [[200, 200]])                                   // 빈 곳 탭 — 풀림
   const sel0 = await faceSelN(page)
+  // [H5] — 긴 누름이 «못 실으면» 몸짓을 안 삼킨다(#93의 노출을 좁힌 수리): 짚을 칠 획이 없는
+  // 자리에서 holdMs를 넘겨 눌러도, 뗌이 탭(고르기/풀기)으로 산다 — 느린 손끝의 탭이 조용히
+  // 죽거나(옛 수리 전) 색이 조용히 바뀌지(짚은 획이 있을 때만 실린다) 않는다.
+  await finger(page, [[525, 430]])                                   // 하나 다시 고름
+  const selRe = await faceSelN(page)
+  await finger(page, [[950, 250]], holdMs + 300)                     // 빈 곳 «긴» 누름 — Injector 대상 없음
+  const selSlowEmpty = await faceSelN(page)
   const s1 = await strokeN(page)
   OUT.g2_finger_tap = {
-    note: '탭 → 1 · 다른 면 탭 → 2 · 같은 면 재탭 → 2 · 긴 누름 = Injector(고름 불변) · 빈 곳 → 0 · 획 증가 0',
+    note: '탭 → 1 · 다른 면 탭 → 2 · 같은 면 재탭 → 2 · 긴 누름 = Injector(고름 불변 · «실었을 때만» 몸짓 소진 [H5]) · 빈 곳 → 0 · 빈 곳 긴 누름 → 탭으로 산다(풀림) · 획 증가 0',
     sel: [sel1, sel2, sel2b, selHold, sel0], stroke_delta: s1 - s0,
     injected: { i: pick.i, hex: pick.hex, w_px: +pick.w.toFixed(1) },
+    hold_no_target: { before: selRe, after_slow_empty_press: selSlowEmpty, hold_ms: holdMs },
   }
   expect(sel1, '탭 하나 → 면 하나').toBe(1)
   expect(sel2, '다른 면 탭 → 더해짐').toBe(2)
@@ -200,6 +214,8 @@ test('② 손가락 탭 — 하나 → 더해짐(다른 면) → 빈 곳 풀림 
   expect(pick.i, 'Injector — 슬롯이 실렸다(marker)').toBe('marker')
   expect(pick.hex, 'Injector — 색이 실렸다').toBe('#1e66c0')
   expect(sel0, '빈 곳 탭 → 풀림').toBe(0)
+  expect(selRe, '되고름(전제)').toBe(1)
+  expect(selSlowEmpty, '[H5] 긴 누름이 못 실으면 탭이 산다 — 느린 빈 곳 누름도 «풀기»다(몸짓이 조용히 안 죽는다)').toBe(0)
   expect(s1 - s0, '손가락은 획을 안 만든다').toBe(0)
 })
 
@@ -213,22 +229,29 @@ test('③ 탭 ↔ 궤도의 문턱 — 경계 양쪽(#93 · 아래 = 탭·화면
   await finger(page, [[525, 430], [525 + u, 430 + u]])
   const selU = await faceSelN(page)
   const v1 = await viewOf(page); const q1 = await poseQ(page)
+  // 경계 «바로 위»(FT+1 대역 — paint64 ⑥의 그 세 점 규약 · 리뷰어 [M6]): 탭이 아니다 · 이동
+  // 자체는 기준점만 서고 끝나므로(둘째 점에서 뗌) 화면 변화 0 — «탭 아님»이 판정이다.
+  const dq = (a: any, b: any) => Math.min(Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w), Math.hypot(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w))
+  const jx = Math.ceil((FT + 1) / Math.SQRT2)
+  await finger(page, [[525, 430], [525 + jx, 430 + jx - 1]])
+  const selJ = await faceSelN(page)
   // 경계 위(FT+6) — 궤도/이동: 화면이 변하고 고름은 안 변한다
   const o = Math.ceil((FT + 6) / Math.SQRT2)
   await finger(page, [[525, 430], [525 + Math.floor(o / 2), 430 + Math.floor(o / 2)], [525 + o, 430 + o], [525 + o + 40, 430 + o + 20]])
   const selO = await faceSelN(page)
   const v2 = await viewOf(page); const q2 = await poseQ(page)
-  const dq = (a: any, b: any) => Math.min(Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w), Math.hypot(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w))
   const moved = Math.abs(v2.ox - v1.ox) + Math.abs(v2.oy - v1.oy) + Math.abs(v2.s - v1.s) * 100 + dq(q1, q2) * 100
   OUT.g3_threshold = {
-    note: '경계 양쪽(#93) — 아래(FT−2): 탭·화면 불변 · 위(FT+6): 궤도(화면 변화 값)·고름 불변',
+    note: '경계 세 점(#93 · [M6]) — 아래(FT−2): 탭·화면 불변 · 바로 위(FT+1): 탭 아님 · 위(FT+6)+끌기: 궤도(화면 변화 값)·고름 불변',
     under: { diag_px: +(u * Math.SQRT2).toFixed(1), sel: selU, view_moved: +(Math.abs(v1.ox - v0.ox) + Math.abs(v1.oy - v0.oy)).toFixed(3), pose_moved: +dq(q0, q1).toFixed(6) },
-    over: { diag_px: +(o * Math.SQRT2).toFixed(1), sel_delta: selO - selU, moved: +moved.toFixed(4) },
+    just_over: { diag_px: +Math.hypot(jx, jx - 1).toFixed(1), sel_delta: selJ - selU },
+    over: { diag_px: +(o * Math.SQRT2).toFixed(1), sel_delta: selO - selJ, moved: +moved.toFixed(4) },
   }
   expect(selU, '문턱 아래 — 탭(고르기)').toBe(1)
   expect(+dq(q0, q1).toFixed(9), '문턱 아래 — 자세 불변').toBe(0)
   expect(Math.abs(v1.ox - v0.ox) + Math.abs(v1.oy - v0.oy), '문턱 아래 — 뷰 불변').toBe(0)
-  expect(selO - selU, '문턱 위 — 고름 불변(탭 아님)').toBe(0)
+  expect(selJ - selU, '문턱 바로 위 — 탭 아님(고름 불변)').toBe(0)
+  expect(selO - selJ, '문턱 위 — 고름 불변(탭 아님)').toBe(0)
   expect(moved, '문턱 위 — 화면이 실제로 움직였다(궤도/이동)').toBeGreaterThan(0.5)
 })
 
@@ -248,26 +271,70 @@ test('④ 이어그리기 — 면 둘을 손가락으로 고르고 펜 한 붓�
   const wallA = await probe(516, 412)
   const wallB = await probe(578, 412)
   expect(new Set([floor, wallA, wallB]).size, '세 영역이 세 면(#103)').toBe(3)
-  // 손가락 탭 둘 — 벽 두 판
+  // ── ㉠ 지시 문면 그대로(리뷰어 [M5]) — **면 셋**을 손가락 탭으로 고르고 한 붓으로 가로지른다:
+  //    «셋 다»에 남고, 넷째(이 장면의 넷째 면은 없다 — 밖은 허공·비고른 면 0으로 잰다)는 0.
+  await finger(page, [[468, 478]])
   await finger(page, [[525, 430]])
   await finger(page, [[575, 430]])
-  expect(await faceSelN(page), '면 둘 고름').toBe(2)
+  expect(await faceSelN(page), '면 셋 고름').toBe(3)
   const n0 = await strokeN(page)
-  // 펜 한 붓 — 바닥에서 출발해 두 벽판을 가로지른다(고른 집합 밖(바닥)은 잘린다)
-  await pen(page, [[455, 470], [500, 452], [520, 447], [548, 440], [566, 434], [585, 430]])
-  const byFace = await page.evaluate((s0) => {
-    const ss = (window as any).__b2.app.doc.strokes
-    const out: Record<number, number> = {}
-    for (const s of ss.slice(s0)) if (s.paint) out[s.paint.f] = (out[s.paint.f] ?? 0) + 1
+  await pen(page, [[440, 472], [470, 466], [500, 452], [520, 447], [548, 440], [566, 434], [585, 430]])
+  const byFace3 = await page.evaluate(([s0, f, a, b]) => {
+    const ss = (window as any).__b2.app.doc.strokes.slice(s0)
+    const out: Record<string, number> = { [`f${f}`]: 0, [`f${a}`]: 0, [`f${b}`]: 0, other: 0 }
+    for (const s of ss) if (s.paint) {
+      const k = `f${s.paint.f}`
+      if (k in out) out[k] = (out[k] ?? 0) + 1; else out.other = (out.other ?? 0) + 1
+    }
     return out
-  }, n0)
+  }, [n0, floor, wallA, wallB] as const)
+  expect(byFace3[`f${floor}`]!, '㉠ 바닥에 남았다').toBeGreaterThan(0)
+  expect(byFace3[`f${wallA}`]!, '㉠ 벽 왼판에 남았다').toBeGreaterThan(0)
+  expect(byFace3[`f${wallB}`]!, '㉠ 벽 오른판에 남았다').toBeGreaterThan(0)
+  expect(byFace3.other, '㉠ 고른 셋 밖의 조각 0').toBe(0)
+  // ── ㉡ «집합 밖 0»의 명시 판 — 벽 두 판만 고르고 같은 붓: 바닥 조각이 **0으로 측정**된다.
+  await finger(page, [[950, 250]])                                   // 풀기
+  await finger(page, [[525, 430]])
+  await finger(page, [[575, 430]])
+  const n1 = await strokeN(page)
+  await pen(page, [[455, 470], [500, 452], [520, 447], [548, 440], [566, 434], [585, 430]])
+  const byFace2 = await page.evaluate(([s0, f, a, b]) => {
+    const ss = (window as any).__b2.app.doc.strokes.slice(s0)
+    const out: Record<string, number> = { [`f${f}`]: 0, [`f${a}`]: 0, [`f${b}`]: 0 }
+    for (const s of ss) if (s.paint) out[`f${s.paint.f}`] = (out[`f${s.paint.f}`] ?? 0) + 1
+    return out
+  }, [n1, floor, wallA, wallB] as const)
+  // ── [M8] 이음매 — 두 벽판을 잇는 자국이 샛기둥(x≈550)에서 끊기는 폭(잉크 없는 열 · css px).
+  //    «획을 면별로 쪼개지 않는다»(지시 ⛔)의 화면 대가를 값으로 — 판정은 사람(DEFERRED 행).
+  const seam = await page.evaluate(() => {
+    const src = document.getElementById('gl') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const x0 = Math.round(534 * dpr), x1 = Math.round(566 * dpr)
+    const y0 = Math.round(432 * dpr), y1 = Math.round(452 * dpr)
+    const t = document.createElement('canvas')
+    t.width = x1 - x0; t.height = y1 - y0
+    const g = t.getContext('2d')!
+    g.drawImage(src, x0, y0, t.width, t.height, 0, 0, t.width, t.height)
+    const d = g.getImageData(0, 0, t.width, t.height).data
+    let run = 0, maxRun = 0
+    for (let x = 0; x < t.width; x++) {
+      let ink = 0
+      for (let y = 0; y < t.height; y++) {
+        const i = (y * t.width + x) * 4
+        if (d[i + 3]! > 0 && d[i]! + d[i + 1]! + d[i + 2]! < 620) ink++
+      }
+      if (ink === 0) { run++; if (run > maxRun) maxRun = run } else run = 0
+    }
+    return { gap_device_px: maxRun, gap_css_px: +(maxRun / dpr).toFixed(1) }
+  })
   OUT.g4_across = {
-    note: '고른 두 벽판에만 조각이 남는다 — 바닥(집합 밖)은 0 · 54-2의 그 기제(paint54 ④와 같은 자)',
-    ids: { floor, wallA, wallB }, by_face: byFace,
+    note: '㉠ 면 «셋» 고름 + 한 붓 → 셋 다에 남고 밖 0(지시 ④ 문면 그대로 — [M5]) · ㉡ 두 판만 고른 판 — 바닥 0이 «측정»된다(키 명시) · 54-2의 그 기제(paint54 ④와 같은 자)',
+    ids: { floor, wallA, wallB }, three_selected: byFace3, two_selected: byFace2,
+    seam_gap: { ...seam, def: '[M8] 이음매(샛기둥 x≈550 · 붓 12px)에서 자국이 끊기는 «잉크 없는 열»의 최대 연속 폭 — 획을 면별로 쪼개지 않는 설계의 화면 대가(각 면의 uv 조각이 경계에서 잘린다). 판정은 사람 — DEFERRED web2-67 행' },
   }
-  expect(byFace[wallA] ?? 0, '벽 왼판에 남았다').toBeGreaterThan(0)
-  expect(byFace[wallB] ?? 0, '벽 오른판에 남았다').toBeGreaterThan(0)
-  expect(byFace[floor] ?? 0, '바닥(고른 집합 밖)은 0').toBe(0)
+  expect(byFace2[`f${wallA}`]!, '㉡ 벽 왼판에 남았다').toBeGreaterThan(0)
+  expect(byFace2[`f${wallB}`]!, '㉡ 벽 오른판에 남았다').toBeGreaterThan(0)
+  expect(byFace2[`f${floor}`]!, '㉡ 바닥(고른 집합 밖)은 0 — 키를 두고 셌다(없음이 아니라 0)').toBe(0)
 })
 
 test('⑤ 작도 중 무변 — 연필 도구에서 손가락 탭은 아무 일도 안 한다', async ({ page }) => {

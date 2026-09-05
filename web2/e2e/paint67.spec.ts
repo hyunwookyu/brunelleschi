@@ -31,6 +31,7 @@ const OUT: Record<string, unknown> = {
   selfcheck_notes: {
     zero_counters: '⑦ 재현 판의 rebake 0은 «낡음이 남는다»의 통과값이고(카운터 죽음 아님 — 같은 자로 수리 판이 ≥1을 낸다), ①의 toast 0도 그 짝(표식 on/off 전이)이 양수 전이를 낸다',
     identical_pairs: '⑥-④·⑤의 해시 «같음»은 픽셀 항등 게이트의 뜻 그 자체다(65 ①의 규약) — 반증(order/append break 계열)이 다른 값을 내는 것을 같은 원장이 든다',
+    single_category: 'g02.falsify_lock_off(115.02 하나)는 반증 «한 번»의 값이다 — 분포가 아니라 «옛 거동이 실제로 돌아온다»의 존재 증명(같은 드래그의 잠금 판 0.83과 두 자릿수 차이가 판별력이다) — 리뷰어 [L2]',
   },
 }
 const LEDGER_OF = (projectName: string) =>
@@ -182,6 +183,10 @@ test('① 0-1 상한 2048 — 토스트 0 · 표식은 걸린 동안만 · 메�
   const toastCount = notices.filter(t => t.includes('상한')).length
   const dotStill = await page.evaluate(() => !(document.getElementById('paint-clamp-dot') as HTMLElement).hidden)
   const mem = await bakeStat(page)
+  // [H1] 엔진 «층» 몫도 값으로 — 2048 층 하나가 80MB라 수용이 6장(96/16) → 2.4장(192/80)으로
+  // 준다(층이 죽으면 커밋은 전량 재굽기 폴백(픽셀 무변 · hasLayer 문) · 초안 미리보기는 빈 층
+  // 위(62 DEFERRED의 결손)가 더 일찍 온다 — DEFERRED 67 행 · 실기기 몫).
+  const layers = await page.evaluate(() => (window as any).__b2.diag.layerStatsForTest())
   // 줌 아웃 — 안 걸리면 표식이 꺼진다
   for (let k = 0; k < zooms + 4; k++) { await page.mouse.wheel(0, 400); await page.waitForTimeout(40) }
   await page.waitForTimeout(200)
@@ -189,9 +194,10 @@ test('① 0-1 상한 2048 — 토스트 0 · 표식은 걸린 동안만 · 메�
   const stillClamped = tOut.some(e => e.visible && e.clamped)
   const dotOff = await page.evaluate(() => (document.getElementById('paint-clamp-dot') as HTMLElement).hidden)
   OUT.g01_cap = {
-    def: '상한 1024→2048(값 lvMax) · 걸린 채 획 20에 «상한» 토스트 0(옛 판: 한 붓 1회) · 표식 on(걸림)→off(안 걸림) 전이 · 메모리: entries·bytes·budget(256MB 재측정 — constants 주석이 유도)',
+    def: '상한 1024→2048(값 lvMax) · 걸린 채 획 20에 «상한» 토스트 0(옛 판: 한 붓 1회 — 측정) · 표식 on(걸림)→off(안 걸림) 전이(⚠ 구성 몫: 표식과 판정자가 같은 술어(paintClampedVisible) 하나다 — 측정 몫은 «전이가 실제로 두 방향 다 일어났다»와 gate.clamped의 독립 근거(screenPx > 2048)다) · 메모리: 텍스처 캐시(entries·bytes·budget — 256MB는 «여덟 쪽» 타협: 옛 판 열여섯 쪽의 반 [H2]) + 엔진 층(layers — 2048 층 80MB · 수용 6→2.4장 [H1] · DEFERRED)',
     level_max: lvMax, zooms, toast_count: toastCount, dot: { on_while_clamped: dotOn, still_on_after_20: dotStill, title: dotTitle, off_after_zoom_out: dotOff, clamped_after_zoom_out: stillClamped },
     memory: { entries: mem.entries, bytes: mem.bytes, budget: mem.budget, evicts: mem.evicts, bytes_mb: +(mem.bytes / 1048576).toFixed(1) },
+    engine_layers: { ...layers, note: '층 하나 = w·h·20B(float RGBA + 덮임) — 2048에서 80MB: 예산 192MB는 최대 층 둘. 죽은 층의 커밋은 전량 폴백(픽셀 무변) · 초안 미리보기 결손(62 DEFERRED)이 더 일찍 온다 — 실기기 몫' },
   }
   expect(toastCount, '토스트 0회(«상한» 문구가 알림 줄에 한 번도 없다)').toBe(0)
   expect(dotOn, '표식 — 걸린 동안 켜진다').toBe(true)
@@ -314,7 +320,7 @@ test('③④ 0-3 연속 스펙트럼(반증 = 옛 점군 판) · 0-4 패널 안 
     size: { S: geo.S, ring_px: geo.ringPx, sv_side_px: Math.round(geo.sv.w), prev_S: 136 },
   }
   OUT.g04_place = {
-    def: '0-4 — 휠이 패널 «안»(rect 포함) · 패널 폭이 열기 전후 같다(가리는 폭 불변) · 툴팁 없음 · 캔버스가 실제로 닿는다',
+    def: '0-4 — 휠이 패널 «안»(rect 포함 · 구성 몫: DOM 배치가 그렇게 지어졌다 — 측정 몫은 실제 rect 포함·폭 전후 동일·elementFromPoint 닿음이다 [M4]) · 패널 폭이 열기 전후 같다(가리는 폭 불변) · 툴팁 없음 · 캔버스가 실제로 닿는다',
     panel_w: { before: panelBefore.width, after: panelAfter.width },
     wheel_inside: wheelBox.x >= panelAfter.x - 1 && wheelBox.x + wheelBox.width <= panelAfter.x + panelAfter.width + 1,
     covered_w_px: panelAfter.width, tooltip: tip, element_hit: hit,
@@ -494,6 +500,13 @@ test('⑥ 0-6 지우개 — 알파 감소·다른 면 무변 · 순서 · undo �
   const erInFile = (saved.match(/"er":1/g) ?? []).length
   const erInDoc = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint?.er === 1).length)
   expect(erInFile, '⑤ 지우개 표식이 저장물에 있다(획 수와 일치)').toBe(erInDoc)
+  // 왕복 «읽기» 몫도 이 원장 안에서(리뷰어 [M4] — roundtrip43의 빨강 실측(missing ['Stroke.er'])은
+  // 단위 판이라 stage0 밖이었다): 지금 저장물을 파일과 같은 파서(readBrnl)로 되읽어 er 수가 같다.
+  const erBack = await page.evaluate((txt) => {
+    const r = (window as any).__b2.diag.readBrnlForTest(txt)
+    return r.data ? r.data.doc.strokes.filter((s: any) => s.paint?.er === 1).length : -1
+  }, saved)
+  expect(erBack, '⑤ 되읽기 — er가 파서를 왕복한다(수 일치)').toBe(erInDoc)
   // ⑥ 뒷꼭지(buttons 32) — 그 한 붓이 지우개다 · 다음 붓(버튼 없음)은 칠이다
   await page.evaluate(() => { (window as any).__b2.app.paintErase = false })
   await pickPaint(page, 'pencil', 18, '#5a3020')
@@ -515,7 +528,8 @@ test('⑥ 0-6 지우개 — 알파 감소·다른 면 무변 · 순서 · undo �
     region: { before: r0.ink, erased: r1.ink, control_same: rCtl1.hash === rCtl.hash, undo_back: rUndo.hash === r0.hash, redo_again: rRedo.hash === r1.hash },
     order: { pep: hPEP.hash, ppe: hPPE.hash, differs: hPEP.hash !== hPPE.hash, same_order_same: hPPE2.hash === hPPE.hash },
     identity_with_eraser: { tex_equal: JSON.stringify(accTex) === JSON.stringify(refTex), screen_equal: accScr.hash === refScr.hash, cases: '슬롯 넷 × (딱딱한·부드러운 지우개 번갈아)' },
-    save: { er_in_file: erInFile, er_in_doc: erInDoc },
+    save: { er_in_file: erInFile, er_in_doc: erInDoc, er_readback: erBack,
+      red_check: 'KEY_ORDER 등재의 빨강 실측은 단위 roundtrip43 게이트 ②(등재 «전» missing [Stroke.er] — 2026-09-05 npm test 1101/1102 빨강 1)다: 단위는 stage0에 안 쓰므로 그 실측의 원장 몫을 이 줄이 든다([M4]) — 이 팔의 er_readback이 같은 왕복을 e2e에서 다시 잰다' },
     tail_eraser: { er: tail.er, tip_erase_after: tail.tipErase, next_stroke_er: normal.er },
     stroke_sample: erasedStroke,
   }
@@ -591,7 +605,7 @@ test('⑦ §2 낡은 그림 — 재현(반증 스위치 = 옛 열쇠): 단계 �
   //   안에서 갈릴 수 있다 — 계단의 뜻 그 자체다. 그래서 «정본과 동일»은 수리 ①②(같은 tq에서
   //   구운 판)의 자이고, 여기는 «계단이 밟혔고 폭주가 아니다»가 자다. 두 해시는 값으로 남긴다.
   OUT.g07_rep_stale = {
-    def: '§2 — D-2 재현: 옛 열쇠(스위치 켬)에서 단계 안 줌(0.72옥타브 · lv 불변) 뒤 재굽기 0 · 상관없는 편집도 0(지속 — 65-post) · 낡은 그림(정본 굽기와 해시 다름 — 무늬 선 굵기의 낡음). 수리: texel 반옥타브 계단(REP67_TEXEL_STEPS_PER_OCT=2)이 열쇠에 들어 ① 되켠 즉시 굽는다 ② 그림이 정본과 동일 · 가만히 두면 0(매 프레임 ⛔) ③ 대역 안 0.72옥타브 줌이 계단을 1~2번 밟고 그 뒤도 정본과 동일',
+    def: '§2 — D-2 재현: 옛 열쇠(스위치 켬)에서 단계 안 줌(0.72옥타브 · lv 불변) 뒤 재굽기 0 · 상관없는 편집도 0(지속 — 65-post) · 낡은 그림(정본 굽기와 해시 다름 — 무늬 선 굵기의 낡음). 수리: texel 반옥타브 계단(REP67_TEXEL_STEPS_PER_OCT=2)이 열쇠에 들어 ① 되켠 즉시 굽는다 ② 그림이 정본과 동일 · 가만히 두면 0(매 프레임 ⛔) ③ 대역 안 0.72옥타브 줌이 계단을 1~2번 밟는다(자 = «계단 횟수» — 계단 판과 «지금 순간» 전량 굽기는 ±¼옥타브 안에서 갈릴 수 있어 hash_equals_rebake는 기록값이다 · 리뷰어 [M9])',
     level: { start: lvStart, band_bottom: lv0, after_zoom: lv1, after_zoom_out: lv2 },
     old_key: { bakes_after_zoom: stZoom.bakes, bakes_after_unrelated_edit: stEdit.bakes, stale_differs_from_fresh: staleDiffers, stale_hash: staleTex.map(t => t.hash), fresh_hash: freshTex.map(t => t.hash) },
     fixed: { bakes_on_reenable: stFix.bakes, hash_equals_fresh: JSON.stringify(fixedTex.map(t => t.hash)) === JSON.stringify(freshTex.map(t => t.hash)), idle_bakes: stIdle.bakes,

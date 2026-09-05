@@ -91,8 +91,10 @@ export interface InputCallbacks {
   /** **손가락 탭**(web2-67 §1 — 칠 도구에서만): 면을 고른다(또 탭 = 더해짐 · 빈 곳 = 풀림 — 54-2). */
   onPaintFingerTap: (p: Pt) => void
   /** **손가락 긴 누름**(web2-67 67-1): 51의 Injector — 짚은 칠 획의 속성을 지금 도구에 싣는다.
-   *  (44의 잡기·39의 손글씨 꾹 누름은 «펜»이라 이 자리가 비어 있었다 — 착수 전 확인 ②.) */
-  onPaintFingerHold: (p: Pt) => void
+   *  (44의 잡기·39의 손글씨 꾹 누름은 «펜»이라 이 자리가 비어 있었다 — 착수 전 확인 ②.)
+   *  반환 = **실제로 실었는가**. 못 실었으면(짚은 칠 획 없음) 몸짓을 안 삼킨다 — 느린
+   *  손끝의 탭이 450ms를 넘겨도 뗄 때 «고르기»로 산다(#93의 노출을 좁힌다 — 리뷰어 [H5]). */
+  onPaintFingerHold: (p: Pt) => boolean
 }
 
 export function initInput(
@@ -648,9 +650,11 @@ export function initInput(
         const p = toPt(e)
         fingerTap = {
           id: e.pointerId, sp: toScreen(e), p, held: false,
-          // 긴 누름 = Injector(67-1) — 시계는 39·44의 그 값(WRITE_HOLD_MS 계열 · 새 숫자 ⛔)
+          // 긴 누름 = Injector(67-1) — 시계는 39·44의 그 값(WRITE_HOLD_MS 계열 · 새 숫자 ⛔).
+          // ⚠ «실었을 때만» 몸짓을 삼킨다(리뷰어 [H5] · #93): 짚은 칠 획이 없으면 held가 안
+          // 서고, 느리게 머문 탭도 뗄 때 고르기로 산다 — 시간 진입이 뜻을 «조용히» 못 바꾼다.
           holdT: window.setTimeout(() => {
-            if (fingerTap && touches.size === 1) { fingerTap.held = true; cb.onPaintFingerHold(fingerTap.p) }
+            if (fingerTap && touches.size === 1) fingerTap.held = cb.onPaintFingerHold(fingerTap.p)
           }, app.writeHoldMs),
         }
       }

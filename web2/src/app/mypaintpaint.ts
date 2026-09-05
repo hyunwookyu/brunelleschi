@@ -45,7 +45,10 @@ export const SPEED_PX_S = 300
  *  ⚠ web2-67 0-1 재측정: 텍스처 상한이 1024 → 2048이 되면서 층 하나가 최대
  *  2048²×20B(float RGBA 16 + 덮임 4) = **80 MB**가 됐다. 96 MB면 최대 층 «하나»만 살아
  *  두 큰 면을 오가며 칠할 때마다 층이 죽어 전량 재굽기가 반복된다 — 최대 층 «둘» + 중간
- *  크기 여유로 **192 MB**. 실측은 paint67 원장 0-1 팔(layerStatsForTest). */
+ *  크기 여유로 **192 MB**. ⚠ 리뷰어 [H1]: 이것도 타협이다 — 옛 판(96/16MB)은 최대 층
+ *  «여섯», 새 판은 «둘»이라 수용이 준다. 셋째 큰 면부터 층이 축출돼 그 면의 커밋은 전량
+ *  재굽기(픽셀 무변 — hasLayer 폴백), **초안 미리보기는 빈 층 위**(62 DEFERRED의 그 결손 —
+ *  굽힌 안료와의 혼합·스머지가 미리보기에서 빠진다)가 «더 일찍» 온다. DEFERRED 67 행 · 실기기 몫. */
 const LAYER_BUDGET = 192 * 1024 * 1024
 
 export const PRESET_BY_NAME: ReadonlyMap<string, Preset> = new Map(PRESETS.map(p => [p.name, p]))

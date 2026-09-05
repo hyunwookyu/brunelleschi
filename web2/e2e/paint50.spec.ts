@@ -690,7 +690,7 @@ test('⚑ 성능 — 스무 면 · 칠 40획: 프레임(#82 — 차)과 텍스�
     before_ms: before, before2_ms: before2, noise_floor_ms: noise, after_ms: after,
     delta_median_ms: +(after.median - before2.median).toFixed(2),
     delta_p90_ms: +(after.p90 - before2.p90).toFixed(2),
-    note_cap: '상한 1024의 근거 — 장당 최악 1024²×4=4.19MB(2048이면 16.7MB — 4배)이고 이 장면의 실제 합은 bytes_total이다(긴 변만 단계라 장당 그보다 작다). «상한을 올리면 커진다»는 **clamped가 참인 장에만** 걸리는 산술이다(2차 [8]) — 이 장면은 clamped 합이 그 판정이다(0이면 상한 증설에 불변 · dpr2의 단일 1024도 포화가 아니라 올림 양자화일 수 있다 — screen_px_prequant가 가른다). 상한을 실제로 누르는 것은 큰 면·줌 인 장면이고 실기기 관측 판정자다(DEFERRED)',
+    note_cap: '⚠ web2-67 0-1이 상한을 1024 → **2048**로 올렸다(사람 판정 「걸리면 자꾸 멈춘다」 — cap 값이 그 실측이다). 장당 최악이 4.19 → **16.7MB**가 됐고 그 대가는 65의 예산·LRU(128→256MB — paint67 0-1)가 진다. 이 장면의 실제 합은 bytes_total(긴 변만 단계라 장당 그보다 작다). «상한을 올리면 커진다»는 **clamped가 참인 장에만** 걸리는 산술이다(2차 [8]) — 이 장면은 clamped 합이 그 판정이다(0이면 상한 증설에 불변 · 올림 양자화 여부는 screen_px_prequant가 가른다). 상한을 실제로 누르는 큰 면·줌 인의 실측은 paint67 ①(level_max 2048)이다',
     note_89: '목표 «스무 면»에 못 미치면 faces 값이 그 사실이다 — 상한을 조용히 줄이지 않는다(rep49 note_89 그대로 · 같은 픽스처가 세운 면이 17이다)',
     note_levels: '기본 줌의 levels가 전부 같은 값인 것은 이 장면의 셀들이 비슷한 화면 크기라서다 — «작으면 낮게»의 실측은 levels_zoomed_out(줌 아웃에서 단계 하강)이 든다',
     note_82: '중앙값이 vsync 바닥(16.7ms)에 붙은 실행에서는 차의 해상도가 눈금뿐이다(rep49 frame20의 그 유보 그대로). ⚠ dpr2의 delta_median_ms가 잡음 바닥 밖인 것은 헤드리스 소프트웨어 GL의 채움 비용 의심 — DEFERRED web2-50 행 · 실기기 관측 판정자. ⚠⚠ 이 실행의 noise_floor_ms가 정확히 0이면(반복 2회 점추정 — #14) 「바닥 밖」 판정은 그 위에 못 선다 — 바닥 0은 판정 불능으로 읽는다(52 1차 [17])',

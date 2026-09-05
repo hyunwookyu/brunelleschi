@@ -1,6 +1,6 @@
 // web2-67 ⛳ 사진 — 사람 눈의 판정대(CLOSING).
-//   67-gestures.png  §1 — 한 장면에 셋: 손가락 탭으로 고른 벽 두 판(강조) · 펜 «점» 넷(슬롯별) ·
-//                    고른 두 판을 가로지른 펜 한 붓(이어그리기 — 바닥은 비었다).
+//   67-gestures.png  §1 — 한 장면에 셋: 손가락 탭으로 고른 «면 셋»(바닥+벽 두 판 · 강조) ·
+//                    펜 «점» 넷(슬롯별) · 셋을 가로지른 펜 한 붓(이어그리기 — 지시 문면 그대로).
 //   67-eraser.png    0-6 — 칠한 면(마커로 채운 판)에 지우개로 글자 「ㄱ」 하나.
 //
 // ⚠ #104: PNG는 stage0/out/shots67/(vite 감시 밖)에 쓰고 실행 뒤 web2/shots/로 옮긴다(tools/shots67-copy.mjs).
@@ -90,15 +90,16 @@ test('67-gestures.png — 손가락 탭 고름 · 펜 점 넷 · 고른 두 판�
     }, slots[k]!)
     await pen(page, [[510 + k * 12, 398]])
   }
-  // 손가락 탭 둘 — 벽 두 판 고름(강조가 화면에 남는다)
+  // 손가락 탭 «셋» — 바닥 + 벽 두 판 고름(지시 사진 문면 「이어 칠한 셋 면」 — 리뷰어 [M5])
+  await fingerTap(page, 468, 478)
   await fingerTap(page, 525, 430)
   await fingerTap(page, 575, 430)
-  // 펜 한 붓 — 바닥에서 출발해 두 벽판을 가로지른다(고른 집합 밖 바닥은 빈다)
+  // 펜 한 붓 — 셋을 가로지른다(바닥 → 벽 왼판 → 벽 오른판)
   await page.evaluate(() => {
     const b2 = (window as any).__b2
     b2.diag.setPaintInstrForTest('marker'); Object.assign(b2.app.paintSel, { hex: '#7a3030', w: 12 })
   })
-  await pen(page, [[455, 470], [500, 452], [520, 447], [548, 440], [566, 434], [585, 430]])
+  await pen(page, [[440, 472], [470, 466], [500, 452], [520, 447], [548, 440], [566, 434], [585, 430]])
   // 장면이 작다 — 판정대는 크게(줌 인 · 사진만의 일: 문서·판정 무변)
   await page.mouse.move(540, 440)
   for (let k = 0; k < 7; k++) { await page.mouse.wheel(0, -160); await page.waitForTimeout(80) }

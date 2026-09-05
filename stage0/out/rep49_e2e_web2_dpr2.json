@@ -130,7 +130,7 @@
     "back_fam_bits": [
       3
     ],
-    "back_ink": 23651864,
+    "back_ink": 23543499,
     "note_names": "2차 [11] — famBits 값에 children 이름을 담던 것을 개명(0은 «계열 전부 접힘»의 측정값이지 카운터 미작동이 아니다 — selfcheck 0 플래그의 정체)"
   },
   "frame20": {
@@ -139,20 +139,20 @@
     "rep_tex_entries": 17,
     "texel_total": 3769344,
     "before_ms": {
-      "median": 30.600000381469727,
-      "p90": 33
+      "median": 28.599999994039536,
+      "p90": 33.599999994039536
     },
     "before2_ms": {
-      "median": 31,
-      "p90": 35.30000019073486
+      "median": 28.299999982118607,
+      "p90": 33.5
     },
-    "noise_floor_ms": 0.4,
+    "noise_floor_ms": 0.3,
     "after_ms": {
-      "median": 51.09999990463257,
-      "p90": 56.5
+      "median": 48.599999994039536,
+      "p90": 53.39999997615814
     },
-    "delta_median_ms": 20.1,
-    "delta_p90_ms": 21.2,
+    "delta_median_ms": 20.3,
+    "delta_p90_ms": 19.9,
     "gate": {
       "registered": "C.REP_FRAME_BUDGET_MS",
       "value": 8,

@@ -538,7 +538,8 @@ inputApi = initInput(ink, app, {
     syncPainttray()
     invalidate()
   },
-  // ── 손가락 긴 누름(web2-67 67-1) — 51의 Injector가 옮겨 온 자리(옛 자리는 6px 탭이었다) ──
+  // ── 손가락 긴 누름(web2-67 67-1) — 51의 Injector가 옮겨 온 자리(옛 자리는 6px 탭이었다).
+  //    반환 = 실었는가([H5] · #93 — 못 실었으면 input이 몸짓을 안 삼켜 뗌이 고르기로 산다) ──
   onPaintFingerHold(p) {
     const inj = injectPaintAt(app, p)
     if (inj) {
@@ -547,6 +548,7 @@ inputApi = initInput(ink, app, {
       status(`짚은 획의 속성을 실었다 — ${SLOT_NAME[inj.i]} ${brushShort(app.paintSel.br)} ${inj.hex} ${inj.w.toFixed(1)}px`)
       invalidate()
     }
+    return inj !== null
   },
   onPaint(pts, press) {
     const r = commitPaint(app, pts, press)
