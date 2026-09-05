@@ -160,21 +160,21 @@
     "note": "슬롯 사양 한 벌의 왕복(A: #2244aa·33px·0.6 ↔ B: #aa3311·12px·0.35 — 전수)과 재시작 생존. 문서 형식 무변은 roundtrip43 ②의 몫",
     "a": {
       "i": "pencil",
-      "br": "classic/pencil",
+      "br": "brunelleschi/pencil_HB",
       "hex": "#2244aa",
       "w": 33,
       "o": 0.6
     },
     "b": {
-      "i": "brush",
-      "br": "deevad/liner",
+      "i": "pencil",
+      "br": "brunelleschi/pencil_4B",
       "hex": "#aa3311",
       "w": 12,
       "o": 0.35
     },
     "a2": {
       "i": "pencil",
-      "br": "classic/pencil",
+      "br": "brunelleschi/pencil_HB",
       "hex": "#2244aa",
       "w": 33,
       "o": 0.6

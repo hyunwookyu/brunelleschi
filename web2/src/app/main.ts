@@ -30,6 +30,7 @@ import { type Instr, materialOf, type MatId } from '../core/palette'   // (MATER
 // 색상 휠(web2-48 48-7) — 기하·색 변환은 순수 모듈이 든다(이 파일은 DOM만).
 import { hsvOf, hexOfHsv, svRect, svPoint, huePoint, hueAt, svAt, partAt, markerInk, type Hsv, type WheelGeom, type WheelPart } from '../core/colorwheel'
 import { brushLabel, brushOrigin } from '../core/brushnames'
+import { PENCIL_PRESET_OF_GRADE, CHARCOAL_PRESET_OF_GRADE, gradeOfPreset, shiftGrade } from '../core/grades68'
 import type { Grade, Layer, Sheet, Stroke, CamPose } from '../core/types'
 import { parseDim, formatMm, lenMm, formatScale, formatUnits, dimSkew, skewOff, UNITS, type Unit } from '../core/dim'
 import { measureMm, measureUnits } from '../core/measure'
@@ -2154,12 +2155,12 @@ function doGripAction(key: string) {
 // ⛳ 게이트 ②: 칠의 어떤 설정(브러시·크기·불투명·색)에도 «두 번 펼쳐서» 닿지 않는다 — paint64 ②가 elementFromPoint로 센다(#87).
 //
 // 구조(위에서 아래): [지금 브러시 견본 + 이름 · 누르면 «브러시» 목록] / 크기 슬라이더 + 값 / 불투명 슬라이더 + 값 /
-//   [색 원 · 누르면 색상 휠] + 최근 색 여섯 / [즐겨찾기 여섯 — 옛 «도구 넷»의 자리 · 브러시 바로가기] / 정면(54-3 그대로).
+//   [색 원 · 누르면 색상 휠] + 최근 색 여섯 / [필통 여덟(68) — 도구 칸 일곱 + 지우개 칸 · 옛 여섯 칸(64~67)의 자리] / 정면(54-3 그대로).
 // 자리: placeFlyout(붓 단추 곁 — 46부터의 자리 · R2 리본 길이 불변). ⚠ 통 등록부(registerBox)에는 **안 든다** — 잠깐 얹히는 통이
 // 아니라 «도구의 화면»이다(R7의 바깥 누름으로 안 접힌다 · 도구를 놓아야 사라진다). 브러시 목록·색상 휠은 통이다(등록 · 한 단계).
 // #97: 견본 캔버스는 position:static 명시 · 줄은 flex-shrink:0(index.html #painttray > *).
 const painttrayEl = document.getElementById('painttray')!
-/** 슬롯(성질의 족)의 그림·이름 — 즐겨찾기 칸이 쓴다(옛 도구 넷의 그 그림 · docs/instrument-icons.md) */
+/** 슬롯(성질의 족)의 그림·이름 — (옛 도구 넷의 그 그림 · docs/instrument-icons.md · 68: 필통 칸은 CASE_SVG를 쓴다 — SLOT_NAME만 산다) */
 const SLOT_SVG: Record<Instr, string> = {
   brush: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3 V14"/><path d="M12.5 14 h7 v4 h-7 z"/><path d="M12.5 18 C12.5 23 11.5 25.5 10.5 27.5 C13.5 26.6 18.5 26.6 21.5 27.5 C20.5 25.5 19.5 23 19.5 18 Z"/></svg>',
   marker: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="4" width="8" height="15" rx="1"/><path d="M13.5 19 L13 24 L17 28 L18.5 19"/></svg>',
@@ -2274,39 +2275,77 @@ function setPaintHex(hex: string, why: string) {
   status(`${hex} — ${SLOT_NAME[app.paintSel.i]}${why}`)
 }
 
-// ── 즐겨찾기 여섯(64 — 옛 «도구 넷»의 자리 · 슬롯의 새 이름) · 기기 저장 ───────────────
-// 칸 = {슬롯 i, 브러시 br} + **칠 사양 한 벌 {색 hex, 크기 w, 불투명 o}**(web2-66 66-3 — 사람 판정
-// 「사양값을 모든 칠 도구들이 공유하는 문제 — 도구별로 따로 저장되어 있어야지」).
-// 탭 = 그 칸의 브러시 «와 사양»으로 · 길게 누름(WRITE_HOLD_MS) = 지금 것 전부를 그 칸에 놔둔다.
-// 그리고 **지금 브러시가 어느 칸과 같으면, 색·크기·불투명을 고칠 때마다 그 칸이 따라 기억한다**
-// (프로크리에이트가 브러시마다 크기를 기억하는 그것 — syncPaintPanel의 adopt 줄). 저장은 기기
-// (localStorage — 52 프리셋의 그 자리)이고 **문서 저장 형식은 안 바뀐다**(KEY_ORDER 무변 — 게이트).
-// 64-1로 획이 br을 저장하므로 칸의 브러시를 바꿔도 옛 획은 안 변한다(게이트 ①).
-const FAV_KEY = 'b2.brushFavs64.v1'                      // 같은 열쇠 — 새 밭(hex·w·o)은 선택이라 옛 저장이 그대로 읽힌다
-const FAV_N = 6
+// ── 필통(web2-68 §1 — 옛 여섯 칸(64~67)의 자리 · 도구 7 + 지우개 1) · 기기 저장 ───────────
+// 사람 판정(2026-09-05): 「필통 시스템으로 가야 한다.」 개념은 66-3의 그것 그대로다 — 칸 = {슬롯 i, 브러시 br}
+// + 칠 사양 한 벌 {색 hex, 크기 w, 불투명 o} · 탭 = 그 칸으로 · 긴 누름(WRITE_HOLD_MS) = 지금 것 전부를 그 칸에 ·
+// 지금 브러시가 어느 칸과 같으면 색·크기·불투명을 고칠 때마다 그 칸이 따라 기억(syncPaintPanel의 adopt 줄).
+// 바뀐 것: 이름(필통) · 그림(견본 획이 아니라 «도구 그림» — 촉에 그 칸의 색 · 연필·목탄은 경도 글자 · 아래 숫자 둘) ·
+// 수(6 → 7 + 지우개 고정 칸 1 = 8). 경도는 br에 실린다(core/grades68 — 경도 = 프리셋 이름 · 저장 형식 무변 · KEY_ORDER 무변).
+// 저장 판: 옛 열쇠(b2.brushFavs64.v1 · 여섯)는 **이주 원본으로만** 읽고(#109 — 새 판이 서면 다시 안 본다), 새 판은
+// b2.pencilcase68.v1(일곱 — 지우개 칸은 저장 밖 · 맨 끝 고정). 옛 여섯 → 새 판 앞 여섯 · 일곱째는 기본(잉크펜).
+const FAV_KEY_64 = 'b2.brushFavs64.v1'                   // 옛 판(64~67) — 읽기 전용 이주 원본
+const FAV_KEY = 'b2.pencilcase68.v1'                     // 새 판(68)
+const FAV_N = C.PAINT68_CASE_N
 type Fav = { i: Instr; br: string; hex?: string; w?: number; o?: number }
-/** 기본 여섯 — 슬롯 넷의 기본 브러시(DEFAULT_BRUSH — AS-C186) + 목탄(연필 족) + 수채(잉크펜 족 · 흰 판에서도 그려지는 것) */
+/** 기본 일곱(지시 §1 «기본 채움») — 연필 HB · 연필 4B · 목탄(중) · 색연필 · 마커 · 붓(수채) · 잉크펜(라이너). 지우개는 여덟째(고정). */
 const FAV_DEFAULT: Fav[] = [
-  { i: 'pencil', br: DEFAULT_BRUSH.pencil }, { i: 'brush', br: DEFAULT_BRUSH.brush }, { i: 'marker', br: DEFAULT_BRUSH.marker },
-  { i: 'cp', br: DEFAULT_BRUSH.cp }, { i: 'pencil', br: 'classic/charcoal' }, { i: 'brush', br: 'deevad/watercolor_expressive' },
+  { i: 'pencil', br: PENCIL_PRESET_OF_GRADE.HB }, { i: 'pencil', br: PENCIL_PRESET_OF_GRADE['4B'] }, { i: 'pencil', br: CHARCOAL_PRESET_OF_GRADE['중'] },
+  { i: 'cp', br: DEFAULT_BRUSH.cp }, { i: 'marker', br: DEFAULT_BRUSH.marker }, { i: 'brush', br: 'deevad/watercolor_expressive' }, { i: 'brush', br: DEFAULT_BRUSH.brush },
 ]
 const isInstr = (v: unknown): v is Instr => v === 'brush' || v === 'marker' || v === 'cp' || v === 'pencil'
+/** 저장물 → 칸 일곱(모양이 틀린 칸은 기본으로 — 조용히 죽지 않는다) */
+const parseFavs = (arr: unknown): Fav[] =>
+  FAV_DEFAULT.map((d, k) => {
+    const v = Array.isArray(arr) ? arr[k] as Partial<Fav> | undefined : undefined
+    if (!(v && isInstr(v.i) && typeof v.br === 'string' && v.br.includes('/'))) return { ...d }
+    const out: Fav = { i: v.i, br: v.br }
+    if (typeof v.hex === 'string' && /^#[0-9a-f]{6}$/i.test(v.hex)) out.hex = v.hex
+    if (typeof v.w === 'number' && Number.isFinite(v.w) && v.w > 0) out.w = v.w
+    if (typeof v.o === 'number' && Number.isFinite(v.o) && v.o > 0 && v.o <= 1) out.o = v.o
+    return out
+  })
+/** 이주 횟수(값으로 — 이주 시험이 읽는다) */
+let favMigrated = 0
 const readFavs = (): Fav[] => {
   try {
-    const arr = JSON.parse(localStorage.getItem(FAV_KEY) ?? 'null') as unknown
-    if (!Array.isArray(arr)) return FAV_DEFAULT.map(f => ({ ...f }))
-    return FAV_DEFAULT.map((d, k) => {
-      const v = arr[k] as Partial<Fav> | undefined
-      if (!(v && isInstr(v.i) && typeof v.br === 'string' && v.br.includes('/'))) return { ...d }
-      const out: Fav = { i: v.i, br: v.br }
-      if (typeof v.hex === 'string' && /^#[0-9a-f]{6}$/i.test(v.hex)) out.hex = v.hex
-      if (typeof v.w === 'number' && Number.isFinite(v.w) && v.w > 0) out.w = v.w
-      if (typeof v.o === 'number' && Number.isFinite(v.o) && v.o > 0 && v.o <= 1) out.o = v.o
-      return out
-    })
+    const raw = localStorage.getItem(FAV_KEY)
+    if (raw !== null) return parseFavs(JSON.parse(raw) as unknown)
+    // 새 판이 없다 — 옛 판(64)이 있으면 앞 여섯으로 이주하고 «한 번» 새 판을 쓴다(#109 — 그 뒤로는 새 판만)
+    const old = localStorage.getItem(FAV_KEY_64)
+    const fs = parseFavs(old !== null ? JSON.parse(old) as unknown : null)
+    if (old !== null) { favMigrated++; writeFavs(fs) }
+    return fs
   } catch { return FAV_DEFAULT.map(f => ({ ...f })) }
 }
 const writeFavs = (fs: Fav[]): void => { try { localStorage.setItem(FAV_KEY, JSON.stringify(fs)) } catch { /* 세션 한정 */ } }
+
+// ── 필통 칸의 «도구 그림»(web2-68 §1) — 선 그림 한 굵기(1.75px — UX-FLOWS §G-5) · 촉/심(.tip)만 fill이 그 칸의 색
+// (Feather 2.x 채록 §B-2 — 도구 그림에 현재 색). 우리 그림(라이선스 물음 없음). ⚠ 70(시각 시스템)이 이 그림을 24px
+// 격자에 맞춘다 — 다시 그리지 않고 맞춘다(70 지시 §3). 촉의 테두리는 «늘» 남긴다(밝은 색(명도 > PAINT68_TIP_BRIGHT_V)에서
+// 사라지지 않게 — 지시 문면의 조건을 포함하는 상위 규칙 · 밝으면 테두리 굵기를 그대로, 아니면 반으로).
+type CaseKind = 'pencil' | 'charcoal' | 'cp' | 'marker' | 'brush' | 'pen' | 'eraser'
+const CASE_SVG_HEAD = '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">'
+const CASE_SVG: Record<CaseKind, (tip: string) => string> = {
+  pencil: tip => `${CASE_SVG_HEAD}<path d="M10.5 21.5 L21.5 10.5 L25.5 14.5 L14.5 25.5 Z"/><path d="M19.5 12.5 L23.5 16.5"/><path class="tip" d="M10.5 21.5 L14.5 25.5 L5.5 30.5 Z"${tip}/></svg>`,
+  charcoal: tip => `${CASE_SVG_HEAD}<path d="M9 21 L20 10 L24.5 14.5 L13.5 25.5 L8 26.5 Z"/><path class="tip" d="M9 21 L12.5 17.5 L17 22 L13.5 25.5 L8 26.5 Z"${tip}/></svg>`,
+  cp: tip => `${CASE_SVG_HEAD}<path d="M10.5 21.5 L21.5 10.5 L25.5 14.5 L14.5 25.5 Z"/><path class="tip2" d="M16.5 15.5 L21.5 10.5 L25.5 14.5 L20.5 19.5 Z"${tip} fill-opacity=".45"/><path class="tip" d="M10.5 21.5 L14.5 25.5 L5.5 30.5 Z"${tip}/></svg>`,
+  marker: tip => `${CASE_SVG_HEAD}<rect x="11.5" y="3.5" width="9" height="15" rx="1"/><path d="M11.5 8 h9"/><path class="tip" d="M13 18.5 L12.5 23 L16.5 28.5 L18.5 18.5 Z"${tip}/></svg>`,
+  brush: tip => `${CASE_SVG_HEAD}<path d="M16 3 V14"/><path d="M12.5 14 h7 v4 h-7 z"/><path class="tip" d="M12.5 18 C12.5 23 11.5 25.5 10.5 27.5 C13.5 26.6 18.5 26.6 21.5 27.5 C20.5 25.5 19.5 23 19.5 18 Z"${tip}/></svg>`,
+  pen: tip => `${CASE_SVG_HEAD}<path d="M12.5 3.5 h7 v12.5 h-7 Z"/><path d="M12.5 8 h7"/><path class="tip" d="M12.5 16 L16 27.5 L19.5 16 Z"${tip}/><path d="M16 20 v3.5" stroke-width="1"/></svg>`,
+  eraser: () => `${CASE_SVG_HEAD}<path d="M13 25 L5.5 17.5 L17.5 5.5 L25 13 Z"/><path d="M9.2 21.2 L13.7 25.7"/><path d="M5 27 h13" stroke-width="1.1"/></svg>`,
+}
+/** 칸의 그림 종류 — 브러시 이름·슬롯에서(목탄은 이름 · 잉크펜은 라이너/펜 이름 · 나머지는 슬롯) */
+const caseKindOf = (i: Instr, br: string): CaseKind =>
+  /charcoal/i.test(br) ? 'charcoal'
+    : i === 'cp' ? 'cp' : i === 'pencil' ? 'pencil' : i === 'marker' ? 'marker'
+      : /liner|\bink|pen\b|_pen|-pen/i.test(br) ? 'pen' : 'brush'
+/** 촉 속성 — fill은 그 칸의 색 · 테두리는 늘 남는다(밝은 색이면 온 굵기, 아니면 반) */
+const caseTipAttr = (hex: string): string => {
+  const v = hsvOf(hex)?.v ?? 0
+  return ` fill="${hex}" stroke-width="${v > C.PAINT68_TIP_BRIGHT_V ? 1.75 : 0.9}"`
+}
+const casePicture = (kind: CaseKind, hex: string): string => CASE_SVG[kind](caseTipAttr(hex))
+const CASE_KIND_NAME: Record<CaseKind, string> = { pencil: '연필', charcoal: '목탄', cp: '색연필', marker: '마커', brush: '붓', pen: '잉크펜', eraser: '지우개' }
 
 /** 크기 슬라이더 줄의 동기화(58-1) — 도구가 바뀌면 max·값이 따라온다(아래 블록이 채운다) */
 let syncPaintSizeRow: () => void = () => {}
@@ -2355,11 +2394,13 @@ let clampDotEl: HTMLElement | null = null
   // web2-67 0-6 — 크기 줄은 «지금 든 것»의 크기다: 지우개가 켜져 있으면 지우개(최대 = 붓과
   // 같다 — 지시 문면 · 58의 규칙 그대로), 아니면 지금 슬롯. 같은 슬라이더 하나다(#54).
   const paintMaxW = (): number => (app.paintErase ? C.PAINT58_MAX_W.brush : C.PAINT58_MAX_W[app.paintSel.i])
+  let syncTicksRef: () => void = () => {}
   const sizeNow = (): number => (app.paintErase ? app.eraseSel.w : app.paintSel.w)
   const setSizeNow = (v: number): void => { if (app.paintErase) app.eraseSel.w = v; else app.paintSel.w = v }
   const syncSizeRow = syncPaintSizeRow = () => {
     const max = paintMaxW()
     sizeRange.max = String(max)
+    syncTicksRef()
     if (sizeNow() > max) setSizeNow(max)
     if (Number(sizeRange.value) !== sizeNow()) sizeRange.value = String(sizeNow())
     sizeVal.textContent = `${sizeNow()}px`
@@ -2370,7 +2411,57 @@ let clampDotEl: HTMLElement | null = null
     syncPaintPanel()                                     // 66-3 — 같은 브러시의 칸이 크기를 따라 기억한다(adopt)
   })
   sizeRange.addEventListener('change', () => status(`${app.paintErase ? '지우개' : '자국'} 굵기 ${sizeNow()}px`))
-  sizeWrap.append(sizeLbl, sizeRange, sizeVal)
+  // web2-68 §3-2 — 크기 눈금 «표식»(Trace 채록 §D-0 — √2 등비 0.57 · 0.80 · 1.13 · … 그 도구의 최대까지).
+  // 슬라이더는 연속 그대로다(58 R1 철회 ⛔ 이산화): 점을 탭하면 그 값, 끌기는 임의 값. 점은 트랙 위에 얹힌 표식이고
+  // 트랙의 포인터 이벤트를 안 가린다(점 자체만 누를 수 있다).
+  const tickWrap = document.createElement('span')
+  tickWrap.id = 'paint-size-tickwrap'
+  const ticks = document.createElement('span')
+  ticks.id = 'paint-size-ticks'
+  tickWrap.append(sizeRange, ticks)
+  let tickKey = ''
+  const tickValues = (): number[] => {
+    const out: number[] = []
+    const max = paintMaxW()
+    for (let v = C.PAINT68_TICK_BASE; v <= max + 1e-9; v *= C.PAINT68_TICK_RATIO) {
+      const r = Math.round(v * 100) / 100
+      if (r >= C.PAINT58_MIN_W) out.push(r)
+    }
+    return out
+  }
+  const syncTicks = () => {
+    const max = paintMaxW(), min = C.PAINT58_MIN_W
+    const key = `${min}|${max}`
+    if (tickKey === key) return
+    tickKey = key
+    ticks.replaceChildren()
+    for (const v of tickValues()) {
+      const dot = document.createElement('i')
+      dot.className = 'tick'
+      dot.dataset.v = String(v)
+      // 위치 — 트랙의 손잡이 이동 범위(양끝 8px 여유 · 크롬 기본 손잡이 반폭)에 맞춘 비율
+      dot.style.left = `calc(8px + (100% - 16px) * ${((v - min) / (max - min)).toFixed(4)})`
+      ticks.append(dot)
+    }
+  }
+  // 탭 = 띠 위 «누른 자리»에 가장 가까운 눈금(점은 그림이다 — 작은 끝에서 점이 겹쳐도 누른 자리가 값이다)
+  ticks.addEventListener('click', (e) => {
+    const r = ticks.getBoundingClientRect()
+    const min = C.PAINT58_MIN_W, max = paintMaxW()
+    const frac = Math.max(0, Math.min(1, (e.clientX - r.left - 8) / Math.max(1, r.width - 16)))
+    const at = min + frac * (max - min)
+    let best: number | null = null
+    for (const v of tickValues()) if (best === null || Math.abs(v - at) < Math.abs(best - at)) best = v
+    if (best === null) return
+    e.preventDefault(); e.stopPropagation()
+    setSizeNow(best)
+    if (app.tool !== 'paint') setTool('paint')
+    sizeRange.value = String(best)
+    syncPaintPanel()
+    status(`${app.paintErase ? '지우개' : '자국'} 굵기 ${best}px — 눈금`)
+  })
+  syncTicksRef = syncTicks
+  sizeWrap.append(sizeLbl, tickWrap, sizeVal)
   painttrayEl.append(sizeWrap)
   syncSizeRow()
 
@@ -2487,29 +2578,34 @@ let clampDotEl: HTMLElement | null = null
   wheelCv.addEventListener('pointerup', wheelDone)
   wheelCv.addEventListener('pointercancel', wheelDone)
 
-  // ── ⑤ 즐겨찾기 여섯 — 옛 «도구 넷»의 자리 ───────────────────────────────────────
+  // ── ⑤ 필통 여덟(web2-68 §1) — 도구 칸 일곱 + 지우개 칸(67 0-6의 그 칸 · 맨 끝 고정 · 끌어 바꿀 수 없다) ────
+  //    칸 = 도구 그림(촉에 그 칸의 색) + 경도 글자(연필·목탄 — 위아래로 끌면 경도가 바뀐다 · 제도 연필 pencilDrag와
+  //    같은 몸짓) + 아래 작은 숫자 둘(크기 px · 불투명 % — 9.5px · Feather 2.x §B-0 상시 숫자 라벨). 툴팁은 새로 안 단다
+  //    (기존 칸의 title은 그대로 — DIRECTION 재검토 대기). id는 그대로(paint-fav-k — e2e·69 전수 왕복이 id를 잡는다).
   const favWrap = document.createElement('div')
   favWrap.id = 'paint-favs'
   favWrap.className = 'rrow prow'
   const favBtns: HTMLButtonElement[] = []
-  const favCv: HTMLCanvasElement[] = []
+  const favPic: HTMLSpanElement[] = []
+  const favGrade: HTMLSpanElement[] = []
+  const favNums: HTMLSpanElement[] = []
   const favKey: string[] = []
-  const FAV_W = 72, FAV_H = 18
+  // 경도 끌기 상태(제도 연필의 pencilDrag와 같은 꼴) — 한 칸 = PAINT68_GRADE_STEP_PX
+  let gradeDrag: { y: number; k: number; br0: string; moved: boolean } | null = null
   for (let k = 0; k < FAV_N; k++) {
     const b = document.createElement('button')
     b.id = `paint-fav-${k + 1}`
     b.className = 'favbtn'
     b.dataset.act = 'state'
-    b.title = `즐겨찾기 ${k + 1} — 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기)`   // 48-10: 패널이 뜨기 전에도 설명이 있다(동기화가 값을 채운다)
-    // 자국 견본(65 §2 ②) — #97: position:static 명시 · flex-shrink 0
-    const fcv = document.createElement('canvas')
-    fcv.id = `paint-fav-${k + 1}-sample`
-    fcv.width = FAV_W * 2; fcv.height = FAV_H * 2
-    fcv.style.cssText = `width:${FAV_W}px;height:${FAV_H}px;position:static;inset:auto;flex-shrink:0;border-radius:2px;background:#fffdf8;pointer-events:none`
-    const fnm = document.createElement('span')
-    fnm.className = 'favname'
-    b.append(fcv, fnm)
-    favCv.push(fcv)
+    b.title = `필통 ${k + 1} — 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기)`   // 48-10: 패널이 뜨기 전에도 설명이 있다(동기화가 값을 채운다)
+    const pic = document.createElement('span')
+    pic.className = 'pcpic'
+    const grade = document.createElement('span')
+    grade.className = 'pcgrade'
+    const nums = document.createElement('span')
+    nums.className = 'pcnums'
+    b.append(pic, grade, nums)
+    favPic.push(pic); favGrade.push(grade); favNums.push(nums)
     favKey.push('')
     let holdT: number | null = null
     let held = false
@@ -2522,14 +2618,23 @@ let clampDotEl: HTMLElement | null = null
         fs[k] = { i: app.paintSel.i, br: app.paintSel.br, hex: app.paintSel.hex, w: app.paintSel.w, o: app.paintSel.o }
         writeFavs(fs)
         syncPainttray()
-        status(`즐겨찾기 ${k + 1} ← ${SLOT_NAME[app.paintSel.i]} · ${brushShort(app.paintSel.br)} · ${app.paintSel.hex} · ${app.paintSel.w}px(이 기기에 남는다 · 옛 획은 안 변한다)`)
+        status(`필통 ${k + 1} ← ${SLOT_NAME[app.paintSel.i]} · ${brushShort(app.paintSel.br)} · ${app.paintSel.hex} · ${app.paintSel.w}px(이 기기에 남는다 · 옛 획은 안 변한다)`)
       }, C.WRITE_HOLD_MS)
     })
     const cancelHold = () => { if (holdT !== null) { clearTimeout(holdT); holdT = null } }
     b.addEventListener('pointerup', cancelHold)
     b.addEventListener('pointerleave', cancelHold)
+    // 경도 글자 — 위아래로 끌면 경도(제도 연필 pencilDrag의 그 몸짓). 누르는 순간 칸의 긴 누름은 안 건다(stopPropagation).
+    grade.addEventListener('pointerdown', (e) => {
+      const f = readFavs()[k]!
+      if (!gradeOfPreset(f.br)) return                       // 경도 축 밖 — 보통 탭
+      e.stopPropagation()
+      gradeDrag = { y: e.clientY, k, br0: f.br, moved: false }
+    })
     b.addEventListener('click', () => {
       if (held) return                                   // 저장 직후의 click은 적용이 아니다
+      if (gradeDrag && gradeDrag.k === k && gradeDrag.moved) { gradeDrag = null; return }   // 끌기 뒤의 click은 탭이 아니다
+      gradeDrag = null
       const f = readFavs()[k]!
       pickBrush(f.i, f.br)
       // 66-3 — 그 칸이 기억하던 사양이 «같이» 온다(칸에 아직 없으면 지금 값 그대로 —
@@ -2539,26 +2644,51 @@ let clampDotEl: HTMLElement | null = null
       if (f.o !== undefined) app.paintSel.o = Math.min(1, Math.max(0.05, f.o))
       if (app.tool !== 'paint') setTool('paint')
       syncPainttray()
-      status(`${SLOT_NAME[f.i]} · ${brushShort(f.br)}${f.hex ? ` · ${f.hex}` : ''}${f.w !== undefined ? ` · ${f.w}px` : ''} — 즐겨찾기 ${k + 1}`)
+      status(`${SLOT_NAME[f.i]} · ${brushShort(f.br)}${f.hex ? ` · ${f.hex}` : ''}${f.w !== undefined ? ` · ${f.w}px` : ''} — 필통 ${k + 1}`)
     })
     favBtns.push(b)
     favWrap.append(b)
   }
-  painttrayEl.append(favWrap)
+  // 경도 끌기 — 이동·뗌은 창에서 받는다(제도 연필과 같은 이유: 칸이 좁아 미는 손가락이 밖으로 나간다)
+  window.addEventListener('pointermove', (e) => {
+    if (!gradeDrag) return
+    const step = Math.round((e.clientY - gradeDrag.y) / C.PAINT68_GRADE_STEP_PX)
+    const next = shiftGrade(gradeDrag.br0, step)             // 아래로 밀면 무른 쪽(HB → 8B · 경 → 연)
+    const fs = readFavs()
+    const f = fs[gradeDrag.k]!
+    if (next === f.br) return
+    gradeDrag.moved = true
+    fs[gradeDrag.k] = { ...f, br: next }
+    writeFavs(fs)
+    // 경도가 바뀌면 그 칸이 지금 브러시가 된다 — 다음 획이 그 경도의 프리셋으로 그어진다(지시 §2 게이트)
+    pickBrush(f.i, next)
+    if (app.tool !== 'paint') setTool('paint')
+    syncPainttray()
+    const g = gradeOfPreset(next)
+    status(`${g?.kind === 'charcoal' ? '목탄' : '연필'} ${g?.grade ?? ''} — 필통 ${gradeDrag.k + 1}`)
+  })
+  const endGradeDrag = () => { if (gradeDrag && !gradeDrag.moved) gradeDrag = null }
+  window.addEventListener('pointerup', endGradeDrag)
+  window.addEventListener('pointercancel', endGradeDrag)
 
-  // ── ⑤′ **지우개 고정 칸**(web2-67 0-6) — 즐겨찾기 옆: 즐겨찾기가 아니라 «언제나 있는 것»이다
-  //    (선 그리기의 지우개 둘이 트레이 밖 고정인 것과 같은 규약). 지우개도 «펜»이다 — 손가락은
-  //    고르기(§1)라 여기 안 닿는다. ⚠ 68(필통)이 이 칸의 «자리»를 다시 볼 수 있다(지시 문면).
+  // ── ⑤′ **지우개 고정 칸**(67 0-6 → 68: 필통의 여덟째 · 맨 끝 · 저장 밖) — 지우개도 «펜»이다(Trace 채록 §D-0 「지우개도
+  //    펜 슬롯 중 하나」). 경도(딱딱/부드러운)는 칸의 경도 글자 자리에 앉는다(paint-erase-soft — 누르면 바뀐다). id 무변.
   {
-    const row = document.createElement('div')
-    row.id = 'paint-erase-row'
-    row.className = 'rrow prow'
+    const cell = document.createElement('div')
+    cell.id = 'paint-erase-cell'
+    cell.className = 'pcell'
     const b = document.createElement('button')
     b.id = 'paint-erase'
-    b.className = 'ebtn'         // ⚠ .rrow가 아니다 — 줄(.rrow) 셈(mats46 ①)은 «행»의 자다
+    b.className = 'favbtn'
     b.dataset.act = 'state'
     b.title = '지우개 — 펜 한 붓이 칠의 덮임을 지운다 · 다시 누르면 붓으로 · 스타일러스 뒷꼭지도 지우개다'
-    b.innerHTML = '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 25 L5.5 17.5 L17.5 5.5 L25 13 Z"/><path d="M9.2 21.2 L13.7 25.7"/><path d="M5 27 h13" stroke-width="1.1"/></svg><span id="paint-erase-lbl">지우개</span>'
+    const pic = document.createElement('span')
+    pic.className = 'pcpic'
+    pic.innerHTML = casePicture('eraser', '#ffffff')
+    const nums = document.createElement('span')
+    nums.className = 'pcnums'
+    nums.id = 'paint-erase-nums'
+    b.append(pic, nums)
     b.addEventListener('click', () => {
       app.paintErase = !app.paintErase
       if (app.tool !== 'paint') setTool('paint')
@@ -2569,7 +2699,7 @@ let clampDotEl: HTMLElement | null = null
     })
     const soft = document.createElement('button')
     soft.id = 'paint-erase-soft'
-    soft.className = 'ebtn'
+    soft.className = 'pcgrade ebtn'
     soft.dataset.act = 'state'
     soft.title = '지우개의 부드러움 — 경도 축 하나: 딱딱한(기본 — 마른 매체) / 부드러운'
     soft.addEventListener('click', () => {
@@ -2578,9 +2708,10 @@ let clampDotEl: HTMLElement | null = null
       syncPainttray()
       status(`지우개 — ${app.eraseSel.soft ? '부드러운' : '딱딱한'}`)
     })
-    row.append(b, soft)
-    painttrayEl.append(row)
+    cell.append(b, soft)
+    favWrap.append(cell)
   }
+  painttrayEl.append(favWrap)
 
   // ── ⑥ **정면**(web2-54 54-3) — 손통 front와 같은 배선(frontFlyTarget — #54). 왕복이다. ──
   {
@@ -2610,6 +2741,17 @@ let clampDotEl: HTMLElement | null = null
     clampDotEl = dot
   }
 
+  // ── 부팅의 사양(web2-68 — 66-3의 빈틈): 부팅 직후 지금 브러시가 어느 칸과 같으면 «그 칸의 사양»이 지금 값이 된다
+  //    (pickBrush가 하는 그것). 안 하면 첫 동기화의 adopt가 부팅 기본값(색·크기·불투명)으로 그 칸을 «조용히» 덮어
+  //    기기에 남긴 사양이 매 부팅마다 지워졌다(case68 ① 이주 시험이 잡았다 — 옛 2번 칸 #445566 → 부팅 기본 #5a5a5a).
+  {
+    const f = readFavs().find(v => v.i === app.paintSel.i && v.br === app.paintSel.br)
+    if (f) {
+      if (f.hex) app.paintSel.hex = f.hex
+      if (f.w !== undefined) app.paintSel.w = Math.min(C.PAINT58_MAX_W[f.i], Math.max(C.PAINT58_MIN_W, f.w))
+      if (f.o !== undefined) app.paintSel.o = Math.min(1, Math.max(0.05, f.o))
+    }
+  }
   // ── 동기화 — 패널의 모든 값은 paintSel(정본)에서 온다(#54) ─────────────────────────
   let sampleKey = ''
   syncPaintPanel = () => {
@@ -2634,7 +2776,7 @@ let clampDotEl: HTMLElement | null = null
       b.title = h ? `최근 색 ${h}` : '최근 색 — 비어 있다(색을 고르면 여기 남는다)'
       b.classList.toggle('on', !!h && h === ps.hex)
     })
-    // 66-3 adopt — 지금 브러시가 어느 칸과 같으면 그 칸이 지금 사양(색·크기·불투명)을 기억한다
+    // 66-3 adopt — 지금 브러시가 어느 필통 칸과 같으면 그 칸이 지금 사양(색·크기·불투명)을 기억한다
     // (프로크리에이트의 «브러시가 크기를 기억한다» — 같은 브러시를 둔 칸이 여럿이면 첫 칸이 기억).
     // 값이 달라졌을 때만 쓴다 — 이 함수는 자주 돈다.
     const fs = readFavs()
@@ -2650,26 +2792,33 @@ let clampDotEl: HTMLElement | null = null
     }
     favBtns.forEach((b, k) => {
       const f = fs[k]!
-      // web2-65 §2 ② — 그림(SLOT_SVG)이 아니라 **그 브러시의 실제 자국**이다. 64 §2 규칙 ①
-      // 「자국 견본으로. 이름만으로는 안 된다」가 여기만 안 지켜졌었다 — 여섯이 다 비슷한
-      // 연필 그림이라 구분이 안 됐다(사람 판정 64-panel.png).
-      const cv = favCv[k]!
-      const key = `${f.i}|${f.br}|${ps.hex}`
-      if (favKey[k] !== key) { favKey[k] = key; drawBrushSample(cv, f.i, f.br, ps.hex) }
-      const nm = b.querySelector('.favname')!
-      nm.textContent = brushLabel(f.br)
-      b.title = `즐겨찾기 ${k + 1} — ${SLOT_NAME[f.i]} · ${brushLabel(f.br)}(원 이름 ${f.br}). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)`
-      b.classList.toggle('on', f.i === ps.i && f.br === ps.br)
+      // web2-68 §1 — 도구 그림(촉 = 그 칸의 색) · 경도 글자 · 숫자 둘. 값의 출처는 칸(기기 저장) 하나다(#54).
+      const kind = caseKindOf(f.i, f.br)
+      const hex = f.hex ?? ps.hex
+      const key = `${kind}|${hex}`
+      if (favKey[k] !== key) { favKey[k] = key; favPic[k]!.innerHTML = casePicture(kind, hex) }
+      const g = gradeOfPreset(f.br)
+      favGrade[k]!.textContent = g ? g.grade : ''
+      favGrade[k]!.hidden = !g
+      const w = f.w ?? ps.w, o = f.o ?? ps.o
+      favNums[k]!.textContent = `${Math.round(w * 10) / 10}px · ${Math.round(o * 100)}%`
+      b.dataset.kind = kind
+      b.dataset.br = f.br
+      b.dataset.hex = hex
+      b.title = `필통 ${k + 1} — ${CASE_KIND_NAME[kind]}${g ? ` ${g.grade}` : ''} · ${SLOT_NAME[f.i]} · ${brushLabel(f.br)}(원 이름 ${f.br}). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)${g ? ' · 경도 글자를 위아래로 끌면 경도' : ''}`
+      b.classList.toggle('on', !app.paintErase && f.i === ps.i && f.br === ps.br)
     })
-    // web2-67 0-6 — 지우개 칸의 상태(켜짐 · 경도 이름). 값의 출처는 app 하나다(#54).
+    // web2-67 0-6 → 68: 지우개 칸의 상태(켜짐 · 경도 이름 · 크기 숫자). 값의 출처는 app 하나다(#54).
     {
       const eb = document.getElementById('paint-erase')
       const sb = document.getElementById('paint-erase-soft')
+      const en = document.getElementById('paint-erase-nums')
       if (eb) eb.classList.toggle('on', app.paintErase)
       if (sb) {
-        sb.textContent = app.eraseSel.soft ? '부드러운' : '딱딱한'
+        sb.textContent = app.eraseSel.soft ? '부드럼' : '딱딱'
         sb.classList.toggle('on', app.paintErase && app.eraseSel.soft)
       }
+      if (en) en.textContent = `${Math.round(app.eraseSel.w * 10) / 10}px`
     }
     if (wheelOpen) { drawWheel(wheelHsv()); wheelHex.textContent = ps.hex }
   }
@@ -3071,7 +3220,7 @@ import {
   mypaintRenderer, mypaintProbeForTest, calibForTest as mypaintCalibForTest, presetMappingForTest,
   lastLayerAlphaForTest, smudgeStatsForTest, resetSmudgeStatsForTest, premulViolationsForTest, layerStatsForTest, lastStrokeCapForTest, presetBaseForTest,
   setCapOffForTest, setSmudgeSelfSampleForTest, setPremulBreakForTest, setFringeBreakForTest,
-  setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET,
+  setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET, setPresetBaseForTest,
   setTipsOffForTest, setTipFrameLockForTest, tipsReadyForTest, tipStatsForTest, resetTipStatsForTest, tipDefaultOfForTest, onTipAssetsLoaded,
   setPaintAppendBreakForTest,
   unknownBrushIdsForTest, setTipGainOffForTest, presetStatsForTest, resetCpTilesForTest, setCpThresholdOffForTest,
@@ -3096,12 +3245,12 @@ setBrushOfSlot((i, grade) => {
   const tuned = paintRenderer()?.brushOf?.(i)
   return tuned && tuned !== DEFAULT_PRESET[i] ? tuned : defaultBrushOf(i, grade)
 })
-/** **지금 브러시를 고른다** — 패널의 견본·브러시 목록·즐겨찾기가 전부 이 하나를 부른다(#54). paintSel.br가 정본(64-1)이고
+/** **지금 브러시를 고른다** — 패널의 견본·브러시 목록·필통이 전부 이 하나를 부른다(#54). paintSel.br가 정본(64-1)이고
  *  슬롯 조정(tune.base)은 «그 슬롯이 마지막으로 든 브러시»의 기록이다(옛 문서 이주·preset 없는 팔의 폴백). */
 function pickBrush(i: Instr58, name: string): void {
   app.paintSel.i = i
   app.paintSel.br = name
-  // web2-66 66-3 — 이 브러시를 기억하는 즐겨찾기 칸이 있으면 그 칸의 사양(색·크기·불투명)이
+  // web2-66 66-3 — 이 브러시를 기억하는 필통 칸이 있으면 그 칸의 사양(색·크기·불투명)이
   // 같이 온다(칸을 안 눌러도 — 어떻게 들든 «그 브러시의 사양»이다). 없으면 지금 값 그대로이고,
   // 그때부터 adopt(syncPaintPanel)가 그 칸에 기억을 시작한다. 안 하면 고르개로 같은 브러시를
   // 드는 순간 지금 전역값이 그 칸을 «조용히» 덮는다(adopt의 첫 실행) — 그 갈림을 여기서 막는다.
@@ -3133,6 +3282,7 @@ registerBox({
 // ── 브러시 고르개(web2-62) — 칠통의 「브러시…」가 연다. 고른 것은 곧바로 기기에 남는다.
 const brushPicker = initBrushPicker({
   toolOf: () => app.paintSel.i,
+  anchorRect: () => painttrayEl.classList.contains('open') ? painttrayEl.getBoundingClientRect() : null,   // web2-68 §3-1 — 패널 «옆»(오른쪽 가장자리에 붙여)
   hexOf: () => app.paintSel.hex,
   onPick: (tool, name) => { pickBrush(tool, name); invalidate() },   // web2-64: 옛 획은 안 변한다(br) — 재굽기 불요
   notify: (m) => notify(m),
@@ -3149,6 +3299,16 @@ import { loopAt, buildGraph, cyclesOf, planesOf, faceScreen } from '../core/face
 import { geomSize3 } from '../core/osnap'
 
 const diag = {
+  /** web2-68 — 판정에 드는 상수를 원장이 스스로 든다(#88 · constants_used) */
+  constantsForTest: () => ({
+    PAINT68_CASE_N: C.PAINT68_CASE_N, PAINT68_GRADE_STEP_PX: C.PAINT68_GRADE_STEP_PX,
+    PAINT68_GRADE_DENSITY_STEP_MIN: C.PAINT68_GRADE_DENSITY_STEP_MIN, PAINT68_GRADE_WIDTH_STEP_MIN: C.PAINT68_GRADE_WIDTH_STEP_MIN,
+    PAINT68_CHARCOAL_DENSITY_STEP_MIN: C.PAINT68_CHARCOAL_DENSITY_STEP_MIN, PAINT68_GRADE_8B_TARGET: C.PAINT68_GRADE_8B_TARGET, PAINT68_GRADE_8B_TOL: C.PAINT68_GRADE_8B_TOL,
+    PAINT68_WIDTH_RATIO_8B_HB: C.PAINT68_WIDTH_RATIO_8B_HB, PAINT68_WIDTH_RATIO_TOL: C.PAINT68_WIDTH_RATIO_TOL, PAINT68_FIT_TOL: C.PAINT68_FIT_TOL, PAINT68_FIT_MAX_ITER: C.PAINT68_FIT_MAX_ITER, PAINT68_FIT_OPAQUE_TOL: C.PAINT68_FIT_OPAQUE_TOL,
+    PAINT68_WIDTH_HONEST_TOL: C.PAINT68_WIDTH_HONEST_TOL, PAINT68_TICK_BASE: C.PAINT68_TICK_BASE, PAINT68_TICK_RATIO: C.PAINT68_TICK_RATIO,
+    PAINT68_RECENT_N: C.PAINT68_RECENT_N, PAINT68_TIP_BRIGHT_V: C.PAINT68_TIP_BRIGHT_V, WRITE_HOLD_MS: C.WRITE_HOLD_MS,
+    PAINT58_MIN_W: C.PAINT58_MIN_W, PAINT58_MAX_W: C.PAINT58_MAX_W,
+  }),
   /** 지금 열려 있는 통(화면 규칙 R7 — web2-34 4번). 「동시에 둘이 안 열린다」를
    *  화면 형태(클래스·hidden·details.open)가 아니라 **등록부**에서 읽는 통로다. */
   openBoxes: () => openBoxIds(),
@@ -3223,7 +3383,7 @@ const diag = {
   setCalibOffForTest: (v: boolean) => { setCalibOffForTest(v); rebakePaintTexForTest(); invalidate() },
   /** 반증(AS-C184) — 이벤트 고정 dtime(ms) · null = 제품(걸음 ÷ 일정 속도) */
   setEventDtimeForTest: (ms: number | null) => { setEventDtimeForTest(ms); rebakePaintTexForTest(); invalidate() },
-  /** web2-64 ① — 지금 브러시를 고른다(패널·즐겨찾기의 그 배선 — pickBrush 하나 #54). 슬롯 조정(tune.base)도 같이 앉힌다:
+  /** web2-64 ① — 지금 브러시를 고른다(패널·필통의 그 배선 — pickBrush 하나 #54). 슬롯 조정(tune.base)도 같이 앉힌다:
    *  «그 슬롯의 지금 브러시»(옛 문서 이주·preset 없는 팔의 폴백)가 마지막으로 고른 것이 되게. */
   pickBrushForTest: (i: Instr58, name: string) => { pickBrush(i, name); rebakePaintTexForTest(); invalidate() },
   /** web2-64 ① 반증(D-3) — 굽기가 획의 브러시 id를 무시한다(옛 결함: 슬롯의 지금 브러시로 굽는다) */
@@ -3249,8 +3409,21 @@ const diag = {
   matColorForTest: (g: string): string => MAT[g as keyof typeof MAT]?.color ?? '',
   /** web2-64 — 재료의 톤 색(palette 그대로 — 46의 (재료, 톤) 사상 · 견본 줄이 지워진 자리의 팔 통로) */
   materialToneForTest: (mat: string, tone: number): string => materialOf(mat as MatId)?.tones[tone] ?? '#000000',
-  /** web2-64 — 즐겨찾기·최근 색 읽기(기기 저장 — 값으로) */
+  /** web2-64 — 필통·최근 색 읽기(기기 저장 — 값으로) · 68: 이주 횟수(favMigrated)도 값으로 */
   paintFavsForTest: () => readFavs(),
+  paintCaseMigratedForTest: () => favMigrated,
+  /** web2-68 §2 개정 — 되먹임 통로(프리셋 기준값 + 보정 캐시 비움) · 돌려주는 값은 이전 기준값 */
+  setPresetBaseForTest: (name: string, key: string, value: number) => { const prev = setPresetBaseForTest(name, key, value); rebakePaintTexForTest(); return prev },
+  /** web2-68 §3-1 게이트 — 견본은 «그리는 그 함수»다: 같은 입력으로 새 캔버스에 drawBrushSample을 돌려 픽셀 해시를 낸다(목록 행의 캔버스와 대조) */
+  brushSampleHashForTest: (tool: Instr58, preset: string, hex: string, w = 150, h = 34): number => {
+    const cv = document.createElement('canvas'); cv.width = w * 2; cv.height = h * 2
+    drawBrushSample(cv, tool, preset, hex)
+    const d = cv.getContext('2d')!.getImageData(0, 0, cv.width, cv.height).data
+    let hh = 0; for (let i = 0; i < d.length; i += 4) hh = (Math.imul(hh, 31) + d[i]! + d[i + 1]! + d[i + 2]!) | 0
+    return hh
+  },
+  /** web2-68 — 필통 칸 하나의 경도를 끈다(몸짓과 같은 함수 shiftGrade · 칸 갱신 · 지금 브러시로) — e2e의 결정론·br 게이트 통로 */
+  shiftCaseGradeForTest: (k: number, step: number) => { const fs = readFavs(); const f = fs[k]!; const next = shiftGrade(f.br, step); fs[k] = { ...f, br: next }; writeFavs(fs); pickBrush(f.i, next); syncPainttray(); return next },
   paintRecentForTest: () => readRecent(),
   /** **자국 견본**(web2-61 게이트·사진의 자) — 흰 판(면 텍스처 규약)에 견본 도형 하나를
    *  제품과 같은 함수(paintMark — 이음매)로 긋고 어둡기 지도(0..255)를 window.__m61에

@@ -15,11 +15,11 @@
         "vh": 800,
         "panel": {
           "left": 6,
-          "top": 257,
+          "top": 242,
           "right": 278,
-          "bottom": 543,
+          "bottom": 558,
           "w": 272,
-          "h": 286,
+          "h": 316,
           "vw": 1200,
           "vh": 800
         },
@@ -34,19 +34,19 @@
           "vh": 800
         },
         "overlap_px2": 0,
-        "covered_px2": 77792,
-        "covered_frac_of_viewport": 0.081
+        "covered_px2": 85952,
+        "covered_frac_of_viewport": 0.0895
       },
       {
         "vw": 800,
         "vh": 800,
         "panel": {
           "left": 6,
-          "top": 257,
+          "top": 242,
           "right": 278,
-          "bottom": 543,
+          "bottom": 558,
           "w": 272,
-          "h": 286,
+          "h": 316,
           "vw": 800,
           "vh": 800
         },
@@ -61,66 +61,79 @@
           "vh": 800
         },
         "overlap_px2": 0,
-        "covered_px2": 77792,
-        "covered_frac_of_viewport": 0.1216
+        "covered_px2": 85952,
+        "covered_frac_of_viewport": 0.1343
       }
     ]
   },
   "p2_favs": {
-    "note": "여섯 칸의 견본 캔버스 픽셀 해시 · 잉크 픽셀 수 · 이름",
-    "shots": [
+    "note": "필통 일곱 칸 — 그림 종류(kind) · 브러시 · 촉 fill == 칸 hex · 경도 · 숫자",
+    "cells": [
       {
-        "id": "paint-fav-1-sample",
-        "hash": 1556796905,
-        "ink": 1735,
-        "w": 144,
-        "h": 36
+        "id": "paint-fav-1",
+        "kind": "pencil",
+        "br": "classic/pencil",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "HB",
+        "nums": "10px · 100%"
       },
       {
-        "id": "paint-fav-2-sample",
-        "hash": 273098547,
-        "ink": 2023,
-        "w": 144,
-        "h": 36
+        "id": "paint-fav-2",
+        "kind": "pencil",
+        "br": "brunelleschi/pencil_4B",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "4B",
+        "nums": "10px · 100%"
       },
       {
-        "id": "paint-fav-3-sample",
-        "hash": 965768833,
-        "ink": 2039,
-        "w": 144,
-        "h": 36
+        "id": "paint-fav-3",
+        "kind": "charcoal",
+        "br": "tanda/charcoal-03",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "중",
+        "nums": "10px · 100%"
       },
       {
-        "id": "paint-fav-4-sample",
-        "hash": -1726617490,
-        "ink": 2413,
-        "w": 144,
-        "h": 36
+        "id": "paint-fav-4",
+        "kind": "cp",
+        "br": "brunelleschi/colored_pencil",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "",
+        "nums": "10px · 100%"
       },
       {
-        "id": "paint-fav-5-sample",
-        "hash": -584466810,
-        "ink": 1513,
-        "w": 144,
-        "h": 36
+        "id": "paint-fav-5",
+        "kind": "marker",
+        "br": "brunelleschi/marker",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "",
+        "nums": "10px · 100%"
       },
       {
-        "id": "paint-fav-6-sample",
-        "hash": -27434035,
-        "ink": 5031,
-        "w": 144,
-        "h": 36
+        "id": "paint-fav-6",
+        "kind": "brush",
+        "br": "deevad/watercolor_expressive",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-7",
+        "kind": "pen",
+        "br": "deevad/liner",
+        "hex": "#5a5a5a",
+        "tip_fill": "#5a5a5a",
+        "grade": "",
+        "nums": "10px · 100%"
       }
     ],
-    "names": [
-      "연필",
-      "제도 라이너",
-      "불투명 마커",
-      "색연필",
-      "목탄",
-      "수채"
-    ],
-    "distinct": 6
+    "distinct_kinds": 6
   },
   "p3_names": {
     "note": "표시는 사람 쪽 이름, 원 이름은 부제와 도움말에 그대로",
@@ -128,13 +141,13 @@
       "hex": "#5a5a5a",
       "i": "marker",
       "w": 10,
-      "br": "ramon/100%_Opaque",
+      "br": "brunelleschi/marker",
       "o": 1
     },
     "shown": {
-      "label": "불투명 마커",
-      "sub": "마커 · ramon · 100%_Opaque",
-      "title": "지금 브러시 «불투명 마커» — 원 이름 ramon/100%_Opaque(마커 족). 누르면 브러시 목록이 열린다"
+      "label": "마커",
+      "sub": "마커 · brunelleschi · marker",
+      "title": "지금 브러시 «마커» — 원 이름 brunelleschi/marker(마커 족). 누르면 브러시 목록이 열린다"
     }
   },
   "p4_clip": {
@@ -146,13 +159,13 @@
         "panel": {
           "root": "#painttray",
           "exists": true,
-          "checked": 13,
+          "checked": 19,
           "rows": []
         },
         "pick": {
           "root": "#brushpick",
           "exists": true,
-          "checked": 413,
+          "checked": 91,
           "rows": []
         }
       },
@@ -162,13 +175,13 @@
         "panel": {
           "root": "#painttray",
           "exists": true,
-          "checked": 13,
+          "checked": 19,
           "rows": []
         },
         "pick": {
           "root": "#brushpick",
           "exists": true,
-          "checked": 413,
+          "checked": 91,
           "rows": []
         }
       }

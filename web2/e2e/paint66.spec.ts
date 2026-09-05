@@ -387,9 +387,9 @@ test('§3 66-3 칠 사양이 슬롯마다 — 색·크기·불투명이 즐겨�
     const ps = (window as any).__b2.app.paintSel
     return { i: ps.i, br: ps.br, hex: ps.hex, w: ps.w, o: ps.o }
   })
-  await page.click('#paint-fav-1'); await page.waitForTimeout(80)   // 연필 칸
+  await page.click('#paint-fav-1'); await page.waitForTimeout(80)   // 연필 HB 칸
   await setSpec('#2244aa', 33, 0.6)
-  await page.click('#paint-fav-2'); await page.waitForTimeout(80)   // 잉크펜 칸
+  await page.click('#paint-fav-2'); await page.waitForTimeout(80)   // 연필 4B 칸(68 기본 채움 — 두 칸이 같은 슬롯이라도 칸마다 따로 기억한다)
   await setSpec('#aa3311', 12, 0.35)
   await page.click('#paint-fav-1'); await page.waitForTimeout(80)
   const a = await spec()
@@ -402,7 +402,7 @@ test('§3 66-3 칠 사양이 슬롯마다 — 색·크기·불투명이 즐겨�
   expect(b.w, '칸 2의 크기가 돌아온다').toBe(12)
   expect(b.o, '칸 2의 불투명이 돌아온다').toBe(0.35)
   // 브러시 고르개로 «같은 브러시»를 들어도 그 칸의 사양이 따라온다(칸을 안 눌러도)
-  const fav1 = await page.evaluate(() => JSON.parse(localStorage.getItem('b2.brushFavs64.v1')!)[0] as { i: string; br: string })
+  const fav1 = await page.evaluate(() => (window as any).__b2.diag.paintFavsForTest()[0] as { i: string; br: string })   // 68: 저장 열쇠가 b2.pencilcase68.v1로 갈렸다 — 읽기는 앱의 통로로
   await page.evaluate((f) => { (window as any).__b2.diag.pickBrushForTest?.(f.i, f.br) }, fav1)
   // (pickBrushForTest가 없으면 즐겨찾기 경로만 잰다 — 아래 재시작 판이 본체다)
   // 새로 고침 — 기기 저장이 산다(?reset은 캐시만 버리므로 여기서는 민자로 연다)
@@ -417,8 +417,8 @@ test('§3 66-3 칠 사양이 슬롯마다 — 색·크기·불투명이 즐겨�
   expect(a2.o, '재시작 뒤에도 칸 1의 불투명').toBe(0.6)
   // 문서 저장 형식 무변 — 즐겨찾기는 기기의 것이다(KEY_ORDER는 roundtrip43 ②가 지킨다):
   // 저장물에 즐겨찾기 밭이 한 글자도 안 섞였는지 문자열로 확인한다
-  const saved = await page.evaluate(() => localStorage.getItem('b2.brushFavs64.v1'))
-  expect(saved, '즐겨찾기가 기기(localStorage)에 남았다').toContain('#2244aa')
+  const saved = await page.evaluate(() => localStorage.getItem('b2.pencilcase68.v1'))   // 68 판갈이 — 새 판의 열쇠(옛 b2.brushFavs64.v1은 이주 원본으로만 읽는다)
+  expect(saved, '필통이 기기(localStorage)에 남았다').toContain('#2244aa')
   OUT.s3_favs = { note: '슬롯 사양 한 벌의 왕복(A: #2244aa·33px·0.6 ↔ B: #aa3311·12px·0.35 — 전수)과 재시작 생존. 문서 형식 무변은 roundtrip43 ②의 몫', a, b, a2 }
   console.log('[66-3]', JSON.stringify({ a, b, a2 }))
 })

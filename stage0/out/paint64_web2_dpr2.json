@@ -63,7 +63,7 @@
             1658173300
           ],
           "off": [
-            1134877516
+            -1063986074
           ]
         }
       },
@@ -82,7 +82,7 @@
             -1862468273
           ],
           "off": [
-            910251887
+            -1288611703
           ]
         }
       }
@@ -1510,7 +1510,7 @@
         "hit": true,
         "rect": [
           12,
-          242,
+          248,
           260,
           42
         ],
@@ -1522,7 +1522,7 @@
         "hit": true,
         "rect": [
           18,
-          249,
+          255,
           122,
           28
         ],
@@ -1533,8 +1533,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          82,
-          293,
+          80,
+          297,
           96,
           16
         ],
@@ -1545,8 +1545,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          187,
-          295,
+          219,
+          300,
           38,
           12
         ],
@@ -1558,7 +1558,7 @@
         "hit": true,
         "rect": [
           82,
-          324,
+          327,
           96,
           16
         ],
@@ -1570,7 +1570,7 @@
         "hit": true,
         "rect": [
           187,
-          326,
+          329,
           38,
           12
         ],
@@ -1582,7 +1582,7 @@
         "hit": true,
         "rect": [
           21,
-          353,
+          356,
           30,
           30
         ],
@@ -1594,7 +1594,7 @@
         "hit": true,
         "rect": [
           59,
-          360,
+          363,
           16,
           16
         ],
@@ -1605,72 +1605,72 @@
         "exists": true,
         "hit": true,
         "rect": [
-          18,
-          394,
-          81,
-          40
+          16,
+          397,
+          61,
+          56
         ],
-        "top": "paint-fav-1"
+        "top": "path"
       },
       {
         "id": "paint-fav-2",
         "exists": true,
         "hit": true,
         "rect": [
-          102,
-          394,
-          81,
-          40
+          80,
+          397,
+          61,
+          56
         ],
-        "top": "paint-fav-2"
+        "top": "path"
       },
       {
         "id": "paint-fav-3",
         "exists": true,
         "hit": true,
         "rect": [
-          185,
-          394,
-          81,
-          40
+          144,
+          397,
+          61,
+          56
         ],
-        "top": "paint-fav-3"
+        "top": "path"
       },
       {
         "id": "paint-fav-4",
         "exists": true,
         "hit": true,
         "rect": [
-          18,
-          437,
-          81,
-          40
+          207,
+          397,
+          61,
+          56
         ],
-        "top": "paint-fav-4"
+        "top": "path"
       },
       {
         "id": "paint-fav-5",
         "exists": true,
         "hit": true,
         "rect": [
-          102,
-          437,
-          81,
-          40
+          16,
+          456,
+          61,
+          56
         ],
-        "top": "paint-fav-5"
+        "top": "path"
       },
       {
         "id": "paint-fav-6",
         "exists": true,
         "hit": true,
         "rect": [
-          185,
-          437,
-          81,
-          40
+          80,
+          456,
+          61,
+          56
         ],
-        "top": "paint-fav-6"
+        "top": "path"
       },
       {
         "id": "btn-paint-front",
@@ -1678,7 +1678,7 @@
         "hit": true,
         "rect": [
           12,
-          527,
+          519,
           260,
           33
         ],
@@ -1691,16 +1691,16 @@
         "#brushpick"
       ],
       "brush_row": {
-        "id": "brushpick-brunelleschi_colored_pencil",
+        "id": "brushpick-deevad_2B_pencil",
         "exists": true,
         "hit": true,
         "rect": [
-          785,
-          217,
-          392,
-          40
+          408,
+          213,
+          289,
+          48
         ],
-        "top": "SPAN"
+        "top": "CANVAS"
       },
       "wheel_open": [
         "#paint-wheelbox"
@@ -1711,7 +1711,7 @@
         "hit": true,
         "rect": [
           20,
-          259,
+          262,
           244,
           244
         ],
@@ -1724,21 +1724,21 @@
     "overflow": {
       "sw": 272,
       "cw": 272,
-      "sh": 329,
-      "ch": 329,
+      "sh": 316,
+      "ch": 316,
       "vh": 800,
-      "bottom": 565,
-      "top": 236
+      "bottom": 558,
+      "top": 242
     },
     "viewport700": {
       "overflow": {
         "sw": 272,
         "cw": 272,
-        "sh": 329,
-        "ch": 329,
+        "sh": 316,
+        "ch": 316,
         "vh": 700,
-        "bottom": 515,
-        "top": 186
+        "bottom": 508,
+        "top": 192
       },
       "zero_stage_missing": []
     },
@@ -1775,45 +1775,42 @@
       "paint-opacity-range": "불투명 — 끌어서 조절한다",
       "paint-color-btn": "지금 색 #5a5a5a — 누르면 색상 휠이 열린다",
       "paint-recent-1": "최근 색 — 비어 있다(색을 고르면 여기 남는다)",
-      "paint-fav-1": "즐겨찾기 1 — 연필 · 연필(원 이름 classic/pencil). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
-      "paint-fav-6": "즐겨찾기 6 — 잉크펜 · 수채(원 이름 deevad/watercolor_expressive). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
+      "paint-fav-1": "필통 1 — 연필 HB · 연필 · 연필(원 이름 classic/pencil). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다) · 경도 글자를 위아래로 끌면 경도",
+      "paint-fav-6": "필통 6 — 붓 · 잉크펜 · 수채(원 이름 deevad/watercolor_expressive). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
       "btn-paint-front": "정면은 면을 골라야 한다 — 칠 도구로 면을 탭해 고른 뒤 누른다"
     },
     "no_title": [],
     "fav3": {
-      "i": "marker",
-      "br": "brunelleschi/marker"
+      "i": "pencil",
+      "br": "tanda/charcoal-03"
     },
     "sel_after_fav3": {
       "hex": "#5a5a5a",
-      "i": "marker",
+      "i": "pencil",
       "w": 10,
-      "br": "brunelleschi/marker",
+      "br": "tanda/charcoal-03",
       "o": 1
     },
     "sel_after_pick": {
       "hex": "#5a5a5a",
-      "i": "marker",
+      "i": "pencil",
       "w": 10,
       "br": "tanda/marker-01",
       "o": 1
     },
-    "name_shown": "마커 01\n마커 · tanda · marker-01",
+    "name_shown": "마커 01\n연필 · tanda · marker-01",
     "favs_after_hold": [
       {
         "i": "pencil",
         "br": "classic/pencil"
       },
       {
-        "i": "brush",
-        "br": "deevad/liner",
-        "hex": "#5a5a5a",
-        "w": 10,
-        "o": 1
+        "i": "pencil",
+        "br": "brunelleschi/pencil_4B"
       },
       {
-        "i": "marker",
-        "br": "brunelleschi/marker",
+        "i": "pencil",
+        "br": "tanda/charcoal-03",
         "hex": "#5a5a5a",
         "w": 10,
         "o": 1
@@ -1823,12 +1820,19 @@
         "br": "brunelleschi/colored_pencil"
       },
       {
-        "i": "pencil",
-        "br": "classic/charcoal"
+        "i": "marker",
+        "br": "brunelleschi/marker"
       },
       {
-        "i": "marker",
+        "i": "pencil",
         "br": "tanda/marker-01",
+        "hex": "#5a5a5a",
+        "w": 10,
+        "o": 1
+      },
+      {
+        "i": "brush",
+        "br": "deevad/liner",
         "hex": "#5a5a5a",
         "w": 10,
         "o": 1
@@ -1840,15 +1844,12 @@
         "br": "classic/pencil"
       },
       {
-        "i": "brush",
-        "br": "deevad/liner",
-        "hex": "#5a5a5a",
-        "w": 10,
-        "o": 1
+        "i": "pencil",
+        "br": "brunelleschi/pencil_4B"
       },
       {
-        "i": "marker",
-        "br": "brunelleschi/marker",
+        "i": "pencil",
+        "br": "tanda/charcoal-03",
         "hex": "#5a5a5a",
         "w": 10,
         "o": 1
@@ -1858,13 +1859,20 @@
         "br": "brunelleschi/colored_pencil"
       },
       {
-        "i": "pencil",
-        "br": "classic/charcoal"
+        "i": "marker",
+        "br": "brunelleschi/marker"
       },
       {
-        "i": "marker",
+        "i": "pencil",
         "br": "tanda/marker-01",
         "hex": "#1e7fd0",
+        "w": 10,
+        "o": 1
+      },
+      {
+        "i": "brush",
+        "br": "deevad/liner",
+        "hex": "#5a5a5a",
         "w": 10,
         "o": 1
       }

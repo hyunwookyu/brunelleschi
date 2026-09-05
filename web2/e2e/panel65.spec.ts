@@ -142,37 +142,31 @@ test('① 자리 — 칠 패널이 세로바와 안 겹치고 화면 안이다',
     rows }
 })
 
-test('② 즐겨찾기 여섯 — 그 브러시의 «실제 자국»이고 서로 픽셀로 다르다', async ({ page }) => {
+test('② 필통 일곱(68 판갈이) — 칸마다 도구 그림이 있고 촉 색이 그 칸의 색이며 그림 종류가 갈린다', async ({ page }) => {
+  // web2-68 §1 — 65의 «실제 자국 견본»(paint-fav-k-sample 캔버스)은 «도구 그림»(SVG · 촉에 그 칸의 색)으로 갈렸다
+  // (사람 판정 「필통 시스템으로」). 이 팔이 지키던 요구(칸이 서로 구분된다 · 값으로)는 그대로다 — 자가 픽셀 해시에서
+  // «그림 종류 + 촉 색»으로 바뀌었을 뿐이다. 본체 게이트는 case68 ③(촉 fill == 칸 hex)이다.
   await boot(page)
-  const shots = await page.evaluate(() => {
-    const out: { id: string; hash: number; ink: number; w: number; h: number }[] = []
-    for (let k = 1; k <= 6; k++) {
-      const cv = document.getElementById(`paint-fav-${k}-sample`) as HTMLCanvasElement | null
-      if (!cv) { out.push({ id: `paint-fav-${k}-sample`, hash: 0, ink: -1, w: 0, h: 0 }); continue }
-      const d = cv.getContext('2d')!.getImageData(0, 0, cv.width, cv.height).data
-      let h = 0, ink = 0
-      for (let i = 0; i < d.length; i += 4) {
-        const v = d[i]! + d[i + 1]! + d[i + 2]!
-        if (v < 740) ink++
-        h = (Math.imul(h, 31) + v) | 0
-      }
-      out.push({ id: `paint-fav-${k}-sample`, hash: h, ink, w: cv.width, h: cv.height })
-    }
-    return out
-  })
-  const names = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('#paint-favs .favname')).map(e => (e.textContent ?? '').trim()))
-  const distinct = new Set(shots.map(s => s.hash)).size
-  OUT.p2_favs = { note: '여섯 칸의 견본 캔버스 픽셀 해시 · 잉크 픽셀 수 · 이름', shots, names, distinct }
-  for (const s of shots) expect(s.ink, `${s.id}: 자국이 그려졌다`).toBeGreaterThan(0)
-  expect(distinct, '여섯이 서로 픽셀로 다르다').toBe(6)
-  expect(names.filter(n => n.length > 0).length, '여섯 칸에 이름이 있다').toBe(6)
+  const cells = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('#paint-favs > button.favbtn')).map(b => {
+      const el = b as HTMLElement
+      const tip = el.querySelector('svg .tip') as SVGElement | null
+      return { id: el.id, kind: el.dataset.kind ?? '', br: el.dataset.br ?? '', hex: el.dataset.hex ?? '', tip_fill: tip?.getAttribute('fill') ?? null, grade: (el.querySelector('.pcgrade') as HTMLElement | null)?.textContent ?? '', nums: (el.querySelector('.pcnums') as HTMLElement | null)?.textContent ?? '' }
+    }))
+  const kinds = new Set(cells.map(c => c.kind))
+  OUT.p2_favs = { note: '필통 일곱 칸 — 그림 종류(kind) · 브러시 · 촉 fill == 칸 hex · 경도 · 숫자', cells, distinct_kinds: kinds.size }
+  expect(cells.length, '도구 칸 일곱(68)').toBe(7)
+  for (const c of cells) {
+    expect(c.tip_fill, `${c.id}: 촉 색 == 칸 hex`).toBe(c.hex)
+    expect(c.nums, `${c.id}: 숫자 둘(px · %)`).toMatch(/px · \d+%$/)
+  }
+  expect(kinds.size, '그림 종류가 갈린다(연필·목탄·색연필·마커·붓·잉크펜 여섯)').toBe(6)
 })
 
 test('③ 이름 사상 — 원 이름은 «표시»가 아니라 부제·도움말에 산다', async ({ page }) => {
   await boot(page)
-  // 마커 슬롯의 기본이 ramon/100%_Opaque다 — 그 칸(즐겨찾기 3)을 눌러 지금 브러시로 만든다
-  await page.click('#paint-fav-3')
+  // 마커 칸(68 기본 채움의 다섯째 — 옛 여섯 칸의 셋째)을 눌러 지금 브러시로 만든다
+  await page.click('#paint-fav-5')
   await page.waitForTimeout(150)
   const sel = await page.evaluate(() => (window as any).__b2.diag.paintSelForTest() as { i: string; br: string })
   const shown = await page.evaluate(() => {

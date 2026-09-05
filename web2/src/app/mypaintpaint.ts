@@ -25,7 +25,7 @@ import { C } from '../core/constants'
 import { Brush } from '../mypaint/brush'
 import { Layer, StrokeSurface, type Bbox, type StrokeOpts } from '../mypaint/surface'
 import { PRESETS as MYPAINT_PRESETS, PRESET_GROUPS as MYPAINT_GROUPS, PRESET_SKIPPED_INPUTS, type Preset } from '../mypaint/presets.gen'
-import { APP_PRESETS, APP_GROUP } from './brushes64'
+import { APP_PRESETS, APP_GROUP, familySizeK } from './brushes64'
 import { DEFAULT_BRUSH, defaultBrushOf } from '../core/paintseam'
 /** 브러시 전부 — mypaint 196(CC0 · 값을 짓지 않는다) + 앱 프리셋(web2-64 — 색연필의 성질로 지은 것 · brushes64.ts가 사유·값). */
 export const PRESETS: readonly Preset[] = [...MYPAINT_PRESETS, ...APP_PRESETS]
@@ -112,6 +112,7 @@ interface Tune {
 //   정확 이름이 먼저, 없으면 이름 무늬. 슬롯 조정(tune.tip)이 있으면 그것이 이긴다.
 const TIP_EXACT: Record<string, string> = {
   'classic/charcoal': 'chalk-chisel', 'tanda/charcoal-01': 'chalk-chisel', 'tanda/charcoal-03': 'chalk-chisel', 'tanda/charcoal-04': 'chalk-chisel',
+  'brunelleschi/charcoal_H': 'chalk-chisel', 'brunelleschi/charcoal_M': 'chalk-chisel', 'brunelleschi/charcoal_S': 'chalk-chisel',   // 68 §2 개정 — 뿌리(classic/charcoal)의 팁 그대로(가족은 매개 셋만 다르다)
   'ramon/Pastel_1': 'rock-pitted', 'deevad/chalk': 'rock-pitted',
   'classic/dry_brush': 'scratches-rough',
   'ramon/B-pencil': 'scratches2',            // 63의 색연필 슬롯(빗금 이빨)
@@ -193,6 +194,19 @@ function brushOf(name: string): Loaded {
   const l = { brush, base, stats }
   loaded.set(name, l)
   return l
+}
+/** web2-68 §2 개정 — 되먹임의 통로: 프리셋 «기준값» 하나를 바꾸고(굳힌 상태와 같은 자 — over 덮개는 팁 눈금 보정(calib)을
+ *  못 바꿔 굳힌 판과 갈린다 · 실측 4B +.019) 그 프리셋의 실린 브러시·보정 캐시를 비운다. e2e(paint68 fit) 전용 · 되돌리는 것도 이 통로. */
+export function setPresetBaseForTest(name: string, key: string, value: number): number {
+  const p = PRESET_BY_NAME.get(name)
+  if (!p) throw new Error(`setPresetBaseForTest: 모르는 브러시 ${name}`)
+  if (!SETTING_IDX.has(key)) throw new Error(`setPresetBaseForTest: 모르는 설정 키 ${key}(#108)`)
+  const cur = p.s[key]
+  const prev = cur ? cur[0] : SETTINGS[SETTING_IDX.get(key)!]!.def
+  p.s[key] = cur && cur[1] ? [value, cur[1]] : [value]
+  loaded.delete(name)
+  for (const k of [...calibs.keys()]) if (k === name || k.startsWith(name + '|')) calibs.delete(k)
+  return prev
 }
 /** web2-64 64-5 — 프리셋 하나의 사상 통계(설정·곡선·미지) + 기준값 몇(opaque·smudge·smudge_length·opaque_multiply) */
 export function presetStatsForTest(name: string): { known: boolean; settings: number; curves: number; unknownSettings: string[]; unknownInputs: string[]; base: Record<string, number> } | null {
@@ -577,9 +591,11 @@ function configureMark(b: Brush, name: string, m: SeamMark, draft: boolean, res:
   // 크기(자가 보정 위에 배수) · 색(선형광 → HSV 기준값)
   const tipRaw = tipName ? tipAtlas(tipName) : null
   if (tipName && !tipRaw) tipMissing++                    // 아틀라스 미로드 — 절차 타원으로(값으로 남는다 · #105)
-  b.setBaseValue(S.RADIUS_LOGARITHMIC, radiusLogFor(name, Math.max(0.5, m.wPx * (t.sizeK ?? 1)), tipRaw ? tipName : null))
-  const tip = tipRaw && tipName ? tipFor(name, tipName, tipRaw, Math.max(0.5, m.wPx * (t.sizeK ?? 1))) : null   // 64-4 — 농도 눈금 판(굵기의 함수 · 보정 열쇠와 같은 프리셋|팁)
-  const dabK = tip && tipName ? dabKFor(name, tipName, Math.max(0.5, m.wPx * (t.sizeK ?? 1))) : 1
+  // web2-68 §2 개정 — 경도 가족의 폭 축: 요청 폭 × 가족 배수(brushes64 FAMILY_SIZE_K · 뿌리·다른 프리셋은 1 — 58 정직성 무변)
+  const wEff = Math.max(0.5, m.wPx * (t.sizeK ?? 1) * familySizeK(name))
+  b.setBaseValue(S.RADIUS_LOGARITHMIC, radiusLogFor(name, wEff, tipRaw ? tipName : null))
+  const tip = tipRaw && tipName ? tipFor(name, tipName, tipRaw, wEff) : null   // 64-4 — 농도 눈금 판(굵기의 함수 · 보정 열쇠와 같은 프리셋|팁)
+  const dabK = tip && tipName ? dabKFor(name, tipName, wEff) : 1
   if (dabK !== 1) applyDabK(b, dabK)                                   // 64-4 둘째 지렛대(희소 판만 — 값은 calib.dabK)
   const [lr, lg, lb] = hexToLinear(m.color)
   const [h, s, v] = rgbToHsv(lr, lg, lb)

@@ -102,3 +102,7 @@ export const NEIGHBOR_GAIN_MIN = 1.05
  *  「눈에 띄게 떨어지지 않는다」(지시 문면)를 통과시키고 «한 자릿수 배»를 잡는다.
  *  움직이면 원장 `lay_slide40_web2.json`의 `gate_3.ratio`부터 다시 읽는다. */
 export const SLIDE_FRAME_MAX = 1.5
+
+/** web2-68 §3-1 브러시 목록 «행 높이 ≈ 48»(지시 문면 · Procreate 채록 §C-3)의 대역 — 견본 34 + 이름 두 줄(12 + 10) + 여백 ·
+ *  측정 «전»에 정한 값(초판 46 → 리뷰어 [L4]로 여기 등재 · 실측 55(dpr1)/57(첫 판 · box-sizing 전)). */
+export const CASE68_LIST_ROW_H = { MIN: 44, MAX: 56 }
