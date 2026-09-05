@@ -9,7 +9,7 @@ import {
   screenToDoc, isEraser, yellowActive, toggleFaceAt, facePreview, excludeCandidateAt, beginNavHold, endNavHold,
   viewScale, writeActive, writeFarPts, writeIdleNow, resetViewLens,
   holdTargetAt, gripDragStartAt, gripBase, applyMove, applyRotate, finishManip, manipLabelOf,
-  paintActive,
+  paintActive, paintEraseNow,
   type App, type GripGeom,
 } from './state'
 import { solveMove, solveAlong, planePointAt, yawOf } from '../core/grip'
@@ -85,8 +85,14 @@ export interface InputCallbacks {
   /** **칠 한 붓이 끝났다**(web2-45) — 문서 좌표 점렬. 면 배정·확정은 main이 부른다(#54). */
   /** 칠 한 붓 — press는 점별 필압(펜만 · raw와 같은 길이 · web2-50 정본 목록의 «압력») */
   onPaint: (pts: Pt[], press?: number[]) => void
-  /** 칠 도구의 **탭**(web2-64 §3 — raw bbox 대각 ≤ C.PAINT64_TAP_MAX_PX): 면 고르기 + 51의 Injector. 판정은 main·state(#54) */
+  /** **마우스**의 탭(web2-67 §1 — raw bbox 대각 ≤ C.PAINT67_MOUSE_TAP_MAX_PX): 면 고르기 + 51의
+   *  Injector(마우스는 장치가 하나라 두 뜻을 다 진다). ⚠ 펜은 여기 안 온다 — 펜 한 붓은 언제나 칠이다. */
   onPaintTap: (p: Pt) => void
+  /** **손가락 탭**(web2-67 §1 — 칠 도구에서만): 면을 고른다(또 탭 = 더해짐 · 빈 곳 = 풀림 — 54-2). */
+  onPaintFingerTap: (p: Pt) => void
+  /** **손가락 긴 누름**(web2-67 67-1): 51의 Injector — 짚은 칠 획의 속성을 지금 도구에 싣는다.
+   *  (44의 잡기·39의 손글씨 꾹 누름은 «펜»이라 이 자리가 비어 있었다 — 착수 전 확인 ②.) */
+  onPaintFingerHold: (p: Pt) => void
 }
 
 export function initInput(
@@ -131,6 +137,10 @@ export function initInput(
   const isTipErase = (e: PointerEvent) => e.pointerType === 'pen' && (e.buttons & TIP_ERASE_BIT) !== 0
   /** 지금 획을 지우개로 보내는가 — 끝이 켰거나(획 하나) 사이드바 도구가 지우개거나 */
   const erasingNow = () => app.tipErase || isEraser(app.tool)
+  /** web2-67 0-6 — **칠 도구에서의 뒷꼭지는 «칠 지우개»다**(선 지우개가 아니다): 그 한 붓은
+   *  보통 칠 경로(draft → onPaint)로 흐르고, 스탬핑(state.paintEraseNow)이 er=1을 찍는다.
+   *  아래 erasingNow 분기 셋(누름·이동·뗌)이 이 술어로 비켜 간다(#54 — 판정은 state 하나). */
+  const paintTipErase = () => paintActive(app) && app.tipErase
   /** 무엇을 지우는가 — 끝은 **연필 지우개**가 기본이다(DECISIONS 「제도 매체」: 가장 흔한
    *  동작이고 선따기가 그것이다. 잉크 지우개는 드물고 파괴적이라 명시적 선택으로 남긴다). */
   const eraseKind = () => (app.tipErase ? 'eraser-pencil' as const : undefined)
@@ -138,6 +148,17 @@ export function initInput(
   const touches = new Map<number, Pt>()
   let lastTouchMid: Pt | null = null
   let lastTouchDist = 0
+  // ── 손가락 탭(web2-67 §1 — 칠 도구에서만) ──────────────────────────────────────
+  // 판정은 «움직인 거리»다(#93 — 시간이 아니다): 문턱(C.PAINT67_FINGER_TAP_MAX_PX)을 넘기
+  // «전»에는 아무것도 안 하고, 넘으면 후보를 접고 궤도가 그 자리부터 시작한다(30-1 무변 —
+  // 문턱 아래 이동량만 버려진다). 떼면 탭 = 면 고르기 · 긴 누름 = Injector(67-1 — 44·39의
+  // 꾹 누름은 «펜»이라 이 자리가 비어 있었다).
+  let fingerTap: { id: number; sp: Pt; p: Pt; held: boolean; holdT: number } | null = null
+  function cancelFingerTap() {
+    if (!fingerTap) return
+    clearTimeout(fingerTap.holdT)
+    fingerTap = null
+  }
   let orbitBtn: { last: Pt; mode: 'orbit' | 'pan' } | null = null
   let faceDown: Pt | null = null
   /** 치수 대상 고르기 탭(web2-29) — 누른 자리. 뗄 때 «안 움직였으면» 고른다. */
@@ -482,7 +503,11 @@ export function initInput(
     // 「잘못 찍힌 점」 문(web2-13 3-b) — 탭 대역 위·STRAY 문 아래의 raw bbox는 획을
     // **애초에 안 만든다.** 탭(끝점 이동 ≤ TAP_MAX_PX)은 여기 안 걸리고 종전 경로
     // (resolveCommit — 소실점 찍기/잡음 폐기)로 그대로 간다. 버린 수는 진단 패널.
-    {
+    // ⚠ web2-67 §1 — **칠 도구는 이 문을 안 지난다**(펜 한 붓은 «길이와 무관»하게 칠이다 —
+    //   2~6px 펜 획이 여기서 조용히 사라지면 §1의 문면이 깨진다. 이 문은 작도의 지뢰(교차·
+    //   오스냅에 참여하는 안 보이는 선분)를 막는 것이고 칠은 그 지뢰가 아니다 — 면 위 잉크다).
+    //   반증 판(gestureSplitOff)에서는 옛 그대로 지난다(옛 세계의 충실한 재현 — 게이트 ⑦).
+    if (!paintActive(app) || app.gestureSplitOff) {
       const endDistPx = Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * viewScale(app)
       let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity
       for (const p of d.raw) {
@@ -501,19 +526,34 @@ export function initInput(
     // 실린다 — Feather의 그 도구). 45~50에서 탭은 잡음이었으므로 몸짓에 뜻을 하나만
     // 얹는 것이다(#77 ㉠ 무위반 — 옛 뜻이 없던 자리). 끌면 종전대로 한 붓이다.
     if (paintActive(app)) {
-      // web2-64 §3 — 탭 ↔ 짧은 획은 **움직인 거리**(raw bbox 대각 · 화면 px)로 가른다(#93 — 시간이 아니다). 끝점 거리가 아니라 bbox인 이유:
-      // 되돌아온 한 붓(끝점 거리 0)도 칠이다. 문턱 C.PAINT64_TAP_MAX_PX(6 — 펜 떨림 2 위 · 쓸모 있는 최소 자국 아래 · AS-C189).
+      // web2-67 §1 — **장치가 뜻을 가른다**(사람 판정 「그리려고 하는 건데 면이 선택되어버리는
+      // 문제」 · Feather의 그 구조): 펜 한 붓은 «언제나 칠»이다 — 길이와 무관, 거리 문턱이
+      // 없어졌다(64의 6px 판정은 펜에서 뺐다). 면 고르기는 손가락 탭(touch 경로)이 한다.
+      // **마우스만** 문턱이 남는다(장치가 하나라 두 뜻을 다 져야 한다 — 6 → 12 · #93 거리).
+      // 반증(D-3 · 게이트 ⑦): gestureSplitOff = 옛 판(펜·마우스 다 6px 탭 판정) — 켜면
+      // 짧은 펜 획이 도로 고르기가 된다(옛 충돌의 재현).
       let bx0 = Infinity, bx1 = -Infinity, by0 = Infinity, by1 = -Infinity
       for (const p of d.raw) {
         if (p.x < bx0) bx0 = p.x; if (p.x > bx1) bx1 = p.x
         if (p.y < by0) by0 = p.y; if (p.y > by1) by1 = p.y
       }
       const diagPx = d.raw.length >= 2 ? Math.hypot(bx1 - bx0, by1 - by0) * viewScale(app) : 0
-      if (diagPx <= C.PAINT64_TAP_MAX_PX) {
+      const tap = app.gestureSplitOff
+        ? diagPx <= 6                                       // 옛 판(64) — 반증 전용 값
+        : drawingType !== 'pen' && diagPx <= C.PAINT67_MOUSE_TAP_MAX_PX
+      if (tap) {
         cb.onPaintTap(d.start)
         return
       }
-      cb.onPaint(d.raw, d.press && d.press.length === d.raw.length ? d.press : undefined)
+      // **펜 점 찍기**(게이트 ①) — 움직임 없는 한 붓은 엔진의 도장 셈(거리 기반)이 0이라
+      // 자국이 안 남는다: 굵기 비율의 짧은 걸음으로 편다(C.PAINT67_DOT_FRAC · 문서 좌표로 환산).
+      let pts = d.raw
+      if (diagPx < 1 && !app.gestureSplitOff) {
+        const wpx = paintEraseNow(app) ? app.eraseSel.w : app.paintSel.w
+        const step = Math.max(C.PAINT67_DOT_MIN_PX, wpx * C.PAINT67_DOT_FRAC) / viewScale(app)
+        pts = [d.start, pt(d.start.x + step, d.start.y)]
+      }
+      cb.onPaint(pts, d.press && d.press.length === pts.length ? d.press : undefined)
       return
     }
     if (yellowActive(app)) {
@@ -596,11 +636,24 @@ export function initInput(
   // ── 포인터 이벤트 ────────────────────────────────────────────────────
   canvas.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'touch') {
-      if (penDown) return // 팜 리젝션
+      if (penDown) return // 팜 리젝션(26) — 그 배선 그대로: 펜이 닿아 있는 동안 손가락은 없다
       if (touches.size === 0 && tryCube(toScreen(e))) return
+      if (fingerTap) cancelFingerTap()   // 둘째 손가락 — 그 몸짓은 팬+줌이다(탭 후보를 접는다)
       touches.set(e.pointerId, toScreen(e))
       lastTouchMid = null
       lastTouchDist = 0
+      // 손가락 탭 후보(web2-67 §1) — 칠 도구에서만: 작도 중 손가락 탭은 종전대로 아무 일도
+      // 안 한다(게이트 ⑤). 문턱 전에는 잠잠하다 — 넘으면 궤도(move가 접는다) · 떼면 탭.
+      if (paintActive(app) && touches.size === 1 && !app.gestureSplitOff) {
+        const p = toPt(e)
+        fingerTap = {
+          id: e.pointerId, sp: toScreen(e), p, held: false,
+          // 긴 누름 = Injector(67-1) — 시계는 39·44의 그 값(WRITE_HOLD_MS 계열 · 새 숫자 ⛔)
+          holdT: window.setTimeout(() => {
+            if (fingerTap && touches.size === 1) { fingerTap.held = true; cb.onPaintFingerHold(fingerTap.p) }
+          }, app.writeHoldMs),
+        }
+      }
       level.grab()
       beginNavHold(app)   // 제스처 동안 감쇠 판정 동결(web2-14 3번)
       return
@@ -697,7 +750,7 @@ export function initInput(
     // 재기(web2-32 6번) — **탭 둘**이다(면과 같은 몸짓: 누를 때 아무것도 안 하고 뗄 때
     // 판정한다). 끌면 취소이므로 잘못 짚은 것을 뗌으로 무를 수 있다.
     if (app.tool === 'measure' && !app.tipErase) { measureDown = toPt(e); return }
-    if (erasingNow()) {
+    if (erasingNow() && !paintTipErase()) {
       beginErase(app)
       const opened = eraseAt(app, toPt(e), eraseKind())
       if (opened.length > 0) cb.onFacesOpened(opened)
@@ -717,6 +770,15 @@ export function initInput(
       if (penDown) return
       if (!touches.has(e.pointerId)) return
       touches.set(e.pointerId, toScreen(e))
+      // 손가락 탭 후보(web2-67 §1) — 문턱 안이면 잠잠(궤도 시작 ⛔ · lastTouchMid도 안
+      // 만진다) · 긴 누름이 이미 소진했으면 이 몸짓은 끝났다 · 문턱을 넘으면 후보를 접고
+      // 아래 궤도가 «이 자리부터» 시작한다(lastTouchMid가 null이라 이번 이동은 기준점만 선다).
+      if (fingerTap && fingerTap.id === e.pointerId) {
+        if (fingerTap.held) return
+        const sp = toScreen(e)
+        if (Math.hypot(sp.x - fingerTap.sp.x, sp.y - fingerTap.sp.y) <= C.PAINT67_FINGER_TAP_MAX_PX) return
+        cancelFingerTap()
+      }
       level.grab()
       const pts = [...touches.values()]
       if (pts.length === 1) {
@@ -753,7 +815,7 @@ export function initInput(
       moveHoldPress(toScreen(e))     // 움직였으면 그리기다 — 꾹 누름 시계를 끈다(web2-39)
       if (writeEntered) return       // 이 몸짓은 글씨 진입으로 소진됐다
       if (manipDrag) { dragManip(e); return }   // 잡기 끌기(web2-44) — 손이다
-      if (erasingNow()) {
+      if (erasingNow() && !paintTipErase()) {
         const opened = eraseAt(app, toPt(e), eraseKind())
         if (opened.length > 0) cb.onFacesOpened(opened)
         cb.onEraserMove(toPt(e))
@@ -827,6 +889,13 @@ export function initInput(
       return
     }
     if (e.pointerType === 'touch') {
+      // 손가락 탭(web2-67 §1) — 문턱 안에서 뗐고 긴 누름이 안 소진했으면 «탭»이다(면 고르기).
+      // pointercancel은 탭이 아니다(몸짓이 끊긴 것 — 조용히 무위).
+      if (fingerTap && fingerTap.id === e.pointerId) {
+        const ft = fingerTap
+        cancelFingerTap()
+        if (!ft.held && e.type === 'pointerup') cb.onPaintFingerTap(ft.p)
+      }
       touches.delete(e.pointerId)
       lastTouchMid = null
       lastTouchDist = 0
@@ -866,7 +935,7 @@ export function initInput(
     }
     if (drawingPointer === e.pointerId) {
       drawingPointer = null
-      if (erasingNow()) {
+      if (erasingNow() && !paintTipErase()) {
         endErase(app)
         if (app.tipErase) {
           app.tipErase = false        // 그 획 하나로 끝난다 — 도구는 처음부터 안 바꿨다
@@ -899,6 +968,9 @@ export function initInput(
         return
       }
       endDraft()
+      // web2-67 0-6 — 뒷꼭지 지우개는 그 한 붓으로 끝난다(칠 판 — endDraft «뒤»에 끈다:
+      // 확정(commitPaint)이 paintEraseNow로 이 값을 읽기 때문이다).
+      if (paintTipErase()) app.tipErase = false
     }
   }
   canvas.addEventListener('pointerup', release)

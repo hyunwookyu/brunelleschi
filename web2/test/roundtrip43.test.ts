@@ -153,6 +153,15 @@ export function fullDocPlus() {
     mat: { grade: 'HB' },
   })
   d.faces[0]!.mat = 'conc'
+  // 지우개 획(web2-67 0-6 — er=1 · 게이트 ②가 «이 줄 없이» 실제로 빨개졌다: 2026-09-05
+  // 실측 missing ['Stroke.er'] — 게이트 ⑤(저장 왕복)의 측정 몫이다. 지우개 획도 획이다 —
+  // 면·쪽·uv·굵기는 칠과 같고 색·불투명은 안 든다(빼기에 뜻이 없다 — stampPaintSel).
+  const ew = hand(43, pt(710, 505), pt(745, 515), 4)
+  d.strokes.push({
+    id: app.nextId++, a: ew[0]!, b: ew[ew.length - 1]!,
+    paint: { f: d.faces[0]!.id, s: 1, er: 1, uv: [0.2, 0.21, 0.5, 0.24, 0.7, 0.26], w: 0.03, br: 'ramon/Hard_Eraser' },
+    mat: { grade: 'HB' },
+  })
   // 단색 채움(web2-48 48-3) — `fill`이 1·2 둘을 다 밟게 두번째 면에 2를 준다.
   if (d.faces[1]) d.faces[1]!.fill = 2
   // 재료 표현(web2-49) — 같은 기계가 이 줄이 없을 때 실제로 빨개졌다(Face.rep — 이 회차

@@ -36,6 +36,11 @@ export const DEFAULT_BRUSH: Readonly<Record<Instr58, string>> = {
 export const defaultBrushOf = (tool: Instr58, grade?: string): string =>
   tool === 'pencil' ? pencilOfGrade(grade) : DEFAULT_BRUSH[tool]
 
+/** web2-67 0-6 — 칠 지우개의 브러시(경도 축 하나: 딱딱한/부드러운 · 마른 매체 기본 = 딱딱한).
+ *  새 개념이 아니다 — mypaint-brushes(CC0)의 eraser=1 프리셋 그대로다(값을 짓지 않는다 A-3):
+ *  hard = ramon/Hard_Eraser(hardness .9) · soft = ramon/Soft_Eraser(hardness .5 · opaque .56). */
+export const ERASER_BRUSH = { hard: 'ramon/Hard_Eraser', soft: 'ramon/Soft_Eraser' } as const
+
 export interface SeamMark {
   /** 대상 캔버스 px 점렬(2점 이상) */
   pts: Pt[]
@@ -56,6 +61,10 @@ export interface SeamMark {
   preset?: string
   /** web2-64 — 획의 불투명(0..1 · `paint.o`). 엔진의 불투명 배수에 곱한다. 없으면 1. */
   opacityK?: number
+  /** web2-67 0-6 — 지우개 자국(`paint.er`): 엔진이 eraser=1로 굽는다(덮임을 «빼는» 획 —
+   *  brushmodes Normal_and_Eraser). 브러시 id와 무관하게 이 표식이 정본이다(모르는 br의
+   *  폴백이 조용히 «칠»로 떨어지지 않게). 초안 세션의 얼린 결정(head)에도 든다(#111). */
+  erase?: 1
   /** web2-62 — 엔진 설정 기준값 덮개(팔·실험실 전용 — 키는 엔진의 설정 이름). 제품 경로는 안 넣는다. */
   over?: Record<string, number>
   /** web2-63 — 팁 이름('none' = 팁 없음 · 절차 타원). 팔·고르개 견본의 통로 — 제품 굽기는 안 넣는다(슬롯의 팁은 기기 조정 tune). */

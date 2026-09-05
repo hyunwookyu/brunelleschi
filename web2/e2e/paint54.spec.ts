@@ -98,8 +98,10 @@ async function room3(page: Page) {
  *  전부 «이후에 더해진 획»만 세므로 안 섞인다. */
 async function probeFaceIds(page: Page): Promise<{ floor: number; wallA: number; wallB: number }> {
   await page.click('#btn-paint')
+  // ⚠ web2-67 §1 자 판갈이 — 마우스 탭 문턱이 6 → 12(C.PAINT67_MOUSE_TAP_MAX_PX)가 되면서
+  // 옛 표본 획(+6,+2 — 대각 6.3px)이 «탭»으로 읽힌다. 표본을 문턱 위(+18,+6 — 대각 19px)로.
   const probe = async (x: number, y: number) => {
-    await drawLine(page, x, y, x + 6, y + 2)
+    await drawLine(page, x, y, x + 18, y + 6)
     return page.evaluate(() => {
       const ss = (window as any).__b2.app.doc.strokes
       const last = ss[ss.length - 1]

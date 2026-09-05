@@ -537,6 +537,21 @@ export const paintAccumOffForTest = (): boolean => paintAccumOff
 let paintPartialOff = false
 export function setPaintPartialOffForTest(v: boolean): void { paintPartialOff = v }
 
+// ── web2-67 §2 — 재료 면의 «줌 뒤 낡은 그림»(65가 남긴 회귀) ─────────────────────────
+// 원인(D-1 — 지시의 「재료·계열이 캐시 키에 안 물렸다」는 확인 결과 절반만 맞았다: 재료(rep
+// m:seed:mm)·계열(famBits)·해칭은 **이미 열쇠에 있다** — paint65 ⑤ 트리거 일곱이 초록인
+// 이유다. 빠진 것은 **무늬 선 굵기(rep.texelPerPx = 단계 ÷ 화면 크기)** 하나다: 줌의
+// 연속값이라 «넣으면 매 프레임 재굽기»로 일부러 뺐고(65 주석 · DEFERRED 두 행), 그 대가가
+// «단계 안 줌에서 무늬 선이 화면 굵기를 잃는 낡은 그림»이었다 — 65 전에는 상관없는 편집
+// (docVersion 폐기)이 저절로 고쳤고 65가 열쇠를 좁히며 지속이 «영구»가 됐다.
+// 수리: 연속값 그대로가 아니라 **반옥타브 양자화**(log2 × C.REP67_TEXEL_STEPS_PER_OCT 반올림)
+// 값을 열쇠에 넣는다 — 줌이 그 계단을 넘을 때만 다시 굽는다(한 옥타브에 두 번 — 단계(2^n)
+// 재굽기 사이에 하나 더 낄 뿐, 매 프레임이 아니다). 무늬 있는 재료(isRepId)에만 건다(단색은
+// 선이 없어 texelPerPx가 그림에 안 실린다 — 헛 재굽기 ⛔).
+// 반증(D-3)이자 재현(D-2): 이 스위치를 켜면 열쇠에서 빠져 옛 낡은 그림이 돌아온다.
+let repTexelSigOff = false
+export function setRepTexelSigOffForTest(v: boolean): void { repTexelSigOff = v }
+
 // ── web2-66 §1 ㉠ — 초안 «얼리기»의 장부와 반증 스위치 ─────────────────────────────────
 /** 캔버스별 초안 장부 — 세션이 층에 «완결»로 담은 초안 획들(차례)과 지금 열린 획의 id.
  *  커밋 인계(gatePaintTex)가 이 장부로 «이미 층에 있는 획»을 다시 안 그린다. */
@@ -581,7 +596,8 @@ function sigOfPaintStroke(s: Stroke): string {
   let h = 0x811c9dc5 | 0
   for (let i = 0; i < uv.length; i++) h = sigHashNum(h, uv[i]!)
   if (p.press) for (let i = 0; i < p.press.length; i++) h = sigHashNum(h, p.press[i]!)
-  return `${s.id}.${h}.${uv.length}.${p.press?.length ?? -1}.${p.w ?? ''}.${p.c ?? ''}.${p.o ?? ''}.${p.br ?? ''}.${p.i ?? ''}.${s.mat?.grade ?? ''}`
+  // web2-67 0-6: er(지우개 표식)도 서명에 든다 — 굽기에 드는 새 입력은 서명에도 든다(#110 ㉡)
+  return `${s.id}.${h}.${uv.length}.${p.press?.length ?? -1}.${p.w ?? ''}.${p.c ?? ''}.${p.o ?? ''}.${p.br ?? ''}.${p.i ?? ''}.${s.mat?.grade ?? ''}.${p.er ?? ''}`
 }
 /** a가 b의 «앞자리 그대로»인가(누적의 전제 — 앞을 고쳤으면 전량이다) */
 function sigsArePrefix(a: string[], b: string[]): boolean {
@@ -862,9 +878,13 @@ function gatePaintTex(r: R3D, app: App) {
     // ⚠ rep의 texelPerPx·pxPerMm은 «줌의 연속값»이라 안 넣는다 — 넣으면 매 프레임 재굽기다.
     //   그 둘의 실제 효과(계열 보임)는 famBits가 들고, 굵기 몫은 종전대로 단계에 붙는다(49 규약).
     const hs = hatch && face ? hatchSpecOf(face) : null
+    // web2-67 §2 — 무늬 선 굵기의 «계단»(위 repTexelSigOff 주석이 정본): 무늬 있는 재료만.
+    const texelQ = !repTexelSigOff && rep && isRepId(rep.m)
+      ? Math.round(Math.log2(Math.max(1e-9, rep.texelPerPx)) * C.REP67_TEXEL_STEPS_PER_OCT) : null
     const bakeSig = `${lv}|${famBits}|`
       + (hatch && hs && face ? `${hs.angleDeg}:${hs.cross ? 1 : 0}:${hatchHexOf(face)}:${hatch.spacingWorld.toFixed(9)}` : '')
       + '|' + (e.side !== 'e' && rep ? `${rep.m}:${rep.seed}:${rep.mm}` : '')
+      + (texelQ !== null ? `|tq${texelQ}` : '')
       + '|' + boxSig(e.box)
     if (bakeSig !== e.bakeSig || e.docKey !== paintKey) {
       const strokes = e.side === 'e' ? borderStrokesOf(app, e.faceId)
@@ -1250,6 +1270,19 @@ function applyPaintDraft(r: R3D, app: App) {
 }
 /** 지금 프레임의 미리보기가 상한 포화 텍스처에 얹혔는가 — 알림(main)의 판정자 */
 export const paintDraftClamped = (): boolean => draftClampedNow
+
+/** web2-67 0-1 — 상한(FACETEX_MAX_PX)에 걸린 «보이는» 칠 텍스처가 있는가. 한 붓마다 뜨던
+ *  토스트를 대신하는 **패널 구석 표식**의 술어(사람 판정 「걸리면 자꾸 멈춘다」 — 멈추게 한
+ *  것은 상한이 아니라 알림의 «형태»였다). 판정은 gatePaintTex가 남긴 userData.gate 그대로
+ *  읽는다(#54 — 두 벌 계산 ⛔). 걸려 있는 동안 켜지고 안 걸리면 꺼진다 — 표시는 main. */
+export function paintClampedVisible(): boolean {
+  for (const e of paintTexes.values()) {
+    if (!e.mesh.visible) continue
+    const gate = e.mesh.userData.gate as { clamped?: boolean } | undefined
+    if (gate?.clamped) return true
+  }
+  return false
+}
 /** 진단·팔 — 미리보기 상태(사본을 든 항목 수 · 이번 프레임에 덧그린 획 수 · 포화) */
 export function paintDraftStats(): { withBase: number; applied: number; clamped: boolean; baseBytes: number } {
   let withBase = 0, baseBytes = 0

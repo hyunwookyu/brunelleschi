@@ -17,7 +17,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintDraftClamped, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -515,9 +515,11 @@ inputApi = initInput(ink, app, {
   // ── 칠 도구의 **탭**(web2-64 §3 — 사람: 「면은 탭으로 고르면 된다」) ──────────────────
   // 탭 하나에 뜻이 둘 얹힌다(#77 ㉠의 자리): ① 51의 Injector(짚은 칠 획의 속성이 지금 브러시로) ② 그 자리의 **면이 골라진다**
   // (54-2의 faceSel — 탭으로 더한다 · 빈 곳 탭이면 풀린다). 둘이 «같은 면»을 가리키므로 옛 뜻이 죽지 않는다 — 짚은 획은 그 면 위에 있다.
-  // 판정은 state.tapSelectFace 하나(#54) · 탭↔짧은 획은 거리(C.PAINT64_TAP_MAX_PX · #93)로 input이 가른다.
+  // 판정은 state.tapSelectFace 하나(#54) · 탭↔짧은 획은 거리(C.PAINT67_MOUSE_TAP_MAX_PX · #93)로 input이 가른다.
+  // ⚠ web2-67 §1 — 여기는 이제 **마우스만** 온다(펜 한 붓은 언제나 칠 · 손가락 탭은 onPaintFingerTap).
   onPaintTap(p) {
     const inj = injectPaintAt(app, p)
+    if (inj) app.paintErase = false   // web2-67 0-6 — 속성을 집었다 = 칠할 뜻(지우개를 놓는다)
     const r = tapSelectFace(app, p)
     if (inj) syncPainttray()
     const injTxt = inj ? ` · ${SLOT_NAME[inj.i]} ${brushShort(app.paintSel.br)} ${inj.hex} ${inj.w.toFixed(1)}px를 실었다` : ''
@@ -526,6 +528,25 @@ inputApi = initInput(ink, app, {
     else if (inj) status(`짚은 획의 속성을 실었다${injTxt}`)
     syncPainttray()
     invalidate()
+  },
+  // ── 손가락 탭(web2-67 §1) — 면 고르기 «만»이다(Injector는 긴 누름으로 갔다 · 67-1):
+  //    펜 한 붓이 언제나 칠이 되면서, 고르는 몸짓은 장치(손가락)가 든다. 판정은 state 하나(#54).
+  onPaintFingerTap(p) {
+    const r = tapSelectFace(app, p)
+    if (r.kind === 'face') status(`면 ${r.n}장 고름 — 칠은 고른 면 안에서만 · 빈 곳을 탭하면 풀린다`)
+    else if (r.kind === 'clear') status(`면 고름을 풀었다(${r.n}장)`)
+    syncPainttray()
+    invalidate()
+  },
+  // ── 손가락 긴 누름(web2-67 67-1) — 51의 Injector가 옮겨 온 자리(옛 자리는 6px 탭이었다) ──
+  onPaintFingerHold(p) {
+    const inj = injectPaintAt(app, p)
+    if (inj) {
+      app.paintErase = false
+      syncPainttray()
+      status(`짚은 획의 속성을 실었다 — ${SLOT_NAME[inj.i]} ${brushShort(app.paintSel.br)} ${inj.hex} ${inj.w.toFixed(1)}px`)
+      invalidate()
+    }
   },
   onPaint(pts, press) {
     const r = commitPaint(app, pts, press)
@@ -2150,13 +2171,25 @@ const brushShort = brushLabel
 
 // ── 색상 휠(48-7) — 기하·색 변환은 `core/colorwheel.ts`가 든다(이 파일은 DOM만) ──
 // 64: 휠은 **색 원을 누르면 얹히는 통**(#paint-wheelbox)에 산다 — 한 단계.
-const WHEEL: WheelGeom = { cx: 68, cy: 68, rOut: 64, rIn: 48 }
+// web2-67 0-3·0-4 — 크기 136 → **244px**(사람 판정 「연속된 스펙트럼이 아니라 점군이라
+// 선택폭이 적다 · 화면을 가린다」): 패널 폭(260 − 패딩 12)을 꽉 채우는 값이다. 실측:
+// 고리 두께 32px · 채도·명도 판 한 변 124px(종전 67px — 손가락 표적 대역 위). 자리는
+// 옆 펼침이 아니라 **패널 안 세로**(0-4)라 커져도 캔버스를 더 가리지 않는다(폭 260 불변).
+const WHEEL: WheelGeom = { cx: 122, cy: 122, rOut: 120, rIn: 88 }
 const wheelCv = document.createElement('canvas')
 const wheelHex = document.createElement('span')
 
+// web2-67 0-3 반증(D-3) — 옛 «2px 점군» 판을 되살린다(켜면 서로 다른 색 수가 대략
+// (변/2)² 대역으로 떨어져야 한다 — 그래야 연속 게이트가 실제로 무언가를 잰다).
+let wheelStepForTest = 0
+function setWheelStepForTest(v: number) { wheelStepForTest = v; drawWheel(wheelHsv()) }
+
 /** 휠을 굽는다 — 고리(색상)와 안쪽 판(채도·명도). 판은 **지금 색상**의 함수라 색상이
  *  바뀔 때마다 다시 굽는다(고리는 안 바뀌지만 한 번에 그리는 편이 단순하다 — A-3).
- *  ⚠ `Math.random` ⛔ — 여기 난수가 아예 없다(격자 주사). */
+ *  ⚠ `Math.random` ⛔ — 여기 난수가 아예 없다(그라디언트·호).
+ *  web2-67 0-3 — 판은 **그라디언트 둘 겹치기**다(점군 ⛔): 바탕 = 순색(h·s1·v1) ·
+ *  가로 = 흰 → 투명(왼쪽이 s0) · 세로 = 투명 → 검정(아래가 v0). 픽셀 (x,y)의 값이
+ *  정확히 HSV(h, x/w, 1−y/h)다 — svAt·svPoint의 사상과 같은 식(#54). */
 function drawWheel(hsv: Hsv) {
   const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1))
   const S = WHEEL.rOut * 2 + 4
@@ -2176,12 +2209,27 @@ function drawWheel(hsv: Hsv) {
     g.closePath(); g.fill()
   }
   const rc = svRect(WHEEL)
-  const step = 2
-  for (let y = 0; y < rc.h; y += step) {
-    for (let x = 0; x < rc.w; x += step) {
-      g.fillStyle = hexOfHsv({ h: hsv.h, s: x / rc.w, v: 1 - y / rc.h })
-      g.fillRect(rc.x + x, rc.y + y, step, step)
+  if (wheelStepForTest > 0) {
+    const step = wheelStepForTest
+    for (let y = 0; y < rc.h; y += step) {
+      for (let x = 0; x < rc.w; x += step) {
+        g.fillStyle = hexOfHsv({ h: hsv.h, s: x / rc.w, v: 1 - y / rc.h })
+        g.fillRect(rc.x + x, rc.y + y, step, step)
+      }
     }
+  } else {
+    g.fillStyle = hexOfHsv({ h: hsv.h, s: 1, v: 1 })
+    g.fillRect(rc.x, rc.y, rc.w, rc.h)
+    const gx = g.createLinearGradient(rc.x, 0, rc.x + rc.w, 0)
+    gx.addColorStop(0, 'rgba(255,255,255,1)')
+    gx.addColorStop(1, 'rgba(255,255,255,0)')
+    g.fillStyle = gx
+    g.fillRect(rc.x, rc.y, rc.w, rc.h)
+    const gy = g.createLinearGradient(0, rc.y, 0, rc.y + rc.h)
+    gy.addColorStop(0, 'rgba(0,0,0,0)')
+    gy.addColorStop(1, 'rgba(0,0,0,1)')
+    g.fillStyle = gy
+    g.fillRect(rc.x, rc.y, rc.w, rc.h)
   }
   const hex = hexOfHsv(hsv)
   const ring = huePoint(WHEEL, hsv.h)
@@ -2213,6 +2261,7 @@ const pushRecent = (hex: string): void => {
 
 function setPaintHex(hex: string, why: string) {
   app.paintSel.hex = hex
+  app.paintErase = false           // web2-67 0-6 — 색을 골랐다 = 칠할 뜻이다(지우개를 놓는다)
   // 64: 잉크펜도 색을 쓴다 — 슬롯을 안 바꾼다(48의 «색을 골랐다 = 마커» 규약은 걷었다)
   if (app.tool !== 'paint') setTool('paint')
   pushRecent(hex)
@@ -2258,6 +2307,8 @@ const writeFavs = (fs: Fav[]): void => { try { localStorage.setItem(FAV_KEY, JSO
 let syncPaintSizeRow: () => void = () => {}
 let syncPaintPanel: () => void = () => {}
 let closePaintWheel: () => void = () => {}
+// web2-67 0-1 — 상한 표식(옛 «한 붓마다 토스트»의 자리): frame이 켜고 끈다.
+let clampDotEl: HTMLElement | null = null
 
 {
   // ── ① 지금 브러시 — 견본 + 이름. 누르면 «브러시» 목록(한 단계 · brushpick) ──────────────
@@ -2296,20 +2347,24 @@ let closePaintWheel: () => void = () => {}
   const sizeVal = document.createElement('span')
   sizeVal.id = 'paint-size-val'
   sizeVal.style.minWidth = '38px'
-  const paintMaxW = (): number => C.PAINT58_MAX_W[app.paintSel.i]
+  // web2-67 0-6 — 크기 줄은 «지금 든 것»의 크기다: 지우개가 켜져 있으면 지우개(최대 = 붓과
+  // 같다 — 지시 문면 · 58의 규칙 그대로), 아니면 지금 슬롯. 같은 슬라이더 하나다(#54).
+  const paintMaxW = (): number => (app.paintErase ? C.PAINT58_MAX_W.brush : C.PAINT58_MAX_W[app.paintSel.i])
+  const sizeNow = (): number => (app.paintErase ? app.eraseSel.w : app.paintSel.w)
+  const setSizeNow = (v: number): void => { if (app.paintErase) app.eraseSel.w = v; else app.paintSel.w = v }
   const syncSizeRow = syncPaintSizeRow = () => {
     const max = paintMaxW()
     sizeRange.max = String(max)
-    if (app.paintSel.w > max) app.paintSel.w = max
-    if (Number(sizeRange.value) !== app.paintSel.w) sizeRange.value = String(app.paintSel.w)
-    sizeVal.textContent = `${app.paintSel.w}px`
+    if (sizeNow() > max) setSizeNow(max)
+    if (Number(sizeRange.value) !== sizeNow()) sizeRange.value = String(sizeNow())
+    sizeVal.textContent = `${sizeNow()}px`
   }
   sizeRange.addEventListener('input', () => {
-    app.paintSel.w = Math.min(paintMaxW(), Math.max(C.PAINT58_MIN_W, Number(sizeRange.value) || C.PAINT58_MIN_W))
+    setSizeNow(Math.min(paintMaxW(), Math.max(C.PAINT58_MIN_W, Number(sizeRange.value) || C.PAINT58_MIN_W)))
     if (app.tool !== 'paint') setTool('paint')
     syncPaintPanel()                                     // 66-3 — 같은 브러시의 칸이 크기를 따라 기억한다(adopt)
   })
-  sizeRange.addEventListener('change', () => status(`자국 굵기 ${app.paintSel.w}px`))
+  sizeRange.addEventListener('change', () => status(`${app.paintErase ? '지우개' : '자국'} 굵기 ${sizeNow()}px`))
   sizeWrap.append(sizeLbl, sizeRange, sizeVal)
   painttrayEl.append(sizeWrap)
   syncSizeRow()
@@ -2370,17 +2425,18 @@ let closePaintWheel: () => void = () => {}
   colorRow.append(colorBtn, recentWrap)
   painttrayEl.append(colorRow)
   // 색상 휠 통(등록 — R7 · 한 단계)
+  // web2-67 0-4 — 옆 펼침이 아니라 **패널 안 세로**로 열린다(사람 판정 「옆으로 펼쳐져서
+  // 화면을 가리는 느낌」): 색 원 줄 바로 아래 행이다. 열려도 캔버스를 가리는 폭은 패널
+  // 폭(260) 그대로다. 툴팁 없음(사람 판정 「툴팁 필요없다」 — paint48 ⑦ 목록에서도 뺐다).
   const wheelBox = document.createElement('div')
   wheelBox.id = 'paint-wheelbox'
   wheelBox.className = 'rrow prow'
   wheelBox.hidden = true
   wheelCv.id = 'paint-wheel-cv'
-  wheelCv.setAttribute('role', 'button')     // 툴팁 대상 선택자에 든다(28-2 · 48-10)
-  wheelCv.title = '색상 휠 — 바깥 고리가 색상, 안쪽 판이 채도·명도'
   wheelHex.id = 'paint-hex'
   wheelHex.className = 'prow-name'
   wheelBox.append(wheelCv, wheelHex)
-  document.body.append(wheelBox)
+  painttrayEl.append(wheelBox)
   let wheelOpen = false
   const setWheelOpen = (v: boolean) => {
     wheelOpen = v
@@ -2388,28 +2444,29 @@ let closePaintWheel: () => void = () => {}
     if (v) {
       drawWheel(wheelHsv()); wheelHex.textContent = app.paintSel.hex
       closeOtherBoxes('#paint-wheelbox')
-      // 자리 — 색 원의 왼쪽(패널 곁 · R5 새 모서리 없음)
-      const r = colorBtn.getBoundingClientRect()
-      // 65 §2 ① — 패널이 왼쪽 가장자리이므로 휠은 **패널의 오른쪽**에 얹힌다(밖으로 안 나간다)
-      const pr = painttrayEl.getBoundingClientRect()
-      wheelBox.style.right = 'auto'
-      wheelBox.style.left = `${Math.round(pr.right + C.FLYOUT_GAP_PX)}px`
-      wheelBox.style.top = `${Math.round(Math.max(C.FLYOUT_EDGE_PX, Math.min(r.top, window.innerHeight - 150)))}px`
     }
+    placeLeftPanel(painttrayEl)                 // 높이가 바뀌었다 — 세로 가운데를 다시 잡는다
   }
   closePaintWheel = () => setWheelOpen(false)
   colorBtn.addEventListener('click', () => setWheelOpen(!wheelOpen))
   registerBox({ id: '#paint-wheelbox', isOpen: () => wheelOpen, close: () => setWheelOpen(false), zone: () => [wheelBox, colorBtn] })
+  // web2-67 0-2 반증(D-3) — 잠금 끔: 이동마다 partAt을 다시 계산한다(옛 거동 — 사각 코너에서
+  // 링으로 넘어가면 색상이 튄다). 제품 경로는 항상 잠금이다.
   const wheelPick = (e: PointerEvent) => {
     const r = wheelCv.getBoundingClientRect()
     const x = e.clientX - r.left, y = e.clientY - r.top
-    const part = partAt(WHEEL, x, y)
+    // web2-67 0-2 — **누른 영역을 떼기 전까지 잠근다**(사람 판정 「코너를 터치하려 하면
+    // 자꾸 링으로 터치가 넘어가 색이 바뀐다」): 끌리는 동안의 판정은 누를 때의 영역
+    // (wheelDrag)이고 좌표는 그 영역 안으로 접힌다 — 사각 밖은 가장자리 값(svAt이 접는다) ·
+    // 링 밖은 각도 값(hueAt은 어디서나 각도다).
+    const part = wheelDrag && !wheelLockOff ? wheelDrag : partAt(WHEEL, x, y)
     if (!part) return
     const cur = wheelHsv()
     const next: Hsv = part === 'ring'
       ? { ...cur, h: hueAt(WHEEL, x, y), s: cur.s || 1, v: cur.v || 1 }
       : { h: cur.h, ...svAt(WHEEL, x, y) }
     app.paintSel.hex = hexOfHsv(next)
+    app.paintErase = false         // web2-67 0-6 — 색을 골랐다 = 칠할 뜻(setPaintHex와 같은 규약)
     if (app.tool !== 'paint') setTool('paint')
     drawWheel(next); wheelHex.textContent = app.paintSel.hex
     syncPaintPanel()
@@ -2484,6 +2541,42 @@ let closePaintWheel: () => void = () => {}
   }
   painttrayEl.append(favWrap)
 
+  // ── ⑤′ **지우개 고정 칸**(web2-67 0-6) — 즐겨찾기 옆: 즐겨찾기가 아니라 «언제나 있는 것»이다
+  //    (선 그리기의 지우개 둘이 트레이 밖 고정인 것과 같은 규약). 지우개도 «펜»이다 — 손가락은
+  //    고르기(§1)라 여기 안 닿는다. ⚠ 68(필통)이 이 칸의 «자리»를 다시 볼 수 있다(지시 문면).
+  {
+    const row = document.createElement('div')
+    row.id = 'paint-erase-row'
+    row.className = 'rrow prow'
+    const b = document.createElement('button')
+    b.id = 'paint-erase'
+    b.className = 'rrow'
+    b.dataset.act = 'state'
+    b.title = '지우개 — 펜 한 붓이 칠의 덮임을 지운다 · 다시 누르면 붓으로 · 스타일러스 뒷꼭지도 지우개다'
+    b.innerHTML = '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 25 L5.5 17.5 L17.5 5.5 L25 13 Z"/><path d="M9.2 21.2 L13.7 25.7"/><path d="M5 27 h13" stroke-width="1.1"/></svg><span id="paint-erase-lbl">지우개</span>'
+    b.addEventListener('click', () => {
+      app.paintErase = !app.paintErase
+      if (app.tool !== 'paint') setTool('paint')
+      syncPainttray()
+      status(app.paintErase
+        ? `지우개 — ${app.eraseSel.soft ? '부드러운' : '딱딱한'} · ${app.eraseSel.w}px · 다시 누르면 붓으로`
+        : '붓으로 돌아왔다')
+    })
+    const soft = document.createElement('button')
+    soft.id = 'paint-erase-soft'
+    soft.className = 'rrow'
+    soft.dataset.act = 'state'
+    soft.title = '지우개의 부드러움 — 경도 축 하나: 딱딱한(기본 — 마른 매체) / 부드러운'
+    soft.addEventListener('click', () => {
+      app.eraseSel.soft = !app.eraseSel.soft
+      if (!app.paintErase) { app.paintErase = true; if (app.tool !== 'paint') setTool('paint') }
+      syncPainttray()
+      status(`지우개 — ${app.eraseSel.soft ? '부드러운' : '딱딱한'}`)
+    })
+    row.append(b, soft)
+    painttrayEl.append(row)
+  }
+
   // ── ⑥ **정면**(web2-54 54-3) — 손통 front와 같은 배선(frontFlyTarget — #54). 왕복이다. ──
   {
     const b = document.createElement('button')
@@ -2499,6 +2592,17 @@ let closePaintWheel: () => void = () => {}
       syncPainttray()
     })
     painttrayEl.append(b)
+  }
+
+  // ── 상한 표식(web2-67 0-1) — 패널 구석의 작은 점. 걸려 있는 동안만 켜진다(frame이 켜고
+  //    끈다 — 술어는 render3d.paintClampedVisible 하나 #54). 설명 한 줄은 호버(title)다.
+  {
+    const dot = document.createElement('div')
+    dot.id = 'paint-clamp-dot'
+    dot.hidden = true
+    dot.title = `칠 해상도 상한(${C.FACETEX_MAX_PX}px)에 걸린 면이 있다 — 그 면의 칠은 화면보다 거칠게 굽힌다`
+    painttrayEl.append(dot)
+    clampDotEl = dot
   }
 
   // ── 동기화 — 패널의 모든 값은 paintSel(정본)에서 온다(#54) ─────────────────────────
@@ -2552,10 +2656,22 @@ let closePaintWheel: () => void = () => {}
       b.title = `즐겨찾기 ${k + 1} — ${SLOT_NAME[f.i]} · ${brushLabel(f.br)}(원 이름 ${f.br}). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)`
       b.classList.toggle('on', f.i === ps.i && f.br === ps.br)
     })
+    // web2-67 0-6 — 지우개 칸의 상태(켜짐 · 경도 이름). 값의 출처는 app 하나다(#54).
+    {
+      const eb = document.getElementById('paint-erase')
+      const sb = document.getElementById('paint-erase-soft')
+      if (eb) eb.classList.toggle('on', app.paintErase)
+      if (sb) {
+        sb.textContent = app.eraseSel.soft ? '부드러운' : '딱딱한'
+        sb.classList.toggle('on', app.paintErase && app.eraseSel.soft)
+      }
+    }
     if (wheelOpen) { drawWheel(wheelHsv()); wheelHex.textContent = ps.hex }
   }
 }
 let wheelDrag: WheelPart = null
+/** web2-67 0-2 반증(D-3 · e2e 전용) — 참이면 잠금 없이 이동마다 partAt(옛 거동) */
+let wheelLockOff = false
 function syncPainttray() {
   // 정면 줄(54-3) — **몇 장이 골라졌는지 화면이 말한다**(54-2 · R6). 툴팁은 쓸 수 있는
   // 상태에서도 뜬다(#96 — «못 쓸 때만 설명»은 뒤집힌 거동이다).
@@ -2876,7 +2992,6 @@ function frameCostQ() {
   return { n: frameCosts.length, r3: q('r3'), bs: q('bs'), d2: q('d2'), total: q('total'), totalMax: Math.max(...totals) }
 }
 
-let clampNoticed = false
 let paintDraftPerturb = false
 function frame() {
   autolevel.tick()   // 접힐 때가 됐으면 여기서 포즈가 움직인다(setPose가 다시 그리게 한다)
@@ -2907,14 +3022,10 @@ function frame() {
           w: widthOfMat({ grade: g, w: app.tool === 'pen' && app.nib !== C.NIB_PX ? app.nib : undefined }) }
       : null)
     render3d(r3d, app)
-    // 상한 포화 알림(web2-59 59-1 — 「상한에 걸리면 그 사실이 보여야 한다 · 조용히 뭉개지
-    // 마라」 43-1의 자리): 그리는 중 미리보기가 포화 텍스처에 얹히면 한 붓에 한 번 한 줄.
-    if (app.paintDraft && paintDraftClamped()) {
-      if (!clampNoticed) {
-        clampNoticed = true
-        notify(`칠 해상도 상한(${C.FACETEX_MAX_PX}px)에 걸렸다 — 이 면의 칠은 화면보다 거칠게 굽힌다. 미리보기가 그 거칠기 그대로다`)
-      }
-    } else if (!app.paintDraft) clampNoticed = false
+    // 상한 포화 «표식»(web2-67 0-1 — 59-1의 토스트를 갈았다: 사람 판정 「이거 걸리면 자꾸
+    // 멈추는데」 — 뜻(조용히 뭉개지 마라 · 43-1)은 그대로, «형태»가 토스트 → 패널 구석의
+    // 작은 점이다. 걸려 있는 동안 켜지고 안 걸리면 꺼진다 · 한 줄 설명은 호버(title)에.
+    if (clampDotEl) clampDotEl.hidden = !(painttrayOpen && paintClampedVisible())
     const fc1 = performance.now()
     // 캐시 키(문서·포즈·뷰·렌더러)가 갈렸을 때만 전량을 그린다. draft가 있으면(web2-12 2번)
     // draft 전용 모드 — 확정 획은 스냅샷 겹이 들고 #brushc는 진행 중인 획 하나만 그린다.
@@ -2997,6 +3108,7 @@ function pickBrush(i: Instr58, name: string): void {
       if (f.o !== undefined) app.paintSel.o = Math.min(1, Math.max(0.05, f.o))
     }
   }
+  app.paintErase = false           // web2-67 0-6 — 붓을 골랐다 = 지우개를 놓는다(고정 칸이 다시 켠다)
   paintRenderer()?.setBrush?.(i, name)
   persistTune()
   syncPainttray()
@@ -3727,6 +3839,18 @@ const diag = {
   setPaintTexBudgetForTest: (bytes: number) => { setPaintTexBudgetForTest(bytes); invalidate() },
   /** web2-65 ① 반증 — 누적 얹기의 «바탕 되깔기»를 끈다: 켜면 중심 게이트(픽셀 항등)가 «빨개져야» 한다 */
   setPaintAppendBreakForTest: (v: boolean) => { setPaintAppendBreakForTest(v); rebakePaintTexForTest(); invalidate() },
+  /** web2-67 0-6 — 지우개 상태(팔이 화면과 같은 값을 읽는다 #88) */
+  paintEraseForTest: () => ({ on: app.paintErase, w: app.eraseSel.w, soft: app.eraseSel.soft, tipErase: app.tipErase }),
+  /** web2-67 §1 게이트 ⑦ 반증 — 펜/손가락 판별 끔(옛 판: 펜도 6px 탭 · 손가락 탭 무위) */
+  setGestureSplitOffForTest: (v: boolean) => { app.gestureSplitOff = v },
+  /** web2-67 §2 반증(이자 D-2 재현) — 무늬 선 굵기 계단을 열쇠에서 뺀다(옛 낡은 그림이 돌아온다) */
+  setRepTexelSigOffForTest: (v: boolean) => { setRepTexelSigOffForTest(v); invalidate() },
+  /** web2-67 0-2 반증 — 컬러피커 잠금 끔(이동마다 partAt — 옛 거동: 코너에서 링으로 넘어간다) */
+  setWheelLockOffForTest: (v: boolean) => { wheelLockOff = v },
+  /** web2-67 0-3 반증 — 옛 «점군» 판(step px 격자)으로 다시 굽는다 · 0 = 제품(그라디언트) */
+  setWheelStepForTest: (v: number) => { setWheelStepForTest(v) },
+  /** web2-67 0-3·0-4 — 휠 기하(값): 크기·고리 두께·판 한 변. 팔이 화면과 같은 값을 읽는다(#88) */
+  wheelGeom67: () => ({ ...WHEEL, S: WHEEL.rOut * 2 + 4, ringPx: WHEEL.rOut - WHEEL.rIn, sv: svRect(WHEEL) }),
   paint50Constants: () => ({ FACETEX_MIN_PX: C.FACETEX_MIN_PX, FACETEX_MAX_PX: C.FACETEX_MAX_PX,
     PAINT_MARKER_ALPHA: C.PAINT_MARKER_ALPHA, PAINT_CP_ALPHA: C.PAINT_CP_ALPHA,
     PAINT_W_FALLBACK_UNITS: C.PAINT_W_FALLBACK_UNITS,
@@ -3742,7 +3866,9 @@ const diag = {
     PAINT59_PREVIEW_DIFF_MAX: C.PAINT59_PREVIEW_DIFF_MAX, PAINT59_CROSS_TOL: C.PAINT59_CROSS_TOL, PAINT59_DRAFT_FRAME_EXTRA_MS: C.PAINT59_DRAFT_FRAME_EXTRA_MS,
     PAINT61_END_TOL: C.PAINT61_END_TOL, PAINT61_PAPER_CORR_MIN: C.PAINT61_PAPER_CORR_MIN,
     PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS: C.PAINT61_DRAFT_FRAME_EXTRA_DPR2_MS, PAINT61_SIZE_TOL: C.PAINT61_SIZE_TOL,
-    PAINT64_DENSITY_TOL: C.PAINT64_DENSITY_TOL, PAINT64_WET_MIN_PX: C.PAINT64_WET_MIN_PX, PAINT64_TAP_MAX_PX: C.PAINT64_TAP_MAX_PX,
+    PAINT64_DENSITY_TOL: C.PAINT64_DENSITY_TOL, PAINT64_WET_MIN_PX: C.PAINT64_WET_MIN_PX,
+    PAINT67_MOUSE_TAP_MAX_PX: C.PAINT67_MOUSE_TAP_MAX_PX, PAINT67_FINGER_TAP_MAX_PX: C.PAINT67_FINGER_TAP_MAX_PX,
+    PAINT67_DOT_FRAC: C.PAINT67_DOT_FRAC, PAINT67_DOT_MIN_PX: C.PAINT67_DOT_MIN_PX,
     PAINT65_TEX_BUDGET_BYTES: C.PAINT65_TEX_BUDGET_BYTES, PAINT65_COMMIT_MS_SPREAD_MAX: C.PAINT65_COMMIT_MS_SPREAD_MAX }),
   /** 저장물 원문(파일 저장과 같은 함수 — #54) — paint50 팔이 «텍스처가 파일에 없다»를 잰다 */
   serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
