@@ -21,26 +21,21 @@
 ```
 저장소 /home/user/brunelleschi · 배포되는 앱은 web2/다(pages.yml의 working-directory가 정본).
 
-**69(인벤토리)가 끝났고 배포됐다**(main 21304c6 — §2 마감 블록 · NOTES 「마감 — web2-69」). 화면의 누를 것 전수
-`docs/reference/INVENTORY.md` 169행(스크립트가 센다 · 원장 inventory69 · «전» 원장 64f878e) · 규칙 넷 판정(R-A 105 · R-B 16 ·
-R-C 33 · R-D 3 · ⚑ 12 = 손잡이) · 옮김(설정 ← 표시 토글 5·홀드 2·질감·치수 설정 5 / 보기 ← 스텐실 / 개발 메뉴 ?dev=1 ← 진단·
-작업대·자립 깃발) · 격자 기본 꺼짐(b2-grid) · 전수 왕복 169/169 · 옮긴 행 46 ≤ 2탭.
-**사슬 6(CHAIN6)의 다음은 70(시각 시스템)** → 71(몸짓). 지시문 `docs/instructions/web2-70.md`가 정본.
-70 준비분(읽기만): 16진수 색 src 159 · index.html 124 · rgba 70 · stroke-width 12종(1.6이 26) · 글자만인 단추 33(카드 안 —
-숫자판 14 · 스텐실 3 · 치수판 3 · 파일 5 · 보기 3 · 설정 4 · 렌즈 1) · 이모지 0 · 글자 크기 4종 · 둥글기 6종 · Phosphor
-@phosphor-icons/core(MIT · 채운 path — 선 굵기 못 바꿈) 이미 의존 · Lucide `lucide-static` 1.41.0 ISC(선 아이콘 · stroke-width 조정 가능) —
-설치는 70이 한다(출처·라이선스를 값으로).
+**70(시각 시스템)이 끝났고 배포됐다**(main a208fa2 — §2 마감 블록 · NOTES 「마감 — web2-70」). 토큰 하나 `web2/src/ui/tokens.css`(51 ·
+캔버스는 `src/ui/tokens.ts` tok() 캐시) · 강조색 잉크 파랑 #2b5bd7 적용(판 위 5.62 · 노랑 #857319 4.51은 ⚑ 사람이 사진으로 고른다) · 상태 셋 CSS만(못 누름 .35 — 되돌리기·다시하기 포함) ·
+아이콘 한 세트 Lucide ISC(선 1.75 하나 · Phosphor 지움 · 세로바 크기 급은 예외 ⚑) · 뗀 라벨 35 → aria-label · 판 둥글기 12 하나(16종) · 그림자 0 · 어두운 판 준비(사진 — 사람이 고른다) · 69 셈 무변.
+**사슬 6(CHAIN6)의 다음은 71(몸짓)** — 끝. 지시문 `docs/instructions/web2-71.md`가 정본. 71 마감에 사슬 총괄 한 장(배포 해시 넷 · 게이트 값 · 자백 모음 · ⚑ 모음 · 사진 목록).
 
 착수 시:
-· web2/HANDOFF.md §1·§2 · docs/CLOSING.md · docs/instructions/CHAIN6.md · web2-70.md · docs/DIRECTION.md 「시작은 종이다」 · docs/reference/UX-FLOWS.md §G·§E · docs/instrument-icons.md(사람 승인 정본 — 70 §3이 그 위에 «격자에 맞춘다»)
+· web2/HANDOFF.md §1·§2 · docs/CLOSING.md · docs/instructions/CHAIN6.md · web2-71.md · docs/reference/UX-FLOWS.md §E 합의 ⑤·⑥ · §A-6 · §C-6 · docs/DIRECTION.md
 · tail -40 PITFALLS.md 를 실제로 읽고 번호를 web2/NOTES.md 「착수 시 PITFALLS 대조」에 적어라 · CLAUDE.md §2의 D 다섯
-· 69 마감 블록의 「70 착수 표에 옮길 것」 다섯을 옮겨 적어라(#42 ⑩)
-· 떠 있는 개발 서버를 내리고 새로 띄운다(#70) · 갈래를 먼저 딴다(web2-70)
+· 70 마감 블록의 「71 착수 표에 옮길 것」 다섯을 옮겨 적어라(#42 ⑩)
+· 떠 있는 개발 서버를 내리고 새로 띄운다(#70) · 갈래를 먼저 딴다(web2-71)
 마감은 `cd web2 && node tools/deploy-check.mjs` — 갈래 푸시는 중간 상태다(#58 · #81).
 밤은 «한 번»(CLOSING ① — 코드를 고쳤을 때만 다시) · 리뷰어는 «한 왕복».
-⚠ 원장 갱신은 `LEDGER=1`(#90) · 워커 1(#99) · 스펙 하나씩 · e2e 중 web2/ 편집 금지(#104) · 「도는 백그라운드 없음」을 값으로.
-⚠ 70은 «생김새만» — 기능·자리·저장 형식 무변 · 69의 셈(23 · 46 · 169행 · 전수 왕복)이 게이트 · 툴팁 ⛔(재검토 대기) · 라벨을 떼면 INVENTORY.md를 다시 «생성» · 글자 라벨 스펙은 id/aria-label로(지운 시험 0).
-⚠ ⚑ 열림 — 69 여덟(DEFERRED 69) + 68 여덟 + 67 여섯 + 66 다섯 + 65 다섯 + 64 넷 + 62 여섯 + 63 넷. 사진 web2/shots/69-*.png(셋).
+⚠ 원장 갱신은 `LEDGER=1`(#90) · 워커 1(#99) · 스펙 하나씩 · e2e 중 web2/ 편집 금지(#104) · 「도는 백그라운드 없음」을 값으로 · 문턱 다섯은 constants(`Math.random` ⛔).
+⚠ 71은 «세 앱 중 둘 이상에 있는 몸짓만» · 67의 가름(펜 = 칠 · 손가락 탭 = 고르기 · 긴 누름 = 주사기) 불변 · 되돌리기는 btn-undo의 «그 함수»(#54) · 축 스냅·작도 원칙 ⛔ · 정사 표식은 70 토큰으로(16진수 0 게이트 tokens70.spec이 71에도 돈다) · GESTURES.md · 34-0에 한 줄.
+⚠ ⚑ 열림 — 70 열둘(DEFERRED 70 — 어두운 판·노랑 강조색·세로바 아이콘 크기 급·닿는 크기 44는 사람 판정) + 69 여덟 + 68 여덟 + 67 여섯 + 66 다섯 + 65 다섯 + 64 넷 + 62 여섯 + 63 넷. 사진 web2/shots/70-*.png(넷 — icons · panels · panels-dark · panels-yellow).
 ```
 
 ## 2. 대기열 — **이것이 정본이다**
@@ -287,6 +282,16 @@ R-C 33 · R-D 3 · ⚑ 12 = 손잡이) · 옮김(설정 ← 표시 토글 5·홀
      렌즈 disabled · dpr2 새 값 없음). 원장 inventory69 dpr1·dpr2 + pre · shots69 · 사진 web2/shots/69-*.png(3 — before는
      64f878e 서버). PITFALLS 등재 없음(#111까지).
    ▶ **다음은 70**(시각 시스템 — `docs/instructions/web2-70.md` 정본 · CHAIN6 순서 · 69 마감 「70 착수 표에 옮길 것」 다섯).
+   **70 완료·배포 — `main a208fa2`**(deploy-check: Pages 33990998456 completed/success attempt 1 · 화면 빌드 식별자 a208fa2 == 배포 커밋(원격 main 일치) · 마감 블록은 NOTES 「마감 — web2-70」)
+     (2026-09-06 · 갈래 web2-70 · 밤 3회(1차 bf91433 866/882 빨강 10 · 2차 b60b808 875/882 빨강 1 files43 표식 색 → --mark 토큰 · 3차 a208fa2 876/882 · 빨강 0 · skip 18) · 단위 138 파일 · 리뷰어 한 왕복 — 17건 전건(높음 7 · 중간 7 · 낮음 3) + 「다음으로」 3). 섰다: **§1 토큰 하나**
+     `src/ui/tokens.css` 51(색 39 · 크기·글자·상태 12) · 캔버스는 `tok()` 캐시(프레임당 getComputedStyle 0) · tokens.css 밖 16진수 0(예외 = 그림·논리·진단 상수 5 파일 · AS-C204) ·
+     **§2 강조색** 잉크 파랑 #2b5bd7 적용(판 위 5.62 · 노랑 스윕 최밝 L .31 #857319 4.51 — 규칙은 노랑 · ⚑ 사람이 사진으로 고른다) · --ink-2 5.14 · 종이 위 잉크 토큰(dark 10.51) · 상태 셋 CSS만(선택 --accent · 못 누름 .35 되돌리기·다시하기·렌즈·롤 · 눌림 --panel-down · 인라인
+     style 0) · **§3 아이콘 한 세트** Lucide ISC(vendor/lucide/LICENSE · Phosphor 이식 지움 #109 · 출하 의존 0) · 선 굵기 1.75 하나
+     (non-scaling-stroke) · 뗀 라벨 35 → aria-label(툴팁 무변) · 이모지 0 · **§4 판** 둥글기 12 하나 · 그림자 0 · 테두리 0 · 불투명 · 여백 8/4 ·
+     글자 10/12/14 · 어두운 판 준비([data-theme=dark] 10 · 사진 둘 — 사람 판정) · 69 셈 무변 23/46/169. ⚑ DEFERRED 70 열둘(어두운 판 선택 · 노랑 강조색 ⚑ · 세로바 아이콘 크기 급 · 닿는 크기 < 44 ·
+     라벨 안 아이콘 자리 · 카드 안 아이콘만 단추 12 · --warn/--select · 볼드 예외 · 캔버스 그림 색 · 흔적 주석 · 사진 dpr). 원장 tokens70(2dpr) ·
+     inventory69 재생성 · 사진 web2/shots/70-*.png(3). PITFALLS 등재 없음.
+   ▶ **다음은 71**(몸짓 — `docs/instructions/web2-71.md` 정본 · CHAIN6의 끝 · 70 마감 「71 착수 표에 옮길 것」 다섯 · 마감에 사슬 총괄).
    ▶ **사슬 6 착수(CHAIN6 — 68 → 69 → 70 → 71 · Fable 한 세션)** (2026-09-05 · 갈래 web2-68 · §0 규칙 1 — 지시문
      `docs/instructions/CHAIN6.md`·`web2-68.md`(필통)·`web2-69.md`(인벤토리)·`web2-70.md`(시각 시스템)·`web2-71.md`(몸짓) 등재 —
      같은 커밋에서 이 대기열 갱신). **68 §0(문서 먼저)**: 사람의 두 문서가 들어왔다 — **`docs/DIRECTION.md` 교체본의 새 절
