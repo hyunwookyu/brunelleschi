@@ -1,5 +1,5 @@
 {
-  "n_flags": 6663,
+  "n_flags": 6676,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -3227,6 +3227,41 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "gesture67_web2_dpr1.json:g2_finger_tap.hold_no_target.after_slow_empty_press",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "gesture67_web2_dpr1.json:g4_across.three_selected.f10",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "gesture67_web2_dpr1.json:g4_across.three_selected.f11",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "gesture67_web2_dpr1.json:g4_across.three_selected.f12",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "gesture67_web2_dpr1.json:g4_across.two_selected.f10",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "gesture67_web2_dpr1.json:g4_across.two_selected.f11",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "gesture67_web2_dpr1.json:g4_across.two_selected.f12",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "gesture67_web2_dpr2.json:g1_pen_dot.rows[0].sel_after",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -3245,6 +3280,41 @@
       "path": "gesture67_web2_dpr2.json:g1_pen_dot.rows[3].sel_after",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "gesture67_web2_dpr2.json:g2_finger_tap.hold_no_target.after_slow_empty_press",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "gesture67_web2_dpr2.json:g4_across.three_selected.f10",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "gesture67_web2_dpr2.json:g4_across.three_selected.f11",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "gesture67_web2_dpr2.json:g4_across.three_selected.f12",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "gesture67_web2_dpr2.json:g4_across.two_selected.f10",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "gesture67_web2_dpr2.json:g4_across.two_selected.f11",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "gesture67_web2_dpr2.json:g4_across.two_selected.f12",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "glyph30_web2.json:per_form_box[14].got",
@@ -21754,11 +21824,6 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint50_web2_dpr1.json:tex_budget.delta_median_ms",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
       "path": "paint50_web2_dpr2.json:multiply.under_pattern_over.contrastPx",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -33806,7 +33871,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 685,
+      "files_scanned": 686,
       "exts_declared": [
         ".md",
         ".py",
@@ -33830,7 +33895,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 685,
+      "files_scanned": 686,
       "exts_declared": [
         ".md",
         ".py",
@@ -34356,6 +34421,7 @@
     ],
     "gesture67_web2_dpr1.json": [
       1,
+      88,
       93,
       99,
       101,
@@ -34365,6 +34431,7 @@
     ],
     "gesture67_web2_dpr2.json": [
       1,
+      88,
       93,
       99,
       101,
