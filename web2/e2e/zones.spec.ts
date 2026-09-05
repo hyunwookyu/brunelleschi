@@ -12,6 +12,7 @@
 //   (⑦ 종이 띠 아래 줄은 paperbar.spec가 잰다)
 // 조건(#71): 뷰포트 1200×800 · dpr 둘 다 · 기본 도구 연필.
 
+// web2-69 §3 — 개발 메뉴(진단·작업대·자립 깃발)는 ?dev=1일 때만 DOM에 있다: 이 스펙은 그 항목을 누른다 → dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 import { C } from '../src/core/constants'
 
@@ -28,7 +29,7 @@ const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
 
 async function boot(page: Page) {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
 }
 
@@ -83,7 +84,8 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
     [...document.querySelectorAll('#display-pop input')].map(e => e.id)))
     // web2-45가 해칭 판 토글(chk-hatchface)을, web2-47이 실 다이어그램(chk-rooms — 표시
     // 토글이라 이 자리가 맞다)을 더했다(#75 ㉣ — 표를 고친다. 이 팔이 실제로 그 추가를 잡았다)
-    .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden', 'chk-hatchface', 'chk-rooms', 'rng-hold', 'rng-whold'])
+    // web2-69 §3 — 표시 토글 다섯·홀드 둘은 설정 서랍(R-B)으로 갔다: 보기 카드에는 실 다이어그램(가끔 확인 · R-C)만 남는다(#75 ㉣ — 표를 고친다)
+    .toEqual(['chk-rooms'])
   // 시스템(세로바 아래 묶음) — 파일 서랍 + **설정**(web2-30 10번 · 톱니바퀴).
   // web2-19 3-a가 「설정 자루」를 해체하면서 둘 곳이 없어졌던 자리를 되세운 것이다.
   // ⚠⚠ **web2-34 6번이 표를 갈랐다** — 시스템 묶음(파일·설정 서랍)이 **위 띠로 올라왔다.**
@@ -108,7 +110,8 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
     [...document.querySelectorAll('#pane-settings input, #pane-settings button')].map(e => e.id)))
     // web2-47이 btn-stencil(사람 스텐실 그리기 — 지시 문면 「설정 안에 숨긴다」)을,
     // web2-58이 btn-tunelab(브러시 작업대 — 지시 문면 「설정에 숨겨 둔다」 R8)을 더했다(#75 ㉣)
-    .toEqual(['chk-press', 'btn-press-cancel', 'chk-grain', 'btn-diag', 'btn-stencil', 'btn-tunelab'])
+    // web2-69 §3 — 설정 서랍 = R-B 전부(손·종이·표시·홀드·치수) + 개발 메뉴(?dev=1 — 이 스펙은 dev=1로 연다 · 진단·작업대·자립 깃발) · 스텐실은 보기 카드로(R-C)
+    .toEqual(['chk-press', 'btn-press-cancel', 'chk-grain', 'btn-brush', 'chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden', 'chk-hatchface', 'rng-hold', 'rng-whold', 'chk-dimsnap', 'chk-exact', 'chk-measure-keep', 'btn-diag', 'btn-tunelab', 'chk-own3d'])
   // 손(오른쪽 세로) — 되돌리기 둘(맨 위·구분선으로 가름) → 자 → 연필(접힘) → 펜 →
   // 지우개 둘 → **치수 → 롤 둘 → 면** → 서랍. #oldtools(hidden)·#tray(접힘)는 A-4/3-b' 구조물.
   // ⚠ **web2-28 4번이 한 띠 «안»의 순서를 바꿨다**: 면(면 찾기)이 롤·치수보다 **아래**로
@@ -135,14 +138,15 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   // 서랍 — 파일 원본·내보내기·비우기·종이 질감. 설정 자루는 없다.
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#pane-file button')].map(e => e.id)))
-    .toEqual(['btn-save', 'btn-open', 'btn-obj', 'btn-gltf', 'btn-clear', 'btn-brush'])
+    .toEqual(['btn-save', 'btn-open', 'btn-obj', 'btn-gltf', 'btn-clear'])   // web2-69: 질감(btn-brush)은 설정 서랍(종이 = R-B)
   // ⚠ **web2-30 10번이 설정 패널을 되세웠다** — web2-19 3-a가 「설정 자루」를 해체하면서
   //   상태 옵션이 갈 곳이 없어져 눈 팝업에 얹혔던 그 결함을 고친 것이다. 이 팔이 지키던
   //   요구(「설정 자루에 있던 것들이 각자 제자리로 갔다」)는 **그대로 유효하다** — 오스냅은
   //   자 팝업에, 표시 셋은 눈에, own3d는 진단 곁에 있고 **설정에는 그 셋이 없다**.
   expect(await page.locator('#pane-settings').count(), '설정 패널은 이제 있다').toBe(1)
-  for (const id of ['#chk-own3d', '#chk-horizon', '#chk-grid', '#osnap-radius']) {
-    expect(await page.locator(`#pane-settings ${id}`).count(), `설정에 ${id}는 없다`).toBe(0)
+  // web2-69 §3 — 표시 토글(지평선·격자)은 이제 설정(R-B)에 있고, 자립 깃발은 개발 메뉴(설정 서랍 안 · ?dev=1)에 있다 · 오스냅 반경은 자 팝업 그대로
+  for (const [id, n] of [['#chk-own3d', 1], ['#chk-horizon', 1], ['#chk-grid', 1], ['#osnap-radius', 0]] as const) {
+    expect(await page.locator(`#pane-settings ${id}`).count(), `설정에 ${id}: ${n}`).toBe(n)
   }
 })
 
@@ -368,9 +372,11 @@ test('②④⑤ — 치수 트리거(손) · 자 팝업(오스냅) · own3d(진�
   //   그래서 이 팔의 요구(「own3d는 설정이 아니라 진단 곁이다」)는 **그대로 유효**하고,
   //   재는 방식만 「설정이 없다」에서 「설정에 own3d가 없다」로 좁아진다(#74 ㉢의 물음).
   expect(await page.locator('#pane-settings').count(), '설정 패널은 이제 있다').toBe(1)
-  expect(await page.locator('#pane-settings #chk-own3d').count(), 'own3d는 설정에 없다').toBe(0)
+  // web2-69 §3 — 자립 깃발은 개발 메뉴(설정 서랍 맨 아래 · ?dev=1일 때만 DOM에 있다)에 산다: 서랍이 접히면 안 보이고 펴면 보인다
+  expect(await page.locator('#pane-settings #devmenu #chk-own3d').count(), 'own3d는 개발 메뉴(설정 서랍 안)에 있다').toBe(1)
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = false })
   await expect(page.locator('#diagctl')).toBeHidden()
-  await openDiag(page)
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })
   await expect(page.locator('#diagctl')).toBeVisible()
   await page.click('#chk-own3d')
   expect(await page.evaluate(() => (window as any).__b2.app.own3d)).toBe(false)
@@ -378,15 +384,15 @@ test('②④⑤ — 치수 트리거(손) · 자 팝업(오스냅) · own3d(진�
   await page.click('#chk-own3d')
   expect(await page.evaluate(() => (window as any).__b2.app.own3d)).toBe(true)
   expect(await page.evaluate(() => localStorage.getItem('b2-own3d'))).toBe('on')
-  await openDiag(page)
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = false })
   await expect(page.locator('#diagctl')).toBeHidden()
 })
 
-test('③ 표시 토글 셋 — 눈 팝업에 있고 동작은 그대로(왕복)', async ({ page }) => {
+test('③ 표시 토글 셋 — 설정 서랍(web2-69 R-B)에 있고 동작은 그대로(왕복)', async ({ page }) => {
   await boot(page)
-  await expect(page.locator('#display-pop')).toBeHidden()
-  await page.click('#btn-display')
-  await expect(page.locator('#display-pop')).toBeVisible()
+  await expect(page.locator('#chk-horizon')).toBeHidden()
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍(R-B)
+  await expect(page.locator('#chk-horizon')).toBeVisible()
   // 지평선 — 끄면 그 줄 픽셀이 0, 켜면 돌아온다(빈 문서 — 자동 표시 상태)
   expect(await inkPixels(page, 150, 397, 750, 404)).toBeGreaterThan(100)
   await page.click('#chk-horizon'); await settle(page)
@@ -403,8 +409,8 @@ test('③ 표시 토글 셋 — 눈 팝업에 있고 동작은 그대로(왕복)
   expect(await page.evaluate(() => (window as any).__b2.app.waitFade)).toBe(false)
   await page.click('#chk-waitfade')
   expect(await page.evaluate(() => (window as any).__b2.app.waitFade)).toBe(true)
-  await page.click('#btn-display')
-  await expect(page.locator('#display-pop')).toBeHidden()
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = false })
+  await expect(page.locator('#chk-horizon')).toBeHidden()
 })
 
 test('⑥ 전체 화면 — 크롬 0 · 뼈대 그대로 · 손잡이로 나온다 · 새로 고치면 꺼짐 (+반증)', async ({ page }) => {

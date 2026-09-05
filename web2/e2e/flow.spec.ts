@@ -69,12 +69,12 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(false)
   // 표시용(체크박스)과 판정용(app.grid)이 갈리지 않는가 — 기본값이 두 자리에 있다(PITFALLS #54)
   expect(await page.isChecked('#chk-grid')).toBe(false)
-  await page.click('#btn-display')                    // 표시는 눈 팝업(web2-19 3-a)
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이)
   await page.click('#chk-grid')
   expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(true)
   await page.click('#chk-grid')                       // 되돌린다 — 뒤 팔이 격자 픽셀에 안 걸리게
   expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(false)
-  await page.click('#btn-display')                    // 닫는다
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = false })  // web2-69: 서랍 닫기
   expect(await inkPixels(page, 0, 0, 1200, 380)).toBe(0)
 
   // 기본 도구는 연필이고, 상태 줄에는 **첫 안내 하나뿐**이다(4-b)
@@ -216,13 +216,13 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(Math.abs(s.pose.q.y)).toBeLessThan(1e-12)
   // 측정 창은 소실점 ✕ 표식(100,400)·(900,400)의 십자를 피한다 — x 150~750
   expect(await inkPixels(page, 150, 397, 750, 404)).toBe(0)  // 자동 숨김 — 소실점이 보인다
-  await page.click('#btn-display')                    // 표시는 눈 팝업(web2-19 3-a)
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이)
   await page.click('#chk-horizon')
   await settle(page)
   expect(await inkPixels(page, 150, 397, 750, 404)).toBeGreaterThan(100)  // 켜면 그 자리에 있다
   // pref(켬)는 이 뒤로 유지한다 — 아래 줌 구간(282행)이 지평선 위치를 픽셀로 재고,
   // 비우기(clearAll)가 자동(null)으로 되돌리는 것까지가 5부 규칙이라 그 복원도 함께 재진다.
-  await page.click('#btn-display')                    // 닫는다
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = false })  // web2-69: 서랍 닫기
   await settle(page)
 
   // ── 2단계: 오스냅 ────────────────────────────────────────────────────

@@ -5,6 +5,7 @@
 //   ① 큰 문서에서 %가 오른다(값으로)      ② 임계를 넘으면 미리 알림(작은 상한 주입)
 //   ③ 실제 실패 시 종전 알림 그대로(회귀)  ④ 작은 문서에서는 아무것도 안 뜬다
 
+// web2-69 §3 — 개발 메뉴(진단·작업대·자립 깃발)는 ?dev=1일 때만 DOM에 있다: 이 스펙은 그 항목을 누른다 → dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
@@ -39,7 +40,7 @@ const savedBytes = async (page: Page) => {
 }
 
 async function boot(page: Page) {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   await drawLine(page, 280, 560, 700, 560)
   await drawLine(page, 500, 560, 800, 480)
@@ -117,7 +118,7 @@ test('③ — 실제 저장 실패 시 종전 알림이 그대로 뜬다 (회귀
   // `Storage.prototype.setItem`을 갈아 끼워 quota를 흉내냈는데, 그 자리를 이제 아무도
   // 안 지나므로 **그대로 두면 조용히 아무것도 안 재게 된다**(#94의 형태 — 관문의 문면이
   // 아니라 «그 런타임의 행위»를 재라). 지금은 저장소 자신의 실패 손잡이를 쓴다.
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   await page.evaluate(() => (window as any).__b2.diag.storeFailForTest('put'))
   // 알림은 **한 번만** 뜨고 2.5초 뒤 사라진다 — 첫 획 직후에 본다.

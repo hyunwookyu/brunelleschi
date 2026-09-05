@@ -14,6 +14,7 @@
 // 재는 것 ①~④(지시 문면) + 반증(D-3): 32 비트를 빼면 지우개 경로로 **안 가는가** —
 // 실제로 빼서 확인한다. ④(일반 펜에서 절대 안 지워진다)가 가장 중요하다.
 
+// web2-69 §3 — 개발 메뉴(진단·작업대·자립 깃발)는 ?dev=1일 때만 DOM에 있다: 이 스펙은 그 항목을 누른다 → dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 
 /** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
@@ -29,7 +30,7 @@ const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
 
 async function boot(page: Page) {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
 }
 

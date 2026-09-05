@@ -30,6 +30,7 @@
 // 선 문법(fill:none · currentColor · 1.6/32 · round)은 **`e2e/icons.spec.ts`가 재는 자리**다
 // (34-5가 세운 `__lintLine` 하나 — 여기서 새로 안 짓는다 · #54).
 
+// web2-69 §3 — 개발 메뉴(진단·작업대·자립 깃발)는 ?dev=1일 때만 DOM에 있다: 이 스펙은 그 항목을 누른다 → dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 import { clearStore } from './store43'
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from '../tools/ledgerfs'
@@ -230,7 +231,7 @@ async function openEverything(page: Page) {
 }
 
 async function boot(page: Page) {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   await installInk(page)
 }

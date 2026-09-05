@@ -174,7 +174,7 @@ test('② 「가린 선 빼기」 옵션이 돈다 — 끄면 H 자리의 잉크
   expect((await rowProfile(page, Y_HID, X0, X1))!.min).toBeLessThan(floor - 12)
 
   // 표시 팝오버의 체크 상자 — **화면의 길**로 끈다(진단 손잡이가 아니라)
-  await page.click('#btn-display')
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이)
   await page.uncheck('#chk-hidden')
   await settle(page)
   // 은선이 사라졌다 — 그 줄이 **빈 줄의 결 대역**으로 돌아온다
@@ -223,7 +223,7 @@ test("②′ 치환이 실제로 선다 — **실제 3D 획의 자리**가 빼�
   // 켬: 그 자리에 은선(H)이 있다
   expect((await rowProfile(page, y, x0, x1))!.min).toBeLessThan(floor - 12)
   // 끔: **원래 3D 획까지** 사라져 종이 바닥으로 돌아온다 — 이것이 «치환»의 화면 증거다
-  await page.click('#btn-display')
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이)
   await page.uncheck('#chk-hidden')
   await settle(page)
   expect((await rowProfile(page, y, x0, x1))!.min).toBeGreaterThan(bare - 6)
@@ -243,10 +243,10 @@ test("②″ 「다시 안 굽는다」를 **실패할 수 있게** 잰다 — �
   const n0 = await page.evaluate(() => (window as any).__b2.diag.underlayBakes())
   expect(n0).toBe(1)                                  // 얹는 순간 한 번(2-c)
   // 표시 손잡이를 끄고 켠다 · 겹을 껐다 켠다 · 획을 하나 더 긋는다 — 굽기는 안 돈다
-  await page.click('#btn-display')
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이)
   await page.uncheck('#chk-hidden')
   await page.check('#chk-hidden')
-  await page.click('#btn-display')
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = false })  // web2-69: 서랍 닫기
   await drawLine(page, 300, 300, 420, 320)
   await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.diag.underlayBakes())).toBe(n0)

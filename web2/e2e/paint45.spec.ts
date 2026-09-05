@@ -141,7 +141,7 @@ test('③ 채움 — 손통 「채움」이 해칭을 만들고 · 표시 토글
   // 판을 바꾼다 — 표시 팝업의 토글(⚑의 두 판)
   // ⚠ web2-50: **면 고정 판은 이제 면 텍스처에 산다**(지시 「면 고정 판만 텍스처로」) —
   // LineSegments 수가 아니라 텍스처 등록 + 픽셀이 판정자다. 화면 고정 판은 종전 그대로.
-  await page.click('#btn-display')
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이)
   await page.click('#chk-hatchface')
   await page.waitForTimeout(200)
   const b = await p45(page)
@@ -152,7 +152,7 @@ test('③ 채움 — 손통 「채움」이 해칭을 만들고 · 표시 토글
   expect(faceInk, '면 고정 해칭이 실제 픽셀이다').toBeGreaterThan(4)
   OUT.fill = { segs_screen: segsScreen, face_mode_textures: texes.length, face_mode_ink: faceInk, toggled: true }
   await page.click('#chk-hatchface')   // 되돌린다(기기 설정 — 다음 팔에 안 새게)
-  await page.click('#btn-display')
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = false })  // web2-69: 서랍 닫기
   // ── 채운 면 «위에» 선이 정상으로 선다(지시 45-4 · 45 리뷰어 [8]㉠) ────────────
   // 선의 잉크는 #brushc(해칭이 사는 #gl보다 DOM에서 위)에 실린다 — 겹 순서는 캔버스
   // 더미의 구성이고, 여기서 재는 것은 «채움이 선 픽셀·승격을 안 건드린다»다.

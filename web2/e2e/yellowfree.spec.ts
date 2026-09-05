@@ -9,6 +9,7 @@
 //
 // 지시 4-e. 판정 캔버스: 활성 겹 위 획은 #layerc(웹2-20 3부) · 표식·손잡이는 #ink.
 
+// web2-69 §3 — 개발 메뉴(진단·작업대·자립 깃발)는 ?dev=1일 때만 DOM에 있다: 이 스펙은 그 항목을 누른다 → dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 
 /** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
@@ -64,7 +65,7 @@ function countPixels(page: Page, id: string, x0: number, y0: number, x1: number,
 }
 
 async function boot(page: Page) {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   await drawLine(page, 280, 560, 700, 560)     // 수평 앵커
   await drawLine(page, 500, 560, 800, 480)     // 소실점 획 — 카메라 닫힘

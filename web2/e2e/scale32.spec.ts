@@ -177,6 +177,7 @@ test('32-6 ② 켜면 도면에 남고, 실행취소로 되돌아간다 — 남�
   await page.click('#dim-toggle')
   await page.evaluate((id) => (window as any).__b2.diag.setDimForTest(id, 2400), post)
   await settle(page)
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이)
   await page.check('#chk-measure-keep')
   await page.click('#btn-measure')
   const s = await screen(page)

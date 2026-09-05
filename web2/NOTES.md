@@ -29051,3 +29051,7 @@ Pages 실행 completed / success (attempt 1) …/actions/runs/33968736375
 | R7 열린 통은 바깥 누름에 접힌다 | 설정 서랍·보기 카드는 FOLD_PANELS 그대로(등록부) · devmenu는 서랍 «안»(자기 통이 아니다) | registerBox 무변 |
 | R8 늘 보이는 것은 잠깐 얹히는 것보다 약하다 | 이 회차의 뜻 그 자체 — R-B·R-C·R-D 24개가 상시에서 카드/개발로 «내려갔다» · 상시 23은 전부 R-A | 상시 23 · 카드 안 43 · 개발 3 |
 | R9 툴팁(48-10) · R10 몸짓(67) | 툴팁 무변(옮김만 · 재검토 대기 ⛔) · 몸짓 없음 | — |
+
+## 스펙 판갈이 — «열기» 한 줄 (지시 §3 「자리 이동은 스펙의 열기 한 줄만 바뀐다」 · 지운 시험 0)
+
+옮긴 뒤 영향 후보 31 스펙을 dpr1로 돌려 빨강 **32**(155 중)를 얻었다 — 원인은 둘뿐: ① 개발 메뉴 항목(btn-diag·btn-tunelab·chk-own3d·#diagctl)을 누르는 스펙은 `?dev=1`로 연다(autosave · diag · dim · extacq · input · own3d · tiperase · icons · papericon31 · ui30 · waitfade · yellowfree · zones — goto 한 줄) ② 옮긴 토글을 누르기 전 «보기 카드 열기»를 «설정 서랍 열기»로(entry17 · flow · level · paint45 · underlay · dim · icons · scale32 · writeenter39 · ui28 · waitfade(질감 → 설정 서랍) · zones). 표(자리 목록)를 값으로 못 박은 스펙 셋은 표를 고쳤다(zones ① 자리 목록 · ui28 ①③ · waitfade 3-c — #75 ㉣ 「표를 고친다」). own3d: 진단(cmd)이 서랍을 접으므로 자립 깃발을 누르기 전 서랍을 다시 편다.

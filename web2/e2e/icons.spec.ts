@@ -10,6 +10,7 @@
 //      래스터로 재고, **배포한 light가 실제로 가장 가까운지** 판정한다. 원장에 남긴다.
 //   ⑥ 이름이 바뀐 것이 같은 동작을 한다(문자열만 바뀌었다).
 
+// web2-69 §3 — 개발 메뉴(진단·작업대·자립 깃발)는 ?dev=1일 때만 DOM에 있다: 이 스펙은 그 항목을 누른다 → dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 import { readFileSync, writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
@@ -21,7 +22,7 @@ const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
 
 async function boot(page: Page) {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
 }
 
@@ -229,6 +230,7 @@ test('⑥ 이름이 바뀐 것이 같은 동작을 한다 — 문자열만 바�
   await boot(page)
   // 소수점 그대로(옛 무한소수 표기) — id 불변·같은 상태를 민다
   await page.click('#dim-toggle'); await settle(page)
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이)
   expect(await page.evaluate(() => (window as any).__b2.app.dimExact)).toBe(false)
   await page.click('#chk-exact')
   expect(await page.evaluate(() => (window as any).__b2.app.dimExact)).toBe(true)
@@ -238,7 +240,7 @@ test('⑥ 이름이 바뀐 것이 같은 동작을 한다 — 문자열만 바�
   // 다른 각도에서는 숨긴다(옛 대기 획은 그린 시점에서만) — zones ③이 왕복을 잰다. 여기서는
   // 라벨이 새 이름이고 같은 체크박스인 것만 값으로 확인한다.
   expect(await page.evaluate(() =>
-    document.querySelector('#display-pop label:has(#chk-waitfade)')!.textContent!.trim()))
+    document.querySelector('#pane-settings label:has(#chk-waitfade)')   /* web2-69: 설정으로 */!.textContent!.trim()))
     .toContain('다른 각도에서는 숨긴다')
   // 종이 질감 — 배선 불변(renderer 왕복은 waitfade.spec 3-c 팔이 잰다). title에 내부 이름이 없다.
   expect(await page.evaluate(() => document.getElementById('btn-brush')!.title)).not.toContain('brush')

@@ -101,6 +101,7 @@ test('㉡ 진입한 몸짓은 획을 안 만든다 — 그리고 상태 밖 세�
 
 test('㉢ 설정 손잡이가 화면에 있고 그 값이 실제로 먹힌다 (사용자 요청)', async ({ page }, testInfo) => {
   await boot(page)
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이)
   const rng = page.locator('#rng-whold')
   await expect(rng, '설정에 손잡이가 있다').toHaveCount(1)
   const base = await state(page)

@@ -5,6 +5,7 @@
 // dpr 줄은 dpr1/dpr2 프로젝트에서 **다른 값**을 요구하므로(D-C3) 표시가 고정 문자열이면
 // 두 프로젝트 중 하나가 반드시 깨진다 — 판별력이 구성에 있다.
 // 실기기 값(MovinkPad의 dpr·UA·필압 단계)은 이 패널로 사람이 읽는다 — DEFERRED의 자리.
+// web2-69 §3 — 개발 메뉴(진단·작업대·자립 깃발)는 ?dev=1일 때만 DOM에 있다: 이 스펙은 그 항목을 누른다 → dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 
 /** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
@@ -23,7 +24,7 @@ const rowText = (page: Page, key: string) => page.evaluate((k) => {
 }, key)
 
 test('빌드 식별자를 누르면 진단이 펴지고 값이 브라우저 현재값과 같다', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   await expect(page.locator('#diagpanel')).toBeHidden()   // 기본은 닫힘 — 그림을 안 가린다
   await openDiag(page)
@@ -50,7 +51,7 @@ test('빌드 식별자를 누르면 진단이 펴지고 값이 브라우저 현�
 })
 
 test('포인터 줄이 실입력으로 갱신된다 — pen 종류·필압이 나온다', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   await openDiag(page)
   expect(await rowText(page, '마지막 포인터')).toContain('mouse')   // 연 클릭이 남긴 대조군
@@ -88,7 +89,7 @@ test('포인터 줄이 실입력으로 갱신된다 — pen 종류·필압이 �
 // 우연 대신 **필기 칸 전면**을 표본한다. (⚠ 초판은 워크트리에 잘못 세워져 유실됐다 —
 // NOTES 「1부」의 cwd 혼선 기록. 이것이 메인의 정본이다.)
 test('진단 패널이 열려도 치수 필기 칸의 포인터를 안 삼킨다 (web2-16 1부)', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   await page.click('#dim-toggle')                      // 치수 리본을 편다
   await openDiag(page)                         // 진단 패널을 연다

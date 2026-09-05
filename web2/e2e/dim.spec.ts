@@ -2,6 +2,7 @@
 // 써서** 스케일을 정하고, 그리는 동안 실시간 길이가 뜨고, 치수 스냅이 실제 길이를
 // 맞추는가. 「화면의 선 · 패널의 숫자 · 확정된 3D 길이가 같아야 한다」(4-5)를 문면으로 잰다.
 
+// web2-69 §3 — 개발 메뉴(진단·작업대·자립 깃발)는 ?dev=1일 때만 DOM에 있다: 이 스펙은 그 항목을 누른다 → dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 
 /** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
@@ -28,7 +29,7 @@ async function drawLine(page: Page, ax: number, ay: number, bx: number, by: numb
 
 /** 작도 + 기둥 — 기둥이 스케일의 기준 */
 async function build(page: Page) {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   await drawLine(page, 100, 400, 1100, 400)
   await drawLine(page, 500, 500, 600, 475)
@@ -92,6 +93,7 @@ test('필기로 첫 치수 → 스케일 · 실시간 길이 · 셋의 일치', 
   const solved = d2.lenOf[d2.target] as number
   expect(Math.abs(shown - solved)).toBeLessThanOrEqual(0.5)   // 표시는 정수 반올림(±0.5는 표기 규약)
   // **무한소수 표기(4-8)를 켜면 자리 그대로 일치한다** — ±0.5가 팔의 느슨함이 아니라
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이)
   // 표기 반올림의 몫임을 가른다(리뷰어 [12]): 이 대조는 상대 1e-9다.
   await page.check('#chk-exact')
   await settle(page)
@@ -108,6 +110,7 @@ test('치수 스냅(4-7) — 실제 3D 길이가 눈금에 맞춰진다 · «다
   await writeOne(page, 60)
   await writeOne(page, 100)
   await page.click('#pad-keys [data-k="apply"]')     // 스테이징 → 적용(web2-10 지시 8-a ②)
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이 — 적용(cmd)이 서랍을 접으므로 그 뒤에 편다)
   await page.check('#chk-dimsnap')
   await page.selectOption('#dimsnap-step', '10')
 
@@ -244,7 +247,7 @@ test('키패드(web2-10 지시 8-a) — 확정 경로: 적용 전에 보이고, 
 })
 
 test('키패드 키가 펜 크기 대역이다 — 실측(지시 5의 크기 규칙과 같은 대역)', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   await page.click('#dim-toggle')
   const boxes = await page.evaluate(() =>

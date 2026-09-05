@@ -247,9 +247,9 @@ test('**접힌 뒤에도 지평선이 그려진다** — 픽셀로 잰다 (web2-
   await drawLine(page, 500, 500, 500, 300)
   // web2-17 5부: 소실점(900,400)이 화면 안이라 자동 숨김이 발동한다 — 이 팔이 재는 것은
   // «접힌 포즈의 지평선 렌더링»이므로 사람 경로(체크박스)로 표시를 굳히고 잰다.
-  await page.click('#btn-display')                    // 표시는 눈 팝업(web2-19 3-a)
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이)
   await page.click('#chk-horizon')                    // 자동 꺼짐(체크 풀림) → 켬 = pref true
-  await page.click('#btn-display')
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = false })  // web2-69: 서랍 닫기
   await settle(page)
 
   const dpr = await page.evaluate(() => window.devicePixelRatio || 1)
@@ -346,7 +346,7 @@ test('**지평선이 옅다 — h~2h 급** · 픽셀 잉크량으로 잰다 (web
   expect(perCol).toBeGreaterThan(30)
 
   // 토글(web2-12 7번) — 끄면 지평선 픽셀이 **0**이다(반증 D-3: 남으면 여기서 걸린다)
-  await page.click('#btn-display')                    // 표시는 눈 팝업(web2-19 3-a)
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 설정 서랍으로 옮겼다(«열기» 한 줄 판갈이)
   await page.click('#chk-horizon')
   await page.mouse.move(600, 700)
   await settle(page)

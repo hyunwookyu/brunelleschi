@@ -6,6 +6,7 @@
 //   3-b: 문 바로 위 길이(8px)의 획이 **정상으로 만들어지는** 것을 확인한다 —
 //        경계 아래(4px)는 획 0 + 카운터 +1.
 
+// web2-69 §3 — 개발 메뉴(진단·작업대·자립 깃발)는 ?dev=1일 때만 DOM에 있다: 이 스펙은 그 항목을 누른다 → dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
@@ -106,7 +107,7 @@ const poseDeg = (page: Page) => page.evaluate(() => {
 
 /** 카메라(1점) + 오른쪽에 기둥 하나 — 왼쪽 아래는 비워 둔다(측정 상자 자리) */
 async function setup(page: Page) {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   await drawLine(page, 100, 400, 1100, 400)          // 지평선
   await drawLine(page, 800, 500, 900, 475)           // 깊이선 → vp0
@@ -244,13 +245,13 @@ test('3-b — 잘못 찍힌 점: 문 아래(4px)는 안 만들고 세고, 문 �
 })
 
 test('3-c — 종이 질감 버튼이 세로바에 없고 설정 안에 있다 · 눌리면 여전히 renderer를 바꾼다', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   // 설정이 닫혀 있으면 안 보인다 — 도구 사이에 서 있지 않다(실수로 못 누른다)
   await expect(page.locator('#btn-brush')).toBeHidden()
-  expect(await page.locator('#pane-file #btn-brush').count()).toBe(1)   // web2-19 3-a: 서랍
+  expect(await page.locator('#pane-settings #btn-brush').count()).toBe(1)   // web2-19 3-a: 서랍 → web2-69: 설정 서랍(종이 = R-B)
   // 서랍을 열고 누르면 종전 배선 그대로 renderer가 바뀐다(A-4 — 경로 생존)
-  await page.click('#pane-file summary')
+  await page.click('#pane-settings summary')   // web2-69: 설정 서랍
   await expect(page.locator('#btn-brush')).toBeVisible()
   const r0 = await page.evaluate(() => (window as any).__b2.app.renderer)
   await page.click('#btn-brush')

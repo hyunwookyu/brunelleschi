@@ -4,6 +4,7 @@
 // 기전의 팔은 단위다(test/osnap.test.ts 연장선 ①~⑤ · test/extacq_measure.test.ts 분포).
 // 여기는 **사람이 만지는 경로**다: 실제 포인터가 끝점 위에 머물러야 획득된다.
 
+// web2-69 §3 — 개발 메뉴(진단·작업대·자립 깃발)는 ?dev=1일 때만 DOM에 있다: 이 스펙은 그 항목을 누른다 → dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 import { clearStore } from './store43'
 
@@ -20,10 +21,10 @@ const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
 
 async function boot(page: Page) {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   await clearStore(page)
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
 }
 

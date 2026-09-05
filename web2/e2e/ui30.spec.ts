@@ -10,6 +10,7 @@
 //   실행에서 확인하고(안 펼쳐지면 「안 움직였다」는 늘 참이다), 30-4는 **얹은 겹이 없는**
 //   종이에서 그 문장이 **안 붙는 것**을 먼저 잰다.
 
+// web2-69 §3 — 개발 메뉴(진단·작업대·자립 깃발)는 ?dev=1일 때만 DOM에 있다: 이 스펙은 그 항목을 누른다 → dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 import { clearStore } from './store43'
 
@@ -17,10 +18,10 @@ const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
 
 async function boot(page: Page) {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
   await clearStore(page)
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
 }
 

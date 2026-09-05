@@ -8,6 +8,7 @@
 //     굳는다(web2-13 1-h의 「이행」 — 아래 팔이 본다)
 // 기전의 팔은 test/own3d.test.ts(단위 — 4-a~4-d·4-g·반증). 여기는 사람이 만지는 표면.
 
+// web2-69 §3 — 개발 메뉴(진단·작업대·자립 깃발)는 ?dev=1일 때만 DOM에 있다: 이 스펙은 그 항목을 누른다 → dev=1로 연다(«열기» 한 줄 판갈이)
 import { test, expect, type Page } from '@playwright/test'
 import { savedText, waitSaved, clearStore } from './store43'
 
@@ -18,13 +19,15 @@ async function openDiag(page: import('@playwright/test').Page) {
     await page.click('#pane-settings > summary')
   }
   await page.click('#btn-diag')
+  // web2-69 — 자립 깃발(chk-own3d)은 개발 메뉴(설정 서랍 안 · ?dev=1)에 있다: 진단(cmd)이 서랍을 접으므로 다시 편다(«열기» 한 줄 판갈이)
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })
 }
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
 
 async function boot(page: Page) {
-  await page.goto('/')
+  await page.goto('/?dev=1')
   await page.waitForFunction(() => (window as any).__b2)
 }
 

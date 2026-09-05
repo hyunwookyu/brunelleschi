@@ -89,22 +89,33 @@ test('28-1 ① 명령은 접고 상태는 안 접는다 — **전수**', async (
   }
 
   // ── 상태 전수 — 눌러도 안 접힌다 ────────────────────────────────────────
-  await page.click('#btn-display')
+  // web2-69 §3 — 표시 토글·홀드 슬라이더는 설정 서랍(R-B)으로 갔다: 상태 전수는 **설정 서랍**에서 재고(안 접힌다), 보기 카드에는 실 다이어그램 하나가 남았다
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })
   await settle(page)
   const states = await page.evaluate(() =>
-    [...document.querySelectorAll('#display-pop [data-act="state"]')].map(e => e.id))
-  console.log(`[28-1] 눈 팝업의 상태: ${states.join(', ')}`)
+    [...document.querySelectorAll('#pane-settings [data-act="state"]')].filter(e => !(e.closest('#devmenu')) && !(e.closest('[hidden]'))).map(e => e.id))
+  console.log(`[28-1] 설정 서랍의 상태: ${states.join(', ')}`)
   expect(states.length).toBeGreaterThan(3)
   for (const id of states) {
     const el = page.locator(`#${id}`)
     if (await el.evaluate(e => (e as HTMLInputElement).type === 'range')) {
       await el.evaluate(e => { (e as HTMLInputElement).value = '500'; e.dispatchEvent(new Event('input', { bubbles: true })) })
+    } else if (await el.evaluate(e => e.tagName === 'SELECT')) {
+      await el.evaluate(e => { e.dispatchEvent(new Event('change', { bubbles: true })) })
     } else {
       await el.click()
     }
     await settle(page)
-    expect(await openOf(page, '#display-pop'), `${id}는 안 접는다`).toBe(true)
+    expect(await openOf(page, '#pane-settings'), `${id}는 안 접는다`).toBe(true)
   }
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = false })
+  await page.click('#btn-display')
+  await settle(page)
+  const viewStates = await page.evaluate(() => [...document.querySelectorAll('#display-pop [data-act="state"]')].map(e => e.id))
+  expect(viewStates, '보기 카드에 남은 상태(실 다이어그램)').toEqual(['chk-rooms'])
+  await page.click('#chk-rooms'); await settle(page)
+  expect(await openOf(page, '#display-pop'), 'chk-rooms는 안 접는다').toBe(true)
+  await page.click('#chk-rooms'); await settle(page)
 
   // ── 오스냅은 **절대** 안 접는다(한 번에 여러 개를 켜고 끄는 자리다) ──────
   await page.click('#btn-display')      // 눈 팝업 닫기
@@ -224,17 +235,18 @@ test('28-3 ③ 화면 문구 — 「바꿈」으로 판정한 자리', async ({ 
   // 설명이 화면에서 빠졌다 — 「나가기만 한다」·「다시 연다」는 이제 title이다
   // ⚠ web2-43이 앞에 둘을 더했다(문서 이름 · 최근 드로잉) — 파일 서랍을 여는 이유의
   //   첫째가 「그때 그리던 것으로 돌아간다」이므로 그 자리가 맨 위다.
-  expect(heads).toEqual(['문서', '최근', '원본 .brnl', '내보내기', '종이'])
+  expect(heads).toEqual(['문서', '최근', '원본 .brnl', '내보내기'])   // web2-69: 「종이」(질감)는 설정 서랍으로(R-B)
   for (const h of heads) expect(h).not.toContain('—')
   expect(await text('#btn-brush')).toBe('질감')          // 상위(「종이」)가 이미 말한 낱말을 뺐다
   // 눈 팝업 — 설명 꼬리가 빠졌다
+  await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 표시 토글은 설정 서랍(R-B)
   const labels = await page.evaluate(() =>
-    [...document.querySelectorAll('#display-pop label')].map(e => (e.textContent ?? '').trim()))
+    [...document.querySelectorAll('#pane-settings label')].map(e => (e.textContent ?? '').trim()))
   console.log(`[28-3] 눈 팝업: ${JSON.stringify(labels)}`)
   expect(labels.some(l => l.includes('밑그림의 H 계열')), '설명이 화면에서 빠졌다').toBe(false)
   expect(labels.some(l => l.startsWith('가린 선(은선)')), '이름은 남았다').toBe(true)
   // 그리고 그 설명은 **툴팁으로 옮겨졌다**(28-2가 읽는다) — 정보를 지우지 않았다
-  const t = await page.getAttribute('#display-pop label:has(#chk-hidden)', 'title')
+  const t = await page.getAttribute('#pane-settings label:has(#chk-hidden)', 'title')
   expect(t ?? '').toContain('H 계열')
   // 전문 용어는 그대로다(순화 ⛔ — 지시 문면)
   await page.click('#btn-snap')
