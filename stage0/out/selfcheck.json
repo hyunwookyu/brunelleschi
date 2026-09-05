@@ -1,5 +1,5 @@
 {
-  "n_flags": 6676,
+  "n_flags": 6762,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -694,6 +694,16 @@
       "path": "camera_gate.json:by_strokes_per_axis.k_4.true_camera_oracle.axis_dir_err_deg.median",
       "val": 0,
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "case68_web2_dpr1.json:g01_case.migrated_count",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "case68_web2_dpr2.json:g01_case.migrated_count",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "classify_leak.json:angle.screen_true",
@@ -22828,6 +22838,86 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "paint68_web2_dpr1.json:candidates.rows[16].hill_12_cal.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:candidates.rows[16].hill_12_raw.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:candidates.rows[16].hill_24_cal.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:candidates.rows[16].hill_24_raw.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:candidates.rows[16].line_12_cal.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:candidates.rows[16].line_12_raw.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:candidates.rows[16].line_24_cal.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:candidates.rows[16].line_24_raw.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:candidates.rows[16].hill_12_cal.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:candidates.rows[16].hill_12_raw.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:candidates.rows[16].hill_24_cal.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:candidates.rows[16].hill_24_raw.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:candidates.rows[16].line_12_cal.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:candidates.rows[16].line_12_raw.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:candidates.rows[16].line_24_cal.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:candidates.rows[16].line_24_raw.n_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "paper_grain26_web2.json:gate.current[1].bare_sd",
       "val": 4.0472514228895307e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
@@ -31553,6 +31643,16 @@
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
     {
+      "path": "case68_web2_dpr1.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "case68_web2_dpr2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
       "path": "close31_web2.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
@@ -32143,6 +32243,16 @@
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
     {
+      "path": "paint68_web2_dpr1.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
       "path": "panel65_web2_dpr1.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
@@ -32549,6 +32659,16 @@
     },
     {
       "path": "brush_visual_web2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "case68_web2_dpr1.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "case68_web2_dpr2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
@@ -33128,6 +33248,16 @@
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
     {
+      "path": "paint68_web2_dpr1.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
       "path": "panel65_web2_dpr1.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
@@ -33569,6 +33699,66 @@
       "flag": "**없는 원장을 인용한다**(18건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
     },
     {
+      "path": "stage0/out/case68_web2_dpr1.json",
+      "val": "#109",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/case68_web2_dpr1.json",
+      "val": "#5486",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/case68_web2_dpr1.json",
+      "val": "#112233",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/case68_web2_dpr1.json",
+      "val": "#203040",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/case68_web2_dpr1.json",
+      "val": "#445566",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/case68_web2_dpr1.json",
+      "val": "#778899",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/case68_web2_dpr2.json",
+      "val": "#109",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/case68_web2_dpr2.json",
+      "val": "#5486",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/case68_web2_dpr2.json",
+      "val": "#112233",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/case68_web2_dpr2.json",
+      "val": "#203040",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/case68_web2_dpr2.json",
+      "val": "#445566",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/case68_web2_dpr2.json",
+      "val": "#778899",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
       "path": "stage0/out/inklayer_web2_before.json",
       "val": "#101014",
       "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
@@ -33690,6 +33880,390 @@
         "reachability_source",
         "reachability_value",
         "registered"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[0]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[1]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[2]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[3]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[4]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[5]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[6]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[7]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[8]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[9]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[10]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[11]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[12]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[13]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[14]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[15]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[16]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[17]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[18]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[19]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[20]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[21]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[22]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr1.json:verdict.gates[23]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[0]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[1]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[2]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[3]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[4]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[5]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[6]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[7]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[8]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[9]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[10]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[11]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[12]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[13]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[14]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[15]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[16]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[17]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[18]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[19]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[20]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[21]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[22]",
+      "val": [
+        "name",
+        "ok"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
+      "path": "paint68_web2_dpr2.json:verdict.gates[23]",
+      "val": [
+        "name",
+        "ok"
       ],
       "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
     },
@@ -33871,7 +34445,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 686,
+      "files_scanned": 697,
       "exts_declared": [
         ".md",
         ".py",
@@ -33895,7 +34469,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 686,
+      "files_scanned": 697,
       "exts_declared": [
         ".md",
         ".py",
@@ -33937,7 +34511,7 @@
     {
       "scan": "scan_dead_ledger",
       "unit": "원장",
-      "targets": 294,
+      "targets": 298,
       "hits": 3,
       "note": null
     },
@@ -33958,7 +34532,7 @@
     {
       "scan": "scan_unbounded_wait",
       "unit": "마감 블록·도구 파일",
-      "targets": 21,
+      "targets": 22,
       "hits": 0,
       "note": "⚠ **세션 안에서 즉석으로 만든 대기는 안 보인다** — 저장소에 없기 때문이다. 그 자리를 지키는 것은 **마감 보고의 「도는 백그라운드 없음」 한 줄**이다"
     },
@@ -33979,16 +34553,16 @@
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 262,
-      "hits": 7,
+      "targets": 266,
+      "hits": 19,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 105,
-      "hits": 19,
-      "note": "값 대조를 **지난 것 61** · **픽스처가 정한 값 13** · **면제 28**(`reachability_absent`) · 원장 295개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, glyph35_web2.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lay_slide40_web2.json:gate, ledger_gate24_web2.json:gate, lens31_web2_dpr1.json:gate, lens31_web2_dpr2.json:gate, lens_roll_osnap.json:gate, mats52_web2_dpr1.json:scale_pass.gate, mats52_web2_dpr1.json:two_layers.gate, mats52_web2_dpr2.json:scale_pass.gate, mats52_web2_dpr2.json:two_layers.gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, paper_grain26_web2.json:gate, paper_grain30_web2.json:gate, paper_grain40_web2.json:gate, papericon31_web2_dpr1.json:gate, papericon31_web2_dpr2.json:gate, passthru24_web2.json:gate, place34_web2_dpr1.json:gate, place34_web2_dpr2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, read42_web2.json:gate, rep49_e2e_web2_dpr1.json:frame20.gate, rep49_e2e_web2_dpr2.json:frame20.gate, restore_pose.json:gate, scale32_web2.json:gate, shutter25_web2.json:gate, shutter25_web2_dpr2.json:gate, skew34_web2.json:gate, snap_cache.json:gate, snap_stage.json:gate, turn31_web2.json:gate, view42_web2.json:gate, view42_web2_dpr1.json:gate, view42_web2_dpr2.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate, xint41_web2.json:gate, zoom31_web2.json:gate, zoom31_web2_dpr1.json:gate, zoom31_web2_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, lens31_web2.json:gate, measure34_web2.json:gate, osnap_kinds.json:gate, osnappull37_web2.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "targets": 153,
+      "hits": 67,
+      "note": "값 대조를 **지난 것 61** · **픽스처가 정한 값 13** · **면제 28**(`reachability_absent`) · 원장 299개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, glyph35_web2.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lay_slide40_web2.json:gate, ledger_gate24_web2.json:gate, lens31_web2_dpr1.json:gate, lens31_web2_dpr2.json:gate, lens_roll_osnap.json:gate, mats52_web2_dpr1.json:scale_pass.gate, mats52_web2_dpr1.json:two_layers.gate, mats52_web2_dpr2.json:scale_pass.gate, mats52_web2_dpr2.json:two_layers.gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, paper_grain26_web2.json:gate, paper_grain30_web2.json:gate, paper_grain40_web2.json:gate, papericon31_web2_dpr1.json:gate, papericon31_web2_dpr2.json:gate, passthru24_web2.json:gate, place34_web2_dpr1.json:gate, place34_web2_dpr2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, read42_web2.json:gate, rep49_e2e_web2_dpr1.json:frame20.gate, rep49_e2e_web2_dpr2.json:frame20.gate, restore_pose.json:gate, scale32_web2.json:gate, shutter25_web2.json:gate, shutter25_web2_dpr2.json:gate, skew34_web2.json:gate, snap_cache.json:gate, snap_stage.json:gate, turn31_web2.json:gate, view42_web2.json:gate, view42_web2_dpr1.json:gate, view42_web2_dpr2.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate, xint41_web2.json:gate, zoom31_web2.json:gate, zoom31_web2_dpr1.json:gate, zoom31_web2_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, lens31_web2.json:gate, measure34_web2.json:gate, osnap_kinds.json:gate, osnappull37_web2.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -34125,6 +34699,42 @@
       26,
       27,
       29
+    ],
+    "case68_web2_dpr1.json": [
+      1,
+      3,
+      5,
+      6,
+      42,
+      54,
+      88,
+      96,
+      97,
+      99,
+      109,
+      5486,
+      112233,
+      203040,
+      445566,
+      778899
+    ],
+    "case68_web2_dpr2.json": [
+      1,
+      3,
+      5,
+      6,
+      42,
+      54,
+      88,
+      96,
+      97,
+      99,
+      109,
+      5486,
+      112233,
+      203040,
+      445566,
+      778899
     ],
     "classify_leak.json": [
       5,
@@ -35210,6 +35820,22 @@
       110,
       111
     ],
+    "paint68_web2_dpr1.json": [
+      1,
+      12,
+      16,
+      42,
+      99,
+      108
+    ],
+    "paint68_web2_dpr2.json": [
+      1,
+      12,
+      16,
+      42,
+      99,
+      108
+    ],
     "panel65_web2_dpr1.json": [
       5,
       12,
@@ -36015,6 +36641,8 @@
     "brush_perf_web2.json",
     "brush_visual_web2.json",
     "camera_gate.json",
+    "case68_web2_dpr1.json",
+    "case68_web2_dpr2.json",
     "classify_leak.json",
     "close31_web2.json",
     "confirm_dir.json",
@@ -36181,6 +36809,8 @@
     "paint66_web2_dpr2.json",
     "paint67_web2_dpr1.json",
     "paint67_web2_dpr2.json",
+    "paint68_web2_dpr1.json",
+    "paint68_web2_dpr2.json",
     "panel65_web2_dpr1.json",
     "panel65_web2_dpr2.json",
     "paper_grain26_web2.json",
