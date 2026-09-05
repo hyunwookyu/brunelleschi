@@ -71,6 +71,8 @@ async function bigBox(page: Page) {
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(200)
   await page.waitForFunction(() => (window as any).__b2.diag.tipsReadyForTest().ready, null, { timeout: 20_000 })
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다(감속·측정 대기) → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   for (const l of [[60, 620, 1140, 620], [500, 700, 900, 610], [500, 700, 150, 620], [900, 610, 640, 560],
     [150, 620, 640, 560], [500, 700, 500, 330], [900, 610, 900, 330], [900, 330, 500, 330]] as const)
     await drawLine(page, l[0], l[1], l[2], l[3])
@@ -105,6 +107,7 @@ async function pickPaint(page: Page, i: Instr = 'pencil', w = 18, hex = '#8a4a3a
     b2.diag.setPaintInstrForTest(i); Object.assign(b2.app.paintSel, { hex: h, w })
   }, [i, w, hex] as const)
   await page.click('#btn-paint')
+  await page.evaluate(() => { const b = document.getElementById('brushpick'); if (b && getComputedStyle(b).display !== 'none') document.getElementById('brushpick-close')?.click() })   // web2-71 §4: 칠을 든 채 다시 누르면 브러시 목록이 열린다(그 통이 캔버스를 덮는다) — 이 헬퍼는 도구만 원한다
   await page.waitForTimeout(60)
 }
 
@@ -361,6 +364,7 @@ test('④-c 재료 면의 «줌 뒤 갈림»과 그 지속 — 값으로(리뷰�
   await page.waitForTimeout(400)
   const afterEdit = await texHash(page)
   await page.click('#btn-paint'); await page.waitForTimeout(60)
+  await page.evaluate(() => { const b = document.getElementById('brushpick'); if (b && getComputedStyle(b).display !== 'none') document.getElementById('brushpick-close')?.click() })   // web2-71 §4: 칠을 든 채 다시 누르면 브러시 목록이 열린다(그 통이 캔버스를 덮는다) — 이 헬퍼는 도구만 원한다
   await rebakeAndWait(page)
   const repRef1 = await texHash(page)
   await rebakeAndWait(page)

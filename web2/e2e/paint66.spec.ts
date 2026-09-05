@@ -58,6 +58,8 @@ async function bigBox(page: Page) {
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(200)
   await page.waitForFunction(() => (window as any).__b2.diag.tipsReadyForTest().ready, null, { timeout: 20_000 })
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다(감속·측정 대기) → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   await drawLine(page, 60, 620, 1140, 620)
   await drawLine(page, 500, 700, 900, 610)
   await drawLine(page, 500, 700, 150, 620)
@@ -339,6 +341,8 @@ test('§2 마커의 단면 — 가로/세로 폭이 갈린다 · 단면이 직�
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await page.waitForFunction(() => (window as any).__b2.diag.tipsReadyForTest().ready, null, { timeout: 20_000 })
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다(감속·측정 대기) → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   const probe = (preset: string, dir: number) =>
     page.evaluate(([p, d]) => (window as any).__b2.diag.markBandProbeForTest('marker', p, 24, d),
       [preset, dir] as const) as Promise<{ width_median: number; flat_share: number; n_cols: number }>
@@ -371,6 +375,8 @@ test('§3 66-3 칠 사양이 슬롯마다 — 색·크기·불투명이 즐겨�
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await page.waitForFunction(() => (window as any).__b2.diag.tipsReadyForTest().ready, null, { timeout: 20_000 })
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다(감속·측정 대기) → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   await page.click('#btn-paint'); await page.waitForTimeout(100)
   const setSpec = async (hex: string, w: number, o: number) => {
     await page.evaluate(([h, w, o]) => {
@@ -409,6 +415,8 @@ test('§3 66-3 칠 사양이 슬롯마다 — 색·크기·불투명이 즐겨�
   await page.goto('/')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await page.waitForFunction(() => (window as any).__b2.diag.tipsReadyForTest().ready, null, { timeout: 20_000 })
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다(감속·측정 대기) → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   await page.click('#btn-paint'); await page.waitForTimeout(100)
   await page.click('#paint-fav-1'); await page.waitForTimeout(80)
   const a2 = await spec()
@@ -429,6 +437,8 @@ test('§3 66-4 R3 정정 — 연달아 쓰는 명령은 통을 안 접는다(자
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await page.waitForFunction(() => (window as any).__b2.diag.tipsReadyForTest().ready, null, { timeout: 20_000 })
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다(감속·측정 대기) → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   await drawLine(page, 60, 620, 1140, 620)
   await drawLine(page, 500, 700, 900, 610)
   await drawLine(page, 500, 700, 150, 620)

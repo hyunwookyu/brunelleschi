@@ -15,7 +15,7 @@ import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
 import { initInput } from './input'
 import { orbitBy, ORBIT_RAD_PER_PX } from './state'   // web2-71 — 정사 픽스처(orbitByForTest)
-import { cubeBasis, orientIn, poseForOrient, parallelPose, toCubeLocal } from '../core/viewcube'
+import { cubeBasis, orientIn, poseForOrient, parallelPose, toCubeLocal, perspectivePose } from '../core/viewcube'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
@@ -571,7 +571,7 @@ inputApi = initInput(ink, app, {
   onGestureTap(n) { if (n === 2) undoOrExplain(); else if (n === 3) redo(app); gesture71Log.push(`tap${n}`) },
   onGestureDouble(n, p) {
     if (n === 3) { undo(app); setGrid(!app.grid); gesture71Log.push('double3:redo-undone,grid') }   // 첫 두드림의 다시하기를 되물리고(undo) 격자·축 토글
-    else if (n === 1) { orthoSnap(); gesture71Log.push('double1:ortho') }
+    else if (n === 1) { const ok = orthoSnap(); gesture71Log.push(ok ? 'double1:ortho:snapped' : 'double1:ortho:none') }   // 밖(±15° 넘게)이면 아무 일도 없다 — 로그도 그렇게(리뷰어 [H1])
     void p
   },
   onGestureHold(n) { if (n === 2) { undoOrExplain(); gesture71Log.push('hold2') } },
@@ -948,8 +948,8 @@ for (const k of Object.keys(toolBtn) as (keyof typeof toolBtn)[]) {
     // 면 버튼을 **다시** 누르면 팝오버(web2-21 4부 — 「전부 찾기」). 손 띠에 버튼을 안
     // 늘린다(지시 4-e ⚠). 다른 도구는 종전 그대로다.
     if (k === 'face' && app.tool === 'face') { toggleFacePop(); return }
-    // 붓을 **다시** 누르면 — web2-64: 패널은 도구를 든 동안 늘 떠 있으므로 여닫을 것이 없다(옛 «재누름이 칠통을 연다»는 걷었다).
-    if (k === 'paint' && app.tool === 'paint') { setPainttrayOpen(true); document.getElementById('paint-brush-btn')!.click(); return }   // web2-71 §4 — 재누름 = 그 도구의 통(브러시 목록 여닫기 · 「여닫을 것이 없다」를 바꾼다)
+    // 붓을 **다시** 누르면 — web2-64: 패널은 도구를 든 동안 늘 떠 있으므로 여닫을 통이 없었다(71이 브러시 목록으로 바꿨다)(옛 «재누름이 칠통을 연다»는 걷었다).
+    if (k === 'paint' && app.tool === 'paint') { setPainttrayOpen(true); document.getElementById('paint-brush-btn')!.click(); return }   // web2-71 §4 — 재누름 = 그 도구의 통(브러시 목록 여닫기 · 옛 문면(64)을 바꿨다)
     // 재기는 **토글**이다 — 다시 누르면 연필로 돌아온다(재는 일은 잠깐 하는 일이다)
     if (k === 'measure' && app.tool === 'measure') { setTool('pencil'); return }
     // 지우개 둘 — **도구를 먼저 바꾸고 크기통을 연다**(web2-34 3번). 연필·펜 단추가
@@ -3090,9 +3090,11 @@ function orthoSnap(): boolean {
   status('정사 — 돌리면 나온다')
   return true
 }
+// 마우스 더블클릭 = 정사 스냅 — 브라우저의 dblclick(OS 더블클릭 규약 · 마우스만: 펜·손가락의 dblclick은 장치가 뜻을 든다 — 67).
+// ⚠ 같은 판정기(두 클릭 350ms·8px)로 하면 스펙·사람이 «빠르게 두 번 누르는» 면 고르기·픽스처 클릭까지 정사로 튀었다(71 밤 뒤 실측 paint48/59/65/67·rep49) — DOM 규약이 그 형태를 안 낸다.
 let lastPtrType = ''
 ink.addEventListener('pointerdown', (e) => { lastPtrType = e.pointerType }, { capture: true })
-ink.addEventListener('dblclick', () => { if (lastPtrType === 'mouse') orthoSnap() })   // 마우스 더블클릭 = 같은 뜻(데스크톱 관습) · 펜·손가락의 dblclick은 아니다(장치가 뜻을 든다 — 67)
+ink.addEventListener('dblclick', () => { if (lastPtrType === 'mouse') { const ok = orthoSnap(); gesture71Log.push(ok ? 'dblclick:ortho:snapped' : 'dblclick:ortho:none') } })
 const orthoMark = document.getElementById('ortho-mark')!
 function undoOrExplain() {
   if (app.undoStack.length === 0 && app.doc.strokes.length > 0) {
@@ -3382,14 +3384,20 @@ const diag = {
   /** web2-70 — 테마(밝은 판/어두운 판) · 토큰 캐시(프레임마다 getComputedStyle을 안 부른다는 값) */
   setThemeForTest: (t: 'light' | 'dark') => { setTheme(t); invalidate() },
   /** web2-71 — 몸짓 표식(D-1): 마지막 두드림의 손가락 수·지속·최대 이동·판정·«왜 아님» · 호출 순서 기록 · 정사 상태 · 칠 멈춤 */
-  gesture71ForTest: () => ({ last: inputApi.gesture71ForTest(), log: [...gesture71Log], ortho: isParallel(app.pose), orthoOff: orthoSnapOffDeg(), grid: app.grid, undo: app.undoStack.length, redo: app.redoStack.length, paintStraight: inputApi.paintStraightForTest() }),
+  gesture71ForTest: () => ({ last: inputApi.gesture71ForTest(), log: [...gesture71Log], ortho: isParallel(app.pose), orthoOff: orthoSnapOffDeg(), grid: app.grid, undo: app.undoStack.length, redo: app.redoStack.length, paintStraight: inputApi.paintStraightForTest(), paintStraightLast: inputApi.paintStraightLastForTest() }),
   gesture71ResetForTest: () => { inputApi.gesture71Reset(); gesture71Log.length = 0 },
   orthoSnapForTest: () => orthoSnap(),
   orbitByForTest: (yawDeg: number, pitchDeg: number) => { orbitBy(app, yawDeg * Math.PI / 180 / ORBIT_RAD_PER_PX, pitchDeg * Math.PI / 180 / ORBIT_RAD_PER_PX); invalidate() },
   viewNameForTest: () => viewName(app.lift.an, app.pose),
   draftForTest: () => inputApi.draftForTest(),
   /** 반증 손잡이(D-3) — 칠 멈춤 문턱 덮개(ms · null = 상수로) · 제품 경로 ⛔ */
-  setGesture71ForTest: (o: { paintHoldMs?: number | null }) => inputApi.setPaintHoldMsForTest(o.paintHoldMs ?? null),
+  setGesture71ForTest: (o: { paintHoldMs?: number | null; tapMovePx?: number | null; tapMs?: number | null; doubleMs?: number | null }) => { if ('paintHoldMs' in o) inputApi.setPaintHoldMsForTest(o.paintHoldMs ?? null); inputApi.setGestureThresholdsForTest({ tapMovePx: o.tapMovePx ?? null, tapMs: o.tapMs ?? null, doubleMs: o.doubleMs ?? null }) },
+  gestureThresholdsForTest: () => inputApi.gestureThresholdsForTest(),
+  paintStepForTest: () => inputApi.paintStepForTest(),
+  /** 원근으로 되돌린 같은 자리(큐브 가운데 「투시」의 그 함수) — §3 픽스처가 정사 상태를 물려받지 않게 */
+  perspectiveForTest: () => { if (isParallel(app.pose)) autolevel.glide(perspectivePose(app.pose)) },
+  noticeTextForTest: () => (document.getElementById('notice')?.textContent ?? '').trim(),
+  scaleBarForTest: () => { const e = document.querySelector('#scalebar, .scalebar, #dim-scale') as HTMLElement | null; return e ? { text: e.textContent?.trim() ?? '', visible: !e.hidden && getComputedStyle(e).display !== 'none' } : null },
   tokensForTest: () => ({ theme: tokensForTest.theme(), cacheSize: tokensForTest.cacheSize(), reads: tokensForTest.reads(), accent: tok('--accent'), panel: tok('--panel'), ink: tok('--ink') }),
   constantsForTest: () => ({
     PAINT68_CASE_N: C.PAINT68_CASE_N, PAINT68_GRADE_STEP_PX: C.PAINT68_GRADE_STEP_PX,

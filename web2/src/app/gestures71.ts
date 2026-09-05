@@ -9,7 +9,9 @@
 // 표식(D-1): 마지막 몸짓의 손가락 수·지속·최대 이동·판정·«왜 아님»을 lastForTest에 남긴다 — 게이트가 그 값을 잰다.
 import { C } from '../core/constants'
 
-export interface TapVerdict { fingers: number; durationMs: number; maxMovePx: number; syncMs: number; verdict: 'tap' | 'double' | 'hold' | 'none'; why: string | null; at: number }
+export interface TapVerdict { fingers: number; durationMs: number; maxMovePx: number; spoiledAtPx: number | null; syncMs: number; verdict: 'tap' | 'double' | 'hold' | 'none'; why: string | null; at: number; doubleGapMs: number | null }
+/** 반증 손잡이(D-3) — 문턱 덮개(null = 상수). 제품 경로 ⛔ */
+export interface ThresholdOverride { tapMovePx?: number | null; tapMs?: number | null; doubleMs?: number | null }
 
 export interface GestureHooks {
   /** 손가락 n개 두드림(한 번) — 두 번째가 350ms 안에 오면 뒤에 onDouble이 따로 온다(§2: 세 손가락 두 번은 첫 번째의 다시하기를 «되물린다» — 호출자가 그 순서를 안다) */
@@ -31,6 +33,13 @@ export function createGestures71(hooks: GestureHooks) {
   let holdRepeating = false
   let last: TapVerdict | null = null
   let enabled = true
+  let groupMaxMove = 0        // 무리 전체의 최대 누적 변위(손가락이 먼저 떨어져도 남는다 — 리뷰어 [H3])
+  let spoiledAtPx: number | null = null   // 처음 문턱을 넘긴 그 순간의 누적 변위(값 — 리뷰어 [H3]: why의 수와 maxMove는 «같은 자(첫 접촉으로부터의 누적 변위)»의 두 시점)
+  let syncMs = 0
+  const ov: ThresholdOverride = {}
+  const TAP_MOVE = () => ov.tapMovePx ?? C.GESTURE71_TAP_MOVE_PX
+  const TAP_MS = () => ov.tapMs ?? C.GESTURE71_TAP_MS
+  const DOUBLE_MS = () => ov.doubleMs ?? C.GESTURE71_DOUBLE_MS
 
   const now = () => Date.now()   // Date.now — 가짜 시계(vitest)가 덮는다 · 판정은 ms 정수면 족하다
   const clearHold = () => { if (holdT !== null) { globalThis.clearInterval(holdT); holdT = null } holdRepeating = false }
@@ -54,8 +63,8 @@ export function createGestures71(hooks: GestureHooks) {
     down(id: number, x: number, y: number) {
       if (!enabled) return
       const t = now()
-      if (fingers.size === 0) { groupT0 = t; groupMax = 0; spoiled = null }
-      else if (t - groupT0 > C.GESTURE71_TOUCH_SYNC_MS) spoiled = spoiled ?? `sync ${Math.round(t - groupT0)}ms > ${C.GESTURE71_TOUCH_SYNC_MS}`
+      if (fingers.size === 0) { groupT0 = t; groupMax = 0; spoiled = null; spoiledAtPx = null; syncMs = 0; groupMaxMove = 0 }
+      else { syncMs = Math.max(syncMs, t - groupT0); if (t - groupT0 > C.GESTURE71_TOUCH_SYNC_MS) spoiled = spoiled ?? `sync ${Math.round(t - groupT0)}ms > ${C.GESTURE71_TOUCH_SYNC_MS}` }
       fingers.set(id, { id, x0: x, y0: y, t0: t, maxMove: 0 })
       groupMax = Math.max(groupMax, fingers.size)
       armHold()
@@ -63,14 +72,16 @@ export function createGestures71(hooks: GestureHooks) {
     move(id: number, x: number, y: number) {
       const f = fingers.get(id); if (!f) return
       f.maxMove = Math.max(f.maxMove, Math.hypot(x - f.x0, y - f.y0))
-      if (f.maxMove > C.GESTURE71_TAP_MOVE_PX && !spoiled) { spoiled = `move ${f.maxMove.toFixed(1)}px > ${C.GESTURE71_TAP_MOVE_PX}`; clearHold() }
+      groupMaxMove = Math.max(groupMaxMove, f.maxMove)
+      // 문턱 0 = «이동 검사 없음»(반증 손잡이 — 지시 §1 「문턱 8px를 0으로 두면 끌기가 되돌리기로 오작동한다」의 그 뜻)
+      if (TAP_MOVE() > 0 && f.maxMove > TAP_MOVE() && !spoiled) { spoiled = `move ${f.maxMove.toFixed(1)}px > ${TAP_MOVE()}`; spoiledAtPx = +f.maxMove.toFixed(1); clearHold() }
     },
     /** 뗌 — 마지막 손가락이 떨어질 때 판정. cancel은 두드림이 아니다. */
     up(id: number, cancel = false) {
       const f = fingers.get(id); if (!f) return
       const t = now()
       const dur = t - groupT0
-      const maxMove = Math.max(...[...fingers.values()].map(g => g.maxMove))
+      const maxMove = groupMaxMove
       fingers.delete(id)
       if (fingers.size > 0) return          // 남은 손가락이 떨어질 때 판정한다
       const wasHold = holdRepeating         // clearHold가 지우기 «전»에 읽는다
@@ -78,19 +89,24 @@ export function createGestures71(hooks: GestureHooks) {
       let verdict: TapVerdict['verdict'] = 'none'; let why: string | null = spoiled
       if (cancel) why = why ?? 'cancel'
       else if (wasHold) { verdict = 'hold'; why = null }
-      else if (!why && dur > C.GESTURE71_TAP_MS) why = `duration ${Math.round(dur)}ms > ${C.GESTURE71_TAP_MS}`
+      let doubleGap: number | null = null
+      if (!why && dur > TAP_MS()) why = `duration ${Math.round(dur)}ms > ${TAP_MS()}`
       else if (!why) {
         verdict = 'tap'
         const p = { x: f.x0, y: f.y0 }
-        if (lastTap && lastTap.fingers === groupMax && t - lastTap.at <= C.GESTURE71_DOUBLE_MS) { verdict = 'double'; lastTap = null; hooks.onDouble(groupMax, p) }
+        if (lastTap && lastTap.fingers === groupMax) doubleGap = t - lastTap.at
+        if (lastTap && lastTap.fingers === groupMax && t - lastTap.at <= DOUBLE_MS()) { verdict = 'double'; lastTap = null; hooks.onDouble(groupMax, p) }
         else { lastTap = { fingers: groupMax, at: t }; hooks.onTap(groupMax, p) }
       }
-      last = { fingers: groupMax, durationMs: Math.round(dur), maxMovePx: +maxMove.toFixed(1), syncMs: 0, verdict, why, at: t }
+      last = { fingers: groupMax, durationMs: Math.round(dur), maxMovePx: +maxMove.toFixed(1), spoiledAtPx, syncMs: Math.round(syncMs), verdict, why, at: t, doubleGapMs: doubleGap === null ? null : Math.round(doubleGap) }
     },
     /** 진단(D-1 표식) */
     lastForTest: (): TapVerdict | null => last,
     activeFingers: () => fingers.size,
     setEnabled(v: boolean) { enabled = v; if (!v) { fingers.clear(); clearHold() } },
     resetForTest() { fingers.clear(); clearHold(); lastTap = null; last = null; spoiled = null },
+    /** 반증 손잡이(D-3) — 문턱을 덮는다(null로 되돌린다) · 제품 경로 ⛔ */
+    setThresholdsForTest(o: ThresholdOverride) { Object.assign(ov, o) },
+    thresholdsForTest: () => ({ tapMovePx: TAP_MOVE(), tapMs: TAP_MS(), doubleMs: DOUBLE_MS(), override: { ...ov } }),
   }
 }

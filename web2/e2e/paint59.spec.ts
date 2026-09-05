@@ -61,12 +61,16 @@ async function drawLine(page: Page, x0: number, y0: number, x1: number, y1: numb
 async function bigBox(page: Page, withFloor = true) {
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다 → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.waitForFunction(() => !!(window as any).__b2.diag.setGesture71ForTest); await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   // ⚠ 실행 중 «web2/ 아래 파일»(스펙 포함)을 고치면 vite 개발 서버가 «모듈 그래프 밖 파일 변경 → 전체
   // 새로고침»을 보내 페이지가 재적재되고 evaluate가 __b2 undefined로 죽는다(실측 두 번 — 편집 직후의
   // 실행에서만). 아래 대기는 부팅 직후 여유일 뿐 그 병의 수리가 아니다 — 수리는 «실행 중 편집 금지»다.
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(200)
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다 → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.waitForFunction(() => !!(window as any).__b2.diag.setGesture71ForTest); await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   await drawLine(page, 60, 620, 1140, 620)
   await drawLine(page, 500, 700, 900, 610)
   await drawLine(page, 500, 700, 150, 620)
@@ -95,6 +99,7 @@ async function pickInstr(page: Page, i: Instr, w = 20, hex = '#8a4a3a') {
     { const b2 = (window as any).__b2; b2.diag.setPaintInstrForTest(i); Object.assign(b2.app.paintSel, { hex: h, w }) } /* 64: 슬롯은 diag(br이 같이 든다) */
   }, [i, w, hex] as const)
   await page.click('#btn-paint')
+  await page.evaluate(() => { const b = document.getElementById('brushpick'); if (b && getComputedStyle(b).display !== 'none') document.getElementById('brushpick-close')?.click() })   // web2-71 §4: 칠을 든 채 다시 누르면 브러시 목록이 열린다(그 통이 캔버스를 덮는다) — 이 헬퍼는 도구만 원한다
   await page.waitForTimeout(60)
 }
 
@@ -657,6 +662,8 @@ test('④ 결은 면 고정 — 자국 어둡기와 종이 타일의 상관(붓 
   // 획·시드와 무관하다는 것(면 고정)이 이 상관이 서는 유일한 길이다. 반증(결 끔) = 0 대역.
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다 → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.waitForFunction(() => !!(window as any).__b2.diag.setGesture71ForTest); await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(150)
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())

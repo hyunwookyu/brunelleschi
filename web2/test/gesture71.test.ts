@@ -50,6 +50,26 @@ describe('web2-71 두드림 판정', () => {
     expect(log.length, '떼면 멈춘다').toBe(3)
     expect(g.lastForTest()?.verdict).toBe('hold')
   })
+  it('이동량은 «첫 접촉으로부터의 누적 변위»다(리뷰어 [H3]) — 5px씩 세 번(델타는 전부 < 8)이면 15px로 두드림 아님 · why는 처음 넘긴 순간(10) · maxMovePx는 끝값(15) · 문턱 덮개 0이면 두드림(반증)', () => {
+    const { g, log } = make()
+    g.down(1, 100, 100); g.down(2, 140, 100)
+    g.move(1, 105, 100); g.move(1, 110, 100); g.move(1, 115, 100)
+    vi.advanceTimersByTime(50); g.up(1); g.up(2)
+    expect(log).toEqual([]); expect(g.lastForTest()?.why).toContain('move 10.0px'); expect(g.lastForTest()?.spoiledAtPx).toBe(10); expect(g.lastForTest()?.maxMovePx).toBe(15)
+    g.setThresholdsForTest({ tapMovePx: 0 })
+    g.down(1, 100, 100); g.down(2, 140, 100); g.move(1, 130, 100); vi.advanceTimersByTime(50); g.up(1); g.up(2)
+    expect(log, '반증 — 문턱 0이면 30px 끌기가 두드림으로 오인된다').toEqual(['tap2'])
+    g.setThresholdsForTest({ tapMovePx: null })
+    expect(g.thresholdsForTest().tapMovePx).toBe(C.GESTURE71_TAP_MOVE_PX)
+  })
+  it('두 번의 간격은 판정의 시계로 잰다(doubleGapMs) — 300ms면 double · 400ms면 tap 둘(gap 400 기록)', () => {
+    const { g, log } = make()
+    const tap = () => { g.down(1, 100, 100); vi.advanceTimersByTime(30); g.up(1) }
+    tap(); vi.advanceTimersByTime(270); tap()
+    expect(log).toEqual(['tap1', 'double1']); expect(g.lastForTest()?.doubleGapMs).toBe(300)
+    vi.advanceTimersByTime(500); tap(); vi.advanceTimersByTime(370); tap()
+    expect(log.slice(2)).toEqual(['tap1', 'tap1']); expect(g.lastForTest()?.doubleGapMs).toBe(400)
+  })
   it('cancel은 두드림이 아니다 · 한 손가락 두 번 = double1', () => {
     const { g, log } = make()
     g.down(1, 100, 100); vi.advanceTimersByTime(30); g.up(1, true)

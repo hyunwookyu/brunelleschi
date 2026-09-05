@@ -50,6 +50,8 @@ async function drawLine(page: Page, x0: number, y0: number, x1: number, y1: numb
 async function room(page: Page) {
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다 → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.waitForFunction(() => !!(window as any).__b2.diag.setGesture71ForTest); await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   await drawLine(page, 100, 400, 1100, 400)
   await drawLine(page, 500, 500, 600, 475)
   await drawLine(page, 500, 500, 400, 475)
@@ -113,6 +115,7 @@ async function pickPaint(page: Page, opt: { swatch?: string; sizePx?: number; in
   //   다시 접힌다. 두 번을 늘 누르던 초판은 두 번째 호출에서 통을 **닫아 놓고** 줄을 찾다가
   //   시간 초과했다 — 「열려 있는가」를 값으로 보고 필요한 만큼만 누른다(#88).
   await page.click('#btn-paint')                     // 도구 — web2-64: 패널이 곧 뜬다(재누름 불요)
+  await page.evaluate(() => { const b = document.getElementById('brushpick'); if (b && getComputedStyle(b).display !== 'none') document.getElementById('brushpick-close')?.click() })   // web2-71 §4: 칠을 든 채 다시 누르면 브러시 목록이 열린다(그 통이 캔버스를 덮는다) — 이 헬퍼는 도구만 원한다
   // web2-64: 견본 줄(swatch-*)은 64-7이 지웠다 — 견본 id(swatch-<재료>-<톤>)를 그 톤의 hex로 풀어 패널의 setPaintHex로 싣는다(무손실)
   if (opt.swatch) {
     const m = /^swatch-([a-z]+)-(\d)$/.exec(opt.swatch)!
@@ -275,6 +278,7 @@ test('④ 48-9 면은 평소에 안 보인다 — 도구가 대상을 비춘다 
   const box = { x: 530, y: 415, w: 40, h: 30 }     // 벽 면 안쪽
   const withPencil = await layerStats(page, 'gl', box.x, box.y, box.w, box.h)
   await page.click('#btn-paint')
+  await page.evaluate(() => { const b = document.getElementById('brushpick'); if (b && getComputedStyle(b).display !== 'none') document.getElementById('brushpick-close')?.click() })   // web2-71 §4: 칠을 든 채 다시 누르면 브러시 목록이 열린다(그 통이 캔버스를 덮는다) — 이 헬퍼는 도구만 원한다
   await page.waitForTimeout(150)
   const withPaint = await layerStats(page, 'gl', box.x, box.y, box.w, box.h)
   expect(withPaint.touched, '칠 도구를 들면 면이 드러난다').toBeGreaterThan(withPencil.touched)
@@ -305,6 +309,8 @@ test('⑤ 48-9 딸린 값 — 칠한 면이 뒤를 가리므로 깊이 순서를
   // 배열 = [뒤, 앞]이고 깊이 = [앞, 뒤]이라 정렬이 **반드시 둘을 바꿔야 한다**.
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다 → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.waitForFunction(() => !!(window as any).__b2.diag.setGesture71ForTest); await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   await drawLine(page, 100, 400, 1100, 400)
   await drawLine(page, 500, 500, 600, 475)
   await drawLine(page, 500, 500, 400, 475)
@@ -395,6 +401,8 @@ test('⑥ 돌리는 동안 칠이 남는다 — 48-6의 «살리기»가 web2-50
 test('⑦ 48-10 툴팁 — 44~47이 더한 손잡이 전수에 설명이 있다', async ({ page }) => {
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다 → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.waitForFunction(() => !!(window as any).__b2.diag.setGesture71ForTest); await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   // 통들을 열어야 동적 줄이 DOM에 선다(손통·칠통은 처음부터 지어져 있다 — main.ts)
   const ids = [
     // web2-44
@@ -440,6 +448,8 @@ test('⑦ 48-10 툴팁 — 44~47이 더한 손잡이 전수에 설명이 있다'
 test('⑧ 48-11 삼각자 배열 — 제도 도구 띠가 세로 한 줄이다', async ({ page }) => {
   await page.goto('/?reset')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  // web2-71 §5 — 이 스펙은 «엔진의 획 동역학»을 재며 펜을 댄 채 400ms 넘게 머문다 → 칠 멈춤 몸짓(직선 띠)을 덮개로 끈다(반증 손잡이 · 제품 경로 무변 · 몸짓은 gesture71.spec이 잰다)
+  await page.waitForFunction(() => !!(window as any).__b2.diag.setGesture71ForTest); await page.evaluate(() => (window as any).__b2.diag.setGesture71ForTest({ paintHoldMs: 1e9 }))
   const geo = await page.evaluate(() => {
     const q = (id: string) => {
       const r = document.getElementById(id)?.getBoundingClientRect()

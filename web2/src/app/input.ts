@@ -164,7 +164,12 @@ export function initInput(
   // §5 칠 획 끝 멈춤 — 떼지 않고 400ms(≤ 3px) 멈추면 시작점→끝점 직선 띠 · 계속 끌면 끝점이 따라온다 · 떼면 확정(같은 raw 두 점 — 저장 형식 무변)
   let paintHold: { sp: Pt; t: number; timer: number | undefined } | null = null
   let paintStraight = false
+  let paintStraightLast = false   // 마지막으로 확정한 칠 획이 직선 띠였는가(진단 — endDraft가 paintStraight를 지운 뒤에도 남는다)
   let paintHoldMsOverride: number | null = null   // 반증 손잡이(D-3 · setGesture71ForTest) — 제품 경로에서는 null
+  let paintStepDoc = 0
+  const avgStepDoc = (raw: Pt[]): number => { if (raw.length < 2) return 0; let d = 0; for (let i = 1; i < raw.length; i++) d += Math.hypot(raw[i]!.x - raw[i - 1]!.x, raw[i]!.y - raw[i - 1]!.y); return d / (raw.length - 1) }
+  /** 시작점→끝점 직선을 곡선과 같은 간격으로 표본한다(끝점 포함 · 최소 두 점) — 저장 형식 무변(raw 점렬) */
+  const straightRaw = (a: Pt, b: Pt): Pt[] => { const L = Math.hypot(b.x - a.x, b.y - a.y); const n = paintStepDoc > 0 ? Math.max(1, Math.round(L / paintStepDoc)) : 1; const out: Pt[] = []; for (let i = 0; i <= n; i++) out.push(pt(a.x + (b.x - a.x) * i / n, a.y + (b.y - a.y) * i / n)); return out }
   const clearPaintHold = () => { if (paintHold?.timer !== undefined) window.clearTimeout(paintHold.timer); paintHold = null; paintStraight = false }
   const paintHoldTick = (sp: Pt, cur: Pt) => {
     if (paintStraight) return
@@ -173,7 +178,8 @@ export function initInput(
       paintHold = { sp, t: performance.now(), timer: window.setTimeout(() => {
         if (!draft || !paintActive(app) || paintStraight || app.gestureSplitOff) return
         paintStraight = true
-        draft.raw = [draft.raw[0]!, cur]
+        paintStepDoc = avgStepDoc(draft.raw)   // 멈추기 전 곡선의 평균 표본 간격(문서 단위) — 직선 띠도 같은 간격(같은 브러시·크기·불투명 = 같은 밀도)
+        draft.raw = straightRaw(draft.raw[0]!, cur)
         draft.end = cur
         cb.onDraftChange(draft)
       }, paintHoldMsOverride ?? C.GESTURE71_PAINT_HOLD_MS) }
@@ -370,7 +376,7 @@ export function initInput(
     // 선이 아니다). 정본은 raw이고 미리보기는 render2d의 점렬 갈래가 그린다.
     if (paintActive(app)) {
       if (!app.gestureSplitOff) { const r0 = canvas.getBoundingClientRect(); paintHoldTick(pt(e.clientX - r0.left, e.clientY - r0.top), cur) }
-      if (paintStraight) draft.raw = [draft.raw[0]!, cur]   // §5 — 끝점이 따라온다(미리보기 == 확정본 · 두 점)
+      if (paintStraight) draft.raw = straightRaw(draft.raw[0]!, cur)   // §5 — 끝점이 따라온다(미리보기 == 확정본 · 같은 표본 간격의 직선)
       draft.end = cur
       draft.label = null
       draft.endSnap = null
@@ -524,6 +530,7 @@ export function initInput(
   }
 
   function endDraft() {
+    paintStraightLast = paintStraight
     clearPaintHold()   // web2-71 §5
     if (!draft) return
     const d = draft
@@ -1027,5 +1034,5 @@ export function initInput(
   canvas.addEventListener('contextmenu', (e) => e.preventDefault())
 
   // 진단·원장 통로(1-a·1-f) — 패널과 e2e가 같은 값을 읽는다
-  return { strokeStats: () => ({ ...capStats }), gesture71ForTest: () => g71.lastForTest(), gesture71Reset: () => g71.resetForTest(), paintStraightForTest: () => paintStraight, draftForTest: () => draft, setPaintHoldMsForTest: (ms: number | null) => { paintHoldMsOverride = ms } }
+  return { strokeStats: () => ({ ...capStats }), gesture71ForTest: () => g71.lastForTest(), gesture71Reset: () => g71.resetForTest(), paintStraightForTest: () => paintStraight, paintStraightLastForTest: () => paintStraightLast, paintStepForTest: () => paintStepDoc, draftForTest: () => draft, setPaintHoldMsForTest: (ms: number | null) => { paintHoldMsOverride = ms }, setGestureThresholdsForTest: (o: { tapMovePx?: number | null; tapMs?: number | null; doubleMs?: number | null }) => g71.setThresholdsForTest(o), gestureThresholdsForTest: () => g71.thresholdsForTest() }
 }
