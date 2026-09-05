@@ -14,6 +14,33 @@
 // 유형 3) — 그래서 **화면 판**(머리 사각 픽셀)과 **반증**(끔 → 이동)이 «측정»의 몫을 진다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { writeFileSync, mkdirSync, readFileSync } from '../tools/ledgerfs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+// 리뷰어 [M1] — 게이트 값은 원장에도 남는다(§5.1 「원장 밖 측정은 규칙이 있어도 안 걸린다」).
+// 초록 실행에서는 관문(#90)이 조용히 막고, LEDGER=1에서 stage0/out/paint66_web2_dpr{1,2}.json.
+const HERE = dirname(fileURLToPath(import.meta.url))
+const OUT: Record<string, unknown> = {
+  what: 'web2-66 게이트 원장 — ①(이동량·화면 머리) ③(새 도장만) ④(bbox 자국·반증) ⑤(뗄 때 불변 · 인계 == 전량 재굽기) §2(마커 단면) §3(슬롯 사양·R3 정정)',
+  note_pitfalls: '#111(이 회차가 등재 — 자는 시간과 이동량 둘) · #42 ⑥(인용은 이 원장에서 다시 읽는다) · #89(각 게이트의 «범위»를 note에 적었다)',
+  no_constants_snapshot: true,
+  constants_used: { note: 'web2 라인은 constantsSnapshot 기계가 없다(라인 유보 — lens31·paint50의 그 자리)' },
+  pitfall_citations: [42, 89, 103, 107, 111],
+}
+const LEDGER_OF = (projectName: string) =>
+  resolve(HERE, `../../stage0/out/paint66_web2_dpr${projectName === 'dpr2' ? 2 : 1}.json`)
+test.afterEach(async ({}, info) => {
+  const f = LEDGER_OF(info.project.name)
+  mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
+  let prev: Record<string, unknown> = {}
+  try { prev = JSON.parse(readFileSync(f, 'utf8') as unknown as string) as Record<string, unknown> } catch { /* 첫 쓰기 */ }
+  writeFileSync(f, JSON.stringify({
+    ...prev,
+    conditions: { project: info.project.name, canonical: 'LEDGER=1 node tools/e2e.mjs ledger e2e/paint66.spec.ts' },
+    ...OUT,
+  }, null, 2))
+})
 
 async function drawLine(page: Page, x0: number, y0: number, x1: number, y1: number) {
   await page.mouse.move(x0, y0)
@@ -174,6 +201,7 @@ test('① ⛳ 도장이 안 움직인다 — 확정 구간 이동량 0(기록 + 
   await page.evaluate(() => { (window as any).__b2.diag.setPaintWLegacyForTest(false) })
   expect(off.moved, '반증 — 끄면 확정 구간 도장이 움직인다').toBeGreaterThan(0)
   expect(off.head.changed, '반증 — 끄면 머리 사각도 변한다').toBeGreaterThan(0)
+  OUT.g1 = { note: '범위(#89): 연필 · 원근 벽 · 120점. 도장 기록의 이동 0은 절반이 구성(세션이 제 기록을 돌려준다 — §5.1 유형 3)이고, «측정»의 몫은 화면 머리 사각(head)과 반증(off)이 진다. 재구축이 도는 도구(cp)의 이동량은 perf66 h2_cp_rebuild가 값으로', on, off }
   console.log('[①]', JSON.stringify({ on, off }))
 })
 
@@ -208,6 +236,7 @@ test('③ 프레임마다 그린 도장 = 새 도장만 — 꼬리 프레임 도
   // 8이동(궤적의 ~3%)이 더한 도장은 이미 쌓인 수의 작은 몫이어야 한다 — pre는 매 프레임 «전부»(n1
   // 상당)를 다시 그렸다(perf66_pre (b): 400점 꼬리 프레임당 551.8개)
   expect(grew, '마지막 8이동이 그린 도장 = 새 도장 몇 개(전부가 아니다)').toBeLessThan(n1 * 0.2)
+  OUT.g3 = { note: '범위(#89): 연필 · 240점. 이동이 프레임에 합쳐지면(coalesced) 한 프레임의 «새 도장»이 그만큼 커진다(perf66 delta.max 13 — 394프레임 < 399이동의 그 몫이지 부분 되그리기가 아니다)', n1, n2, grew }
   console.log('[③]', JSON.stringify({ n1, n2, grew }))
 })
 
@@ -238,6 +267,7 @@ test('④ bbox 자국 0 — draft bbox가 덮는 확정 칠이 그리는 중 안
   const off = await gesture()
   await page.evaluate(() => { (window as any).__b2.diag.setPaintFreezeOffForTest(false) })
   expect(off.changed, '반증 — 끄면 그 사각이 변한다(이중 합성)').toBeGreaterThan(100)
+  OUT.g4_bbox = { note: '(e)의 post 판 — pre 값은 perf66_pre e_bbox(dpr1 3,078채널 · dpr2 12,884채널)에 동결. on = 제품(0이어야) · off = 얼리기 끔 반증(pre의 이중 합성이 돌아온다)', on, off }
   console.log('[④]', JSON.stringify({ on, off }))
 })
 
@@ -272,9 +302,18 @@ test('⑤ ⛳ 미리보기 == 확정본 — 뗄 때 픽셀 불변(캔버스 해�
     const commitScr = await glCrop(page, ...CLIP)
     const bk = await page.evaluate(() => (window as any).__b2.diag.paintBake() as { handoverStrokes: number; bakes: number })
     const scr = cropDiff(draftScr, commitScr)
-    rows.push({ tag: t.tag, tex_same: JSON.stringify(draftTex) === JSON.stringify(commitTex), scr_changed: scr.changed, scr_maxD: scr.maxD, rebuilds: dStat.rebuilds, full_uploads: dStat.fullUploads, handed: bk.handoverStrokes, bakes: bk.bakes })
+    // 리뷰어 [H1] — 뗄 때의 sha 항등은 «인계» 경로에서 절반이 구성이다(확정본 캔버스가 세션의
+    // 그 캔버스다 — §5.1 유형 3). 그래서 여기서 **전량 재굽기와의 픽셀 항등을 측정**한다:
+    // 인계된 층·캔버스가 정본(획 목록)에서 처음부터 구운 판과 같아야 한다(paint65 ①의 그 자 —
+    // 그 자가 실제로 f32/f64 갈림을 잡았다). 이것이 ⑤의 «측정» 몫이다.
+    await page.evaluate(() => { (window as any).__b2.diag.rebakePaintTex() })
+    await page.waitForTimeout(250)
+    const rebakeTex = await page.evaluate(() => (window as any).__b2.diag.paintTexHash())
+    const handedSame = JSON.stringify(commitTex) === JSON.stringify(rebakeTex)
+    rows.push({ tag: t.tag, tex_same: JSON.stringify(draftTex) === JSON.stringify(commitTex), rebake_same: handedSame, scr_changed: scr.changed, scr_maxD: scr.maxD, rebuilds: dStat.rebuilds, full_uploads: dStat.fullUploads, handed: bk.handoverStrokes, bakes: bk.bakes })
     expect(JSON.stringify(commitTex), `${t.tag}: 뗄 때 캔버스 해시 불변(sha 항등)`).toBe(JSON.stringify(draftTex))
     expect(scr.changed, `${t.tag}: 뗄 때 화면 사각 불변`).toBe(0)
+    expect(handedSame, `${t.tag}: 인계된 판 == 전량 재굽기(측정 — 구성 아님)`).toBe(true)
     await page.click('#btn-undo'); await page.waitForTimeout(300)
   }
   // ⑥의 몫 — 그리는 동안 전량 업로드 0회(재구축 제외 — cp 램프의 문턱 이동은 전량이 맞다)
@@ -291,6 +330,7 @@ test('⑤ ⛳ 미리보기 == 확정본 — 뗄 때 픽셀 불변(캔버스 해�
   await page.evaluate(() => (window as any).__b2.diag.setPaintDraftPerturbForTest(false))
   const pd = cropDiff(pDraft, pCommit)
   expect(pd.changed, '반증 — 입력을 어긋내면 뗄 때 픽셀이 바뀐다').toBeGreaterThan(0)
+  OUT.g5 = { note: '뗄 때 불변(tex_same·scr_changed — «인계» 경로라 절반이 구성)과 «인계 == 전량 재굽기»(rebake_same — 측정 · paint65 ①의 자). cp 행은 재구축 3회를 지나고도 항등. 반증 = perturb(입력 어긋냄)', rows, falsify_perturb: pd, texReallocs_note: '재할당 계수는 diag.paintBake().texReallocs — 이 줄 아래 값', texReallocs: await page.evaluate(() => (window as any).__b2.diag.paintBake().texReallocs) }
   console.log('[⑤]', JSON.stringify({ rows, falsify_perturb: pd }))
 })
 
@@ -322,6 +362,7 @@ test('§2 마커의 단면 — 가로/세로 폭이 갈린다 · 단면이 직�
   const oldV = await probe('ramon/100%_Opaque', 90)
   const oldRatio = Math.max(oldH.width_median, oldV.width_median) / Math.max(1, Math.min(oldH.width_median, oldV.width_median))
   expect(oldRatio, '대조 — 옛 원형 마커는 방향 무관(< 1.15)').toBeLessThan(1.15)
+  OUT.s2_marker = { note: '방향 넷의 반최대 폭(텍스처 px · 요청 24px)과 단면 평평 몫(80%↑/20%↑ — 직사각형 ≈ 1). old = 옛 원형 마커 대조(자가 방향 차를 실제로 잰다는 실증 — #108의 그 자리)', rows, ratio: +ratio.toFixed(2), old: { h: oldH, v: oldV, ratio: +oldRatio.toFixed(2) } }
   console.log('[§2]', JSON.stringify({ rows, ratio: +ratio.toFixed(2), old: { h: oldH, v: oldV, ratio: +oldRatio.toFixed(2) } }))
 })
 
@@ -378,6 +419,7 @@ test('§3 66-3 칠 사양이 슬롯마다 — 색·크기·불투명이 즐겨�
   // 저장물에 즐겨찾기 밭이 한 글자도 안 섞였는지 문자열로 확인한다
   const saved = await page.evaluate(() => localStorage.getItem('b2.brushFavs64.v1'))
   expect(saved, '즐겨찾기가 기기(localStorage)에 남았다').toContain('#2244aa')
+  OUT.s3_favs = { note: '슬롯 사양 한 벌의 왕복(A: #2244aa·33px·0.6 ↔ B: #aa3311·12px·0.35 — 전수)과 재시작 생존. 문서 형식 무변은 roundtrip43 ②의 몫', a, b, a2 }
   console.log('[66-3]', JSON.stringify({ a, b, a2 }))
 })
 
@@ -435,5 +477,6 @@ test('§3 66-4 R3 정정 — 연달아 쓰는 명령은 통을 안 접는다(자
   // ③ 반증 — 한 번 쓰고 마는 명령(정면)은 종전대로 접는다
   await page.click('#btn-grip-front'); await page.waitForTimeout(120)
   expect(await trayOpen(), '반증 — 정면(한 번 쓰는 명령)은 손통을 접는다').toBe(false)
+  OUT.s3_r3 = { note: 'R3 정정 — 자동찾기 3판(각 판 통 열림 + 확정 보임 · 취소는 접는 것이 맞다) · 손통 분류 3연타(통 유지 + 값이 실제로 돎) · 반증(정면 — 한 번 쓰는 명령은 접힌다)', cls_seen: seen }
   console.log('[66-4]', JSON.stringify({ cls_seen: seen }))
 })

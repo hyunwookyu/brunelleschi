@@ -7,7 +7,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
   frontFlyTarget, liveFaceSel, lastSelFace, faceThicknessNow, setClsThickness, setFaceThicknessEx, faceSlotsOf,
   njGrip, setStrokeNj, setJoint56OffForTest,
-  commitPaint, buildPaintStrokes, injectPaintAt, tapSelectFace, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen, setPaintWLegacyForTest,
+  commitPaint, buildPaintStrokes, injectPaintAt, tapSelectFace, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen, setPaintWLegacyForTest, worldPerPxPerpProbeForTest,
   placePersonAt, gripFaceArea, floorAreaNow, volumeNow, flashFaces, screenToDoc, roomsNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
@@ -3057,6 +3057,9 @@ const diag = {
   /** web2-66 §2 — 자국 단면 프로브(방향별 폭·평평한 몫) */
   markBandProbeForTest: (tool: Instr58, preset: string | undefined, wPx: number, dirDeg: number) =>
     markBandProbeForTest(tool, preset, wPx, dirDeg),
+  /** web2-66 [H5] — 임의 두 화면 점의 굵기 환산(표집 대가의 자 — 커밋과 같은 함수 #54) */
+  worldPerPxPerpForTest: (faceId: number, a: { x: number; y: number }, b: { x: number; y: number }) =>
+    worldPerPxPerpProbeForTest(app, faceId, a, b),
   paintRendererId: () => paintRendererId(),
   /** **엔진 조정**(web2-61 — 이음매의 작업대 표면과 같은 배선 #54) + 재굽기 */
   setPaintParamForTest: (i: Instr58, key: string, value: number) => {

@@ -1863,6 +1863,11 @@ export const paintActive = (app: Pick<App, 'tool'>): boolean => app.tool === 'pa
  *  함수)을 되살린다. 켜면 그리는 중 w가 흘러 «이미 지나간 도장»이 움직인다(pre의 그 증상). */
 let paintWLegacyForTest = false
 export function setPaintWLegacyForTest(v: boolean): void { paintWLegacyForTest = v }
+/** web2-66 진단(리뷰어 [H5]) — 임의 두 화면 점의 굵기 환산(같은 함수 — 표집 대가를 값으로 잰다) */
+export function worldPerPxPerpProbeForTest(app: App, faceId: number, a: Pt, b: Pt): number | null {
+  const rf = app.faces.find(x => x.id === faceId)
+  return rf ? worldPerPxPerp(app, rf, a, b) : null
+}
 
 /** 한 붓을 확정한다 — 지나간 면마다 나뉘어 얹힌다(지시 문면 · 사용자는 의식하지 않는다).
  *  면 밖 점은 센다(조용히 버리지 않는다 — 진단이 읽는다). */

@@ -233,6 +233,104 @@ test('(a)(b)(c)(d) 그리는 중 — 점 20·100·400', async ({ page }) => {
 // 잰 것이 `perf66_pre_web2_dpr{1,2}.json`의 `e_bbox`에 **동결**돼 있다(pre 트리에서 실측 —
 // dpr1: 변한 채널 3,078 · 최대 28).
 
+test('(리뷰어 H2·H3·H5) 재구축이 도는 cp · 도장 8.5배의 새 마커 · 표집 대가 — #111 판별을 그 셋에 댄다', async ({ page }) => {
+  test.setTimeout(600_000)
+  await bigBox(page)
+  // ── [H3] 새 마커(brunelleschi/marker — 도장 밀도 8.5배)로 §1의 자를 다시 댄다 ──────────
+  await pickPaint(page, 'marker', 18, '#4a6b8a')
+  {
+    const pts = serpentine(400)
+    const run = await draftProbe(page, pts, [Math.floor(400 * 0.5), 398])
+    const ms = run.perMove.map(p => p.ms)
+    const pairs: Record<string, unknown>[] = []
+    for (let i = 0; i + 1 < run.bursts.length; i++) {
+      const mv = movement(run.bursts[i]!, run.bursts[i + 1]!)
+      if (mv) pairs.push(mv)
+    }
+    await page.evaluate(() => { (window as any).__b2.diag.paintBakeReset() })
+    // 커밋 쪽 — 같은 도구로 짧은 획 하나(perf65 paintStroke의 그 몸짓)
+    await page.mouse.move(560, 600); await page.mouse.down()
+    await page.mouse.move(600, 610, { steps: 6 }); await page.mouse.up()
+    await page.waitForTimeout(250)
+    const bk = await page.evaluate(() => (window as any).__b2.diag.paintBake() as { ms: number; appendStrokes: number; handoverStrokes: number; bakes: number })
+    OUT.h3_marker = {
+      note: '[H3] §2가 마커 도장을 119 → 1,006/획으로 올렸다 — §1의 자(프레임 ms·이동량)를 새 마커로. 커밋 ms는 같은 도구의 짧은 획(펜 떼기 완결 몫)',
+      n: 400, frame_ms: { head6: r2(mean(ms.slice(0, 6))), tail6: r2(mean(ms.slice(-6))), max: r2(Math.max(...ms)) },
+      movement: pairs, total: run.stat,
+      commit_short_stroke: { ms: r2(bk.ms), handed: bk.handoverStrokes, appended: bk.appendStrokes, bakes: bk.bakes },
+    }
+  }
+  await page.click('#btn-undo'); await page.waitForTimeout(150)
+  await page.click('#btn-undo'); await page.waitForTimeout(150)
+  // ── [H2] cp(압력 램프 — 문턱 눈금이 움직여 재구축이 실제로 돈다)의 «확정 구간 이동량» ────
+  await pickPaint(page, 'cp', 18, '#5a4a3a')
+  {
+    const res = await page.evaluate(async () => {
+      const b2 = (window as any).__b2
+      const el = document.getElementById('ink')!
+      const r = el.getBoundingClientRect()
+      const raf = () => new Promise<void>(res2 => requestAnimationFrame(() => requestAnimationFrame(() => res2())))
+      const N = 120
+      const pt = (i: number) => ({ x: 545 + (i / (N - 1)) * 300, y: 420 + (i / (N - 1)) * 30 })
+      const pr = (i: number) => 0.2 + (i / (N - 1)) * 0.7          // 오르는 압력 — 달리는 평균이 눈금을 넘는다
+      const fire = (type: string, p: { x: number; y: number }, press: number, buttons: number) =>
+        el.dispatchEvent(new PointerEvent(type, {
+          pointerId: 1, pointerType: 'pen', isPrimary: true, buttons,
+          pressure: press, clientX: r.left + p.x, clientY: r.top + p.y, bubbles: true, cancelable: true,
+        }))
+      b2.diag.setDabLogForTest(true)
+      b2.diag.paintDraftFramesReset()
+      fire('pointerdown', pt(0), pr(0), 1)
+      let logMid: number[] = []
+      for (let i = 1; i < N; i++) {
+        fire('pointermove', pt(i), pr(i), 1)
+        if (i % 6 === 0) await raf()
+        if (i === Math.floor(N * 0.5)) { await raf(); logMid = [...(b2.diag.lastDabLogForTest() as number[])] }
+      }
+      await raf()
+      const logEnd = [...(b2.diag.lastDabLogForTest() as number[])]
+      const st = b2.diag.paintDraftFrames()
+      fire('pointerup', pt(N - 1), 0, 0)
+      b2.diag.setDabLogForTest(false)
+      await raf()
+      return { logMid, logEnd, rebuilds: st.rebuilds, fullUploads: st.fullUploads }
+    })
+    // 재구축이 «실제로» 돌았는가(#103) — 안 돌았으면 이 팔은 아무것도 안 잰다(D-3)
+    expect(res.rebuilds, 'cp 램프에서 재구축이 실제로 돌았다').toBeGreaterThan(0)
+    const m = Math.floor((res.logMid.length / 3) * 0.8)
+    let mx = 0, moved = 0
+    for (let i = 0; i < m; i++) {
+      const d = Math.hypot(res.logEnd[i * 3]! - res.logMid[i * 3]!, res.logEnd[i * 3 + 1]! - res.logMid[i * 3 + 1]!)
+      if (d > 0.01) moved++
+      if (d > mx) mx = d
+    }
+    OUT.h2_cp_rebuild = {
+      note: '[H2] 재구축(cp 문턱 눈금 이동 — 층 되세움 + 전량 재먹임)을 «지나는» 획의 확정 구간 이동량. 재먹임은 같은 점·같은 시드·같은 굵기라 위치가 같아야 한다(문턱은 결 판만 바꾼다 — DECISIONS의 그 단언을 값으로)',
+      rebuilds: res.rebuilds, full_uploads: res.fullUploads,
+      confirmed80: { of: m, moved, max_px: r2(mx) },
+    }
+    expect(mx, 'cp 재구축을 지나도 확정 구간 이동량 0').toBe(0)
+    await page.click('#btn-undo'); await page.waitForTimeout(150)
+  }
+  // ── [H5] 표집 대가 — 이 픽스처 획의 «시작 걸음 환산 vs 끝 걸음 환산» 비(원근 벽) ──────────
+  {
+    const ratio = await page.evaluate(() => {
+      const b2 = (window as any).__b2
+      const rf = b2.app.faces[0]
+      const wpp = (a: { x: number; y: number }, b: { x: number; y: number }) => {
+        // worldPerPxPerp와 같은 식을 진단으로 — 시작·끝 두 자리의 환산을 견준다
+        return b2.diag.worldPerPxPerpForTest ? b2.diag.worldPerPxPerpForTest(rf.id, a, b) : null
+      }
+      return { start: wpp({ x: 545, y: 380 }, { x: 548, y: 380 }), end: wpp({ x: 852, y: 560 }, { x: 855, y: 560 }) }
+    })
+    OUT.h5_sampling_cost = {
+      note: '[H5] 굵기 표집을 «첫 걸음»으로 옮긴 대가 — 획 전체가 시작점의 환산을 쓴다. 이 픽스처(서펜타인 · 원근 벽)의 시작↔끝 환산 비가 그 오차의 상한이다. 종전(첫→끝 중점)도 상수 하나였으므로 «획 안에서 굵기가 변하지 않는» 것은 같다 — 바뀐 것은 상수의 표집 자리다. 옛 문서는 저장된 세계 굵기(paint.w)를 그대로 쓰므로 여는 순간 자국이 안 바뀐다',
+      wpp_start: ratio.start, wpp_end: ratio.end,
+      end_over_start: ratio.start && ratio.end ? r2(ratio.end / ratio.start) : null,
+    }
+  }
+})
+
 test('(⑦) 도구별 도장 간격 — 값만 낸다(판정은 사람 · 지시 ⑦)', async ({ page }) => {
   test.setTimeout(600_000)
   await bigBox(page)

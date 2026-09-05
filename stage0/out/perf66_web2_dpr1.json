@@ -30,9 +30,9 @@
       "draft_strokes": 1,
       "a_frame_ms": {
         "head6": 0.57,
-        "mid6": 0.65,
-        "tail6": 0.47,
-        "max": 1.6
+        "mid6": 0.62,
+        "tail6": 0.5,
+        "max": 1.7
       },
       "b_dabs_per_frame": {
         "note": "자 둘(같은 기록의 두 읽기): log_len = lastDabLog 길이 — pre(전량 되그리기)에서는 «그 프레임에 그린 수»(전부)이고 post(세션)에서는 «누적»이다 · delta = 연속 이동의 길이 증가 — post에서 «그 프레임에 그린 수»(새 도장만). pre의 그린 수는 log_len, post의 그린 수는 delta로 읽는다",
@@ -120,7 +120,7 @@
         "tail6": 6373
       },
       "total": {
-        "ms_sum": 10.7,
+        "ms_sum": 10.6,
         "frames": 17,
         "upload_bytes": 107840,
         "full_uploads": 0,
@@ -132,9 +132,9 @@
       "moves": 99,
       "draft_strokes": 1,
       "a_frame_ms": {
-        "head6": 0.52,
-        "mid6": 0.52,
-        "tail6": 0.67,
+        "head6": 0.57,
+        "mid6": 0.48,
+        "tail6": 0.63,
         "max": 0.9
       },
       "b_dabs_per_frame": {
@@ -223,7 +223,7 @@
         "tail6": 7181
       },
       "total": {
-        "ms_sum": 54.1,
+        "ms_sum": 56.8,
         "frames": 97,
         "upload_bytes": 638348,
         "full_uploads": 0,
@@ -235,10 +235,10 @@
       "moves": 399,
       "draft_strokes": 1,
       "a_frame_ms": {
-        "head6": 0.4,
-        "mid6": 0.52,
-        "tail6": 0.57,
-        "max": 3.2
+        "head6": 0.45,
+        "mid6": 0.53,
+        "tail6": 0.58,
+        "max": 3
       },
       "b_dabs_per_frame": {
         "note": "자 둘(같은 기록의 두 읽기): log_len = lastDabLog 길이 — pre(전량 되그리기)에서는 «그 프레임에 그린 수»(전부)이고 post(세션)에서는 «누적»이다 · delta = 연속 이동의 길이 증가 — post에서 «그 프레임에 그린 수»(새 도장만). pre의 그린 수는 log_len, post의 그린 수는 delta로 읽는다",
@@ -326,7 +326,7 @@
         "tail6": 6321
       },
       "total": {
-        "ms_sum": 239.2,
+        "ms_sum": 249.8,
         "frames": 394,
         "upload_bytes": 2664072,
         "full_uploads": 0,
@@ -402,5 +402,92 @@
         "gap_over_radius": 0.19
       }
     ]
+  },
+  "h3_marker": {
+    "note": "[H3] §2가 마커 도장을 119 → 1,006/획으로 올렸다 — §1의 자(프레임 ms·이동량)를 새 마커로. 커밋 ms는 같은 도구의 짧은 획(펜 떼기 완결 몫)",
+    "n": 400,
+    "frame_ms": {
+      "head6": 1.22,
+      "tail6": 0.38,
+      "max": 4.9
+    },
+    "movement": [
+      {
+        "frames": [
+          200,
+          201
+        ],
+        "dabs": [
+          2127,
+          2135
+        ],
+        "confirmed80": {
+          "max": 0,
+          "mean": 0,
+          "moved": 0,
+          "of": 1701
+        },
+        "all_prev": {
+          "max": 0,
+          "mean": 0,
+          "moved": 0,
+          "of": 2127
+        }
+      },
+      {
+        "frames": [
+          398,
+          399
+        ],
+        "dabs": [
+          4239,
+          4247
+        ],
+        "confirmed80": {
+          "max": 0,
+          "mean": 0,
+          "moved": 0,
+          "of": 3391
+        },
+        "all_prev": {
+          "max": 0,
+          "mean": 0,
+          "moved": 0,
+          "of": 4239
+        }
+      }
+    ],
+    "total": {
+      "frames": 399,
+      "ms": 183.9,
+      "lastMs": 0.3,
+      "strokes": 399,
+      "uploads": 399,
+      "uploadBytes": 1172452,
+      "fullUploads": 0,
+      "rebuilds": 0
+    },
+    "commit_short_stroke": {
+      "ms": 0,
+      "handed": 1,
+      "appended": 0,
+      "bakes": 0
+    }
+  },
+  "h2_cp_rebuild": {
+    "note": "[H2] 재구축(cp 문턱 눈금 이동 — 층 되세움 + 전량 재먹임)을 «지나는» 획의 확정 구간 이동량. 재먹임은 같은 점·같은 시드·같은 굵기라 위치가 같아야 한다(문턱은 결 판만 바꾼다 — DECISIONS의 그 단언을 값으로)",
+    "rebuilds": 4,
+    "full_uploads": 4,
+    "confirmed80": {
+      "of": 90,
+      "moved": 0,
+      "max_px": 0
+    }
+  },
+  "h5_sampling_cost": {
+    "note": "[H5] 굵기 표집을 «첫 걸음»으로 옮긴 대가 — 획 전체가 시작점의 환산을 쓴다. 이 픽스처(서펜타인 · 원근 벽)의 시작↔끝 환산 비가 그 오차의 상한이다. 종전(첫→끝 중점)도 상수 하나였으므로 «획 안에서 굵기가 변하지 않는» 것은 같다 — 바뀐 것은 상수의 표집 자리다. 옛 문서는 저장된 세계 굵기(paint.w)를 그대로 쓰므로 여는 순간 자국이 안 바뀐다",
+    "wpp_start": 0.005526054483443454,
+    "wpp_end": 0.007257470091285301,
+    "end_over_start": 1.31
   }
 }
