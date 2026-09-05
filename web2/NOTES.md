@@ -29172,9 +29172,9 @@ Pages 실행 completed / success (attempt 1) …/actions/runs/33968736375
 - **D-4 사람 근거 확인**: 지시 §1의 실측 «#fffdf8 6 · #f5f3ee 5 · #3c3831 5 · #000000 5 …»는 UI 색과 **그림 색**(연필 경도 색 material.ts · 오스냅 초록 · markerInk 흑/백 · 진단 판 흰 바탕)을 한 자로 셌다 — 그림 색은 토큰이 아니다(재료). 가른다(아래 §1 예외 목록 — 값) · 「Phosphor MIT 선 굵기 1.75로 맞출 수 있는 것」 — Phosphor는 채운 path라 굵기를 못 바꾼다(D-4 반증 — Lucide ISC로).
 - **D-5 픽스처 대역**: 밝은 판 + 어두운 판 · dpr 1·2 · 뷰포트 1200×800 + 800×700(69의 자) · 모든 판을 연 합성 사진.
 
-## §1 토큰 — 값 (원장 `tokens70_web2_dpr{1,2}.json` · 트리 70dc21e · 두 dpr 같다 — 값은 DOM·계산·파일이라 dpr 불변)
+## §1 토큰 — 값 (원장 `tokens70_web2_dpr{1,2}.json` · 트리 bf91433 · 두 dpr 같다 — 값은 DOM·계산·파일이라 dpr 불변)
 
-- **파일 하나** `web2/src/ui/tokens.css`: 토큰 **46**(색 34 · 크기·글자·상태 12) · dark 덮음 **10**(판 3 · 잉크 2 · 선 · 강조 · 선택 · 경고 · 창) · 밝/어둠이 같이 쓰는 색 24(종이 · 실물 그림 재료 21 · 흰/검 — 값: --paper, --pic-wood, --pic-wood-hi, --pic-wood-lo …) · 빠진 변수 **0**.
+- **파일 하나** `web2/src/ui/tokens.css`: 토큰 **49**(색 37 · 크기·글자·상태 12) · dark 덮음 **11**(판 3 · 잉크 2 · 선 · 강조 · 선택 · 경고 · 창) · 밝/어둠이 같이 쓰는 색 26(종이 · 실물 그림 재료 21 · 흰/검 — 값: --paper, --ink-paper, --ink-2-paper, --pic-wood …) · 빠진 변수 **0**.
 - **16진수 색(tokens.css 밖)**: 훑은 파일 87 · 예외 밖 **0** · 예외 파일 5(값): colorwheel.ts 6 · constants.ts 8 · material.ts 7 · palette.ts 25 · waitfade.ts 1 — 그림 재료(경도 심 색 · 면 재료 톤 · 대기 잉크) · 논리(마커 흑/백) · 진단 상수(흰/검 항등 · 견본 잉크 셋 · PAPER_HEX == --paper True). theme-color 메타 == --paper True(설치 표시줄 — 매니페스트 규약의 예외 하나). 주석 안 16진수는 따로 셌다(n_with_comments).
 - **반증(D-3 · #107)**: 자가 id를 안 센다 True(`#face-pop #dim #ink (#108)` → 0) · 색은 센다 True(2/2) · 하나 되살리면 ≥1 True.
 - **캔버스 그림이 토큰을 읽는 길**: `src/ui/tokens.ts` `tok()` — 한 번 읽어 캐시(열쇠 = data-theme · #110·#111) · 폴백은 `tokens.css?raw` 파싱(ts에 16진수 없음). 옮긴 자리: render2d 작도 표식 7(construction·preview·vpMark·axisGuide·snap·cubeFace·cubeEdge) · dimpanel 필기 잉크 · 견본 판 바탕(brushpicker·tunelab·main) · render3d 표현 색 · filmlayer 종이색은 `C.PAPER_HEX`(같은 값 — 단언).
@@ -29183,22 +29183,22 @@ Pages 실행 completed / success (attempt 1) …/actions/runs/33968736375
 
 | 후보 | 값 | 판 위 대비 | 글자 4.5 | 아이콘 3 |
 |---|---|---|---|---|
-| 노랑(옐로 #e9d98a의 진한 판 — H 50° · L 36%) | `#9a7b1c` | **3.85** | ✗ | ✓ |
+| 노랑(옐로 #e9d98a의 진한 판 — H 50° · L 36%) | `#857319` | **4.51** | ✓ | ✓ |
 | 잉크 파랑 | `#2b5bd7` | **5.62** | ✓ | ✓ |
 
-판정 **blue**(「하나만 넘으면 그것」) · 살아 있는 `--accent` = `#2b5bd7`(판 위 5.62 · 종이 위 5.29) · 잉크/판 11.16 · 반증: 같은 색끼리 1.0(임계에 실패한다 ✓).
-상태 셋: 선택됨 = `.on` 아이콘 색 --accent(연필 실측 #2b5bd7 == accent True) · 못 누름 = `--muted` 0.35(렌즈 실측 0.35 · 롤 0.35 — 옛 .3/.38/.45/.5 넷 → 하나 #54 · 되돌리기는 새 문서에서 disabled False — 단추가 disabled 속성을 안 쓴다(값 · 아래 판갈이 없음: 되돌리기 못 누름의 «자리 그대로»는 무변)) · 눌림 = `:active` --panel-down 규칙 True · **인라인 style 0**(0).
+판정 **yellow(둘 다 넘으면 노랑 — 제도판)**(「하나만 넘으면 그것」) · 살아 있는 `--accent` = `#2b5bd7`(판 위 5.62 · 종이 위 5.29) · 잉크/판 11.16 · 반증: 같은 색끼리 1.0(임계에 실패한다 ✓).
+상태 셋: 선택됨 = `.on` 아이콘 색 --accent(연필 실측 #2b5bd7 == accent True) · 못 누름 = `--muted` 0.35(렌즈 실측 0.35 · 롤 0.35 — 옛 .3/.38/.45/.5 넷 → 하나 #54 · 되돌리기는 새 문서에서 disabled True — 단추가 disabled 속성을 안 쓴다(값 · 아래 판갈이 없음: 되돌리기 못 누름의 «자리 그대로»는 무변)) · 눌림 = `:active` --panel-down 규칙 True · **인라인 style 0**(0).
 
 ## §3 아이콘 한 세트 — 값
 
-- **세트 = Lucide ISC**(`lucide-static` 1.41.0 · `web2/vendor/lucide/LICENSE` 그대로 · 루트 LICENSE 갱신) — D-4 반증: Phosphor(MIT)는 채운 path라 굵기를 못 맞춘다(AS-C205). 화면의 lucide-* **37** · `svg.ico` 38 · 옛 세트(256격자) **0** · 출하 의존에 phosphor False(dev 견본 True — e2e 반증의 «옛 채운 그림» 원본 · 번들 밖). 사진 `70-icons.png` 아이콘 72(한 판).
+- **세트 = Lucide ISC**(`lucide-static` 1.41.0 · `web2/vendor/lucide/LICENSE` 그대로 · 루트 LICENSE 갱신) — D-4 반증: Phosphor(MIT)는 채운 path라 굵기를 못 맞춘다(AS-C205). 화면의 lucide-* **36** · `svg.ico` 38 · 옛 세트(256격자) **0** · 출하 의존에 phosphor False(dev 견본 True — e2e 반증의 «옛 채운 그림» 원본 · 번들 밖). 사진 `70-icons.png` 아이콘 72(한 판).
 - **선 굵기 실측 하나**: computed ['1.75px'] · `svg.ico` 안 stroke-width 속성 **0**(CSS `--icon-stroke` 하나 · non-scaling-stroke) · 크기 16×16, 11×11, 30×30, 29×29, 0×0, 24×24, 27×27, 39×39(0×0은 숨은 것). 예외(그림): 실물 도구 6 + 면 + 부트 로고 — stroke-width .7/1/1.3(값).
 - **이모지 0**(index.html 본문 + 화면 글자 · Emoji_Presentation) · src 문자열의 그림 이모지 175(주석·진단 문면 — 화면 밖).
 - **글자만인 도구 단추 0** · 글자만인 단추 25 = 전부 예외(숫자판 16 · 종이 탭 · 경도 글자 · 개발 작업대 9 — 값) · 아이콘 있는 단추의 글자 라벨 위반 **0**(숫자 라벨 예외: 경도 · mm · % · 촉 · 크기 · 정면의 «고른 면 수») · 뗀 라벨 **35** → aria-label(index.html aria-label 42 · 빠진 것 0) · 툴팁 무변(title 그대로 · ⛔).
 
 ## §4 판과 글자 — 값
 
-- 둥글기 CSS 종류 ['0', 'var(--radius)', '50%'](0 = 없음 · 50% = 원) · 판 8종 실측 ['12px', '0px'] · 여백 px 리터럴 0(전부 토큰 · 위반 0) · 글자 크기 실측 ['10px', '12px', '14px'](위반 0 — 각인 SVG text 8.5px는 그림: 5) · 볼드 5(제목 + 경도 각인 — 예외 값) · 그림자 CSS 0 · 반투명 판 0 · 판 그림자 0 · 판 테두리 0 · CSS의 rgba 0.
+- 둥글기 CSS 종류 ['0', 'var(--radius)', '50%'](0 = 없음 · 50% = 원) · 판 8종 실측 ['12px'] · 여백 px 리터럴 0(전부 토큰 · 위반 0) · 글자 크기 실측 ['10px', '12px', '14px'](위반 0 — 각인 SVG text 8.5px는 그림: 5) · 볼드 5(제목 + 경도 각인 — 예외 값) · 그림자 CSS 0 · 반투명 판 0 · 판 그림자 0 · 판 테두리 0 · CSS의 rgba 0.
 - 반증: 둥글기 하나 더하면 2종 True · 7px 더하면 걸린다 True.
 - **69의 셈 무변**(원장 inventory69 재생성 · 트리 70dc21e): 기본 **23** · 칠 **46** · 표 **169행** · 전수 왕복 **169/169** · 옮긴 행 최대 2탭 — INVENTORY.md를 다시 «생성»(라벨 열이 «그림»으로 바뀐 행 35).
 - 세로바 바닥 778 → **795**(< 800 · --hit-pad 3→4 · --btn-gap 1→0) — 800×700에서는 옛것도 잘렸다(69 셈 21 무변).
@@ -29208,4 +29208,34 @@ Pages 실행 completed / success (attempt 1) …/actions/runs/33968736375
 - `test/icons.test.ts`: Phosphor 이식 시험 → **Lucide 출처 시험**(같은 뜻: 세트 path가 그대로 · 옛 세트 잔존 0 · 출하 의존 0 · 라이선스) · 카메라 계열 훑기는 Lucide camera 계열 바늘로(20자 넘는 path만 — 「m2 2 20 20」 빗금은 eye-off와 겹친다) · LICENSE 줄 Lucide.
 - `e2e/icons.spec.ts` `__lintLine`(34-5): 굵기 1.6/32 → **CSS 1.75 하나** · 격자 24(세트)·32(자작) 둘 허용 · 채운 256은 그대로 걸린다(반증 무변).
 - `e2e/tokens70.spec.ts`(새 · 4칸) · `e2e/shots70.spec.ts`(새 · 2칸 · dpr2 목록) · `docs/instrument-icons.md` 옐로 롤 fill → `var(--pic-yellow)`(색 하나 · 값 무변).
-- 영향 후보 30 스펙(dpr1 · 워커 4): **147/154(빨강 7)** — 귀속 전부 «70이 바꾼 자»: icons ②(색 전이 .12s가 동기 검사와 경주 → 전이 없앰) · 34-5 톱니(세트 그림 — 옛 자작 톱니의 «닫힘·호 여덟» 단언 둘은 값으로만 · .pane 아이콘 크기 규칙을 카드 몸통으로 좁힘) · 31-4 종이 단추(SHEET_ICON의 옛 stroke-width 1.6 속성 → class ico) · lens31 ①(34-6 예산 81 < 94 — 누름 여유 4→3 되돌림: 닿는 넓이는 보이는 여백이 아니다 · 값) · layerbar R6(#e9d98a → --pic-yellow 변수를 읽는다) · sidebar(.ico-f 24 < 25 — 같은 .pane 규칙) · ui28 ③(「질감」은 aria-label) → 재실행 **39/39**(icons 6 · lens31 · layerbar · sidebar · ui28 · tokens70 · papericon31) · 지운 시험 0 · 값으로 바꾼 단언 2(34-5)
+- 영향 후보 30 스펙(dpr1 · 워커 4): **147/154(빨강 7)** — 귀속 전부 «70이 바꾼 자»: icons ②(색 전이 .12s가 동기 검사와 경주 → 전이 없앰) · 34-5 톱니(세트 그림 — 옛 자작 톱니의 «닫힘·호 여덟» 단언 둘은 값으로만(= 약화 2 · 리뷰어 [M6]대로 적는다) · .pane 아이콘 크기 규칙을 카드 몸통으로 좁힘(빠져나간 것 = 파일·설정 손잡이 29px — s3.icon_size_table) · 31-4 종이 단추(SHEET_ICON의 옛 stroke-width 1.6 속성 → class ico) · lens31 ①(34-6 예산 81 < 94 — 누름 여유 4→3 되돌림: 닿는 넓이는 보이는 여백이 아니다 · 값 s1.hit_pad) · layerbar R6(#e9d98a → --pic-yellow 변수를 읽는다) · sidebar(.ico-f 24 < 25 — 같은 .pane 규칙) · ui28 ③(「질감」은 aria-label) → 재실행 39/39. **밤 1차(트리 bf91433) 866/882 빨강 10 = 5 스펙 × 2 dpr, 전부 70이 바꾼 자**: boot(부트 판 배경이 var(--paper) — 시험은 매니페스트 색 리터럴을 찾았다 → 토큰 파일에서 대조) · draw(축 스냅 안내 파선의 채도 17 > 12 — 잉크 토큰은 따뜻한 회색 → 무채색 토큰 --guide #555555 하나 더) · paint54 ⑥(«2장»은 aria-label · 숫자 라벨 «2») · ui34place ⑤(치수 기둥이 8px 넓어져 위 띠의 길과 2px 겹침 — 판 가로 여백 16 → 8 · --dim-w 232 → 224) · zoom31 ①(돋보기는 자작 정본(docs/instrument-icons.md) — 세트로 갈았던 것을 되돌림) · papericon31 ①(최근 목록의 삭제 아이콘이 svg가 되어 셈이 +1 — 목록 것은 뺀다) → 재실행 초록(52/55 → 25/26 → 17/17 · tokens70 4/4 두 dpr) · 지운 시험 0 · 약화 단언 2
+
+## 리뷰어 «한 왕복» — 17건(높음 7 · 중간 7 · 낮음 3) 대응 (CLOSING ②)
+
+| # | 지적 | 대응(값) |
+|---|---|---|
+| [H1] | 판 8종 중 6이 둥글기 0 — «0은 값이 아니다»로 통과 | 판 전부에 `--radius`(서랍 둘 · 팝 넷 · 치수판 · 스텐실 · 종이/겹 팝 · 겹 목록 · 툴팁 · 진단 · 상태줄) · 실측 목록을 16종으로(필통 칸·브러시 목록·상태줄 포함) · **radius_live ['12px']**(0 없음) · 자에서 «0 제외»를 뺐다 |
+| [H2] | 되돌리기·다시하기가 못 누름이 아니다 | 스택이 비면 `.disabled`(클릭은 살아 이유를 말한다 — btn-roll과 같은 수) · 새 문서 실측 undo 0.35 / redo 0.35(disabled True) |
+| [H3] | 노랑 L 36%는 손값 — 더 내리면 판정이 뒤집힌다 | 스윕(H 49.9° · S .68 고정 · L 11점 — 원장 s2.yellow_sweep): L 0.45 #c1a724 2.28✗ · L 0.42 #b49c22 2.61✗ · L 0.40 #ac9420 2.87✗ · L 0.38 #a38d1f 3.15✗ · L 0.36 #9a851d 3.50✗ · L 0.34 #927e1b 3.85✗ · L 0.33 #8e7a1b 4.06✗ · L 0.32 #89771a 4.26✗ · L 0.31 #857319 4.51✓ · L 0.30 #816f18 4.77✓ · L 0.28 #786817 5.31✓ → 글자 4.5를 넘는 가장 밝은 L = .31 `#857319`. 규칙 판정 **yellow(둘 다 넘으면 노랑 — 제도판)** · 적용 **파랑**(⚑ «노랑으로 읽히는가»는 사람 눈 — `70-panels-yellow.png`를 파랑 판과 나란히 · DECISIONS 70 · DEFERRED 70) · 자백: 1차의 36%는 근거가 없었다 |
+| [H4] | 반증 둘 없음 · dark 덮음은 항등 | must_dark 목록 원장에(10) · dark에서 하나 빼면 빠진 변수 **1** · 인라인 style 하나 넣으면 **1** — 둘 다 실제 실행 |
+| [H5] | 세로바 795가 원장에 없고 4/3이 갈린다 | 원장 s4.sidebar: 바닥 **765**/800 · --hit-pad **3px**(4로 두면 34-6 예산 미달 — 예외 값 s1.hit_pad) · 닿는 크기 최소 [33, 33](--tap 44px 미달 — DEFERRED 70) · sidebar_layout 원장 재실행(778 → 그 원장이 정본) · 문서 셋의 795/3→4 문면 고침 |
+| [H6] | 아이콘 크기 «24 하나·32» 게이트가 값만 | 크기 표 s3.icon_size_table(어느 아이콘이 어느 크기): 24 = 카드·통 안 Lucide · 32 = 필통 칸(.pcpic [0]) · 밖 = 11px: layer-add · 16px: paper-add · 27px: sidebar-toggle · 29px: pane-file,pane-settings · 30px: btn-fullscreen,btn-display,btn-draw-view,btn-zoom-fit,btn-lens,btn-undo,btn-redo,dim-toggle · 39px: btn-grip,btn-paint — web2-10/12 크기 급(--ui-scale 1.5 · 손가락 표적 ≥ 30 · 34-6 예산)이라 24로 맞추면 sidebar·lens31이 깨진다 → 예외 값 + DEFERRED 70 ⚑(사람 판정) |
+| [H7] | 전량·단위·빌드 값 없음 | 밤 1차 866/882(빨강 10 = 5 스펙 × 2 dpr · 전부 70이 바꾼 자 · 위 절) → 코드를 고쳤으므로 밤 2차(마감 블록) · 단위 138 파일 · tsc 0 · 빌드 초록 · selfcheck(마감 블록) |
+| [M1] | --ink-2 3.4:1 | `#6f6a63` — 판 위 **5.14** · 종이 위 4.83 · 게이트에 단언 |
+| [M2] | 어두운 판 대비 없음 · 종이 위 글자 안 읽힘 | dark 원장: 강조 5.69 · 잉크 12.13 · (옛 배선) 잉크를 종이에 실으면 1.12 → `--ink-paper`/`--ink-2-paper`(종이 위 요소: 띠·세로바·탭·상태줄·빌드 식별자) 실측 10.51 / 4.83 · 세로바 computed #7e9cf0 · 탭 #3c3831 · 게이트에 단언 |
+| [M3] | #109 부분 이행 · LICENSE 단언 | 번들 grep(dist): 파일 2 · 옛 세트 path **0** · 256격자 0 · 낱말 1(index.html 주석 → 문면 고침) · devDependencies의 Phosphor는 e2e 반증 견본(값 s3.phosphor_in_devDependencies) — 루트 LICENSE는 «번들에 없다»가 그대로 참 |
+| [M4] | «전부 0» 셋의 자 | 간격 토큰 값 원장(s1.spacing_tokens + hit_pad 3 예외) · rgb/hsl/이름색 파일별 셈(s1.other_color_syntax — CSS 0 · ts는 tokAlpha·캔버스 알파) · 이모지 def 문면을 값 필드로(Extended_Pictographic이면 1064 — 자의 뜻이 다르다) |
+| [M5] | getComputedStyle 0 값 없음 | s4.sidebar: 20프레임 reads_per_frame **0** · 테마 바꾸면 다시 읽음 True(반증 · 열쇠 = data-theme) · 캐시 3 |
+| [M6] | 「약화 0」 vs 값으로 바꾼 단언 2 | 문면을 고쳤다: **약화 2**(34-5 «닫힘·호 여덟» — 세트 그림에 없는 자 · 대신 lint(fill·currentColor·round·1.75·격자)와 세트 출처 대조(icons.test)가 그 자리) · .pane 규칙에서 빠진 것 = 파일·설정 손잡이 29px(값) |
+| [M7] | 겹친 판 경계 · 잘린 글자 | 사진을 1600×900에서(겹침은 합성의 것 — 실사용은 R7 한 번에 하나 · 서랍/기둥은 34-6이 자리를 갈랐다 · ui34place ⑤ 재실측 겹침 0) · 판 대 판은 --panel-2(카드 안 단추·행)로 뜬다 |
+| [L1] | 글자만인 단추 내역 | 원장대로: 종이 탭 1 · 숫자판 14 · 개발 작업대 10 = 25 |
+| [L2] | 토큰 산술 47 | DECISIONS 고침 — 원장 token_count 49(색 37 + 나머지 12) |
+| [L3] | dpr2 전 필드 동일 · 사진 dpr | DEFERRED 70 한 줄 · 사진 dpr1(로그 값) |
+
+## 사진 (web2/shots/ — CLOSING ⛔ · 사람 눈)
+
+`70-icons.png`(아이콘 71 한 판 · 1200×800) · `70-panels.png`(모든 판 합성 · 밝은 판 · 1600×900 — 겹침 없음) · `70-panels-dark.png`(같은 것 · 어두운 판) · `70-panels-yellow.png`(같은 것 · 강조색 노랑 후보 #857319 — 사람 판정 ⚑). dpr1.
+
+## 자백 (70)
+
+① 지시의 색 실측을 UI/그림 한 자로 읽을 뻔했다(AS-C204 — 예외 목록을 값으로). ② 자작 아이콘 셋(삼각자·롤·돋보기)을 세트로 갈았다가 시험이 잡아 되돌렸다(정본 path 무변). ③ 셸 이스케이프가 시험 파일에 제어 문자( → 0x08)를 심었다 — 바이트로 잡았다(값 1). ④ 누름 여유 4px이 34-6 예산을 깼다 → 3px(예외 값). ⑤ 원장 없이 돌린 부분 실행이 원장 5개의 mtime을 건드려 되돌렸다(#90의 형태 · 커밋 밖). ⑥ 노랑 후보의 L 36%를 근거 없이 골랐다(리뷰어 [H3] — 스윕으로 갈았다). ⑦ 둥글기 «0은 값이 아니다»로 판 여섯의 각짐을 지나쳤다([H1]). ⑧ 되돌리기의 못 누름을 렌즈·롤로 갈아치웠다([H2]). ⑨ 밤 1차 빨강 10을 냈다(5 스펙 — 전부 70이 바꾼 자 · 고쳤으므로 밤 2차).

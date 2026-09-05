@@ -1,6 +1,6 @@
 {
  "conditions": {
-  "workers": 2,
+  "workers": 1,
   "project": "dpr1",
   "canonical": "LEDGER=1 npx playwright test sidebar --workers=1",
   "time_validity": "값이 전부 결정론(CSS px 자리·겹침)이라 워커 수가 값을 못 바꾼다 — 조건은 기록용(#71 ㉠ 규약의 일관)"
@@ -11,28 +11,28 @@
   "h": 800
  },
  "sidebar_pencil": {
-  "w": 91,
-  "h": 766,
-  "bottom": 778
+  "w": 72,
+  "h": 753,
+  "bottom": 765
  },
  "sidebar_pen": {
-  "w": 91,
-  "h": 766,
-  "bottom": 778
+  "w": 72,
+  "h": 753,
+  "bottom": 765
  },
  "sidebar_eraser": {
-  "w": 91,
-  "h": 766,
-  "bottom": 778
+  "w": 72,
+  "h": 753,
+  "bottom": 765
  },
  "tray": {
   "w": 96,
-  "h": 176
+  "h": 171
  },
  "etray_right_x": 1145,
  "etray": {
   "w": 168,
-  "h": 279
+  "h": 276
  },
  "overlap": {
   "pencil": {
@@ -108,8 +108,8 @@
    ]
   }
  },
- "right_edge_x": 1158,
+ "right_edge_x": 1159,
  "hit_pad_css": "3px",
- "clip_boundary_css_h": 778,
+ "clip_boundary_css_h": 765,
  "note": "판정(겹침 0·화면 안·오른쪽 축·크기 대역)은 팔의 단언이 정본이고 이 원장은 그 실측값의 기록이다."
 }

@@ -284,7 +284,7 @@ test('31-4 ① 화면에 카메라 도형이 없다 — DOM 전수 훑기 (+옛 
   await construct(page)
   // [12] **닫힌 상태의 svg 수**와 **관측 dpr**을 먼저 값으로 남긴다 — 「열든 안 열든 같다」가
   // 산문이 아니라 수가 되고, dpr 축이 실제로 갈렸다는 것도 값으로 남는다(2차 리뷰어 [12]).
-  const closedCount = await page.evaluate(() => document.querySelectorAll('svg').length)
+  const closedCount = await page.evaluate(() => Array.from(document.querySelectorAll('svg')).filter(e => !e.closest('#recent')).length)   // web2-70: 최근 목록의 삭제 아이콘(svg · 목록이 비동기로 선다)은 통의 것이 아니라 뺀다
   const dprObserved = await page.evaluate(() => window.devicePixelRatio)
   // **숨은 것도 화면이다** — 겹쳐 뜨는 것 **전부**를 열어 놓고 잰다(1차 리뷰어 [4] —
   // 초판은 넷을 안 열었고 그 중 `#paper-pop`은 **이 항목의 툴팁이 가리키는 자리**였다).
@@ -299,7 +299,9 @@ test('31-4 ① 화면에 카메라 도형이 없다 — DOM 전수 훑기 (+옛 
   console.log(`[31-4 ①] 윤곽 견본 IoU 상위 다섯: ${before.rows.slice(0, 5).map(r => `${r.where} ${r.iou}(${r.iou_ref})`).join(' · ')}`)
   console.log(`[31-4 ①] 견본 전부(나2 · 문 ${CAMERA_IOU_ALL}) 상위 다섯: ${allTop.slice(0, 5).map(r => `${r.where} ${r.iou_all}(${r.iou_all_ref})`).join(' · ')}`)
   console.log(`[31-4 ①] 연 것 ${before.opened.length}자리: ${before.opened.join(' · ')} · 닫힌 상태 svg ${closedCount} → 연 뒤 ${before.svgs} · devicePixelRatio ${dprObserved}`)
-  expect(before.svgs, '접힌 통의 svg도 DOM에 산다 — 열든 안 열든 같은 수다').toBe(closedCount)
+  // web2-70: 파일 서랍의 «최근» 줄은 열 때 짓고 그 삭제 단추가 이제 아이콘(svg)이다 — 통의 svg가 아니라 목록 행의 것이라 그 수만큼 뺀다(값)
+  const recentIcons = await page.evaluate(() => document.querySelectorAll('#recent .rdel svg').length)
+  expect(before.svgs - recentIcons, '접힌 통의 svg도 DOM에 산다 — 열든 안 열든 같은 수다(최근 목록의 삭제 아이콘은 뺀다)').toBe(closedCount)
   expect(dprObserved, 'dpr 축이 실제로 갈렸다').toBeCloseTo(testInfo.project.name === 'dpr2' ? 2 : 1, 3)
   console.log(`[31-4 ①] 새 아이콘 자신 — 윤곽 ${paperRow.iou}(${paperRow.iou_ref}) · 채운 견본까지 ${paperRow.iou_all}(${paperRow.iou_all_ref})`)
   expect(before.svgs, '훑은 svg가 실제로 여럿이다').toBeGreaterThan(10)

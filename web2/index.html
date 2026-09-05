@@ -50,7 +50,7 @@
          답은 z가 아니라 **자리를 나누는 것**이다(#79의 문면) — 위 띠에서 내려오는 것은
          기둥의 **왼쪽 길**에 선다. 값은 기둥에서 계산한다(단일 출처 — #54). */
       --dim-right: 96px;             /* 치수 리본의 오른쪽 여백 */
-      --dim-w: 232px;                /* 그 폭(내용 208 + 좌우 패딩 12) */
+      --dim-w: 224px;                /* 그 폭(내용 208 + 좌우 패딩 8 — web2-70 토큰 --gap) */
       --top-lane: calc(var(--dim-right) + var(--dim-w) + 6px);   /* = 334px */
       /* 종이 띠가 멈추는 자리 — **위 띠의 왼쪽 끝**보다 앞이어야 한다(170 + 156 + 여유 14) */
       --topbar-reserve: 340px;
@@ -119,7 +119,7 @@
     #paperbar { display: flex; flex-direction: row; align-items: flex-end; gap: 0; overflow-x: auto; max-width: 100%; }
     .ptab {
       background: var(--panel); border: 0; border-radius: 0;
-      font: var(--fs-num)/1 var(--font); color: var(--ink-2);
+      font: var(--fs-num)/1 var(--font); color: var(--ink-2-paper);
       padding: var(--gap-in) var(--gap) var(--gap-in); margin: 0; cursor: pointer; white-space: nowrap;
       -webkit-tap-highlight-color: transparent; touch-action: none;
       border-bottom: 1px solid var(--line);
@@ -132,7 +132,7 @@
     .ptab .pname { display: block; max-width: 72px; overflow: hidden; text-overflow: ellipsis; }
     /* 활성 = 맨 위 종이 — 색이 아니라 **형태**가 가른다(규칙 둘). 아래 테두리가 사라져
        종이와 한 장으로 붙고, 썸네일 테두리가 진해져 **앞으로 나온다**. */
-    .ptab.on { background: var(--paper); color: var(--ink); border-bottom-color: transparent; }
+    .ptab.on { background: var(--paper); color: var(--ink-paper); border-bottom-color: transparent; }
     .ptab.on .pthumb { border-color: var(--ink-2); }
     #paper-add {
       border-bottom-color: transparent; background: none;
@@ -152,7 +152,7 @@
     }
     /* 길게 누르면 뜨는 것 — 썸네일·이름·삭제(작도 종이는 삭제 없음) */
     #paper-pop {
-      position: fixed; z-index: 11;
+      position: fixed; z-index: 11; border-radius: var(--radius);
       display: flex; flex-direction: column; gap: var(--gap); align-items: stretch;
       background: var(--panel);
       padding: var(--gap) var(--gap); font: var(--fs-body)/1.5 var(--font); color: var(--ink-2);
@@ -167,17 +167,17 @@
     #layerbar { position: relative; display: flex; flex-direction: row; align-items: center; gap: var(--gap-in); padding: var(--gap-in) 0 0 var(--gap); }
     .lsum {
       display: flex; align-items: center; gap: var(--gap-in);
-      font: var(--fs-num)/1 var(--font); color: var(--ink-2);
+      font: var(--fs-num)/1 var(--font); color: var(--ink-2-paper);
       background: var(--panel); padding: var(--gap-in) var(--gap) var(--gap-in) var(--gap-in); cursor: pointer;
       -webkit-tap-highlight-color: transparent; touch-action: none;
     }
     .lsum svg { width: 20px; height: 20px; }
     .lsum-n { font-variant-numeric: tabular-nums; }
-    .lsum.open { color: var(--ink); }
+    .lsum.open { color: var(--ink-paper); }
     /* 솔로인 동안은 **요약이 그것을 말한다** — 목록을 접어도 「지금 하나만 보고 있다」가 남는다 */
     .lsum.solo { border-style: dashed; }
     #layer-list {
-      position: absolute; top: 100%; left: 8px; z-index: 11; margin-top: var(--gap-in);
+      position: absolute; top: 100%; left: 8px; z-index: 11; margin-top: var(--gap-in); border-radius: var(--radius);
       display: flex; flex-direction: column;
       background: var(--panel);
       /* ⚠ **몸통이 줄의 가운데를 차지해야 한다**(web2-25 4-a): 좁으면 눈·자물쇠가 가운데로
@@ -188,7 +188,7 @@
     .lrow {
       display: flex; align-items: center; gap: var(--gap);
       min-height: 34px; padding: var(--gap-in) var(--gap);          /* 넓은 줄 — 손가락이 정확히 안 가도 된다 */
-      font: var(--fs-num)/1 var(--font); color: var(--ink-2);
+      font: var(--fs-num)/1 var(--font); color: var(--ink-2-paper);
       cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: none;
     }
     .lrow + .lrow { border-top: 1px solid var(--line); }
@@ -198,7 +198,7 @@
     .lrow:not(.on) { opacity: .45; }              /* 꺼짐 — 젖혀 둔 종이 */
     .lrow.solo { border-left: 2px solid var(--accent); padding-left: calc(var(--gap) - 2px); }
     .ltab.ladd {
-      display: flex; align-items: center; background: none; border: 0; color: var(--ink-2);
+      display: flex; align-items: center; background: none; border: 0; color: var(--ink-2-paper);
       padding: var(--gap-in) var(--gap-in); cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: none;
     }
     .ltab.ladd.disabled { opacity: var(--muted); cursor: default; }
@@ -213,16 +213,16 @@
     .lctl { background: none; border: 0; padding: var(--gap-in); margin: 0; cursor: pointer; color: inherit; opacity: .75; }
     .lctl:hover { opacity: 1; }
     #layer-pop {
-      position: fixed; z-index: 11;
+      position: fixed; z-index: 11; border-radius: var(--radius);
       display: flex; flex-direction: column; gap: var(--gap); align-items: stretch;
       background: var(--panel);
       padding: var(--gap) var(--gap); font: var(--fs-body)/1.5 var(--font); color: var(--ink-2);
     }
     #layer-pop u { cursor: pointer; }
     .lpick { display: flex; align-items: center; gap: var(--gap); background: none; border: 0;
-      padding: var(--gap-in) var(--gap-in); cursor: pointer; color: var(--ink-2); font: var(--fs-body) var(--font); }
+      padding: var(--gap-in) var(--gap-in); cursor: pointer; color: var(--ink-2-paper); font: var(--fs-body) var(--font); }
     .lpick svg { width: 22px; height: 22px; }
-    .lpick:hover { color: var(--ink); }
+    .lpick:hover { color: var(--ink-paper); }
 
     /* ── 위 띠(web2-34 6번) — 위 오른쪽. 뷰 큐브(cx W−110·y 20~100)와 안 겹치게 왼쪽에.
        ⚠⚠ **id는 `#eyebar` 그대로다**(배선·팔 여럿이 그 이름을 읽는다 — #54) — 바뀐 것은
@@ -241,10 +241,10 @@
     .top-divider { width: 1px; height: 30px; background: var(--line); margin: var(--gap-in) var(--gap-in); opacity: .55; align-self: center; }
     /* 표시·자 팝업 — 설정 자루의 옅은 바탕 규약 그대로(4-a: 「배경이 필요하면 아주 옅게」) */
     #display-pop, #snap-pop, #face-pop, #lens-pop {
-      position: fixed; z-index: 11;
+      position: fixed; z-index: 11; border-radius: var(--radius);
       display: flex; flex-direction: column; gap: var(--gap); align-items: stretch;
       background: var(--panel);
-      padding: var(--gap) calc(2 * var(--gap)); white-space: nowrap;
+      padding: var(--gap); white-space: nowrap;   /* 가로 16 → 8: 위 띠의 길이 치수 기둥을 안 가로지른다(34-6 ⑤ · 70 재실측) */
       font: var(--fs-body)/1.5 var(--font); color: var(--ink-2);
     }
     #display-pop[hidden], #snap-pop[hidden], #face-pop[hidden], #lens-pop[hidden] { display: none; }
@@ -284,7 +284,7 @@
     #fs-exit {
       display: none; position: fixed; right: 6px; bottom: 34px; z-index: 12;
       background: none; border: 0; padding: var(--hit-pad); cursor: pointer;
-      color: var(--ink-2); opacity: .5;
+      color: var(--ink-2-paper); opacity: .5;
     }
     #fs-exit:hover { opacity: .9; }
     body.fs #fs-exit { display: block; }
@@ -313,15 +313,15 @@
        고친다. 오른쪽 위의 그 줄(#dimsuggest)과 그 CSS는 여기서 사라졌다. */
     /* 툴팁(web2-28 2번) — 화면의 다른 것과 같은 결(옅은 바탕·테두리 하나). */
     #tip {
-      position: fixed; z-index: 60; pointer-events: none;
+      position: fixed; z-index: 60; pointer-events: none; border-radius: var(--radius);
       background: var(--panel); color: var(--ink); padding: var(--gap-in) var(--gap); font-size: var(--fs-body); line-height: 1.35; max-width: 240px;
     }
     #tip[hidden] { display: none; }
     body.fs #tip { display: none; }
     #notice {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 10; border-radius: var(--radius);
       font: var(--fs-body)/1.8 var(--font); text-align: center;
-      color: var(--ink-2); pointer-events: none; height: 24px;
+      color: var(--ink-2-paper); pointer-events: none; height: 24px;
     }
     #notice u { pointer-events: auto; cursor: pointer; }
 
@@ -372,7 +372,7 @@
        흐름(flex) 안이라 이웃과 절대 안 겹친다(겹침 0의 구성적 보장 — e2e가 쌍별로 잰다). */
     .t {
       background: none; border: 0; border-radius: 0; padding: var(--hit-pad); margin: 0;
-      display: block; cursor: pointer; color: var(--ink-2);
+      display: block; cursor: pointer; color: var(--ink-2-paper);
       -webkit-tap-highlight-color: transparent;
     }   /* web2-70: 색 전이 없음 — 상태(선택·못 누름)는 즉시(icons.spec ②의 계산색 검사가 동기다) */
     .t svg { display: block; transition: transform .12s ease; }
@@ -386,7 +386,7 @@
     svg.ico * { vector-effect: non-scaling-stroke; stroke-width: var(--icon-stroke); }
     details.pane > div svg.ico, .stencil-row svg.ico, #dimpanel svg.ico, #lens-pop svg.ico, #display-pop svg.ico, #press-calib svg.ico, #devmenu svg.ico { width: var(--icon); height: var(--icon); }
     .pane button, .stencil-row button, #dimpanel button.icobtn, .lens-reset { display: inline-flex; align-items: center; justify-content: center; min-width: var(--tap); min-height: var(--tap); }
-    @media (hover: hover) { .t:hover { color: var(--ink); } }
+    @media (hover: hover) { .t:hover { color: var(--ink-paper); } }
     /* 아이콘 크기 — 기준 높이 × --ui-scale(단일 출처). width는 viewBox 비례(auto). */
     .ico-s  svg { height: calc(18px * var(--ui-scale)); width: auto; }  /* 접기 토글 */
     .ico-m  svg { height: calc(20px * var(--ui-scale)); width: auto; }  /* 실행취소·시점·치수·질감 */
@@ -490,7 +490,7 @@
        위아래로 끌면 경도) + 아래 작은 숫자 둘(크기 px · 불투명 % · 9.5px — Feather 2.x 채록 §B-0). 견본 획이 아니라 도구 그림인
        이유: 사람 판정 「필통 시스템으로」 — 칸은 «어느 도구인가»를 말하고 색·크기·불투명은 촉·숫자가 말한다. */
     #paint-favs { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap-in); padding: var(--gap-in) var(--gap-in); }
-    .favbtn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0; background: var(--panel-2);
+    .favbtn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0; background: var(--panel-2); border: 0;
               border-radius: var(--radius); padding: var(--gap-in) var(--gap-in) var(--gap-in); margin: 0; color: var(--ink); cursor: pointer; touch-action: none; min-width: 0; min-height: 56px; }
     .favbtn .pcpic { display: block; width: 32px; height: 32px; }
     .favbtn .pcpic svg { width: 32px; height: 32px; display: block; }
@@ -520,7 +520,7 @@
     #stencil-modal { position: fixed; inset: 0; z-index: 30; display: flex;
       align-items: center; justify-content: center; background: var(--scrim); }
     #stencil-modal[hidden] { display: none; }
-    #stencil-box { background: var(--panel); padding: calc(2 * var(--gap));
+    #stencil-box { background: var(--panel); border-radius: var(--radius); padding: calc(2 * var(--gap));
       font: var(--fs-body)/1.5 var(--font); color: var(--ink); }
     #stencil-canvas { background: var(--white); display: block;
       margin: var(--gap) 0; touch-action: none; cursor: crosshair; }
@@ -566,10 +566,10 @@
          「겹치면 자리를 나누고 z로 풀려 하지 마라」다 — 자리를 나눴다.
          `top`은 `#display-pop`과 같은 줄(48px)이고 `right`는 main.ts의 `placeUnder`가
          **제 요약 아래**에 맞춘다(팝오버가 제 단추 아래 서는 것과 같은 규약 — #54). */
-      position: fixed; right: var(--top-lane); top: 48px; z-index: 13;
+      position: fixed; right: var(--top-lane); top: 48px; z-index: 13; border-radius: var(--radius);
       display: flex; flex-direction: column; gap: var(--gap); align-items: stretch;
       background: var(--panel);
-      padding: var(--gap) calc(2 * var(--gap)); white-space: nowrap;
+      padding: var(--gap); white-space: nowrap;   /* 가로 8 — 34-6 ⑤ */
       max-height: calc(100vh - 58px); overflow-y: auto;
       /* ⚠ 터치 스크롤은 **막힌 채로 뒀다** — 유효 사슬이 수리 전에도 none이었고(전 요소가
          #app 자손) 「패널을 스크롤 못 한다」는 관측이 없다. 관측 없이 pan-y로 푸는 것은
@@ -579,7 +579,7 @@
     }
     /* 뷰 썸네일 팝오버(web2-12 5번) — 뷰 버튼 왼쪽에 펼쳐진다. 눈으로 보고 고른다. */
     #views-pop {
-      position: fixed; z-index: 30;
+      position: fixed; z-index: 30; border-radius: var(--radius);
       background: var(--panel);
       padding: var(--gap); display: flex; flex-direction: column; gap: var(--gap);
       max-height: calc(100vh - 24px); overflow-y: auto;
@@ -599,7 +599,7 @@
 
     /* 버튼 곁 확인(web2-12 4번) — 누른 버튼의 왼쪽 옆. 다른 패널과 같은 옅은 바탕(4-a). */
     .confirm-pop {
-      position: fixed; z-index: 30;
+      position: fixed; z-index: 30; border-radius: var(--radius);
       background: var(--panel);
       padding: var(--gap) calc(2 * var(--gap)); font: var(--fs-body) var(--font); color: var(--ink);
       display: flex; gap: calc(2 * var(--gap)); align-items: center; white-space: nowrap;
@@ -652,10 +652,10 @@
 
     /* 치수 리본(web2-08 지시 4-3) — 우측, 접힌다. 옅은 바탕(4-a 「배경이 필요하면 아주 옅게」) */
     #dimpanel {
-      position: fixed; right: var(--dim-right); top: 96px; z-index: 11; /* 시점바(right:54)의 왼쪽 — 열면 토글을 안 덮는다 */
+      position: fixed; right: var(--dim-right); top: 96px; z-index: 11; border-radius: var(--radius); /* 시점바(right:54)의 왼쪽 — 열면 토글을 안 덮는다 */
       display: flex; flex-direction: column; gap: var(--gap); width: 208px;
       background: var(--panel);
-      padding: var(--gap) calc(2 * var(--gap)); font: var(--fs-body) var(--font); color: var(--ink);
+      padding: var(--gap);   /* 가로 8(--dim-w 224와 한 값) */ font: var(--fs-body) var(--font); color: var(--ink);
     }
     #dimpanel.folded { display: none; }
     #dimpanel .head { color: var(--ink-2); letter-spacing: .04em; }
@@ -729,7 +729,7 @@
        (web2-10 지시 4). 닿는 넓이를 키우던 패딩도 뜻을 잃어 줄였다. */
     #buildid {
       position: fixed; right: 6px; bottom: 4px; z-index: 12;
-      font: var(--fs-num) var(--font-mono); color: var(--line);
+      font: var(--fs-num) var(--font-mono); color: var(--ink-2-paper); opacity: var(--muted);
       pointer-events: none;
       padding: var(--gap-in);
     }
@@ -740,7 +740,7 @@
        패널이 앞으로 얼마나 자라도 입력을 못 삼키게 DOM에서도 관측만 하게 한다.
        대가: 패널 글자를 마우스로 긁어 복사할 수 없다 — 태블릿(주 기기)에는 없던 길이다. */
     #diagpanel {
-      position: fixed; right: 6px; bottom: 26px; z-index: 12;
+      position: fixed; right: 6px; bottom: 26px; z-index: 12; border-radius: var(--radius);
       max-width: min(86vw, 560px);
       background: var(--panel);
       padding: var(--gap) calc(2 * var(--gap)); font: var(--fs-num)/1.7 var(--font-mono); color: var(--ink);
@@ -1097,7 +1097,7 @@
              `.ico-m`이다 — 여유 px를 여기 다시 적지 않는다(#88: 팔이 실측에서 유도한다).
              SVG는 docs/instrument-icons.md 「돋보기」 정본 그대로다(path 수정 금지). -->
         <button id="btn-zoom-fit" class="t ico-m" title="돋보기 — 대상에 맞춰 화면을 채운다" aria-label="돋보기">
-          <svg class="ico lucide-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" /></svg>
+          <svg class="ico" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="14" r="9"/><path d="M20.36 20.36 L27 27"/></svg>
         </button>
         <!-- 렌즈(web2-31 2번) — **확정된 뒤에 «보는 방식»을 바꾼다**(화각).
              ⚠⚠ `Camera.f`·`fSource`가 **아니다**: 이 손잡이는 `app.viewF`(렌더 초점거리)만
@@ -1241,7 +1241,7 @@
         <!-- 치수(3-a) — 시점 묶음에서 나와 **손 띠**로: 그린 선에 값을 주는 일이므로
              도구다. 리본 패널(#dimpanel)은 그대로, 트리거만 옮겼다. -->
         <button id="dim-toggle" class="t ico-m" title="치수 — 리본 패널" aria-label="치수">
-          <!-- web2-70: Lucide ruler (ISC · 옛 Phosphor ruler는 지웠다) -->
+          <!-- web2-70: Lucide ruler (ISC · 옛 세트의 ruler는 지웠다) -->
           <svg class="ico lucide-ruler" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z" /><path d="m14.5 12.5 2-2" /><path d="m11.5 9.5 2-2" /><path d="m8.5 6.5 2-2" /><path d="m17.5 15.5 2-2" /></svg>
         </button>
 

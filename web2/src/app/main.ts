@@ -3065,6 +3065,12 @@ function gotoDrawView() {
   fitViewToFrame()
 }
 document.getElementById('btn-undo')!.addEventListener('click', () => undoOrExplain())
+/** web2-70 §2 — 못 누름 = .disabled(불투명 --muted · 자리 그대로 · 클릭은 살아 있다 — 이유를 말한다(2-a · btn-roll과 같은 수)). 되돌리기·다시하기가 이 규칙의 첫 손님(지시 문면). 프레임마다 동기(값 셋 비교뿐). */
+function syncUndoRedoMuted() {
+  const u = document.getElementById('btn-undo')!, r = document.getElementById('btn-redo')!
+  u.classList.toggle('disabled', app.undoStack.length === 0)
+  r.classList.toggle('disabled', app.redoStack.length === 0)
+}
 document.getElementById('btn-redo')!.addEventListener('click', () => redo(app))
 document.getElementById('btn-draw-view')!.addEventListener('click', () => gotoDrawView())
 // 돋보기(web2-31 3번) — 대상에 맞춰 화면을 채운다. **화면 크기의 출처는 r3d 하나다**
@@ -3174,6 +3180,7 @@ function frameCostQ() {
 
 let paintDraftPerturb = false
 function frame() {
+  syncUndoRedoMuted()   // web2-70 [H2]
   autolevel.tick()   // 접힐 때가 됐으면 여기서 포즈가 움직인다(setPose가 다시 그리게 한다)
   // 정착 전이(web2-37 2번) — 색이 시간의 함수인 «그 창 동안만» 계속 그린다. 창이 닫히면
   // 이 항은 false라 프레임 고리가 평소의 «바뀔 때만»으로 돌아간다(평소에는 조용하다).
@@ -3328,7 +3335,7 @@ const diag = {
   /** web2-68 — 판정에 드는 상수를 원장이 스스로 든다(#88 · constants_used) */
   /** web2-70 — 테마(밝은 판/어두운 판) · 토큰 캐시(프레임마다 getComputedStyle을 안 부른다는 값) */
   setThemeForTest: (t: 'light' | 'dark') => { setTheme(t); invalidate() },
-  tokensForTest: () => ({ theme: tokensForTest.theme(), cacheSize: tokensForTest.cacheSize(), accent: tok('--accent'), panel: tok('--panel'), ink: tok('--ink') }),
+  tokensForTest: () => ({ theme: tokensForTest.theme(), cacheSize: tokensForTest.cacheSize(), reads: tokensForTest.reads(), accent: tok('--accent'), panel: tok('--panel'), ink: tok('--ink') }),
   constantsForTest: () => ({
     PAINT68_CASE_N: C.PAINT68_CASE_N, PAINT68_GRADE_STEP_PX: C.PAINT68_GRADE_STEP_PX,
     PAINT68_GRADE_DENSITY_STEP_MIN: C.PAINT68_GRADE_DENSITY_STEP_MIN, PAINT68_GRADE_WIDTH_STEP_MIN: C.PAINT68_GRADE_WIDTH_STEP_MIN,

@@ -696,7 +696,8 @@ export const C = {
   TOKENS70_FONT_SIZES: [10, 12, 14] as const,   // 숫자 · 본문 · 제목
   TOKENS70_RADIUS_PX: 12,            // 판 둥글기(--radius)
   TOKENS70_GAP_PX: 8,                // 간격 단위(--gap · 아이콘 안 4)
-  ACCENT_CAND_YELLOW_HEX: '#9a7b1c', // 강조색 후보 — 옐로(#e9d98a · H 50°)를 «노랑으로 읽히는 하한»(L 36%)까지 진하게 한 판
+  ACCENT_CAND_YELLOW_HEX: '#857319', // 강조색 후보 — 옐로(#e9d98a · H 50° · S .68)에서 판 위 글자 4.5를 넘는 «가장 밝은» L(.31 · 스윕은 원장 tokens70 s2.yellow_sweep — 리뷰어 [H3]: 36%는 근거 없는 손값이었다)
+  ACCENT_YELLOW_SWEEP_L: [0.45, 0.42, 0.40, 0.38, 0.36, 0.34, 0.33, 0.32, 0.31, 0.30, 0.28] as const,   // 스윕 점(H·S 고정)
   ACCENT_CAND_BLUE_HEX: '#2b5bd7',   // 강조색 후보 — 잉크 파랑(지시 문면 근방값)
   /** 해칭 선의 불투명도 — 면 채움(0.22)보다 약간 짙되 2H 잉크(0.5)보다 옅게:
    *  해칭은 «톤»이지 «선»이 아니다(지시: 선이 위에 얹힌다). */

@@ -14,6 +14,7 @@ const FALLBACK: Record<string, string> = (() => {
 
 const cache = new Map<string, string>()
 let cacheTheme: string | null = null
+let reads = 0   // getComputedStyle을 실제로 부른 횟수(진단 — 프레임당 0이 값)
 
 const themeKey = (): string => (typeof document === 'undefined' ? '' : document.documentElement.getAttribute('data-theme') ?? '')
 
@@ -25,6 +26,7 @@ export function tok(name: string): string {
   if (t !== cacheTheme) { cache.clear(); cacheTheme = t }
   const hit = cache.get(name)
   if (hit !== undefined) return hit
+  reads++
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
   const out = v || fallback
   cache.set(name, out)
@@ -46,4 +48,4 @@ export function setTheme(theme: 'light' | 'dark'): void {
 }
 
 /** 진단 — 캐시가 프레임마다 다시 읽지 않는다는 값(getComputedStyle 호출 수). */
-export const tokensForTest = { cacheSize: () => cache.size, theme: themeKey, fallback: () => ({ ...FALLBACK }) }
+export const tokensForTest = { cacheSize: () => cache.size, theme: themeKey, fallback: () => ({ ...FALLBACK }), reads: () => reads }

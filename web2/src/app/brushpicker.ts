@@ -57,8 +57,8 @@ export function initBrushPicker(opts: {
   root.hidden = true
   root.style.cssText = [
     'position:fixed', 'right:12px', 'top:56px', 'width:400px', 'max-height:calc(100vh - 80px)',
-    'overflow-y:auto', 'background:var(--panel)', 'border:1px solid var(--line)', 'border-radius:var(--radius)',
-    'box-shadow:0 6px 24px rgba(60,56,49,.25)', 'padding:10px', 'z-index:40',
+    'overflow-y:auto', 'background:var(--panel)', 'border:0', 'border-radius:var(--radius)',
+    'padding:var(--gap)', 'z-index:40',   // web2-70 §4 — 판은 색 차로만 뜬다(그림자·테두리 0)
     'display:none', 'flex-direction:column', 'gap:6px', 'font-size:12px', 'color:var(--ink)',
   ].join(';')
 

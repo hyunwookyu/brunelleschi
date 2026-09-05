@@ -25,7 +25,10 @@ test('로딩화면이 인라인이고 크레딧·배경이 정본과 맞는다 (
   expect(bootHtml).toContain('Brunelleschi')
   // ② 배경 = 매니페스트 background_color — 크롬 스플래시에서 넘어올 때 안 튀는 조건
   const m = JSON.parse(await (await page.request.get('/manifest.webmanifest')).text())
-  expect(html).toContain(`background: ${m.background_color}; pointer-events: none;`)
+  // web2-70: 색은 토큰 하나(tokens.css --paper) — 부트 판은 var(--paper)를 쓰고, 그 값이 매니페스트 배경색과 같은지는 토큰 파일에서 읽는다
+  expect(html).toContain('background: var(--paper); pointer-events: none;')
+  const tokensCss = fs.readFileSync(new URL('../src/ui/tokens.css', import.meta.url), 'utf-8')
+  expect(/--paper:\s*([^;]+);/.exec(tokensCss)?.[1]?.trim(), '--paper == 매니페스트 background_color').toBe(m.background_color)
   // ③ 크레딧 ↔ LICENSE 정합(지시 3) — 정본은 LICENSE다. 저작권자 실명·연도가 양쪽에
   //    있어야 한다(둘 중 하나만 고치면 여기서 갈린다 — 1차 리뷰어 [11]).
   const lic = fs.readFileSync(path.resolve(process.cwd(), '..', 'LICENSE'), 'utf8')

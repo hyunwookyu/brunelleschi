@@ -66,10 +66,17 @@ test('70-icons.png — 쓰는 아이콘 전부를 한 판에(격자 · 이름 �
   await page.evaluate(() => document.getElementById('icon-sheet')?.remove())
 })
 
-test('70-panels.png — 모든 판을 연 합성 · 밝은 판 / 70-panels-dark.png — 같은 것 · 어두운 판', async ({ page }) => {
+test('70-panels.png — 모든 판을 연 합성 · 밝은 판 / 70-panels-dark.png — 같은 것 · 어두운 판 / 70-panels-yellow.png — 노랑 후보(사람 판정 ⚑)', async ({ page }, info) => {
+  // [M7] 1200×800에서는 브러시 목록(290~710)과 설정 서랍(580~866)이 겹쳐 글자가 잘린다(합성의 겹침 — 실사용은 R7 한 번에 하나 · 서랍과 기둥은 34-6이 자리를 갈랐다) → 사진은 1600×900
+  await page.setViewportSize({ width: 1600, height: 900 })
   await boot(page)
   await openAll(page)
+  console.log(`[70-panels] dpr ${await page.evaluate(() => devicePixelRatio)} · 뷰포트 1600×900 · project ${info.project.name}`)
   saveBuf('70-panels.png', await page.screenshot())
+  await page.evaluate(() => document.documentElement.style.setProperty('--accent', (window as any).__b2.diag.constantsForTest().ACCENT_CAND_YELLOW_HEX ?? '#857319'))
+  await page.waitForTimeout(200)
+  saveBuf('70-panels-yellow.png', await page.screenshot())
+  await page.evaluate(() => document.documentElement.style.removeProperty('--accent'))
   await page.evaluate(() => (window as any).__b2.diag.setThemeForTest('dark'))
   await page.waitForTimeout(300)
   const dark = await page.evaluate(() => ({ theme: document.documentElement.getAttribute('data-theme'), panel: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() }))

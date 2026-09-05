@@ -375,7 +375,8 @@ test('⑥ 34-0 몫(#96) — 정면 줄의 툴팁·막힘 사유·고름 수 표�
     const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
     const tray = document.getElementById('painttray')!
     return {
-      title: b.title, disabled: b.classList.contains('disabled'), label: lbl.textContent,
+      // web2-70 §3: 글자 라벨은 뗐다 — «고른 면 수»는 숫자 라벨(lbl)로, 문장은 aria-label로(R6의 «화면이 말한다»는 둘이 같이 든다)
+      title: b.title, disabled: b.classList.contains('disabled'), label: (b.getAttribute('aria-label') || '') + ' · 숫자 ' + lbl.textContent,
       rect: { x: +r.x.toFixed(1), y: +r.y.toFixed(1), w: +r.width.toFixed(1), h: +r.height.toFixed(1) },
       viewport: { w: window.innerWidth, h: window.innerHeight },
       clickable: b === el || b.contains(el),
