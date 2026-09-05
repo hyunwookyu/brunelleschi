@@ -29,9 +29,9 @@
       "moves": 19,
       "draft_strokes": 1,
       "a_frame_ms": {
-        "head6": 0.65,
-        "mid6": 0.63,
-        "tail6": 0.5,
+        "head6": 0.57,
+        "mid6": 0.65,
+        "tail6": 0.47,
         "max": 1.6
       },
       "b_dabs_per_frame": {
@@ -120,7 +120,7 @@
         "tail6": 6373
       },
       "total": {
-        "ms_sum": 11.3,
+        "ms_sum": 10.7,
         "frames": 17,
         "upload_bytes": 107840,
         "full_uploads": 0,
@@ -133,7 +133,7 @@
       "draft_strokes": 1,
       "a_frame_ms": {
         "head6": 0.52,
-        "mid6": 0.5,
+        "mid6": 0.52,
         "tail6": 0.67,
         "max": 0.9
       },
@@ -223,7 +223,7 @@
         "tail6": 7181
       },
       "total": {
-        "ms_sum": 57.1,
+        "ms_sum": 54.1,
         "frames": 97,
         "upload_bytes": 638348,
         "full_uploads": 0,
@@ -235,10 +235,10 @@
       "moves": 399,
       "draft_strokes": 1,
       "a_frame_ms": {
-        "head6": 0.43,
-        "mid6": 0.65,
+        "head6": 0.4,
+        "mid6": 0.52,
         "tail6": 0.57,
-        "max": 3.1
+        "max": 3.2
       },
       "b_dabs_per_frame": {
         "note": "자 둘(같은 기록의 두 읽기): log_len = lastDabLog 길이 — pre(전량 되그리기)에서는 «그 프레임에 그린 수»(전부)이고 post(세션)에서는 «누적»이다 · delta = 연속 이동의 길이 증가 — post에서 «그 프레임에 그린 수»(새 도장만). pre의 그린 수는 log_len, post의 그린 수는 delta로 읽는다",
@@ -326,7 +326,7 @@
         "tail6": 6321
       },
       "total": {
-        "ms_sum": 243,
+        "ms_sum": 239.2,
         "frames": 394,
         "upload_bytes": 2664072,
         "full_uploads": 0,
@@ -372,18 +372,18 @@
       {
         "tool": "marker",
         "spacingK": 1,
-        "dabs": 158,
-        "gap_px_median": 2.44,
-        "dab_radius_median": 10.91,
-        "gap_over_radius": 0.22
+        "dabs": 1006,
+        "gap_px_median": 0.38,
+        "dab_radius_median": 11.1,
+        "gap_over_radius": 0.03
       },
       {
         "tool": "marker",
         "spacingK": 0.5,
-        "dabs": 317,
-        "gap_px_median": 1.22,
-        "dab_radius_median": 10.91,
-        "gap_over_radius": 0.11
+        "dabs": 2013,
+        "gap_px_median": 0.19,
+        "dab_radius_median": 11.1,
+        "gap_over_radius": 0.02
       },
       {
         "tool": "cp",

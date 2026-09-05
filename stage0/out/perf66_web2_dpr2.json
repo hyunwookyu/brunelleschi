@@ -29,9 +29,9 @@
       "moves": 19,
       "draft_strokes": 1,
       "a_frame_ms": {
-        "head6": 1.18,
-        "mid6": 1.42,
-        "tail6": 1.15,
+        "head6": 1.12,
+        "mid6": 1.37,
+        "tail6": 1.2,
         "max": 2.2
       },
       "b_dabs_per_frame": {
@@ -120,7 +120,7 @@
         "tail6": 23819
       },
       "total": {
-        "ms_sum": 23.8,
+        "ms_sum": 23.5,
         "frames": 17,
         "upload_bytes": 405020,
         "full_uploads": 0,
@@ -132,10 +132,10 @@
       "moves": 99,
       "draft_strokes": 1,
       "a_frame_ms": {
-        "head6": 1.22,
-        "mid6": 1.23,
-        "tail6": 1.6,
-        "max": 2.4
+        "head6": 1.27,
+        "mid6": 1.2,
+        "tail6": 1.62,
+        "max": 2.6
       },
       "b_dabs_per_frame": {
         "note": "자 둘(같은 기록의 두 읽기): log_len = lastDabLog 길이 — pre(전량 되그리기)에서는 «그 프레임에 그린 수»(전부)이고 post(세션)에서는 «누적»이다 · delta = 연속 이동의 길이 증가 — post에서 «그 프레임에 그린 수»(새 도장만). pre의 그린 수는 log_len, post의 그린 수는 delta로 읽는다",
@@ -223,7 +223,7 @@
         "tail6": 25649
       },
       "total": {
-        "ms_sum": 135.3,
+        "ms_sum": 134.9,
         "frames": 97,
         "upload_bytes": 2423268,
         "full_uploads": 0,
@@ -235,10 +235,10 @@
       "moves": 399,
       "draft_strokes": 1,
       "a_frame_ms": {
-        "head6": 1.2,
-        "mid6": 1.23,
-        "tail6": 1.17,
-        "max": 10.5
+        "head6": 1.18,
+        "mid6": 1.18,
+        "tail6": 1.23,
+        "max": 10.8
       },
       "b_dabs_per_frame": {
         "note": "자 둘(같은 기록의 두 읽기): log_len = lastDabLog 길이 — pre(전량 되그리기)에서는 «그 프레임에 그린 수»(전부)이고 post(세션)에서는 «누적»이다 · delta = 연속 이동의 길이 증가 — post에서 «그 프레임에 그린 수»(새 도장만). pre의 그린 수는 log_len, post의 그린 수는 delta로 읽는다",
@@ -326,7 +326,7 @@
         "tail6": 24128
       },
       "total": {
-        "ms_sum": 598.1,
+        "ms_sum": 594.4,
         "frames": 394,
         "upload_bytes": 10036296,
         "full_uploads": 0,
@@ -372,18 +372,18 @@
       {
         "tool": "marker",
         "spacingK": 1,
-        "dabs": 158,
-        "gap_px_median": 4.88,
-        "dab_radius_median": 21.36,
-        "gap_over_radius": 0.23
+        "dabs": 985,
+        "gap_px_median": 0.79,
+        "dab_radius_median": 22.23,
+        "gap_over_radius": 0.04
       },
       {
         "tool": "marker",
         "spacingK": 0.5,
-        "dabs": 317,
-        "gap_px_median": 2.44,
-        "dab_radius_median": 21.36,
-        "gap_over_radius": 0.11
+        "dabs": 1970,
+        "gap_px_median": 0.39,
+        "dab_radius_median": 22.23,
+        "gap_over_radius": 0.02
       },
       {
         "tool": "cp",

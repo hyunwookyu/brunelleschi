@@ -182,11 +182,15 @@ test('③ 이름 사상 — 원 이름은 «표시»가 아니라 부제·도움
     return { label: (b?.textContent ?? '').trim(), sub: (sub?.textContent ?? '').trim(), title: btn?.title ?? '' }
   })
   OUT.p3_names = { note: '표시는 사람 쪽 이름, 원 이름은 부제와 도움말에 그대로', sel, shown }
-  expect(sel.br, '마커 칸의 브러시').toBe('ramon/100%_Opaque')
-  expect(shown.label, '표시 이름이 원 이름이 아니다').not.toContain('100%_Opaque')
-  expect(shown.label, '사람 쪽 이름').toBe('불투명 마커')
-  expect(shown.sub, '부제에 원 이름이 산다').toContain('100%_Opaque')
-  expect(shown.title, '도움말에 원 이름이 산다').toContain('ramon/100%_Opaque')
+  // web2-66 §2 자 판갈이 — 마커 기본이 brunelleschi/marker(납작 촉)로 바뀌었다(옛 ramon/100%_Opaque는 원형).
+  // 자의 뜻(표시는 사람 쪽 · 원 이름은 부제·도움말)은 그대로다.
+  expect(sel.br, '마커 칸의 브러시').toBe('brunelleschi/marker')
+  expect(shown.label, '표시 이름이 원 이름이 아니다').not.toContain('brunelleschi/marker')
+  expect(shown.label, '사람 쪽 이름').toBe('마커')
+  // 부제는 원 이름을 « · »로 갈라 적는다(brushOrigin — «brunelleschi · marker») — 두 조각으로 잰다
+  expect(shown.sub, '부제에 원 이름(무리)이 산다').toContain('brunelleschi')
+  expect(shown.sub, '부제에 원 이름(이름)이 산다').toContain('marker')
+  expect(shown.title, '도움말에 원 이름이 산다').toContain('brunelleschi/marker')
 })
 
 test('④ 잘린 글자 0 — 패널·브러시 목록 전수 · 화면 폭 둘(800 · 1200)', async ({ page }) => {
