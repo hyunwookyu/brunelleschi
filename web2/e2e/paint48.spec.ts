@@ -407,7 +407,8 @@ test('⑦ 48-10 툴팁 — 44~47이 더한 손잡이 전수에 설명이 있다'
     'btn-floor-area', 'btn-person', 'btn-stencil', 'stencil-save', 'stencil-clear', 'stencil-close',
     'btn-grip-farea',
     // web2-48이 더한 것 — 세운 규칙은 «그 라운드 안에서 판다»(48-10)
-    'paint-wheel-cv',
+    // ⚠ web2-67 0-4가 'paint-wheel-cv'를 뺐다 — 사람 판정 「툴팁 필요없다」(휠은 색 공간
+    //   그 자체의 그림이라 설명이 그림을 가릴 뿐이다). role=button도 함께 걷었다.
     // web2-58 — 크기 슬라이더(다섯 칸 트레이 대체 · D-W26)
     'paint-size-range',
     // web2-64 — 칠 패널의 새 손잡이(견본 단추 · 불투명 · 색 원 · 즐겨찾기)

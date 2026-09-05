@@ -81,7 +81,7 @@ test('① D-2 재현·수리 · D-3 반증 — 브러시를 바꿔도 옛 획의
   test.setTimeout(180_000)
   await bigBox(page)
   const cs0 = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
-  OUT.constants_snapshot = { PAINT64_DENSITY_TOL: cs0.PAINT64_DENSITY_TOL, PAINT64_WET_MIN_PX: cs0.PAINT64_WET_MIN_PX, PAINT64_TAP_MAX_PX: cs0.PAINT64_TAP_MAX_PX, PAINT63_DISTINCT_REL: cs0.PAINT63_DISTINCT_REL, PAINT62_PAINTED_ALPHA: cs0.PAINT62_PAINTED_ALPHA,
+  OUT.constants_snapshot = { PAINT64_DENSITY_TOL: cs0.PAINT64_DENSITY_TOL, PAINT64_WET_MIN_PX: cs0.PAINT64_WET_MIN_PX, PAINT67_MOUSE_TAP_MAX_PX: cs0.PAINT67_MOUSE_TAP_MAX_PX, PAINT63_DISTINCT_REL: cs0.PAINT63_DISTINCT_REL, PAINT62_PAINTED_ALPHA: cs0.PAINT62_PAINTED_ALPHA,
     note: '스냅샷-라이트(web2 원장의 constantsSnapshot 기계 부재는 종전 유보 · 값은 constants.ts가 정본 — 리뷰어 [M5])' }
   const rows: Record<string, unknown> = {}
   // 슬롯 넷 × (A → B) — A로 긋고 «지금 브러시»를 B로 바꾼 뒤 재굽기
@@ -546,10 +546,14 @@ test('⑦ 34-0 — 패널 손잡이 전수의 툴팁(48-10) · 즐겨찾기 탭/
   expect(recent2[0], '최근 색도 기기에').toBe('#1e7fd0')
 })
 
-test('⑥ 면 탭 — 칠 도구의 탭이 면을 고른다 · 짧은 획(문턱 위)은 칠 · 빈 곳 탭이 푼다 · 반증 = 연필 도구의 같은 탭은 안 고른다', async ({ page }) => {
+// ⚠ web2-67 §1 자 판갈이 — 이 팔은 이제 **마우스 경로**의 문턱(C.PAINT67_MOUSE_TAP_MAX_PX ·
+// 6 → 12)을 잰다. 펜의 문턱은 «없어졌고»(펜 한 붓은 언제나 칠 — gesture67 ①) 손가락 탭이
+// 고르기를 이었다(gesture67 ②). playwright의 mouse.*는 pointerType 'mouse'라 이 팔이 곧
+// 마우스 판이다 — 뜻(§1 게이트 ⑥: 마우스는 문턱으로 종전 거동)은 그대로다.
+test('⑥ 면 탭(마우스) — 칠 도구의 탭이 면을 고른다 · 짧은 획(문턱 위)은 칠 · 빈 곳 탭이 푼다 · 반증 = 연필 도구의 같은 탭은 안 고른다', async ({ page }) => {
   await bigBox(page)
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
-  const TAP = cs.PAINT64_TAP_MAX_PX as number
+  const TAP = cs.PAINT67_MOUSE_TAP_MAX_PX as number
   // 반증 먼저 — 연필 도구(작도)에서 면 안을 탭해도 faceSel이 안 는다
   await page.click('#btn-pencil')
   await page.mouse.click(700, 480); await page.waitForTimeout(80)
@@ -567,8 +571,10 @@ test('⑥ 면 탭 — 칠 도구의 탭이 면을 고른다 · 짧은 획(문턱
   await page.waitForTimeout(80)
   const selUnder = await page.evaluate(() => (window as any).__b2.app.faceSel.length)
   const strokesUnder = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
-  // 문턱 «바로 위»(dx 5 · dy 4 → 대각 6.4 — 리뷰어 [M10]) — 칠
-  await page.mouse.move(700, 480); await page.mouse.down(); await page.mouse.move(705, 484, { steps: 2 }); await page.mouse.up()
+  // 문턱 «바로 위»(대각 ≈ TAP+1 — 리뷰어 [M10]의 그 자리 · 67: 값이 상수를 따라온다) — 칠
+  const jx = Math.ceil((TAP + 1) / Math.SQRT2)
+  const justDiag = +(Math.hypot(jx, jx - 1)).toFixed(1)
+  await page.mouse.move(700, 480); await page.mouse.down(); await page.mouse.move(700 + jx, 480 + jx - 1, { steps: 2 }); await page.mouse.up()
   await page.waitForTimeout(200)
   const strokesJust = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
   const selJust = await page.evaluate(() => (window as any).__b2.app.faceSel.length)
@@ -583,11 +589,11 @@ test('⑥ 면 탭 — 칠 도구의 탭이 면을 고른다 · 짧은 획(문턱
   await page.mouse.click(300, 200); await page.waitForTimeout(80)
   const selClear = await page.evaluate(() => (window as any).__b2.app.faceSel.length)
   OUT.face_tap = {
-    def: `칠 도구의 한 붓이 raw bbox 대각 ≤ C.PAINT64_TAP_MAX_PX(${TAP} · 화면 px)이면 탭 = 면 고르기(+51 Injector) · 넘으면 칠. 경계 양쪽(문턱 −2 · +4)에서 잰다 · 빈 곳 탭 = 풀기 · 반증 = 연필 도구의 같은 탭은 안 고른다(작도 중에는 옛 뜻 그대로)`,
-    threshold: { registered: 'C.PAINT64_TAP_MAX_PX', value: TAP, origin: '세션이 정했다(2026-09-04 · 첫 실행 «전») — 아래 = 펜 끝 떨림의 탭 문 TAP_MAX_PX 2(AS-C79) · 위 = 쓸모 있는 최소 자국(점 하나 ≈ 굵기 · 기본 10px)의 절반 대역. 6px 아래의 «점 찍기»는 칠이 아니라 고르기다(대가 — AS-C189 · 실기기 손가락 떨림이 판정)' },
+    def: `**마우스**의 한 붓이 raw bbox 대각 ≤ C.PAINT67_MOUSE_TAP_MAX_PX(${TAP} · 화면 px)이면 탭 = 면 고르기(+51 Injector) · 넘으면 칠. 경계 양쪽(문턱 −2 · +1 · +4)에서 잰다 · 빈 곳 탭 = 풀기 · 반증 = 연필 도구의 같은 탭은 안 고른다(작도 중에는 옛 뜻 그대로). ⚠ 67 §1 판갈이: 펜은 이 문턱을 안 지난다(언제나 칠 — gesture67 ①이 그 자)`,
+    threshold: { registered: 'C.PAINT67_MOUSE_TAP_MAX_PX', value: TAP, origin: 'web2-67 지시 문면(6 → 12 — 마우스는 손가락이 없어 고르기와 그리기를 한 장치가 진다). 옛 6은 64 세션의 값(AS-C189 — 펜에 걸려 «그리려는데 골라지는» 충돌을 냈고 §1이 장치로 갈랐다)' },
     threshold_px: TAP, sel_pencil_tap: selPencil, sel_after_tap: selTap, strokes_delta_tap: strokesTap - strokes0,
     under: { diag_px: +(under * Math.SQRT2).toFixed(1), sel: selUnder, strokes_delta: strokesUnder - strokesTap },
-    just_over: { diag_px: 6.4, sel: selJust, strokes_delta: strokesJust - strokesUnder },
+    just_over: { diag_px: justDiag, sel: selJust, strokes_delta: strokesJust - strokesUnder },
     over: { diag_px: +(over * Math.SQRT2).toFixed(1), sel: selOver, strokes_delta: strokesOverDelta },
     sel_after_empty_tap: selClear,
   }
@@ -596,7 +602,7 @@ test('⑥ 면 탭 — 칠 도구의 탭이 면을 고른다 · 짧은 획(문턱
   expect(strokesTap - strokes0, '탭은 칠이 아니다').toBe(0)
   expect(selUnder, '문턱 아래의 흔들린 탭도 고르기(수 그대로 — 같은 면)').toBe(1)
   expect(strokesUnder - strokesTap, '문턱 아래 — 칠 0').toBe(0)
-  expect(strokesJust - strokesUnder, '문턱 바로 위(6.4px)의 획은 칠이다').toBeGreaterThan(0)
+  expect(strokesJust - strokesUnder, `문턱 바로 위(${justDiag}px)의 획은 칠이다`).toBeGreaterThan(0)
   expect(strokesOverDelta, '문턱 위의 짧은 획은 칠이다').toBeGreaterThan(0)
   expect(selOver, '짧은 획은 고름을 안 바꾼다').toBe(1)
   expect(selClear, '빈 곳 탭이 고름을 푼다').toBe(0)

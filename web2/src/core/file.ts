@@ -100,7 +100,8 @@ const KEY_ORDER: string[] = [
   // web2-50: uv(면 위 좌표 — 정본)가 늘었다. press는 아래 줄에 이미 있다(전역 차례 목록).
   // web2-55: e(테두리 슬롯 표지 — uv가 (경계거리, 두께 방향)이 된다)
   // web2-64: br(브러시 id — 64-1) · o(불투명 0..1 — 1이면 안 쓴다)
-  'paint', 'f', 'e', 'uv', 'm', 'i', 'c', 'br', 'o',
+  // web2-67 0-6: er(지우개 표식 — 값 1 하나 · 없으면 칠 = 옛 문서 이주 없음)
+  'paint', 'f', 'e', 'er', 'uv', 'm', 'i', 'c', 'br', 'o',
   // rep(web2-49 — 재료 표현 {m, s}: 열쇠 m·s는 위 칠 줄과 면 줄에 이미 있다)
   // web2-55: ex(면 예외 {t}) · clsDefs(분류 정의 덮어쓰기 {t,off,pri,core,mat} — 분류 id
   // 열쇠 slab/wall/extw/intw/slope 다섯 포함) — t·mat·s는 전역 목록에 이미 있다.
@@ -271,6 +272,9 @@ export function parseBrnl(text: string, info?: ParseInfo): BrnlData | null {
       st.paint = p.e === 1
         ? { f: p.f, e: 1, uv: p.uv.map(Number) }
         : { f: p.f, s: p.s, uv: p.uv.map(Number) }
+      // 지우개 표식(web2-67 0-6) — lock·nj와 같은 규격(값 1 하나 · 모양이 틀리면 그 필드만
+      // 버린다). 잃으면 «칠»로 읽혀 조용히 틀린 그림이 되므로 — 게이트 ⑤가 왕복을 지킨다.
+      if (p.er === 1) st.paint.er = 1
       // 점별 필압(50 — 정본 목록의 «압력») — 길이가 uv 점 수와 같아야 받는다. 틀리면
       // 그 필드만 버린다(질은 51의 몫이라 잃어도 조용히 틀린 기하가 안 난다).
       if (Array.isArray(p.press) && p.press.length === p.uv.length / 2 &&

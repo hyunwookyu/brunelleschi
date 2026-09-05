@@ -157,6 +157,8 @@ function markOfStroke(s: Stroke, box: UvBox, dims: { h: number; pxPerUnit: numbe
     // web2-64 64-1 — 획이 든 브러시 id가 굽기를 정한다(슬롯의 «지금» 브러시가 아니다 — 원칙 a). 반증 스위치는 옛 결함.
     preset: brushIdOff ? undefined : p.br,
     opacityK: p.o,
+    // web2-67 0-6 — 지우개 표식(획 → 자국으로 그대로): 엔진이 eraser=1로 굽는다.
+    ...(p.er === 1 ? { erase: 1 as const } : {}),
   }
 }
 

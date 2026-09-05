@@ -455,6 +455,19 @@
        자리는 **화면 왼쪽 가장자리**다(main.ts placeLeftPanel) — 작도 세로바와 안 겹친다. */
     #painttray { width: 260px; padding: 6px; background: rgba(252,251,248,.96); box-shadow: 0 1px 10px rgba(0,0,0,.09);
                  border-radius: 6px; gap: 3px; align-items: stretch; }
+    /* 상한 표식(web2-67 0-1) — 패널 우상단 구석의 작은 점. 토스트를 대신한다(걸려 있는
+       동안만 · 설명은 호버). 흐름 밖(absolute)이라 줄 배치를 안 민다. */
+    #paint-clamp-dot { position: absolute; top: 5px; right: 5px; width: 9px; height: 9px;
+                       border-radius: 50%; background: #c4813a; pointer-events: auto; }
+    /* 지우개 고정 칸(web2-67 0-6) — 즐겨찾기 옆 한 줄: [지우개] [경도]. 68(필통)이 자리를 다시 볼 수 있다.
+       단추는 .ebtn(줄이 아니다 — .rrow 줄 셈(mats46 ①)을 오염시키면 안 된다). */
+    #paint-erase-row { display: flex; gap: 6px; align-items: stretch; }
+    .ebtn { border: 1px solid rgba(60,56,49,.14); border-radius: 4px; background: rgba(255,255,255,.55);
+            cursor: pointer; touch-action: none; font: 13px system-ui, sans-serif; color: #3c3831; }
+    #paint-erase { flex: 1; display: flex; align-items: center; gap: 6px; padding: 5px 8px; }
+    #paint-erase svg { width: 20px; height: 20px; }
+    #paint-erase-soft { flex-shrink: 0; padding: 5px 8px; font-size: 12px; }
+    #paint-erase.on, #paint-erase-soft.on { background: rgba(60, 56, 49, .14); }
     #painttray .rrow { box-shadow: none; background: transparent; }
     #painttray .rrow.on { background: rgba(60, 56, 49, .10); }
     #painttray .prow { padding-top: 4px; padding-bottom: 4px; }
@@ -466,8 +479,10 @@
     #paint-color { gap: 8px; }
     .colordot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(60,56,49,.35); padding: 0; cursor: pointer;
                 touch-action: none; flex-shrink: 0; box-shadow: inset 0 0 0 2px rgba(255,255,255,.7); }
-    /* 색상 휠 통(64) — 색 원을 누르면 곁에 얹힌다(한 단계 · registerBox) */
-    #paint-wheelbox { position: fixed; z-index: 13; flex-direction: column; gap: 4px; padding: 7px 9px; display: flex; }
+    /* 색상 휠 통(64 → **web2-67 0-4**) — 옆 펼침(fixed)이 아니라 **패널 안 세로 행**이다
+       (사람 판정 「옆으로 펼쳐져서 화면을 가리는 느낌」): 색 원 줄 바로 아래에 접혔다
+       펴진다. 열려도 캔버스를 가리는 폭은 패널 폭 그대로다. 툴팁 없음(같은 판정). */
+    #paint-wheelbox { position: static; flex-direction: column; gap: 4px; padding: 4px 0; display: flex; align-items: center; }
     #paint-wheelbox[hidden] { display: none; }
     #paint-wheel-cv { position: static; inset: auto; display: block; touch-action: none; cursor: crosshair; }
     #paint-hex { min-width: 0; font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #4a463f; }

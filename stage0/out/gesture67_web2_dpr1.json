@@ -1,0 +1,151 @@
+{
+  "conditions": {
+    "project": "dpr1",
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/gesture67.spec.ts (#99)"
+  },
+  "what": "web2-67 §1 — 몸짓 가르기: 펜=칠 · 손가락 탭=고르기 · 손가락 긴 누름=Injector · 마우스=문턱 12",
+  "note_pitfalls": "#93(탭 판정은 «움직인 거리»다 — 시간이 아니다: 문턱 경계 양쪽을 잰다) · #99 · #101 · #102(한 test 안 ?reset 재부름 ⛔) · #103(장면 확인 — 잉크·면 수) · #111 판별 ①(입력 하나에 전부를 다시 만드는가 — 이 라운드는 입력 «배정»만 바꿨고 미리보기 기제 무변)",
+  "note_d3": "⑦ gestureSplitOff가 반증이다 — 켜면 옛 판(펜도 6px 탭 판정 · 손가락 탭 무위)이 같은 장면에서 실제로 돌아온다",
+  "pitfall_citations": [
+    42,
+    93,
+    99,
+    101,
+    102,
+    103,
+    111
+  ],
+  "selfcheck_notes": {
+    "zero_counters": "①의 sel_after(0)·⑤의 delta(전부 0)는 «아무 일도 안 한다» 게이트의 통과값이다 — 카운터 죽음이 아니라 그 짝(②의 sel 1·2, ⑦의 옛 충돌 sel 1)이 같은 자로 양수를 낸다"
+  },
+  "g1_pen_dot": {
+    "note": "펜 점 하나 → 획 1 · 잉크 증가 · faceSel 0 (슬롯 전수)",
+    "rows": [
+      {
+        "instr": "pencil",
+        "stroke_delta": 1,
+        "ink_delta": 108,
+        "sel_after": 0
+      },
+      {
+        "instr": "brush",
+        "stroke_delta": 1,
+        "ink_delta": 360,
+        "sel_after": 0
+      },
+      {
+        "instr": "marker",
+        "stroke_delta": 1,
+        "ink_delta": 299,
+        "sel_after": 0
+      },
+      {
+        "instr": "cp",
+        "stroke_delta": 1,
+        "ink_delta": 531,
+        "sel_after": 0
+      }
+    ]
+  },
+  "g2_finger_tap": {
+    "note": "탭 → 1 · 다른 면 탭 → 2 · 같은 면 재탭 → 2 · 긴 누름 = Injector(고름 불변 · «실었을 때만» 몸짓 소진 [H5]) · 빈 곳 → 0 · 빈 곳 긴 누름 → 탭으로 산다(풀림) · 획 증가 0",
+    "sel": [
+      1,
+      2,
+      2,
+      2,
+      0
+    ],
+    "stroke_delta": 0,
+    "injected": {
+      "i": "marker",
+      "hex": "#1e66c0",
+      "w_px": 13.7
+    },
+    "hold_no_target": {
+      "before": 1,
+      "after_slow_empty_press": 0,
+      "hold_ms": 450
+    }
+  },
+  "g3_threshold": {
+    "note": "경계 세 점(#93 · [M6]) — 아래(FT−2): 탭·화면 불변 · 바로 위(FT+1): 탭 아님 · 위(FT+6)+끌기: 궤도(화면 변화 값)·고름 불변",
+    "under": {
+      "diag_px": 9.9,
+      "sel": 1,
+      "view_moved": 0,
+      "pose_moved": 0
+    },
+    "just_over": {
+      "diag_px": 13.5,
+      "sel_delta": 0
+    },
+    "over": {
+      "diag_px": 18.4,
+      "sel_delta": 0,
+      "moved": 11.1708
+    }
+  },
+  "g4_across": {
+    "note": "㉠ 면 «셋» 고름 + 한 붓 → 셋 다에 남고 밖 0(지시 ④ 문면 그대로 — [M5]) · ㉡ 두 판만 고른 판 — 바닥 0이 «측정»된다(키 명시) · 54-2의 그 기제(paint54 ④와 같은 자)",
+    "ids": {
+      "floor": 10,
+      "wallA": 11,
+      "wallB": 12
+    },
+    "three_selected": {
+      "f10": 1,
+      "f11": 1,
+      "f12": 1,
+      "other": 0
+    },
+    "two_selected": {
+      "f10": 0,
+      "f11": 1,
+      "f12": 1
+    },
+    "seam_gap": {
+      "gap_device_px": 10,
+      "gap_css_px": 10,
+      "def": "[M8] 이음매(샛기둥 x≈550 · 붓 12px)에서 자국이 끊기는 «잉크 없는 열»의 최대 연속 폭 — 획을 면별로 쪼개지 않는 설계의 화면 대가(각 면의 uv 조각이 경계에서 잘린다). 판정은 사람 — DEFERRED web2-67 행"
+    }
+  },
+  "g5_drafting": {
+    "sel_after_tap": 0,
+    "stroke_delta": 0,
+    "view_delta": [
+      0,
+      0
+    ]
+  },
+  "g67_mouse_falsify": {
+    "note": "⑥ 마우스: 탭=고르기 · 문턱+6 획=칠(경계 양쪽 전수는 paint64 ⑥) · ⑦ 반증: 끄면 짧은 펜 획이 고르기(옛 충돌) · 손가락 탭 무위",
+    "mouse": {
+      "threshold": 12,
+      "sel_after_click": 1,
+      "paint_delta_over": 1
+    },
+    "falsify": {
+      "sel_before": 0,
+      "new_world": {
+        "paint_delta": 1,
+        "sel": 0
+      },
+      "old_world": {
+        "paint_delta": 0,
+        "sel": 1,
+        "finger_sel": 1
+      }
+    }
+  },
+  "note_dpr": "dpr2 판은 ①(잉크 픽셀)만 dpr이 실리고 나머지(고름 수·문턱 판정·면 배정)는 css px 판정이라 dpr1과 비트 동일이다 — 같음이 곧 그 사실의 확인이지 독립 표본이 아니다(paint64 note_dpr의 그 규약 · 리뷰어 [M1])",
+  "note_time_entry": "⚠ 손가락 «긴 누름 = Injector»는 시간 진입이다(#93의 그 형태 — 지시 67-1 문면이 정한 자리 · 39·44 꾹 누름과 같은 대역 writeHoldMs). 노출을 좁힌 수리([H5]): «실었을 때만» 몸짓을 삼킨다 — 못 실은 느린 탭은 뗄 때 고르기로 산다(g2.hold_no_target). 남는 노출(짚을 획 «위»의 느린 탭이 Injector가 되는 경우)은 실기기 판정 — AS-C197·DEFERRED",
+  "constants_used": {
+    "PAINT67_FINGER_TAP_MAX_PX": 12,
+    "PAINT67_MOUSE_TAP_MAX_PX": 12,
+    "PAINT67_DOT_FRAC": 0.35,
+    "PAINT67_DOT_MIN_PX": 2,
+    "note": "판정 전 실행이 diag.paint50Constants()와 대조한다(① 첫 줄) — 여기 수는 사람 눈용 사본이다(#88: 정본은 앱 상수)"
+  }
+}

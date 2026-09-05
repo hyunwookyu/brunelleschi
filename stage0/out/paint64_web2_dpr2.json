@@ -13,76 +13,76 @@
       "marker": {
         "a": "ramon/100%_Opaque",
         "b": "tanda/marker-01",
-        "ink_a": 22913,
+        "ink_a": 20344,
         "same_after_b": true,
         "falsification_idoff_same": false,
         "back_same": true,
         "hashes": {
           "a": [
-            289787324
+            -709262686
           ],
           "b": [
-            289787324
+            -709262686
           ],
           "off": [
-            1736432187
+            159115813
           ]
         }
       },
       "pencil": {
         "a": "classic/pencil",
         "b": "deevad/2B_pencil",
-        "ink_a": 45860,
+        "ink_a": 40612,
         "same_after_b": true,
         "falsification_idoff_same": false,
         "back_same": true,
         "hashes": {
           "a": [
-            -178860081
+            -754885109
           ],
           "b": [
-            -178860081
+            -754885109
           ],
           "off": [
-            -2025688974
+            1901651497
           ]
         }
       },
       "cp": {
         "a": "ramon/B-pencil",
         "b": "classic/charcoal",
-        "ink_a": 67455,
+        "ink_a": 59783,
         "same_after_b": true,
         "falsification_idoff_same": false,
         "back_same": true,
         "hashes": {
           "a": [
-            -835007133
+            1658173300
           ],
           "b": [
-            -835007133
+            1658173300
           ],
           "off": [
-            -421536601
+            1134877516
           ]
         }
       },
       "brush": {
         "a": "deevad/liner",
         "b": "classic/pen",
-        "ink_a": 90704,
+        "ink_a": 80265,
         "same_after_b": true,
         "falsification_idoff_same": false,
         "back_same": true,
         "hashes": {
           "a": [
-            690606181
+            -1862468273
           ],
           "b": [
-            690606181
+            -1862468273
           ],
           "off": [
-            336615606
+            910251887
           ]
         }
       }
@@ -1509,21 +1509,21 @@
         "exists": true,
         "hit": true,
         "rect": [
-          907,
-          506,
-          232,
+          12,
+          242,
+          260,
           42
         ],
-        "top": "paint-brush-sample"
+        "top": "paint-brush-btn"
       },
       {
         "id": "paint-brush-sample",
         "exists": true,
         "hit": true,
         "rect": [
-          913,
-          513,
-          152,
+          18,
+          249,
+          122,
           28
         ],
         "top": "paint-brush-sample"
@@ -1533,8 +1533,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          977,
-          557,
+          82,
+          293,
           96,
           16
         ],
@@ -1545,8 +1545,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          1082,
-          559,
+          187,
+          295,
           38,
           12
         ],
@@ -1557,8 +1557,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          977,
-          588,
+          82,
+          324,
           96,
           16
         ],
@@ -1569,8 +1569,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          1082,
-          590,
+          187,
+          326,
           38,
           12
         ],
@@ -1581,8 +1581,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          916,
-          617,
+          21,
+          353,
           30,
           30
         ],
@@ -1593,8 +1593,8 @@
         "exists": true,
         "hit": true,
         "rect": [
-          954,
-          624,
+          59,
+          360,
           16,
           16
         ],
@@ -1605,81 +1605,81 @@
         "exists": true,
         "hit": true,
         "rect": [
-          913,
-          658,
-          71,
-          44
+          18,
+          394,
+          81,
+          40
         ],
-        "top": "svg"
+        "top": "paint-fav-1"
       },
       {
         "id": "paint-fav-2",
         "exists": true,
         "hit": true,
         "rect": [
-          987,
-          658,
-          71,
-          44
+          102,
+          394,
+          81,
+          40
         ],
-        "top": "svg"
+        "top": "paint-fav-2"
       },
       {
         "id": "paint-fav-3",
         "exists": true,
         "hit": true,
         "rect": [
-          1062,
-          658,
-          71,
-          44
+          185,
+          394,
+          81,
+          40
         ],
-        "top": "svg"
+        "top": "paint-fav-3"
       },
       {
         "id": "paint-fav-4",
         "exists": true,
         "hit": true,
         "rect": [
-          913,
-          705,
-          71,
-          44
+          18,
+          437,
+          81,
+          40
         ],
-        "top": "svg"
+        "top": "paint-fav-4"
       },
       {
         "id": "paint-fav-5",
         "exists": true,
         "hit": true,
         "rect": [
-          987,
-          705,
-          71,
-          44
+          102,
+          437,
+          81,
+          40
         ],
-        "top": "svg"
+        "top": "paint-fav-5"
       },
       {
         "id": "paint-fav-6",
         "exists": true,
         "hit": true,
         "rect": [
-          1062,
-          705,
-          71,
-          44
+          185,
+          437,
+          81,
+          40
         ],
-        "top": "svg"
+        "top": "paint-fav-6"
       },
       {
         "id": "btn-paint-front",
         "exists": true,
         "hit": true,
         "rect": [
-          907,
-          755,
-          232,
+          12,
+          527,
+          260,
           33
         ],
         "top": "btn-paint-front"
@@ -1710,10 +1710,10 @@
         "exists": true,
         "hit": true,
         "rect": [
-          767,
-          624,
-          132,
-          132
+          20,
+          259,
+          244,
+          244
         ],
         "top": "paint-wheel-cv"
       }
@@ -1722,23 +1722,23 @@
       "#brushpick"
     ],
     "overflow": {
-      "sw": 244,
-      "cw": 244,
-      "sh": 294,
-      "ch": 294,
+      "sw": 272,
+      "cw": 272,
+      "sh": 329,
+      "ch": 329,
       "vh": 800,
-      "bottom": 794,
-      "top": 500
+      "bottom": 565,
+      "top": 236
     },
     "viewport700": {
       "overflow": {
-        "sw": 244,
-        "cw": 244,
-        "sh": 294,
-        "ch": 294,
+        "sw": 272,
+        "cw": 272,
+        "sh": 329,
+        "ch": 329,
         "vh": 700,
-        "bottom": 694,
-        "top": 400
+        "bottom": 515,
+        "top": 186
       },
       "zero_stage_missing": []
     },
@@ -1768,27 +1768,27 @@
   "panel": {
     "def": "34-0(#96) — 손잡이 전수 툴팁 · R1(슬라이더 = 연속값 · 58 정정) · R3(전부 data-act state — 패널은 접히지 않는다) · R6(값 표찰 · 견본 · 이름) · R7(브러시 목록·휠은 통) · R8 정정(패널은 도구를 든 동안 항상 — 통 밖) · 즐겨찾기 탭=적용 · 길게=저장(기기) · 목록 고르기 = br만",
     "titles": {
-      "paint-brush-btn": "지금 브러시 deevad/liner(잉크펜 족) — 누르면 브러시 목록이 열린다",
+      "paint-brush-btn": "지금 브러시 «제도 라이너» — 원 이름 deevad/liner(잉크펜 족). 누르면 브러시 목록이 열린다",
       "paint-sizes": "자국 굵기 — 슬롯별 최대: 잉크펜 500 · 마커 100 · 색연필 50 · 연필 50",
       "paint-size-range": "자국 굵기(px) — 끌어서 조절한다",
       "paint-opacity": "불투명 — 획의 불투명(0.05~1). 브러시 자체의 불투명에 곱한다",
       "paint-opacity-range": "불투명 — 끌어서 조절한다",
       "paint-color-btn": "지금 색 #5a5a5a — 누르면 색상 휠이 열린다",
       "paint-recent-1": "최근 색 — 비어 있다(색을 고르면 여기 남는다)",
-      "paint-fav-1": "즐겨찾기 1 — 연필 · classic/pencil. 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
-      "paint-fav-6": "즐겨찾기 6 — 잉크펜 · deevad/watercolor_expressive. 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
+      "paint-fav-1": "즐겨찾기 1 — 연필 · 연필(원 이름 classic/pencil). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
+      "paint-fav-6": "즐겨찾기 6 — 잉크펜 · 수채(원 이름 deevad/watercolor_expressive). 누르면 지금 브러시로 · 길게 누르면 지금 브러시를 여기 놔둔다(이 기기 · 옛 획은 안 변한다)",
       "btn-paint-front": "정면은 면을 골라야 한다 — 칠 도구로 면을 탭해 고른 뒤 누른다"
     },
     "no_title": [],
     "fav3": {
       "i": "marker",
-      "br": "ramon/100%_Opaque"
+      "br": "brunelleschi/marker"
     },
     "sel_after_fav3": {
       "hex": "#5a5a5a",
       "i": "marker",
       "w": 10,
-      "br": "ramon/100%_Opaque",
+      "br": "brunelleschi/marker",
       "o": 1
     },
     "sel_after_pick": {
@@ -1798,7 +1798,7 @@
       "br": "tanda/marker-01",
       "o": 1
     },
-    "name_shown": "marker-01\n마커 · tanda",
+    "name_shown": "마커 01\n마커 · tanda · marker-01",
     "favs_after_hold": [
       {
         "i": "pencil",
@@ -1806,11 +1806,17 @@
       },
       {
         "i": "brush",
-        "br": "deevad/liner"
+        "br": "deevad/liner",
+        "hex": "#5a5a5a",
+        "w": 10,
+        "o": 1
       },
       {
         "i": "marker",
-        "br": "ramon/100%_Opaque"
+        "br": "brunelleschi/marker",
+        "hex": "#5a5a5a",
+        "w": 10,
+        "o": 1
       },
       {
         "i": "cp",
@@ -1822,7 +1828,10 @@
       },
       {
         "i": "marker",
-        "br": "tanda/marker-01"
+        "br": "tanda/marker-01",
+        "hex": "#5a5a5a",
+        "w": 10,
+        "o": 1
       }
     ],
     "favs_after_reload": [
@@ -1832,11 +1841,17 @@
       },
       {
         "i": "brush",
-        "br": "deevad/liner"
+        "br": "deevad/liner",
+        "hex": "#5a5a5a",
+        "w": 10,
+        "o": 1
       },
       {
         "i": "marker",
-        "br": "ramon/100%_Opaque"
+        "br": "brunelleschi/marker",
+        "hex": "#5a5a5a",
+        "w": 10,
+        "o": 1
       },
       {
         "i": "cp",
@@ -1848,7 +1863,10 @@
       },
       {
         "i": "marker",
-        "br": "tanda/marker-01"
+        "br": "tanda/marker-01",
+        "hex": "#1e7fd0",
+        "w": 10,
+        "o": 1
       }
     ],
     "recent": [
@@ -1859,28 +1877,28 @@
     ]
   },
   "face_tap": {
-    "def": "칠 도구의 한 붓이 raw bbox 대각 ≤ C.PAINT64_TAP_MAX_PX(6 · 화면 px)이면 탭 = 면 고르기(+51 Injector) · 넘으면 칠. 경계 양쪽(문턱 −2 · +4)에서 잰다 · 빈 곳 탭 = 풀기 · 반증 = 연필 도구의 같은 탭은 안 고른다(작도 중에는 옛 뜻 그대로)",
+    "def": "**마우스**의 한 붓이 raw bbox 대각 ≤ C.PAINT67_MOUSE_TAP_MAX_PX(12 · 화면 px)이면 탭 = 면 고르기(+51 Injector) · 넘으면 칠. 경계 양쪽(문턱 −2 · +1 · +4)에서 잰다 · 빈 곳 탭 = 풀기 · 반증 = 연필 도구의 같은 탭은 안 고른다(작도 중에는 옛 뜻 그대로). ⚠ 67 §1 판갈이: 펜은 이 문턱을 안 지난다(언제나 칠 — gesture67 ①이 그 자)",
     "threshold": {
-      "registered": "C.PAINT64_TAP_MAX_PX",
-      "value": 6,
-      "origin": "세션이 정했다(2026-09-04 · 첫 실행 «전») — 아래 = 펜 끝 떨림의 탭 문 TAP_MAX_PX 2(AS-C79) · 위 = 쓸모 있는 최소 자국(점 하나 ≈ 굵기 · 기본 10px)의 절반 대역. 6px 아래의 «점 찍기»는 칠이 아니라 고르기다(대가 — AS-C189 · 실기기 손가락 떨림이 판정)"
+      "registered": "C.PAINT67_MOUSE_TAP_MAX_PX",
+      "value": 12,
+      "origin": "web2-67 지시 문면(6 → 12 — 마우스는 손가락이 없어 고르기와 그리기를 한 장치가 진다). 옛 6은 64 세션의 값(AS-C189 — 펜에 걸려 «그리려는데 골라지는» 충돌을 냈고 §1이 장치로 갈랐다)"
     },
-    "threshold_px": 6,
+    "threshold_px": 12,
     "sel_pencil_tap": 0,
     "sel_after_tap": 1,
     "strokes_delta_tap": 0,
     "under": {
-      "diag_px": 4.2,
+      "diag_px": 9.9,
       "sel": 1,
       "strokes_delta": 0
     },
     "just_over": {
-      "diag_px": 6.4,
+      "diag_px": 13.5,
       "sel": 1,
       "strokes_delta": 1
     },
     "over": {
-      "diag_px": 9.9,
+      "diag_px": 15.6,
       "sel": 1,
       "strokes_delta": 1
     },
@@ -1890,7 +1908,7 @@
   "constants_snapshot": {
     "PAINT64_DENSITY_TOL": 0.05,
     "PAINT64_WET_MIN_PX": 40,
-    "PAINT64_TAP_MAX_PX": 6,
+    "PAINT67_MOUSE_TAP_MAX_PX": 12,
     "PAINT63_DISTINCT_REL": 0.25,
     "PAINT62_PAINTED_ALPHA": 0.008,
     "note": "스냅샷-라이트(web2 원장의 constantsSnapshot 기계 부재는 종전 유보 · 값은 constants.ts가 정본 — 리뷰어 [M5])"

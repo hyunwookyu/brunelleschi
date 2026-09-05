@@ -178,6 +178,14 @@ export interface App {
   /** 칠 도구의 지금 설정 — web2-64: **브러시 id(br)**가 정본이고 슬롯(i)은 «성질의 족»(캡·결·기본 색)이다.
    *  획은 br·o·c·w를 그대로 든다(64-1 — 브러시를 바꿔도 옛 획이 안 변한다). o = 불투명(0..1 · 1이면 저장 안 함). */
   paintSel: { hex: string; i: Instr; w: number; br: string; o: number }
+  /** web2-67 0-6 — **칠 지우개**(패널의 고정 칸 · 즐겨찾기가 아니라 «언제나 있는 것»).
+   *  켜져 있으면 펜 한 붓이 «덮임을 빼는 획»(paint.er=1 · ERASER_BRUSH)이 된다.
+   *  세션 상태다(paintSel과 같은 급 · 저장 ⛔). 뒷꼭지(tipErase)는 이것과 무관하게
+   *  그 한 붓만 지우개다(paintEraseNow가 둘을 합친다 — #54). */
+  paintErase: boolean
+  /** 지우개의 사양 — 크기(화면 px · 최대는 붓과 같다 C.PAINT58_MAX_W.brush) · 부드러움
+   *  (경도 축 하나: false = 딱딱한(기본 — 마른 매체) · true = 부드러운). */
+  eraseSel: { w: number; soft: boolean }
   /** **면 고름**(web2-54 54-2) — 잡기(꾹 누름)로 고른 면들. 차례가 뜻이다: **마지막이
    *  정면의 대상**(54-3 — 예측 가능한 쪽). 도구를 바꿔도 산다(핀셋으로 골라 놓고 칠
    *  도구를 들면 그대로 — 「칠 도구를 든 채로 고르기」를 안 만들고도 되는 길). 잡은 채
@@ -187,6 +195,10 @@ export interface App {
   /** **획은 자기 면에만 남는다**(54-1)의 스위치 — 기본 참. D-3 반증 전용(끄면 옛 거동 —
    *  여러 면이 같이 칠해짐 — 이 돌아온다는 것을 팔이 잰다). 화면 손잡이 ⛔(54-1 문면). */
   paintOwnGate: boolean
+  /** web2-67 §1 게이트 ⑦의 반증(D-3 · e2e 전용) — 참이면 펜/손가락 판별을 끈 «옛 판»:
+   *  펜·마우스 다 옛 문턱(6px)으로 탭 판정하고 손가락 탭은 아무것도 안 한다. 켜면 옛 충돌
+   *  (짧은 펜 획이 고르기가 된다)이 돌아온다는 것을 팔이 잰다. 화면 손잡이 ⛔. */
+  gestureSplitOff: boolean
   /** **정면 왕복**(54-3) — 정면으로 날기 직전의 자세. 있으면 「다시 누르면 직전 시점으로
    *  돌아온다」의 목적지다. 궤도(orbitBy)가 돌면 비운다 — 그 뒤의 「정면」은 새 비행이다. */
   frontBack: CamPose | null
@@ -441,6 +453,9 @@ export function createApp(W: number, H: number): App {
     // 흔들린다(무회귀). 기본 굵기는 마커 촉 폭(C.MARKER_W_PX = 크기 트레이의 가운데 칸).
     // web2-64: 기본 색 = 등급 흑연색(MAT.HB — 45~63의 «붓 = 흑연»과 같은 픽셀 · 리뷰어 [H6]: 색 규약 변경이 옛 획·새 획의 색을 안 가른다)
     paintSel: { hex: MAT.HB.color, i: 'brush', w: C.MARKER_W_PX, br: DEFAULT_BRUSH.brush, o: 1 },
+    paintErase: false,
+    eraseSel: { w: C.MARKER_W_PX, soft: false },   // 크기 초기값은 칠과 같은 자리(새 숫자 ⛔)
+    gestureSplitOff: false,
     faceSel: [],
     paintOwnGate: true,
     frontBack: null,
@@ -1818,7 +1833,7 @@ import { computeJoints, type JointFaceIn, type JointsOut } from '../core/joint'
 import { borderGeoOf, borderHitAt } from '../core/border'
 import { uvFromScreen, paintGeoOf } from '../core/facetex'
 import { cycleMat, isMatId, materialOf, type MatId, type Instr } from '../core/palette'
-import { DEFAULT_BRUSH, defaultBrushOf } from '../core/paintseam'
+import { DEFAULT_BRUSH, defaultBrushOf, ERASER_BRUSH } from '../core/paintseam'
 import { MAT } from '../core/material'
 import { cycleRep, isRepId, isMatRepId, REP_NAMES, repBasis } from '../core/matrep'
 
@@ -1935,7 +1950,7 @@ export function buildPaintStrokes(
           const pb = project(app.lift.an, app.pose, A[1]!)
           const world = len3(sub3(A[1]!, A[0]!))
           const px = pa && pb ? Math.hypot(pb.x - pa.x, pb.y - pa.y) * viewScale(app) : 0
-          s.paint!.w = px > 1e-6 ? app.paintSel.w * (world / px) : C.PAINT_W_FALLBACK_UNITS
+          s.paint!.w = px > 1e-6 ? paintWNow(app) * (world / px) : C.PAINT_W_FALLBACK_UNITS
         } else s.paint!.w = C.PAINT_W_FALLBACK_UNITS
       }
       if (!isDrawPose(app.pose)) s.view = clonePose(app.pose)
@@ -2000,17 +2015,33 @@ export function buildPaintStrokes(
     const wTail = paintWLegacyForTest ? r.pts[r.pts.length - 1]! : r.pts[1]!
     const wpp = r.pts.length >= 2 ? worldPerPxPerp(app, rf, r.pts[0]!, wTail) : null
     const ppu = pxPerUnitOnScreen(app, rf)
-    s.paint!.w = wpp ? app.paintSel.w * wpp
-      : ppu ? app.paintSel.w / ppu : C.PAINT_W_FALLBACK_UNITS
+    s.paint!.w = wpp ? paintWNow(app) * wpp
+      : ppu ? paintWNow(app) / ppu : C.PAINT_W_FALLBACK_UNITS
     if (!isDrawPose(app.pose)) s.view = clonePose(app.pose)
     added.push(s)
   }
   return { strokes: added, offFace, offOwn }
 }
 
+/** web2-67 0-6 — **지금 이 붓이 지우개인가**(#54 — 스탬핑·굵기·패널이 같은 술어를 본다):
+ *  패널의 고정 칸(paintErase)이거나 뒷꼭지(tipErase — 그 한 붓만)다. 손가락은 아니다(§1 —
+ *  지우개도 «펜»이다: 손가락 입력은 애초에 칠 경로에 안 들어온다). */
+export const paintEraseNow = (app: Pick<App, 'paintErase' | 'tipErase'>): boolean =>
+  app.paintErase || app.tipErase
+
+/** 지금 «칠» 굵기(화면 px — 커밋의 세계 환산 «앞» 값): 지우개면 지우개의 크기다(#54). */
+const paintWNow = (app: App): number => (paintEraseNow(app) ? app.eraseSel.w : app.paintSel.w)
+
 /** 지금 설정을 획에 찍는다(web2-64 — 한 자리 #54): 슬롯 표식 i(잉크펜은 없음 — 50의 규약) · 색 c(모든 슬롯 — 64) ·
- *  브러시 id br(64-1) · 불투명 o(1이면 안 쓴다 — 옛 문서 바이트 무변). */
+ *  브러시 id br(64-1) · 불투명 o(1이면 안 쓴다 — 옛 문서 바이트 무변).
+ *  web2-67 0-6 — 지우개면 **표식 er=1 + 지우개 브러시**만 찍는다(색·슬롯·불투명은 빼기에 뜻이 없다 —
+ *  안 찍어야 옛 문서 규약(«없으면 안 쓴다»)대로 바이트가 준다). */
 function stampPaintSel(app: App, s: Stroke): void {
+  if (paintEraseNow(app)) {
+    s.paint!.er = 1
+    s.paint!.br = app.eraseSel.soft ? ERASER_BRUSH.soft : ERASER_BRUSH.hard
+    return
+  }
   const ps = app.paintSel
   if (ps.i !== 'brush') s.paint!.i = ps.i === 'marker' ? 1 : ps.i === 'cp' ? 2 : 3
   s.paint!.c = ps.hex
@@ -2028,6 +2059,7 @@ export function injectPaintAt(app: App, p: Pt): { i: Instr; hex: string; w: numb
   let best: { s: Stroke; d: number } | null = null
   for (const s of app.doc.strokes) {
     if (s.paint === undefined) continue
+    if (s.paint.er === 1) continue   // web2-67 0-6 — 지우개 획은 «속성 집기»의 대상이 아니다(집으면 붓이 지우개가 된다)
     const g3 = app.paintGeo.get(s.id)
     if (!g3) continue
     for (let i = 0; i + 1 < g3.length; i++) {

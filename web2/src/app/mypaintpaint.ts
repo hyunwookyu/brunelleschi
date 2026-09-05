@@ -40,8 +40,16 @@ import { tipAtlas, tipsReady, tipsLoadError, paperHeightTile, TIP_CHOICES, type 
 export const ENGINE_SETTINGS_READ = 64
 /** 합성 속도(px/s) — 점렬에 시각이 없으므로 dtime = 걸음 ÷ 이 값(AS-C184). */
 export const SPEED_PX_S = 300
-/** 층 예산(바이트) — 1024² float 층이 16MB라 여섯 장 남짓. 넘치면 오래된 캔버스의 층을 버린다. */
-const LAYER_BUDGET = 96 * 1024 * 1024
+/** 층 예산(바이트) — 넘치면 오래된 캔버스의 층을 버린다(버려진 캔버스는 누적을 못 쓰고
+ *  전량 재굽기로 떨어진다 — hasLayer가 그 문이다).
+ *  ⚠ web2-67 0-1 재측정: 텍스처 상한이 1024 → 2048이 되면서 층 하나가 최대
+ *  2048²×20B(float RGBA 16 + 덮임 4) = **80 MB**가 됐다. 96 MB면 최대 층 «하나»만 살아
+ *  두 큰 면을 오가며 칠할 때마다 층이 죽어 전량 재굽기가 반복된다 — 최대 층 «둘» + 중간
+ *  크기 여유로 **192 MB**. ⚠ 리뷰어 [H1]: 이것도 타협이다 — 옛 판(96/16MB)은 최대 층
+ *  «여섯», 새 판은 «둘»이라 수용이 준다. 셋째 큰 면부터 층이 축출돼 그 면의 커밋은 전량
+ *  재굽기(픽셀 무변 — hasLayer 폴백), **초안 미리보기는 빈 층 위**(62 DEFERRED의 그 결손 —
+ *  굽힌 안료와의 혼합·스머지가 미리보기에서 빠진다)가 «더 일찍» 온다. DEFERRED 67 행 · 실기기 몫. */
+const LAYER_BUDGET = 192 * 1024 * 1024
 
 export const PRESET_BY_NAME: ReadonlyMap<string, Preset> = new Map(PRESETS.map(p => [p.name, p]))
 export const SETTING_IDX: ReadonlyMap<string, number> = new Map(SETTINGS.map((s, i) => [s.id, i]))
@@ -547,14 +555,19 @@ interface MarkResolved { t: Tune; flat: boolean; tipName: string | null; paperK:
 function resolveMark(name: string, m: SeamMark): MarkResolved {
   const t = tune[m.tool] ?? {}
   const flat = (markerFlatForTest() && m.tool === 'marker') || paintOpaqueForTest()
-  const tipName = flat ? null : tipNameFor(m, name)
-  const paperK = grainOffForTest() || flat ? 0 : (t.paperK ?? TOOL_PAPER[m.tool])
+  // web2-67 0-6 — 지우개 자국: 팁·종이 결 없음(지우개는 안료가 아니라 «빼기»다 — 결이 깎으면
+  // 골에 안료 찌꺼기가 남는다). 경도(딱딱/부드러운)는 브러시(ERASER_BRUSH)의 hardness가 든다.
+  const erase = m.erase === 1
+  const tipName = flat || erase ? null : tipNameFor(m, name)
+  const paperK = grainOffForTest() || flat || erase ? 0 : (t.paperK ?? TOOL_PAPER[m.tool])
   const cpTh = m.tool === 'cp' && paperK > 0 && !cpThresholdOff ? cpThresholdOf(pressFlatForTest() ? null : m.press) : null
   const sw = [flat ? 1 : 0, capOffOverride ? 1 : 0, smudgeSelfOverride ? 1 : 0, paintModeOff ? 1 : 0,
     smudgeOff ? 1 : 0, pressFlatForTest() ? 1 : 0, tipFrameLock, calibOff ? 1 : 0, tipGainOff ? 1 : 0].join('')
+  // ⚠ head에 erase가 든다(#111 · 66 착수 표 3 — 굽기에 새 입력을 더하면 얼린 결정에도 넣는다:
+  // 빠지면 재구축이 안 걸려 뗄 때 픽셀이 갈린다).
   const head = [name, m.wPx, m.color, m.seed, m.tool, m.grade ?? '', m.opacityK ?? 1, tipName ?? '',
     cpTh ?? '', paperK, sw, t.sizeK ?? 1, t.opacityK ?? 1, t.spacingK ?? 1, t.scatterK ?? 1, t.smudgeK ?? 1,
-    m.over ? JSON.stringify(m.over) : '', m.tip ?? ''].join('|')
+    m.over ? JSON.stringify(m.over) : '', m.tip ?? '', erase ? 1 : 0].join('|')
   return { t, flat, tipName, paperK, cpTh, head }
 }
 
@@ -585,6 +598,9 @@ function configureMark(b: Brush, name: string, m: SeamMark, draft: boolean, res:
   if (paintModeOff) b.setBaseValue(S.PAINT_MODE, 0)
   if (smudgeOff) b.setBaseValue(S.SMUDGE, 0)
   if (flat) { b.setBaseValue(S.OPAQUE, 1); b.setBaseValue(S.HARDNESS, 1); b.setBaseValue(S.OPAQUE_LINEARIZE, 0) }
+  // web2-67 0-6 — 지우개 표식이 정본이다: 브러시가 무엇이든 eraser=1로 굽는다(모르는 br의
+  // 슬롯 폴백이 조용히 «칠»로 떨어지는 길을 막는다 — 표식 없는 옛 문서는 여기 안 온다).
+  if (m.erase === 1) b.setBaseValue(S.ERASER, 1)
   b.setRng(rng32(m.seed))
   // 64-2 — 색연필 슬롯: 문턱 판(구멍) · 깊이 1(골 = 알파 0). 슬롯 조정 paperK 0이면 결 없음 그대로.
   return {
