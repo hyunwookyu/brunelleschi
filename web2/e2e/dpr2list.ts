@@ -25,7 +25,8 @@ export const DPR2_NEED_RE = /screenshot\(|getImageData|readPixels|toDataURL/
  *  (#99와 같은 뿌리). 초록 실행에서 빠지고 밤(e2e:night)·원장(e2e:ledger)에만 돈다. */
 export const MEASURE_SPECS = ['cost18', 'cost20', 'cost22', 'brushperf', 'perf65', 'perf66'] as const
 
-/** 조건이 낸 목록(2026-09-05 · web2-68: **case68·shots68**이 늘었다(필통 칸의 촉 색·눈금·목록 견본의 픽셀 해시 — getImageData · 사진 screenshot) — 63 → 65 · paint68은 픽셀 API를 안 부른다(__m61 지도만 — paint63 선례) ·
+/** 조건이 낸 목록(2026-09-05 · web2-69: **shots69**가 늘었다(사진 screenshot — 인벤토리 전/후/칠) — 65 → 66 · inventory69는 픽셀 API를 안 부른다(DOM 셈) ·
+ *  web2-68: **case68·shots68**이 늘었다(필통 칸의 촉 색·눈금·목록 견본의 픽셀 해시 — getImageData · 사진 screenshot) — 63 → 65 · paint68은 픽셀 API를 안 부른다(__m61 지도만 — paint63 선례) ·
  *  web2-67: paint67·shots67·**gesture67**이 늘었다(화면 #gl
  *  getImageData — 지우개·낡은 그림·이음매 틈([M8] seam_gap)의 픽셀 자 · 사진 screenshot) —
  *  60 → 63. ⚠ gesture67은 첫 판에서 조건 밖이었는데(픽셀 자가 diag 통로뿐) 리뷰어 [M8]
@@ -39,6 +40,6 @@ export const DPR2_SPECS = [
   'grain26', 'grain30', 'grain40', 'graphite', 'icons', 'inklayer', 'input',
   'join56', 'level', 'materials', 'mats46', 'mats52', 'nums47', 'own3d', 'paint45',
   'paint48', 'paint50', 'paint54', 'paint59', 'paint62', 'paint64', 'paint65', 'paint66', 'paint67', 'panel65', 'paper', 'papericon31', 'press26', 'rep49', 'rollpose',
-  'roundsave', 'shots62', 'shots63', 'shots64', 'shots65', 'shots66', 'shots67', 'shots68', 'slide40', 'snapghost', 'span57', 'thick55', 'turn31', 'ui34r7', 'underlay', 'view42',
+  'roundsave', 'shots62', 'shots63', 'shots64', 'shots65', 'shots66', 'shots67', 'shots68', 'shots69', 'slide40', 'snapghost', 'span57', 'thick55', 'turn31', 'ui34r7', 'underlay', 'view42',
   'waitfade', 'waitink37', 'yellow', 'yellowfree', 'zones',
 ] as const

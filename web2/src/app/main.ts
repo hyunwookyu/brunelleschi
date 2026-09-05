@@ -81,6 +81,15 @@ try {
   document.getElementById('buildid')!.textContent = __BUILD_ID__
 } catch { /* 치환이 안 됐다 — 화면에만 안 뜬다 */ }
 
+// web2-69 §3 R-D — 개발 메뉴는 «?dev=1»일 때만 DOM에 생긴다(hidden ⛔ 미생성 — 인벤토리 셈에서 빠진다). 설정 서랍 맨 아래 접힘.
+// 배선(진단·작업대·자립 깃발)은 아래에서 getElementById로 잡으므로 없으면 조용히 건너뛴다(값은 diag가 «미생성»으로 낸다).
+const DEV_MENU = new URLSearchParams(location.search).has('dev')
+if (DEV_MENU) {
+  const tpl = document.getElementById('devmenu-tpl') as HTMLTemplateElement | null
+  const host = document.querySelector('#pane-settings > div')
+  if (tpl && host) host.append(tpl.content.cloneNode(true))
+}
+
 // 진단 패널(web2-10 지시 4 · web2-11 1-f 확장) — 콘솔 없는 태블릿의 판독 통로.
 // ⚠ **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 종전에는 우하단 빌드 식별자를 눌렀는데,
 //    그 자리를 겨눈 손이 다른 버튼 대신 그것을 눌렀다(사람 관측). 빌드 식별자는 이제
@@ -93,7 +102,8 @@ let inputApi: { strokeStats: () => StrokeCapStats } | null = null
 const brnlBytes = () =>
   new Blob([serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView })]).size
 const diagPanel = initDiagPanel(
-  document.getElementById('btn-diag')!, document.getElementById('diagpanel')!,
+  document.getElementById('btn-diag') ?? document.createElement('button'),   // web2-69 — 개발 메뉴가 없으면(?dev=1 아님) 떠 있는 단추(안 눌린다)
+  document.getElementById('diagpanel')!,
   () => {
     const st = inputApi?.strokeStats()
     return [
@@ -192,7 +202,10 @@ if (location.search.includes('reset')) {
     if ('caches' in window) {
       for (const k of await caches.keys()) await caches.delete(k)
     }
-    location.replace(location.pathname)
+    // web2-69 — reset 밖의 매개(?dev=1)는 살린다(개발 메뉴는 그 매개로만 생긴다 · e2e가 ?reset&dev=1로 연다)
+    const q = new URLSearchParams(location.search); q.delete('reset')
+    const rest = q.toString()
+    location.replace(location.pathname + (rest ? '?' + rest : ''))
   })()
 } else if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   // updateViaCache: 'none' — 워커 스크립트도 Pages의 max-age=600에 걸린다.
@@ -1244,9 +1257,17 @@ for (const kind of OSNAP_ORDER) {
   label.append(box, ` ${KIND_LABEL[kind]}`)
   osnapPanel.append(label)
 }
+// web2-69 §2 — 격자 «표시»의 기본은 꺼짐(DIRECTION 「격자와 축만 기본 꺼짐」 · app.grid false) · 저장된 설정(기기)이 있으면 그것을 따른다.
+// 축 스냅과는 무관하다(표시 손잡이일 뿐). 71이 세 손가락 두 번으로 이 토글을 켠다.
+const GRID_KEY = 'b2-grid'
+try { const g = localStorage.getItem(GRID_KEY); if (g === 'on' || g === 'off') app.grid = g === 'on' } catch { /* 기본(꺼짐) */ }
 const gridBox = document.getElementById('chk-grid') as HTMLInputElement
 gridBox.checked = app.grid
-gridBox.addEventListener('change', () => { app.grid = gridBox.checked; invalidate() })
+gridBox.addEventListener('change', () => {
+  app.grid = gridBox.checked
+  try { localStorage.setItem(GRID_KEY, app.grid ? 'on' : 'off') } catch { /* 세션 한정 */ }
+  invalidate()
+})
 // 지평선 토글(web2-12 7번 → web2-17 5부: **자동 숨김**) — 체크박스는 실제 표시 상태를
 // 비춘다(자동으로 꺼지면 체크가 풀린다 — 그래야 켜는 법이 보인다). 사람이 만지면
 // `horizonPref`가 굳고 자동이 더는 안 건드린다 — 판별자는 `change` 사건이다(프로그램
@@ -1284,13 +1305,15 @@ const hiddenBox = document.getElementById('chk-hidden') as HTMLInputElement
 hiddenBox.checked = app.showHidden
 hiddenBox.addEventListener('change', () => { app.showHidden = hiddenBox.checked; invalidate() })
 
-const own3dBox = document.getElementById('chk-own3d') as HTMLInputElement
-own3dBox.checked = app.own3d
-own3dBox.addEventListener('change', () => {
-  setOwn3d(app, own3dBox.checked)
-  try { localStorage.setItem(OWN3D_KEY, own3dBox.checked ? 'on' : 'off') } catch { /* 세션 한정 */ }
-  invalidate()
-})
+const own3dBox = document.getElementById('chk-own3d') as HTMLInputElement | null   // web2-69 — 개발 메뉴(?dev=1)에만 있다
+if (own3dBox) {
+  own3dBox.checked = app.own3d
+  own3dBox.addEventListener('change', () => {
+    setOwn3d(app, own3dBox.checked)
+    try { localStorage.setItem(OWN3D_KEY, own3dBox.checked ? 'on' : 'off') } catch { /* 세션 한정 */ }
+    invalidate()
+  })
+}
 
 // ── 종이 결(web2-34 1번 · 설정 서랍 · 기본 켜짐) ───────────────────────────────
 // 저장은 **localStorage**다 — `RENDERER_KEY`·`HOLD_KEY`와 같은 자리이고, 그 줄이 적은
