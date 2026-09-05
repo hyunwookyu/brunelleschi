@@ -21,23 +21,23 @@
 ```
 저장소 /home/user/brunelleschi · 배포되는 앱은 web2/다(pages.yml의 working-directory가 정본).
 
-**⛔ 사슬 6(68 → 69 → 70 → 71)이 68 §2에서 멈췄다 — CHAIN6 멈춤 조건 ① «측정이 지시문의 전제와 어긋난다».**
-갈래 `web2-68`에 커밋만 있고 **main에 병합·배포하지 않았다**(#58 중간 상태 · 마지막 배포는 여전히 67 `main 3c6f259`).
-섰다(갈래): §0 문서(DIRECTION 교체본 · UX-FLOWS) · §1 필통 여덟(도구 그림·촉 색·경도 글자·숫자 · 이주 · case68 6/6 × 2dpr) ·
-§3 목록 두 칸 + 눈금 표식 · 단위 1111 · 빌드 초록 · 사진 셋(web2/shots/68-*.png).
-**못 선 것 = §2 경도 축의 «값»**: 후보 열다섯을 같은 조건으로 잰 표(paint68_web2_dpr{1,2}.json · NOTES 68 §2)에서
-classic/pencil(HB) .130이 tanda 2b/4B/6B/8b(.027~.094)보다 짙고, tanda 2b↔8b 보간 셋은 «같은 값»(≤ .0015)이며,
-tanda/pencil-8b는 크기 보정 폭주(요청 12 → 폭 70)까지 든다 — 지시 §2 방법 3의 폴백으로도 단조가 못 선다(AS-C199 ❌).
-**사람이 정할 것(DEFERRED 68 첫 행)**: ㉠ 작가를 가로지르는 보간 허용(classic → ramon/B → subtle) ㉡ 농도 축 = 불투명 배수(값을 짓는 쪽)
-㉢ 압력 대역을 바꿔 재측정 ㉣ 여섯을 넷으로. 답이 오면: grades68.ts 표(+ brushes64 lerp)만 바꾸고 paint68을 초록으로 만든 뒤
-68 마감(CLOSING 아홉 걸음 — 밤 «한 번» · 리뷰어 한 왕복 · 배포)으로 이어 69 → 70 → 71을 간다.
-⚠ 부수 결함(손대지 않았다): tanda/pencil-8b · Dieterle/Pencil-_Left_Handed의 크기 보정 폭주(mypaintpaint calib — DEFERRED 68 둘째 행).
+**68(필통)이 끝났고 배포됐다**(main f8418a5 — §2 마감 블록 · NOTES 「마감 — web2-68」). 필통 여덟(도구 그림·촉 색·경도 글자·
+숫자 · 지우개 고정 칸 · 옛 여섯 이주) · 경도 축 = 한 뿌리의 매개 가족(§2 개정 — classic/pencil → HB~8B · classic/charcoal →
+경/중/연 · opaque 되먹임 · 폭 배수) · 브러시 목록 두 칸(패널 옆 · 세트+최근 · 보이는 행만 그림) · 크기 눈금 표식(√2).
+**사슬 6(CHAIN6)의 다음은 69(인벤토리)** → 70(시각 시스템) → 71(몸짓). 지시문 `docs/instructions/web2-69.md`가 정본.
+69 준비분(갈래 web2-69): `web2/e2e/inventory69.spec.ts`(전수 세기 팔 — «눌린다» = elementFromPoint) — 1차 실측: 기본 23 ·
+칠 도구 +23 · 보기 카드 +10 · 치수판 +23 · ?dev=1 없음(미생성 — 69 §3이 만든다).
 
 착수 시:
-· 갈래 web2-68을 이어 쓴다(`git checkout web2-68`) · docs/instructions/CHAIN6.md · web2-68.md §2 · NOTES 68 §2 표 · DEFERRED 68
+· web2/HANDOFF.md §1·§2 · docs/CLOSING.md · docs/instructions/CHAIN6.md · web2-69.md · docs/DIRECTION.md 「시작은 종이다」 · docs/reference/UX-FLOWS.md §A-0·§C-0·§D-0·§E
 · tail -40 PITFALLS.md 를 실제로 읽고 번호를 web2/NOTES.md 「착수 시 PITFALLS 대조」에 적어라 · CLAUDE.md §2의 D 다섯
-· 떠 있는 개발 서버를 내리고 새로 띄운다(#70) · 원장은 LEDGER=1 · 워커 1 · 스펙 하나씩(#99 — 68 자백 2)
+· 68 마감 블록의 「69 착수 표에 옮길 것」 다섯을 옮겨 적어라(#42 ⑩)
+· 떠 있는 개발 서버를 내리고 새로 띄운다(#70) · 갈래를 먼저 딴다(web2-69)
 마감은 `cd web2 && node tools/deploy-check.mjs` — 갈래 푸시는 중간 상태다(#58 · #81).
+밤은 «한 번»(CLOSING ① — 코드를 고쳤을 때만 다시) · 리뷰어는 «한 왕복».
+⚠ 원장 갱신은 `LEDGER=1`(#90) · 워커 1(#99) · 스펙 하나씩 · afterEach가 이전 실행을 합치지 않게(68 [H1]) · e2e 중 web2/ 편집 금지(#104) · 「도는 백그라운드 없음」을 값으로.
+⚠ 69는 기능을 지우지 않는다(CHAIN6 ㉠ — 옮기고 접고 숨긴다) · 전수 왕복(표의 모든 id가 닿는다)이 그 검사 · 글자 라벨·툴팁·아이콘은 70의 일 · 재검토 대기 둘(조명 · 툴팁) ⛔.
+⚠ ⚑ 열림 — 68 여덟(DEFERRED 68) + 67 여섯 + 66 다섯 + 65 다섯 + 64 넷 + 62 여섯 + 63 넷. 사진 web2/shots/68-*.png(셋).
 ```
 
 ## 2. 대기열 — **이것이 정본이다**
@@ -260,6 +260,18 @@ tanda/pencil-8b는 크기 보정 폭주(요청 12 → 폭 70)까지 든다 — �
    ▶ **68 §2 개정 등재**(2026-09-05 · `docs/instructions/web2-68-amend.md` — 사람 판정: 경도 축은 한 뿌리(classic/pencil ·
      classic/charcoal)의 매개 가족 · opaque를 목표 농도에 되먹임 · 게이트는 개정 문서의 것 · DIRECTION 두 줄 되살림 · §0 규칙 1 —
      같은 커밋에서 이 대기열 갱신). 멈춤 ①이 닫혔다 — 68 마감(CLOSING)으로 간다.
+   **68 완료·배포 — `main f8418a5`**(deploy-check 화면 식별자 일치 · Pages completed/success attempt 1 · 마감 블록은 NOTES
+     「마감 — web2-68」)
+     (2026-09-05 · 사슬 6 CHAIN6(68 → 69 → 70 → 71 · Fable 한 세션) · 갈래 web2-68 · 밤 2회(1차 24eb4be 852/872 빨강 5 = 부하 2 +
+     자 판갈이 1 + 결함 1(shots63 — 목록 보이는 행만 그리기) · 2차 1142dc8 **856/872 빨강 1** 부하 귀속 · skip 15) · 단위 1112 ·
+     리뷰어 **한 왕복 22건 전건**(높음 4 · 중간 12 · 낮음 6)). 섰다: **§0 문서**(DIRECTION 「시작은 종이다」 · UX-FLOWS · 빠진 두 줄
+     되살림) · **§1 필통 여덟**(도구 그림 + 촉 색 + 경도 글자 + 숫자 둘 · 지우개 고정 칸 · b2.pencilcase68.v1 · 옛 여섯 이주 한 번 ·
+     부팅 사양 수리) · **§2 개정 — 경도 축은 한 뿌리의 매개 가족**(brunelleschi/pencil_HB…8B · charcoal_H/M/S · opaque 되먹임(굳힌
+     상태와 같은 자 setPresetBaseForTest) · 폭 축 = 크기 배수 FAMILY_SIZE_K(끝값 1.714 · 고유 폭 비 2.143/1.857 · 제품 1.889) · 농도
+     hill [.130 … .451] · CHAIN6 멈춤 ① → 개정으로 닫힘) · **§3 목록 두 칸**(패널 옆 · 세트 8+최근 · 보이는 행만 그림) · **눈금 표식**
+     (√2 · 탭 = 값 · 연속) · 상시 셈 41. ⚑ DEFERRED 68 여덟(실효 폭 85.7 · 0.5 자 수치 문 · .451 > .429 · blur1 · 눈금 겹침 · 재배열 ·
+     mm · calib 폭주). 원장 paint68·case68(2dpr) · 사진 web2/shots/68-*.png(3). PITFALLS 등재 없음(#111까지 — 원장 규약 위반 둘은 자백으로).
+   ▶ **다음은 69**(인벤토리 — `docs/instructions/web2-69.md` 정본 · CHAIN6 순서 · 68 마감 「69 착수 표에 옮길 것」 다섯).
    ▶ **사슬 6 착수(CHAIN6 — 68 → 69 → 70 → 71 · Fable 한 세션)** (2026-09-05 · 갈래 web2-68 · §0 규칙 1 — 지시문
      `docs/instructions/CHAIN6.md`·`web2-68.md`(필통)·`web2-69.md`(인벤토리)·`web2-70.md`(시각 시스템)·`web2-71.md`(몸짓) 등재 —
      같은 커밋에서 이 대기열 갱신). **68 §0(문서 먼저)**: 사람의 두 문서가 들어왔다 — **`docs/DIRECTION.md` 교체본의 새 절
