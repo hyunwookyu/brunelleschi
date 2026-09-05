@@ -29,7 +29,7 @@ export const pencilOfGrade = (grade?: string): string =>
 export const DEFAULT_BRUSH: Readonly<Record<Instr58, string>> = {
   pencil: 'classic/pencil',            // 등급이 오면 pencilOfGrade가 가른다
   brush: 'deevad/liner',               // 잉크펜 — 제도 라이너(불투명 1 · AA 2)
-  marker: 'ramon/100%_Opaque',         // 둥근·딱딱한 불투명 블록(61의 마커 계약 · 압력 무관 = 실물 마커)
+  marker: 'brunelleschi/marker',       // web2-66 §2 — 납작한 촉(타원 도장 · 고정 각). 옛 기본 ramon/100%_Opaque는 원형이었다(사람 판정 「마커의 단면은 원형이 아니다」) — 그 값 위에 단면만 얹은 앱 프리셋
   cp: 'brunelleschi/colored_pencil',   // web2-64-2 — 색연필의 성질로 지은 앱 프리셋(ramon/B-pencil은 «연필»이었다)
 }
 /** 슬롯(+등급) → 기본 브러시 id — 이주·초기값·«지금 브러시 없음»의 폴백이 전부 이 한 함수다(#54) */
@@ -93,6 +93,17 @@ export interface PaintRenderer {
   hasLayer?(canvas: HTMLCanvasElement): boolean
   /** 이 캔버스의 층을 놓는다(⑤ 메모리 — 안 보이는 면을 버릴 때 딸린 층도 같이) */
   releaseLayer?(canvas: HTMLCanvasElement): void
+  /** web2-66 §1 ㉠㉡ — **초안 세션**: 그리는 중인 자국의 «새 점만» 층에 눌러 담고 그 사각만
+   *  다시 합성한다. 이미 놓인 도장은 안 움직인다(게이트 ①). 반환 'rebuild' = 얼린 결정이
+   *  갈렸다(부르는 쪽이 층을 다시 세우고 재먹임) · null = 세션 불가(옛 전량 판으로). */
+  draftFeed?(g: CanvasRenderingContext2D, m: SeamMark, bg: HTMLCanvasElement): MarkBox | 'rebuild' | null
+  /** 세션의 획을 완결한다(남은 점 + 펜 떼기 + endStroke) — 층이 굽기로 얹은 것과 같아진다.
+   *  null = 세션이 그 획이 아니다(부르는 쪽은 전량 재굽기로). */
+  draftFinish?(g: CanvasRenderingContext2D, m: SeamMark, bg: HTMLCanvasElement): MarkBox | null
+  /** 세션을 버린다 — 층의 미완 도장은 부르는 쪽이 재굽기로 지운다 */
+  draftCancel?(canvas: HTMLCanvasElement): void
+  /** 이 캔버스에 초안 세션이 열려 있는가(진단) */
+  draftOpen?(canvas: HTMLCanvasElement): boolean
   /** 작업대 몫(선택) — 도구별 브러시 후보·손잡이·조정 저장 */
   brushChoices?(tool: Instr58): string[]
   brushOf?(tool: Instr58): string
@@ -141,6 +152,28 @@ export function appendMarkSeam(
   if (m.pts.length < 2) return { x0: 0, y0: 0, x1: -1, y1: -1 }   // 점 하나 — 층도 화면도 안 바뀐다
   return renderer.appendMark(g, m, bg)
 }
+/** web2-66 — 초안 세션에 자국을 먹인다(새 점만). 'rebuild'/null의 뜻은 PaintRenderer.draftFeed. */
+export function draftFeedSeam(
+  g: CanvasRenderingContext2D, m: SeamMark, bg: HTMLCanvasElement,
+): MarkBox | 'rebuild' | null {
+  if (!renderer?.draftFeed || !renderer.hasLayer) return null
+  if (!renderer.hasLayer(g.canvas)) return null
+  return renderer.draftFeed(g, m, bg)
+}
+/** web2-66 — 세션의 획을 완결한다(펜 떼기까지 — 굽기로 얹은 것과 같은 층). */
+export function draftFinishSeam(
+  g: CanvasRenderingContext2D, m: SeamMark, bg: HTMLCanvasElement,
+): MarkBox | null {
+  if (!renderer?.draftFinish || !renderer.hasLayer) return null
+  if (!renderer.hasLayer(g.canvas)) return null
+  return renderer.draftFinish(g, m, bg)
+}
+/** web2-66 — 세션을 버린다(층의 미완 도장은 부르는 쪽이 재굽기로 지운다). */
+export const draftCancelSeam = (canvas: HTMLCanvasElement): void => { renderer?.draftCancel?.(canvas) }
+/** web2-66 — 초안 세션 지원 여부(렌더러가 세 손잡이를 다 내놓는가) */
+export const draftSeamSupported = (): boolean =>
+  !!(renderer?.draftFeed && renderer.draftFinish && renderer.draftCancel && renderer.hasLayer)
+
 /** 이 캔버스에 굽기가 세운 층이 살아 있는가 — 누적의 전제(값으로 보인다) */
 export const paintLayerAlive = (canvas: HTMLCanvasElement): boolean =>
   renderer?.hasLayer?.(canvas) ?? false

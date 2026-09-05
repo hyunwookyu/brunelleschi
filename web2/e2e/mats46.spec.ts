@@ -351,13 +351,19 @@ test('⑤ 면 재료 — 손통 「재료」가 해칭 무늬·색을 실제로 
   await page.mouse.down(); await page.waitForTimeout(ms + 300); await page.mouse.up()
   await page.waitForTimeout(60)
   expect((await page.evaluate(() => (window as any).__b2.diag.grip44())).faceId).not.toBeNull()
-  await page.click('#btn-grip'); await page.click('#btn-grip-fill')
+  // web2-66 66-4(R3 정정) 자 판갈이 — 채움·재료는 «돌리는» 명령이라 손통이 안 접힌다(GRIP_REPEAT).
+  // #btn-grip을 무조건 다시 누르면 열린 통을 «닫아» 버린다 — 열려 있으면 그대로 둔다.
+  const gripOpen = async () => {
+    const open = await page.evaluate(() => document.getElementById('griptray')!.classList.contains('open'))
+    if (!open) await page.click('#btn-grip')
+  }
+  await gripOpen(); await page.click('#btn-grip-fill')
   await page.waitForTimeout(150)
   const segs0 = await page.evaluate(() =>
     (window as any).__b2.diag.paint45().hatch.reduce((s: number, h: { segs: number }) => s + h.segs, 0))
   expect(segs0, '기본 해칭이 섰다').toBeGreaterThan(4)
   // 재료 한 걸음 — 벽돌(간격 8 — 기본 11보다 촘촘: 선분 수가 는다)
-  await page.click('#btn-grip'); await page.click('#btn-grip-fmat')
+  await gripOpen(); await page.click('#btn-grip-fmat')
   await page.waitForTimeout(150)
   const d = await page.evaluate(() => (window as any).__b2.diag.mats46())
   expect((d.faceMats as { mat: string | null }[]).some(f => f.mat === 'brick'), '면에 벽돌이 실렸다').toBe(true)
@@ -391,8 +397,13 @@ test('⑥ 깊이 순서 «픽셀» — 이색 해칭 겹침의 위 색이 앞 �
     await page.mouse.move(x, y)
     await page.mouse.down(); await page.waitForTimeout(ms + 300); await page.mouse.up()
     await page.waitForTimeout(60)
-    await page.click('#btn-grip'); await page.click('#btn-grip-fill')
-    for (let k = 0; k < steps; k++) { await page.click('#btn-grip'); await page.click('#btn-grip-fmat') }
+    // 66-4 자 판갈이 — 채움·재료는 손통이 안 접힌다(위 ⑤의 그 주석): 열려 있으면 그대로 쓴다
+    const gripOpen = async () => {
+      const open = await page.evaluate(() => document.getElementById('griptray')!.classList.contains('open'))
+      if (!open) await page.click('#btn-grip')
+    }
+    await gripOpen(); await page.click('#btn-grip-fill')
+    for (let k = 0; k < steps; k++) { await gripOpen(); await page.click('#btn-grip-fmat') }
     await page.click('#btn-pencil'); await page.click('#btn-pencil')   // 잡기 세션 놓기(39·44)
     await page.waitForTimeout(60)
   }

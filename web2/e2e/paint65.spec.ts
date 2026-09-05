@@ -120,7 +120,7 @@ async function paintStroke(page: Page, x0: number, y0: number) {
 /** 벽 안의 격자 자리(6 × 10) */
 const wallSpot = (i: number): [number, number] => [530 + (i % 6) * 58, 355 + Math.floor(i / 6) * 25]
 
-type Bake = { bakes: number; bakedStrokes: number; appends: number; appendStrokes: number; uploads: number; uploadBytes: number; drops: number; rebuilds: number; evicts: number; texReallocs: number; entries: number; bytes: number; budget: number }
+type Bake = { bakes: number; bakedStrokes: number; appends: number; appendStrokes: number; handoverStrokes: number; uploads: number; uploadBytes: number; drops: number; rebuilds: number; evicts: number; texReallocs: number; entries: number; bytes: number; budget: number }
 const bakeStat = (page: Page) => page.evaluate(() => (window as any).__b2.diag.paintBake() as Bake)
 const bakeReset = (page: Page) => page.evaluate(() => { (window as any).__b2.diag.paintBakeReset() })
 type TexHash = { key: string; level: number; hash: number; ink: number; w: number; h: number }
@@ -203,22 +203,24 @@ test('③ 재굽힌 획 수 = 1 — 커밋마다 새 획 하나만', async ({ pa
   test.setTimeout(600_000)
   await bigBox(page)
   await pickPaint(page)
-  const rows: { n: number; bakes: number; baked: number; appends: number; appended: number; bytes: number }[] = []
+  const rows: { n: number; bakes: number; baked: number; appends: number; appended: number; handed: number; bytes: number }[] = []
   for (let i = 0; i < 30; i++) {
     await bakeReset(page)
     const [x, y] = wallSpot(i)
     await paintStroke(page, x, y)
     const st = await bakeStat(page)
-    rows.push({ n: i + 1, bakes: st.bakes, baked: st.bakedStrokes, appends: st.appends, appended: st.appendStrokes, bytes: st.uploadBytes })
+    rows.push({ n: i + 1, bakes: st.bakes, baked: st.bakedStrokes, appends: st.appends, appended: st.appendStrokes, handed: st.handoverStrokes ?? 0, bytes: st.uploadBytes })
   }
   const painted = await page.evaluate(() => (window as any).__b2.app.doc.strokes.filter((s: any) => s.paint !== undefined).length as number)
   expect(painted, '서른 획이 놓였다').toBe(30)
   // 첫 커밋은 «그 (면,쪽) 텍스처가 서는» 자리라 전량 굽기가 맞다(얹을 바탕이 아직 없다).
-  // 둘째부터는 새 획 하나만 — 전량 재굽기 0 · 얹기 1.
+  // 둘째부터는 새 획 하나만 — 전량 재굽기 0 · 얹기(또는 초안 인계) 1.
+  // ⚠ 자 판갈이(web2-66): 그리는 중 세션이 그 획을 이미 층에 담았으면 커밋은 «인계»만 한다
+  // (handoverStrokes — 다시 안 그린다). 뜻은 종전과 같다: 커밋에 그려진 새 획은 하나뿐이다.
   for (const r of rows.slice(1)) {
     expect(r.bakes, `획 ${r.n}: 전량 재굽기 0`).toBe(0)
     expect(r.baked, `획 ${r.n}: 다시 그린 획 0`).toBe(0)
-    expect(r.appended, `획 ${r.n}: 얹은 획 1`).toBe(1)
+    expect(r.appended + r.handed, `획 ${r.n}: 얹었거나 인계된 획 1`).toBe(1)
   }
   const full = await page.evaluate(() => {
     const t = (window as any).__b2.diag.paintTex()[0]
@@ -289,36 +291,44 @@ test('④-b 부분 업로드 — 끄고 켠 판이 «화면으로 같다»(D-3 �
   await bigBox(page)
   await pickPaint(page)
   for (let i = 0; i < 6; i++) { const [x, y] = wallSpot(i); await paintStroke(page, x, y) }
+  // ⚠ 자 판갈이(web2-66): 몸짓의 업로드가 «그리는 중»(초안 세션 — draftStat)과 «커밋»(bakeStat)
+  // 둘로 갈렸다. 부분/전량의 대조는 몸짓 «전체»(둘의 합)로 잰다 — 뜻은 종전 그대로다.
+  const draftUp = () => page.evaluate(() => (window as any).__b2.diag.paintDraftFrames() as { uploadBytes: number; uploads: number; fullUploads: number })
+  const draftReset = () => page.evaluate(() => { (window as any).__b2.diag.paintDraftFramesReset() })
   // 켬 — 더티 사각만
-  await bakeReset(page)
+  await bakeReset(page); await draftReset()
   {
     const [x, y] = wallSpot(6); await paintStroke(page, x, y)
   }
   const on = await bakeStat(page)
+  const onD = await draftUp()
   const onScr = await screenHash(page)
   const onTex = await texHash(page)
   // 끔 — 같은 몸짓, 전량 업로드
   await page.evaluate(() => { (window as any).__b2.diag.setPaintPartialOffForTest(true) })
   await page.waitForTimeout(200)
-  await bakeReset(page)
+  await bakeReset(page); await draftReset()
   {
     const [x, y] = wallSpot(7); await paintStroke(page, x, y)
   }
   const off = await bakeStat(page)
+  const offD = await draftUp()
   // 같은 상태에서 두 판을 견주려면 «같은 문서»여야 한다 — 마지막 획을 되돌려 켬 판의 문서로 돌아간다
   await page.click('#btn-undo'); await page.waitForTimeout(400)
   await page.evaluate(() => { (window as any).__b2.diag.setPaintPartialOffForTest(false) })
   await rebakeAndWait(page)
   const backScr = await screenHash(page)
   const backTex = await texHash(page)
-  expect(on.uploadBytes, '켬 — 더티 사각만 올린다').toBeLessThan(off.uploadBytes)
+  const onTotal = on.uploadBytes + onD.uploadBytes
+  const offTotal = off.uploadBytes + offD.uploadBytes
+  expect(onTotal, '켬 — 더티 사각만 올린다(몸짓 전체)').toBeLessThan(offTotal)
   expect(JSON.stringify(backTex), '되돌린 뒤 캔버스가 켬 판과 같다').toBe(JSON.stringify(onTex))
   expect(backScr.hash, '되돌린 뒤 **화면**이 켬 판과 같다 — 부분 업로드가 픽셀을 안 바꾼다').toBe(onScr.hash)
   OUT.g4b_partial = {
-    note: '부분 업로드 켬/끔의 대조(D-3) — 바이트는 갈리고 픽셀은 같다. ⚠ 이 자가 이 회차의 첫 판을 잡았다(SKIP × FLIP_Y로 화면이 갈렸다)',
-    partial_on: { upload_bytes: on.uploadBytes, uploads: on.uploads, screen_hash: onScr.hash, screen_ink: onScr.ink },
-    partial_off: { upload_bytes: off.uploadBytes, uploads: off.uploads },
-    ratio_off_over_on: +(off.uploadBytes / Math.max(1, on.uploadBytes)).toFixed(1),
+    note: '부분 업로드 켬/끔의 대조(D-3) — 바이트는 갈리고 픽셀은 같다. ⚠ 이 자가 65의 첫 판을 잡았다(SKIP × FLIP_Y로 화면이 갈렸다). 66부터 몸짓 전체(초안 + 커밋)로 잰다',
+    partial_on: { upload_bytes_total: onTotal, commit: on.uploadBytes, draft: onD.uploadBytes, uploads: on.uploads + onD.uploads, screen_hash: onScr.hash, screen_ink: onScr.ink },
+    partial_off: { upload_bytes_total: offTotal, commit: off.uploadBytes, draft: offD.uploadBytes, uploads: off.uploads + offD.uploads },
+    ratio_off_over_on: +(offTotal / Math.max(1, onTotal)).toFixed(1),
     screen_same_after_restore: backScr.hash === onScr.hash,
   }
 })
@@ -509,13 +519,14 @@ test('⑥ 반증(D-3) — 누적을 끄면 pre의 O(N)이 돌아온다', async (
   await page.evaluate(() => { (window as any).__b2.diag.setPaintAccumOffForTest(false) })
   await page.waitForTimeout(400)
   expect(on.bakedStrokes, '누적 켬 — 다시 그린 획 0').toBe(0)
-  expect(on.appendStrokes, '누적 켬 — 얹은 획 1').toBe(1)
+  // 자 판갈이(web2-66) — 세션 인계(handoverStrokes)도 «새 획 하나»다(paint65 ③의 그 주석)
+  expect(on.appendStrokes + (on.handoverStrokes ?? 0), '누적 켬 — 얹었거나 인계된 획 1').toBe(1)
   expect(off.bakedStrokes, '누적 끔 — 그 면의 획 전부를 다시 그린다').toBe(14)
-  expect(off.appendStrokes, '누적 끔 — 얹기 0').toBe(0)
+  expect(off.appendStrokes + (off.handoverStrokes ?? 0), '누적 끔 — 얹기·인계 0').toBe(0)
   OUT.g6_falsify_accum = {
-    note: '같은 장면·같은 몸짓에서 누적만 껐다 — 재굽힌 획 수가 1(얹기)에서 «전부»로 돌아간다',
-    accum_on: { baked_strokes: on.bakedStrokes, appended: on.appendStrokes, upload_bytes: on.uploadBytes },
-    accum_off: { baked_strokes: off.bakedStrokes, appended: off.appendStrokes, upload_bytes: off.uploadBytes },
+    note: '같은 장면·같은 몸짓에서 누적만 껐다 — 재굽힌 획 수가 1(얹기·인계)에서 «전부»로 돌아간다',
+    accum_on: { baked_strokes: on.bakedStrokes, appended: on.appendStrokes, handed: on.handoverStrokes ?? 0, upload_bytes: on.uploadBytes },
+    accum_off: { baked_strokes: off.bakedStrokes, appended: off.appendStrokes, handed: off.handoverStrokes ?? 0, upload_bytes: off.uploadBytes },
   }
 })
 

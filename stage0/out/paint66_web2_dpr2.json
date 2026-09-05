@@ -1,0 +1,192 @@
+{
+  "conditions": {
+    "project": "dpr2",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/paint66.spec.ts"
+  },
+  "what": "web2-66 게이트 원장 — ①(이동량·화면 머리) ③(새 도장만) ④(bbox 자국·반증) ⑤(뗄 때 불변 · 인계 == 전량 재굽기) §2(마커 단면) §3(슬롯 사양·R3 정정)",
+  "note_pitfalls": "#111(이 회차가 등재 — 자는 시간과 이동량 둘) · #42 ⑥(인용은 이 원장에서 다시 읽는다) · #89(각 게이트의 «범위»를 note에 적었다)",
+  "no_constants_snapshot": true,
+  "constants_used": {
+    "note": "web2 라인은 constantsSnapshot 기계가 없다(라인 유보 — lens31·paint50의 그 자리)"
+  },
+  "pitfall_citations": [
+    42,
+    89,
+    103,
+    107,
+    111
+  ],
+  "g1": {
+    "note": "범위(#89): 연필 · 원근 벽 · 120점. 도장 기록의 이동 0은 절반이 구성(세션이 제 기록을 돌려준다 — §5.1 유형 3)이고, «측정»의 몫은 화면 머리 사각(head)과 반증(off)이 진다. 재구축이 도는 도구(cp)의 이동량은 perf66 h2_cp_rebuild가 값으로",
+    "on": {
+      "dabsA": 51,
+      "dabsB": 120,
+      "confirmed": 40,
+      "maxMove": 0,
+      "moved": 0,
+      "head": {
+        "changed": 0,
+        "maxD": 0
+      }
+    },
+    "off": {
+      "dabsA": 48,
+      "dabsB": 106,
+      "confirmed": 38,
+      "maxMove": 18.49911263661029,
+      "moved": 38,
+      "head": {
+        "changed": 6823,
+        "maxD": 15
+      }
+    }
+  },
+  "g3": {
+    "note": "범위(#89): 연필 · 240점. 이동이 프레임에 합쳐지면(coalesced) 한 프레임의 «새 도장»이 그만큼 커진다(perf66 delta.max 13 — 394프레임 < 399이동의 그 몫이지 부분 되그리기가 아니다)",
+    "n1": 115,
+    "n2": 120,
+    "grew": 5
+  },
+  "g4_bbox": {
+    "note": "(e)의 post 판 — pre 값은 perf66_pre e_bbox(dpr1 3,078채널 · dpr2 12,884채널)에 동결. on = 제품(0이어야) · off = 얼리기 끔 반증(pre의 이중 합성이 돌아온다)",
+    "on": {
+      "changed": 0,
+      "maxD": 0
+    },
+    "off": {
+      "changed": 12364,
+      "maxD": 31
+    }
+  },
+  "g5": {
+    "note": "뗄 때 불변(tex_same·scr_changed — «인계» 경로라 절반이 구성)과 «인계 == 전량 재굽기»(rebake_same — 측정 · paint65 ①의 자). cp 행은 재구축 3회를 지나고도 항등. 반증 = perturb(입력 어긋냄)",
+    "rows": [
+      {
+        "tag": "pencil",
+        "tex_same": true,
+        "rebake_same": true,
+        "scr_changed": 0,
+        "scr_maxD": 0,
+        "rebuilds": 0,
+        "full_uploads": 0,
+        "handed": 2,
+        "bakes": 1
+      },
+      {
+        "tag": "ink",
+        "tex_same": true,
+        "rebake_same": true,
+        "scr_changed": 0,
+        "scr_maxD": 0,
+        "rebuilds": 0,
+        "full_uploads": 0,
+        "handed": 3,
+        "bakes": 3
+      },
+      {
+        "tag": "marker",
+        "tex_same": true,
+        "rebake_same": true,
+        "scr_changed": 0,
+        "scr_maxD": 0,
+        "rebuilds": 0,
+        "full_uploads": 0,
+        "handed": 4,
+        "bakes": 5
+      },
+      {
+        "tag": "cp(압력 램프)",
+        "tex_same": true,
+        "rebake_same": true,
+        "scr_changed": 0,
+        "scr_maxD": 0,
+        "rebuilds": 3,
+        "full_uploads": 3,
+        "handed": 5,
+        "bakes": 7
+      }
+    ],
+    "falsify_perturb": {
+      "changed": 1624,
+      "maxD": 28
+    },
+    "texReallocs_note": "재할당 계수는 diag.paintBake().texReallocs — 이 줄 아래 값",
+    "texReallocs": 1
+  },
+  "s2_marker": {
+    "note": "방향 넷의 반최대 폭(텍스처 px · 요청 24px)과 단면 평평 몫(80%↑/20%↑ — 직사각형 ≈ 1). old = 옛 원형 마커 대조(자가 방향 차를 실제로 잰다는 실증 — #108의 그 자리)",
+    "rows": [
+      {
+        "dir": 0,
+        "width_median": 24,
+        "flat_share": 1,
+        "n_cols": 25
+      },
+      {
+        "dir": 45,
+        "width_median": 13,
+        "flat_share": 1,
+        "n_cols": 25
+      },
+      {
+        "dir": 90,
+        "width_median": 10,
+        "flat_share": 1,
+        "n_cols": 25
+      },
+      {
+        "dir": 135,
+        "width_median": 22,
+        "flat_share": 1,
+        "n_cols": 25
+      }
+    ],
+    "ratio": 2.4,
+    "old": {
+      "h": {
+        "width_median": 24,
+        "flat_share": 1,
+        "n_cols": 25
+      },
+      "v": {
+        "width_median": 24,
+        "flat_share": 1,
+        "n_cols": 25
+      },
+      "ratio": 1
+    }
+  },
+  "s3_favs": {
+    "note": "슬롯 사양 한 벌의 왕복(A: #2244aa·33px·0.6 ↔ B: #aa3311·12px·0.35 — 전수)과 재시작 생존. 문서 형식 무변은 roundtrip43 ②의 몫",
+    "a": {
+      "i": "pencil",
+      "br": "classic/pencil",
+      "hex": "#2244aa",
+      "w": 33,
+      "o": 0.6
+    },
+    "b": {
+      "i": "brush",
+      "br": "deevad/liner",
+      "hex": "#aa3311",
+      "w": 12,
+      "o": 0.35
+    },
+    "a2": {
+      "i": "pencil",
+      "br": "classic/pencil",
+      "hex": "#2244aa",
+      "w": 33,
+      "o": 0.6
+    }
+  },
+  "s3_r3": {
+    "note": "R3 정정 — 자동찾기 3판(각 판 통 열림 + 확정 보임 · 취소는 접는 것이 맞다) · 손통 분류 3연타(통 유지 + 값이 실제로 돎) · 반증(정면 — 한 번 쓰는 명령은 접힌다)",
+    "cls_seen": [
+      null,
+      "slab",
+      "wall",
+      "extw"
+    ]
+  }
+}

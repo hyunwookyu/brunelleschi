@@ -36,6 +36,8 @@ export const BRUSH_LABEL_EXACT: Readonly<Record<string, string>> = {
   'tanda/charcoal-04': '목탄 04',
   'deevad/watercolor_expressive': '수채',
   'brunelleschi/colored_pencil': '색연필',
+  'brunelleschi/marker': '마커',              // web2-66 §2 — 납작한 촉(타원 도장 · 고정 각)의 앱 프리셋 · 새 기본
+
 }
 
 /** ③ 낱말 사상 — 긴 것부터 문다(watercolor가 water·color로 쪼개지지 않게). */

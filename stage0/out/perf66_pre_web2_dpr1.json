@@ -1,0 +1,329 @@
+{
+  "conditions": {
+    "project": "dpr1",
+    "workers": 1,
+    "canonical": "LEDGER=1 PRE66=1 node tools/e2e.mjs ledger e2e/perf66.spec.ts (워커 1 — #99)"
+  },
+  "what": "web2-66 — 그리는 중(draft) 계측(D-2): (a) 프레임 ms (b) 프레임당 도장 수 (c) 이미 그려진 도장의 이동량 (d) 업로드 바이트 (e) bbox 자국",
+  "tree": "수리 전(pre — 동결)",
+  "note_pitfalls": "#12·#14(점 하나·ms로 주장하지 않는다 — 정본은 도장 수·이동량, ms는 구간 평균·배수만) · #99(워커 1) · #101(web2 안에서) · #103(같은 장면 두 번 확인 — 놓인 획 수) · #107(자는 되돌리기 전에 뜬다) · #110(전량 되그리기 = 입력 하나에 전부를 다시 만드는 그 형태)",
+  "note_meter": "자는 diag.paintDraftFrames()(render3d 초안 계수기)와 diag.lastDabLogForTest()(엔진 표면 도장 기록) — 앱이 실제로 도는 그 경로다(#54). 이동량 계산만 스펙(노드)에서 한다",
+  "scene": "paint50의 bigBox(오른쪽 벽 · 축척 2500 · 원근) · 연필 슬롯 · 합성 펜 압력 0.5 상수",
+  "no_constants_snapshot": true,
+  "constants_used": {
+    "note": "web2 라인은 constantsSnapshot 기계가 없다(라인 유보 — lens31·paint50의 no_constants_snapshot이 정본)"
+  },
+  "pitfall_citations": [
+    12,
+    14,
+    47,
+    99,
+    101,
+    103,
+    107,
+    110
+  ],
+  "abc": [
+    {
+      "n": 20,
+      "moves": 19,
+      "draft_strokes": 1,
+      "a_frame_ms": {
+        "head6": 0.78,
+        "mid6": 1.73,
+        "tail6": 2.87,
+        "max": 3.2
+      },
+      "b_dabs_per_frame": {
+        "note": "lastDabLog 길이 = 그 프레임에 «실제로 그린» 도장 수. pre = 매 프레임 획 전체(누적 증가) · post = 새 도장 몇",
+        "head6": 2.17,
+        "tail6": 14,
+        "last": 16
+      },
+      "c_movement": [
+        {
+          "frames": [
+            8,
+            9
+          ],
+          "dabs": [
+            6,
+            7
+          ],
+          "confirmed80": {
+            "max": 0.01,
+            "mean": 0.01,
+            "moved": 1,
+            "of": 4
+          },
+          "all_prev": {
+            "max": 0.02,
+            "mean": 0.01,
+            "moved": 3,
+            "of": 6
+          }
+        },
+        {
+          "frames": [
+            14,
+            15
+          ],
+          "dabs": [
+            12,
+            13
+          ],
+          "confirmed80": {
+            "max": 0.04,
+            "mean": 0.02,
+            "moved": 6,
+            "of": 9
+          },
+          "all_prev": {
+            "max": 0.05,
+            "mean": 0.02,
+            "moved": 9,
+            "of": 12
+          }
+        },
+        {
+          "frames": [
+            18,
+            19
+          ],
+          "dabs": [
+            15,
+            16
+          ],
+          "confirmed80": {
+            "max": 0.05,
+            "mean": 0.03,
+            "moved": 9,
+            "of": 12
+          },
+          "all_prev": {
+            "max": 0.06,
+            "mean": 0.03,
+            "moved": 12,
+            "of": 15
+          }
+        }
+      ],
+      "d_upload_bytes_per_frame": {
+        "head6": 937984,
+        "tail6": 937984
+      },
+      "total": {
+        "ms_sum": 34.6,
+        "frames": 19,
+        "upload_bytes": 17821696,
+        "full_uploads": 19,
+        "rebuilds": 0
+      }
+    },
+    {
+      "n": 100,
+      "moves": 99,
+      "draft_strokes": 1,
+      "a_frame_ms": {
+        "head6": 0.85,
+        "mid6": 10.9,
+        "tail6": 24.92,
+        "max": 26.7
+      },
+      "b_dabs_per_frame": {
+        "note": "lastDabLog 길이 = 그 프레임에 «실제로 그린» 도장 수. pre = 매 프레임 획 전체(누적 증가) · post = 새 도장 몇",
+        "head6": 2.17,
+        "tail6": 97,
+        "last": 100
+      },
+      "c_movement": [
+        {
+          "frames": [
+            40,
+            41
+          ],
+          "dabs": [
+            36,
+            37
+          ],
+          "confirmed80": {
+            "max": 0.12,
+            "mean": 0.06,
+            "moved": 26,
+            "of": 28
+          },
+          "all_prev": {
+            "max": 0.15,
+            "mean": 0.08,
+            "moved": 34,
+            "of": 36
+          }
+        },
+        {
+          "frames": [
+            70,
+            71
+          ],
+          "dabs": [
+            67,
+            68
+          ],
+          "confirmed80": {
+            "max": 0.24,
+            "mean": 0.12,
+            "moved": 51,
+            "of": 53
+          },
+          "all_prev": {
+            "max": 0.31,
+            "mean": 0.16,
+            "moved": 65,
+            "of": 67
+          }
+        },
+        {
+          "frames": [
+            98,
+            99
+          ],
+          "dabs": [
+            99,
+            100
+          ],
+          "confirmed80": {
+            "max": 0.39,
+            "mean": 0.2,
+            "moved": 77,
+            "of": 79
+          },
+          "all_prev": {
+            "max": 0.49,
+            "mean": 0.25,
+            "moved": 97,
+            "of": 99
+          }
+        }
+      ],
+      "d_upload_bytes_per_frame": {
+        "head6": 937984,
+        "tail6": 937984
+      },
+      "total": {
+        "ms_sum": 1174.4,
+        "frames": 99,
+        "upload_bytes": 92860416,
+        "full_uploads": 99,
+        "rebuilds": 0
+      }
+    },
+    {
+      "n": 400,
+      "moves": 399,
+      "draft_strokes": 1,
+      "a_frame_ms": {
+        "head6": 0.78,
+        "mid6": 48.43,
+        "tail6": 91.57,
+        "max": 103.1
+      },
+      "b_dabs_per_frame": {
+        "note": "lastDabLog 길이 = 그 프레임에 «실제로 그린» 도장 수. pre = 매 프레임 획 전체(누적 증가) · post = 새 도장 몇",
+        "head6": 2.17,
+        "tail6": 551.83,
+        "last": 564
+      },
+      "c_movement": [
+        {
+          "frames": [
+            160,
+            161
+          ],
+          "dabs": [
+            194,
+            196
+          ],
+          "confirmed80": {
+            "max": 0.78,
+            "mean": 0.39,
+            "moved": 153,
+            "of": 155
+          },
+          "all_prev": {
+            "max": 0.98,
+            "mean": 0.49,
+            "moved": 192,
+            "of": 194
+          }
+        },
+        {
+          "frames": [
+            280,
+            281
+          ],
+          "dabs": [
+            311,
+            312
+          ],
+          "confirmed80": {
+            "max": 1.33,
+            "mean": 0.67,
+            "moved": 247,
+            "of": 248
+          },
+          "all_prev": {
+            "max": 1.67,
+            "mean": 0.84,
+            "moved": 310,
+            "of": 311
+          }
+        },
+        {
+          "frames": [
+            398,
+            399
+          ],
+          "dabs": [
+            559,
+            564
+          ],
+          "confirmed80": {
+            "max": 8.96,
+            "mean": 4.47,
+            "moved": 447,
+            "of": 447
+          },
+          "all_prev": {
+            "max": 11.26,
+            "mean": 5.6,
+            "moved": 559,
+            "of": 559
+          }
+        }
+      ],
+      "d_upload_bytes_per_frame": {
+        "head6": 937984,
+        "tail6": 937984
+      },
+      "total": {
+        "ms_sum": 21815.9,
+        "frames": 399,
+        "upload_bytes": 374255616,
+        "full_uploads": 399,
+        "rebuilds": 0
+      }
+    }
+  ],
+  "e_bbox": {
+    "note": "확정 획(벽 가운데)의 사각을, 그 사각을 «지나지 않는» ㄱ자 draft가 그리는 중에 바꾸는가. pre = 바꾼다(전량 blit의 이중 합성 — bbox 자국) · post = 0",
+    "clip": [
+      610,
+      435,
+      120,
+      60
+    ],
+    "changed_channels_gt6": 3078,
+    "max_channel_diff": 28,
+    "mean_channel_diff": 1.65,
+    "channels": 28800
+  }
+}

@@ -217,9 +217,9 @@ export function initFilePanel(deps: FileDeps): FilePanel {
         confirmNear(del, `「${d.name}」을 지운다 — 되돌릴 수 없다.`, {
           label: '지운다',
           onPick: () => {
-            // 볼일이 여기서 끝난다 — **그때 접는다**(`data-fold="late"`의 짝 · 비우기와 같다)
-            const pane = document.getElementById('pane-file') as HTMLDetailsElement | null
-            if (pane) pane.open = false
+            // web2-66 66-4(R3 정정) — 지우기는 **연달아 쓰는 명령**이다(옛 드로잉 여럿을 잇달아
+            // 정리하는 것이 자연스럽다). 종전에는 여기서 서랍을 접었는데, 그러면 다음 지우기마다
+            // 서랍을 다시 열어야 한다(자동찾기와 같은 형태). 서랍은 열어 두고 목록만 갱신한다.
             void deleteDoc(d.id).then(() => {
               // 지금 문서를 지웠으면 **빈 새 문서**로 간다(유령을 안 남긴다)
               if (d.id === cur.id) reset()

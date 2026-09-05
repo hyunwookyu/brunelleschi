@@ -7,7 +7,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
   frontFlyTarget, liveFaceSel, lastSelFace, faceThicknessNow, setClsThickness, setFaceThicknessEx, faceSlotsOf,
   njGrip, setStrokeNj, setJoint56OffForTest,
-  commitPaint, buildPaintStrokes, injectPaintAt, tapSelectFace, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen,
+  commitPaint, buildPaintStrokes, injectPaintAt, tapSelectFace, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen, setPaintWLegacyForTest, worldPerPxPerpProbeForTest,
   placePersonAt, gripFaceArea, floorAreaNow, volumeNow, flashFaces, screenToDoc, roomsNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
@@ -17,7 +17,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintDraftClamped, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintDraftClamped, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -934,8 +934,11 @@ function renderFacePop() {
     return b
   }
   if (app.faceCandidates === null) {
-    // 전부 켜고 빼기(4-a) — 후보를 전부 내놓고 아닌 것만 탭해서 뺀다
-    mk('전부 찾기', 'btn-face-all', runFindAll)
+    // 전부 켜고 빼기(4-a) — 후보를 전부 내놓고 아닌 것만 탭해서 뺀다.
+    // web2-66 66-4(R3 정정) — 이 명령의 볼일은 누르는 순간 «안» 끝난다: 후보가 서면 확정·취소가
+    // **이 통 안에** 뜬다. `cmd`라고 접으면 그 다음 걸음이 미아가 된다(사람 판정 — 「찾기 관련
+    // 패널이 사라져버려서 면 아이콘을 다시 눌러야 하는 번거로움」). `data-fold="keep"`.
+    mk('전부 찾기', 'btn-face-all', runFindAll).dataset.fold = 'keep'
   } else {
     mk(`확정 ${app.faceCandidates.length}`, 'btn-face-commit', () => {
       const n = commitCandidates(app)
@@ -1517,7 +1520,10 @@ function initPanelFold() {
       // ⚠ `data-fold="late"` — **누르는 순간 볼일이 안 끝나는 명령**이다: 그 버튼 «곁»에
       //    확인이 뜨는 자리(비우기 — web2-12 4번). 바로 접으면 **앵커가 사라져 확인이
       //    미아가 된다**(전량 e2e `flow.spec`이 잡았다). 접힘은 그 명령이 스스로 부른다.
-      if (el.dataset.fold === 'late') return
+      // ⚠ `data-fold="keep"`(web2-66 66-4 — **R3 정정**) — **연달아 쓰는 명령**이다: 접는
+      //    기준은 «명령이냐»가 아니라 «그 뒤에 그 통을 또 쓸 것 같은가»다(사람 판정 —
+      //    자동찾기(전부 찾기)의 다음 걸음(확정·취소)이 같은 통 안에 뜬다). 안 접는다.
+      if (el.dataset.fold === 'late' || el.dataset.fold === 'keep') return
       p.setOpen(false)
     })
   }
@@ -1970,6 +1976,11 @@ const GRIP_ROWS = [
   { key: 'farea', name: '면적', tip: '면적 — 잡은 면의 면적. 축척이 없으면 숫자를 안 낸다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M10 20 h6 M10 20 v-4" stroke-width="1.1"/></svg>' },
 ] as const
 const gripRow = new Map<string, HTMLButtonElement>()
+// web2-66 66-4 — **R3 정정**: 접는 기준은 «명령이냐»가 아니라 «그 뒤에 그 통을 또 쓸 것
+// 같은가»다(사람 판정 — 자동찾기의 그 번거로움). 손통에서 «돌리거나 재누름이 뜻을 갖는»
+// 여섯은 제 툴팁이 이미 「다시 누르면 …」이라 말한다 — 누른 뒤 통이 닫히면 그 «다시»가
+// 통을 다시 여는 일이 된다. 그 여섯은 통을 열어 둔다(한 번 쓰고 마는 명령은 종전대로 접는다).
+const GRIP_REPEAT = new Set(['cls', 'thick', 'fill', 'fmat', 'rep', 'njoin'])
 for (const r of GRIP_ROWS) {
   const b = document.createElement('button')
   b.id = `btn-grip-${r.key}`
@@ -1977,7 +1988,7 @@ for (const r of GRIP_ROWS) {
   b.dataset.act = 'cmd'
   b.innerHTML = `${r.svg}<span>${r.name}</span>`
   b.title = r.tip     // 48-10 — 통을 열기 «전»에도 설명이 있다(syncGripRows는 열어야 돈다)
-  b.addEventListener('click', () => { setGriptrayOpen(false); doGripAction(r.key) })
+  b.addEventListener('click', () => { if (!GRIP_REPEAT.has(r.key)) setGriptrayOpen(false); doGripAction(r.key) })
   griptrayEl.append(b)
   gripRow.set(r.key, b)
 }
@@ -2210,11 +2221,16 @@ function setPaintHex(hex: string, why: string) {
 }
 
 // ── 즐겨찾기 여섯(64 — 옛 «도구 넷»의 자리 · 슬롯의 새 이름) · 기기 저장 ───────────────
-// 칸 = {슬롯 i, 브러시 br}. 탭 = 지금 브러시로 · 길게 누름(WRITE_HOLD_MS) = 지금 브러시를 그 칸에 놔둔다.
+// 칸 = {슬롯 i, 브러시 br} + **칠 사양 한 벌 {색 hex, 크기 w, 불투명 o}**(web2-66 66-3 — 사람 판정
+// 「사양값을 모든 칠 도구들이 공유하는 문제 — 도구별로 따로 저장되어 있어야지」).
+// 탭 = 그 칸의 브러시 «와 사양»으로 · 길게 누름(WRITE_HOLD_MS) = 지금 것 전부를 그 칸에 놔둔다.
+// 그리고 **지금 브러시가 어느 칸과 같으면, 색·크기·불투명을 고칠 때마다 그 칸이 따라 기억한다**
+// (프로크리에이트가 브러시마다 크기를 기억하는 그것 — syncPaintPanel의 adopt 줄). 저장은 기기
+// (localStorage — 52 프리셋의 그 자리)이고 **문서 저장 형식은 안 바뀐다**(KEY_ORDER 무변 — 게이트).
 // 64-1로 획이 br을 저장하므로 칸의 브러시를 바꿔도 옛 획은 안 변한다(게이트 ①).
-const FAV_KEY = 'b2.brushFavs64.v1'
+const FAV_KEY = 'b2.brushFavs64.v1'                      // 같은 열쇠 — 새 밭(hex·w·o)은 선택이라 옛 저장이 그대로 읽힌다
 const FAV_N = 6
-type Fav = { i: Instr; br: string }
+type Fav = { i: Instr; br: string; hex?: string; w?: number; o?: number }
 /** 기본 여섯 — 슬롯 넷의 기본 브러시(DEFAULT_BRUSH — AS-C186) + 목탄(연필 족) + 수채(잉크펜 족 · 흰 판에서도 그려지는 것) */
 const FAV_DEFAULT: Fav[] = [
   { i: 'pencil', br: DEFAULT_BRUSH.pencil }, { i: 'brush', br: DEFAULT_BRUSH.brush }, { i: 'marker', br: DEFAULT_BRUSH.marker },
@@ -2227,7 +2243,12 @@ const readFavs = (): Fav[] => {
     if (!Array.isArray(arr)) return FAV_DEFAULT.map(f => ({ ...f }))
     return FAV_DEFAULT.map((d, k) => {
       const v = arr[k] as Partial<Fav> | undefined
-      return v && isInstr(v.i) && typeof v.br === 'string' && v.br.includes('/') ? { i: v.i, br: v.br } : { ...d }
+      if (!(v && isInstr(v.i) && typeof v.br === 'string' && v.br.includes('/'))) return { ...d }
+      const out: Fav = { i: v.i, br: v.br }
+      if (typeof v.hex === 'string' && /^#[0-9a-f]{6}$/i.test(v.hex)) out.hex = v.hex
+      if (typeof v.w === 'number' && Number.isFinite(v.w) && v.w > 0) out.w = v.w
+      if (typeof v.o === 'number' && Number.isFinite(v.o) && v.o > 0 && v.o <= 1) out.o = v.o
+      return out
     })
   } catch { return FAV_DEFAULT.map(f => ({ ...f })) }
 }
@@ -2286,7 +2307,7 @@ let closePaintWheel: () => void = () => {}
   sizeRange.addEventListener('input', () => {
     app.paintSel.w = Math.min(paintMaxW(), Math.max(C.PAINT58_MIN_W, Number(sizeRange.value) || C.PAINT58_MIN_W))
     if (app.tool !== 'paint') setTool('paint')
-    syncSizeRow()
+    syncPaintPanel()                                     // 66-3 — 같은 브러시의 칸이 크기를 따라 기억한다(adopt)
   })
   sizeRange.addEventListener('change', () => status(`자국 굵기 ${app.paintSel.w}px`))
   sizeWrap.append(sizeLbl, sizeRange, sizeVal)
@@ -2316,7 +2337,7 @@ let closePaintWheel: () => void = () => {}
   opRange.addEventListener('input', () => {
     app.paintSel.o = Math.min(1, Math.max(0.05, Math.round(Number(opRange.value) * 100) / 100))
     if (app.tool !== 'paint') setTool('paint')
-    syncOpRow()
+    syncPaintPanel()                                     // 66-3 — 같은 브러시의 칸이 불투명을 따라 기억한다(adopt)
   })
   opRange.addEventListener('change', () => status(`불투명 ${app.paintSel.o.toFixed(2)}`))
   opWrap.append(opLbl, opRange, opVal)
@@ -2435,10 +2456,11 @@ let closePaintWheel: () => void = () => {}
       holdT = window.setTimeout(() => {
         held = true
         const fs = readFavs()
-        fs[k] = { i: app.paintSel.i, br: app.paintSel.br }
+        // 66-3 — 브러시만이 아니라 **칠 사양 한 벌**(색·크기·불투명)이 같이 남는다
+        fs[k] = { i: app.paintSel.i, br: app.paintSel.br, hex: app.paintSel.hex, w: app.paintSel.w, o: app.paintSel.o }
         writeFavs(fs)
         syncPainttray()
-        status(`즐겨찾기 ${k + 1} ← ${SLOT_NAME[app.paintSel.i]} · ${brushShort(app.paintSel.br)}(이 기기에 남는다 · 옛 획은 안 변한다)`)
+        status(`즐겨찾기 ${k + 1} ← ${SLOT_NAME[app.paintSel.i]} · ${brushShort(app.paintSel.br)} · ${app.paintSel.hex} · ${app.paintSel.w}px(이 기기에 남는다 · 옛 획은 안 변한다)`)
       }, C.WRITE_HOLD_MS)
     })
     const cancelHold = () => { if (holdT !== null) { clearTimeout(holdT); holdT = null } }
@@ -2448,8 +2470,14 @@ let closePaintWheel: () => void = () => {}
       if (held) return                                   // 저장 직후의 click은 적용이 아니다
       const f = readFavs()[k]!
       pickBrush(f.i, f.br)
+      // 66-3 — 그 칸이 기억하던 사양이 «같이» 온다(칸에 아직 없으면 지금 값 그대로 —
+      // 그 순간부터 이 칸이 지금 값을 기억하기 시작한다 · syncPaintPanel의 adopt 줄)
+      if (f.hex) app.paintSel.hex = f.hex
+      if (f.w !== undefined) app.paintSel.w = Math.min(C.PAINT58_MAX_W[f.i], Math.max(C.PAINT58_MIN_W, f.w))
+      if (f.o !== undefined) app.paintSel.o = Math.min(1, Math.max(0.05, f.o))
       if (app.tool !== 'paint') setTool('paint')
-      status(`${SLOT_NAME[f.i]} · ${brushShort(f.br)} — 즐겨찾기 ${k + 1}`)
+      syncPainttray()
+      status(`${SLOT_NAME[f.i]} · ${brushShort(f.br)}${f.hex ? ` · ${f.hex}` : ''}${f.w !== undefined ? ` · ${f.w}px` : ''} — 즐겨찾기 ${k + 1}`)
     })
     favBtns.push(b)
     favWrap.append(b)
@@ -2497,7 +2525,20 @@ let closePaintWheel: () => void = () => {}
       b.title = h ? `최근 색 ${h}` : '최근 색 — 비어 있다(색을 고르면 여기 남는다)'
       b.classList.toggle('on', !!h && h === ps.hex)
     })
+    // 66-3 adopt — 지금 브러시가 어느 칸과 같으면 그 칸이 지금 사양(색·크기·불투명)을 기억한다
+    // (프로크리에이트의 «브러시가 크기를 기억한다» — 같은 브러시를 둔 칸이 여럿이면 첫 칸이 기억).
+    // 값이 달라졌을 때만 쓴다 — 이 함수는 자주 돈다.
     const fs = readFavs()
+    {
+      const ai = fs.findIndex(f => f.i === ps.i && f.br === ps.br)
+      if (ai >= 0) {
+        const f = fs[ai]!
+        if (f.hex !== ps.hex || f.w !== ps.w || f.o !== ps.o) {
+          fs[ai] = { ...f, hex: ps.hex, w: ps.w, o: ps.o }
+          writeFavs(fs)
+        }
+      }
+    }
     favBtns.forEach((b, k) => {
       const f = fs[k]!
       // web2-65 §2 ② — 그림(SLOT_SVG)이 아니라 **그 브러시의 실제 자국**이다. 64 §2 규칙 ①
@@ -2918,6 +2959,7 @@ import {
   setTipsOffForTest, setTipFrameLockForTest, tipsReadyForTest, tipStatsForTest, resetTipStatsForTest, tipDefaultOfForTest, onTipAssetsLoaded,
   setPaintAppendBreakForTest,
   unknownBrushIdsForTest, setTipGainOffForTest, presetStatsForTest, resetCpTilesForTest, setCpThresholdOffForTest,
+  setDabLogForTest, lastDabLogForTest, markBandProbeForTest,
 } from './mypaintpaint'
 import { setBrushIdOffForTest } from '../core/facetex'
 import { setBrushOfSlot } from '../core/file'
@@ -2943,6 +2985,18 @@ setBrushOfSlot((i, grade) => {
 function pickBrush(i: Instr58, name: string): void {
   app.paintSel.i = i
   app.paintSel.br = name
+  // web2-66 66-3 — 이 브러시를 기억하는 즐겨찾기 칸이 있으면 그 칸의 사양(색·크기·불투명)이
+  // 같이 온다(칸을 안 눌러도 — 어떻게 들든 «그 브러시의 사양»이다). 없으면 지금 값 그대로이고,
+  // 그때부터 adopt(syncPaintPanel)가 그 칸에 기억을 시작한다. 안 하면 고르개로 같은 브러시를
+  // 드는 순간 지금 전역값이 그 칸을 «조용히» 덮는다(adopt의 첫 실행) — 그 갈림을 여기서 막는다.
+  {
+    const f = readFavs().find(v => v.i === i && v.br === name)
+    if (f) {
+      if (f.hex) app.paintSel.hex = f.hex
+      if (f.w !== undefined) app.paintSel.w = Math.min(C.PAINT58_MAX_W[i], Math.max(C.PAINT58_MIN_W, f.w))
+      if (f.o !== undefined) app.paintSel.o = Math.min(1, Math.max(0.05, f.o))
+    }
+  }
   paintRenderer()?.setBrush?.(i, name)
   persistTune()
   syncPainttray()
@@ -2989,6 +3043,23 @@ const diag = {
   setPaintPreviewVectorForTest: (v: boolean) => { setPaintPreviewVectorForTest(v); invalidate() },
   setPaintDraftPerturbForTest: (v: boolean) => { paintDraftPerturb = v },
   paintDraft: () => ({ ...paintDraftStats(), strokes: app.paintDraft?.length ?? 0 }),
+  /** web2-66 D-2 — 초안 프레임 계수기(프레임 수·ms·덧그린 획·업로드 바이트) */
+  paintDraftFrames: () => paintDraftFrameStats(),
+  paintDraftFramesReset: () => resetPaintDraftFrameStats(),
+  /** web2-66 게이트 ①의 자 — 도장 (x,y,r) 기록 켬/끔과 마지막 자국의 기록 */
+  setDabLogForTest: (v: boolean) => setDabLogForTest(v),
+  lastDabLogForTest: () => lastDabLogForTest(),
+  /** web2-66 게이트 ①의 반증(D-3) — 얼리기 끔: 옛 전량 되그리기 판(pre의 이동량이 돌아온다) */
+  setPaintFreezeOffForTest: (v: boolean) => { setPaintFreezeOffForTest(v); invalidate() },
+  paintFreezeOffForTest: () => paintFreezeOffForTest(),
+  /** web2-66 반증 둘째 — 옛 굵기 표집(첫→끝 중점 — 이동의 실제 원인)을 되살린다 */
+  setPaintWLegacyForTest: (v: boolean) => { setPaintWLegacyForTest(v); invalidate() },
+  /** web2-66 §2 — 자국 단면 프로브(방향별 폭·평평한 몫) */
+  markBandProbeForTest: (tool: Instr58, preset: string | undefined, wPx: number, dirDeg: number) =>
+    markBandProbeForTest(tool, preset, wPx, dirDeg),
+  /** web2-66 [H5] — 임의 두 화면 점의 굵기 환산(표집 대가의 자 — 커밋과 같은 함수 #54) */
+  worldPerPxPerpForTest: (faceId: number, a: { x: number; y: number }, b: { x: number; y: number }) =>
+    worldPerPxPerpProbeForTest(app, faceId, a, b),
   paintRendererId: () => paintRendererId(),
   /** **엔진 조정**(web2-61 — 이음매의 작업대 표면과 같은 배선 #54) + 재굽기 */
   setPaintParamForTest: (i: Instr58, key: string, value: number) => {

@@ -158,6 +158,12 @@ export function setTipFrameLockForTest(v: number): void { tipFrameLock = v }
 let tipMissing = 0
 /** 층 추적(진단) — 마지막으로 그린 캔버스의 표면 */
 let lastSurface: StrokeSurface | null = null
+/** web2-66 진단(게이트 ①의 자 — D-2) — 켜면 자국마다 «실제로 그려진 도장 (x,y,r)» 목록을
+ *  떠 둔다(surface.dabLog · 값 변화 없음). 되돌리기 «전»에 뜬다(#107). 제품 경로는 끔. */
+let dabLogOn = false
+let lastDabLog: number[] = []
+export function setDabLogForTest(v: boolean): void { dabLogOn = v; if (!v) lastDabLog = [] }
+export const lastDabLogForTest = (): number[] => lastDabLog
 /** 진단 — draw(초안 통로)는 층을 되돌리므로, 팔이 켜면 되돌리기 «전» 알파 지도를 떠 둔다 */
 let captureAlpha = false
 let capturedAlpha: { a: Float32Array; w: number; h: number } | null = null
@@ -244,6 +250,7 @@ function hasLayer(canvas: HTMLCanvasElement): boolean {
 }
 /** web2-65 — 층을 놓는다(⑤ 메모리 — 안 보이는 면을 버릴 때) */
 function releaseLayer(canvas: HTMLCanvasElement): void {
+  draftSessions.delete(canvas)                  // web2-66 — 층이 죽으면 세션도 함께(재굽기가 새로 세운다)
   const e = entries.get(canvas)
   if (!e) return
   entries.delete(canvas)
@@ -506,7 +513,9 @@ function runStroke(brush: Brush, surf: StrokeSurface, pts: { x: number; y: numbe
   // 넣어 그 «죽은 구간»을 무시할 길이에 쓴다(원문 거동 그대로 · 잃는 것 .5px).
   if (n > 1) {
     const q = pts[1]!, dd = Math.hypot(q.x - pts[0]!.x, q.y - pts[0]!.y)
-    if (dd > 1) brush.strokeTo(surf, pts[0]!.x + ((q.x - pts[0]!.x) / dd) * 0.5, pts[0]!.y + ((q.y - pts[0]!.y) / dd) * 0.5, pAt(0), 0, 0, 0.0005)
+    if (dd > 1) {
+      brush.strokeTo(surf, pts[0]!.x + ((q.x - pts[0]!.x) / dd) * 0.5, pts[0]!.y + ((q.y - pts[0]!.y) / dd) * 0.5, pAt(0), 0, 0, 0.0005)
+    }
   }
   let prev = pts[0]!
   for (let i = 1; i < n; i++) {
@@ -531,15 +540,28 @@ function presetOf(m: SeamMark): string {
   return defaultBrushOf(m.tool, m.grade)
 }
 
-function paintOne(surf: StrokeSurface, m: SeamMark, draft: boolean): Bbox {
-  const name = presetOf(m)
-  const l = brushOf(name)
+/** web2-66 — 자국의 «얼릴 수 있는» 결정 전부를 한 번에 푼다(#54 — configureMark·초안 세션이
+ *  같은 이 함수를 본다). head는 그 결정의 열쇠다: 그리는 중 이 값이 갈리면(색·굵기·cp 문턱·
+ *  반증 스위치…) 얼린 세션은 못 잇고 다시 세운다(draftFeed의 'rebuild'). */
+interface MarkResolved { t: Tune; flat: boolean; tipName: string | null; paperK: number; cpTh: number | null; head: string }
+function resolveMark(name: string, m: SeamMark): MarkResolved {
   const t = tune[m.tool] ?? {}
   const flat = (markerFlatForTest() && m.tool === 'marker') || paintOpaqueForTest()
-  restoreBase(l)
-  const b = l.brush
-  // 크기(자가 보정 위에 배수) · 색(선형광 → HSV 기준값)
   const tipName = flat ? null : tipNameFor(m, name)
+  const paperK = grainOffForTest() || flat ? 0 : (t.paperK ?? TOOL_PAPER[m.tool])
+  const cpTh = m.tool === 'cp' && paperK > 0 && !cpThresholdOff ? cpThresholdOf(pressFlatForTest() ? null : m.press) : null
+  const sw = [flat ? 1 : 0, capOffOverride ? 1 : 0, smudgeSelfOverride ? 1 : 0, paintModeOff ? 1 : 0,
+    smudgeOff ? 1 : 0, pressFlatForTest() ? 1 : 0, tipFrameLock, calibOff ? 1 : 0, tipGainOff ? 1 : 0].join('')
+  const head = [name, m.wPx, m.color, m.seed, m.tool, m.grade ?? '', m.opacityK ?? 1, tipName ?? '',
+    cpTh ?? '', paperK, sw, t.sizeK ?? 1, t.opacityK ?? 1, t.spacingK ?? 1, t.scatterK ?? 1, t.smudgeK ?? 1,
+    m.over ? JSON.stringify(m.over) : '', m.tip ?? ''].join('|')
+  return { t, flat, tipName, paperK, cpTh, head }
+}
+
+/** 자국 하나를 그릴 브러시·표면 설정(paintOne에서 뽑아낸 그 순서 그대로 — 픽셀 항등의 전제). */
+function configureMark(b: Brush, name: string, m: SeamMark, draft: boolean, res: MarkResolved): StrokeOpts {
+  const { t, flat, tipName, paperK, cpTh } = res
+  // 크기(자가 보정 위에 배수) · 색(선형광 → HSV 기준값)
   const tipRaw = tipName ? tipAtlas(tipName) : null
   if (tipName && !tipRaw) tipMissing++                    // 아틀라스 미로드 — 절차 타원으로(값으로 남는다 · #105)
   b.setBaseValue(S.RADIUS_LOGARITHMIC, radiusLogFor(name, Math.max(0.5, m.wPx * (t.sizeK ?? 1)), tipRaw ? tipName : null))
@@ -564,10 +586,8 @@ function paintOne(surf: StrokeSurface, m: SeamMark, draft: boolean): Bbox {
   if (smudgeOff) b.setBaseValue(S.SMUDGE, 0)
   if (flat) { b.setBaseValue(S.OPAQUE, 1); b.setBaseValue(S.HARDNESS, 1); b.setBaseValue(S.OPAQUE_LINEARIZE, 0) }
   b.setRng(rng32(m.seed))
-  const paperK = grainOffForTest() || flat ? 0 : (t.paperK ?? TOOL_PAPER[m.tool])
   // 64-2 — 색연필 슬롯: 문턱 판(구멍) · 깊이 1(골 = 알파 0). 슬롯 조정 paperK 0이면 결 없음 그대로.
-  const cpTh = m.tool === 'cp' && paperK > 0 && !cpThresholdOff ? cpThresholdOf(pressFlatForTest() ? null : m.press) : null
-  const opts: StrokeOpts = {
+  return {
     cap: flat ? 1 : TOOL_CAP[m.tool],
     capExact: !flat && m.tool === 'marker',          // 마커 한 획 알파 = C.PAINT_MARKER_ALPHA(46 계약 · 61 그대로)
     opacityK: flat ? 1 : (t.opacityK ?? 1) * (m.opacityK ?? 1),   // web2-64: 획의 불투명(paint.o) × 슬롯 조정 배수(팁 농도는 판의 눈금 — tipFor)
@@ -581,10 +601,19 @@ function paintOne(surf: StrokeSurface, m: SeamMark, draft: boolean): Bbox {
     smudgeSnapshot: !smudgeSelfOverride,
     rng: rng32(m.seed ^ 0x5bd1e995),
   }
+}
+
+function paintOne(surf: StrokeSurface, m: SeamMark, draft: boolean): Bbox {
+  const name = presetOf(m)
+  const l = brushOf(name)
+  restoreBase(l)
+  const opts = configureMark(l.brush, name, m, draft, resolveMark(name, m))
   surf.beginStroke(opts)
   if (premulBreakOnce) { surf.breakPremulOnce = true; premulBreakOnce = false }
   surf.fringeBreak = fringeBreak
-  runStroke(b, surf, m.pts, pressFlatForTest() ? null : (m.press ?? null), 0.5)
+  if (dabLogOn) surf.dabLog = []                          // 66 D-2 — 되돌리기 «전»에 뜬다(#107)
+  runStroke(l.brush, surf, m.pts, pressFlatForTest() ? null : (m.press ?? null), 0.5)
+  if (dabLogOn && surf.dabLog) { lastDabLog = surf.dabLog; surf.dabLog = null }
   restoreBase(l)
   let box: Bbox
   const v0 = surf.premulViolations
@@ -613,6 +642,21 @@ function blit(g: CanvasRenderingContext2D, surf: StrokeSurface, box: Bbox): void
   g.restore()
 }
 const union = (a: Bbox, b: Bbox): Bbox => ({ x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) })
+
+/** web2-65·66 — 더티 사각 하나를 «바탕 되깔기 + 층 over»로 다시 합성한다(얹기·초안 세션의
+ *  공용 합성 — 굽기(over(층, 바탕))와 같은 식이라는 사유는 appendMark 머리주석).
+ *  skipBg = 65 ①의 반증(바탕 되깔기를 건너뛰면 층이 두 번 얹혀 그림이 갈린다). */
+function compositeBox(g: CanvasRenderingContext2D, surf: StrokeSurface, bg: HTMLCanvasElement, box: Bbox, skipBg = false): void {
+  if (box.x1 < box.x0 || box.y1 < box.y0) return
+  const bw = box.x1 - box.x0 + 1, bh = box.y1 - box.y0 + 1
+  g.save()
+  g.setTransform(1, 0, 0, 1, 0, 0)
+  g.globalCompositeOperation = 'source-over'
+  g.globalAlpha = 1
+  if (!skipBg) g.drawImage(bg, box.x0, box.y0, bw, bh, box.x0, box.y0, bw, bh)   // 더티 사각 ← 바탕(불투명 = 대입)
+  g.restore()
+  blit(g, surf, box)                                                 // 그 위에 층 전체를 over
+}
 
 /** 한 자국(초안·견본·작업대) — 캔버스의 층 위에 스냅숏-되돌림으로 얹는다(층 불변). */
 function drawOne(g: CanvasRenderingContext2D, m: SeamMark): void {
@@ -660,18 +704,161 @@ function appendMark(g: CanvasRenderingContext2D, m: SeamMark, bg: HTMLCanvasElem
   capturedAlpha = null
   const box = paintOne(surf, m, false)          // draft=false — 층에 «남는다»(굽기와 같은 통로)
   if (box.x1 < box.x0) return { x0: 0, y0: 0, x1: -1, y1: -1 }
-  const bw = box.x1 - box.x0 + 1, bh = box.y1 - box.y0 + 1
-  g.save()
-  g.setTransform(1, 0, 0, 1, 0, 0)
-  g.globalCompositeOperation = 'source-over'
-  g.globalAlpha = 1
-  // web2-65 ① 반증(D-3): 바탕 되깔기를 «건너뛰면» 층이 두 번 얹혀 옅은 자국이 진해진다 —
-  // 「빠른데 다른 그림」이 실제로 어떤 모양인지가 이것이고, 중심 게이트가 그것을 잡아야 한다.
-  if (!appendBreak) g.drawImage(bg, box.x0, box.y0, bw, bh, box.x0, box.y0, bw, bh)   // 더티 사각 ← 바탕(불투명 = 대입)
-  g.restore()
-  blit(g, surf, box)                                                 // 그 위에 층 전체를 over
+  // web2-65 ① 반증(D-3): 바탕 되깔기를 «건너뛰면»(appendBreak) 층이 두 번 얹혀 옅은 자국이
+  // 진해진다 — 「빠른데 다른 그림」이 실제로 어떤 모양인지가 이것이고, 중심 게이트가 그것을 잡는다.
+  compositeBox(g, surf, bg, box, appendBreak)
   return box
 }
+
+// ── web2-66 §1 ㉠㉡ — **초안 세션**: 그리는 중인 획을 층에 «눌러 담는다» ──────────────────
+// 매 프레임 «새 점»만 브러시 상태기계에 더 먹이고, 새 도장이 닿은 사각만 다시 합성한다.
+// 이미 놓인 도장은 층에 그대로 남아 «다시는 안 움직인다»(게이트 ①). 얼릴 수 있는 이유:
+//   · 엔진은 점렬을 인과적으로 걷는다(도장 자리는 앞 점들만의 함수 — 곡선 맞춤이 없다)
+//   · 자국의 결정(색·굵기·시드·cp 문턱…)은 resolveMark.head로 얼린다 — 갈리면 'rebuild'
+//   · 압력은 점렬과 평행(buildPaintStrokes의 구성)이라 점 i의 압력이 미래에 안 변한다
+// 세션은 **전용 Brush**를 든다(#106의 교훈 — 공유 인스턴스를 프레임 사이에 들면 다른 그리기
+// (견본·보정)가 상태를 오염시킨다). 뗄 때 draftFinish가 펜 떼기 이벤트까지 먹이면 층의 상태가
+// 굽기(runStroke 전체)와 **같다** — 커밋이 그 층을 그대로 «넘겨받는다»(render3d의 인계).
+interface DraftSession {
+  surf: StrokeSurface
+  brush: Brush
+  head: string
+  fed: number
+  pts: { x: number; y: number }[]
+  halfDone: boolean
+  prevPt: { x: number; y: number }
+  log: number[] | null            // dabLogOn일 때 — 세션 전체의 도장 기록(게이트 ①의 자)
+}
+const draftSessions = new Map<HTMLCanvasElement, DraftSession>()
+
+function freshBrush(name: string): Brush {
+  const p = PRESET_BY_NAME.get(name)
+  if (!p) throw new Error(`mypaint: 모르는 브러시 ${name}`)
+  const b = new Brush()
+  b.loadPreset(p, SETTING_IDX, INPUT_IDX)
+  // ⚠ 굽기 경로와 «비트로» 같게 — 공유 브러시(brushOf)는 기준값을 Float32Array 사본(base)에서
+  // 되살리므로 float32로 양자화된 값으로 돈다(0.4 → 0.40000000596…). 새 Brush가 float64 원값을
+  // 들면 도장 위치가 1e-7대로 갈려 «세션 == 굽기» 픽셀 항등이 확률적으로 깨진다(paint65 ①이
+  // charcoal에서 실제로 잡았다 — D-1 표식: 이벤트 열은 비트 동일 · 기준값 여섯이 f32/f64 차).
+  for (let i = 0; i < SETTINGS.length; i++) b.settings[i]!.baseValue = Math.fround(b.getBaseValue(i))
+  b.settingsBaseValuesHaveChanged()
+  return b
+}
+
+/** 세션의 pAt — runStroke의 t 사상은 press가 점렬과 평행일 때 press[i] 항등이다(구성 —
+ *  머리주석). 평행이 아니면 draftFeed가 세션을 거절하므로 여기는 평행만 온다. */
+const sessPressAt = (press: number[] | null, i: number): number =>
+  press && press.length > 0 ? Math.min(1, Math.max(0, press[Math.min(press.length - 1, i)]! / C.PRESS_Q)) : 0.5
+
+/** 새 점들을 먹인다 — runStroke의 이벤트 열(리셋 · 첫 점 · 반 픽셀 · 점들)을 나눠 재생한 것과
+ *  같다(펜 떼기만 draftFinish의 몫). */
+function feedSessionPoints(sess: DraftSession, m: SeamMark): void {
+  const pts = m.pts
+  const press = pressFlatForTest() ? null : (m.press ?? null)
+  const b = sess.brush, surf = sess.surf
+  if (sess.log !== null) surf.dabLog = sess.log
+  if (sess.fed === 0) {
+    b.primeAt(pts[0]!.x, pts[0]!.y, SPEED_PX_S)
+    b.newStroke()
+    b.strokeTo(surf, pts[0]!.x, pts[0]!.y, sessPressAt(press, 0), 0, 0, 0.001)
+    sess.prevPt = { x: pts[0]!.x, y: pts[0]!.y }
+    sess.pts.push({ x: pts[0]!.x, y: pts[0]!.y })
+    sess.fed = 1
+  }
+  if (!sess.halfDone && pts.length > 1) {
+    const p0 = pts[0]!, q = pts[1]!
+    const dd = Math.hypot(q.x - p0.x, q.y - p0.y)
+    if (dd > 1) {
+      b.strokeTo(surf, p0.x + ((q.x - p0.x) / dd) * 0.5, p0.y + ((q.y - p0.y) / dd) * 0.5, sessPressAt(press, 0), 0, 0, 0.0005)
+    }
+    sess.halfDone = true
+  }
+  for (let i = sess.fed; i < pts.length; i++) {
+    const p = pts[i]!
+    const dt = eventDtimeMs !== null ? eventDtimeMs / 1000 : Math.max(0.0005, Math.hypot(p.x - sess.prevPt.x, p.y - sess.prevPt.y) / SPEED_PX_S)
+    b.strokeTo(surf, p.x, p.y, sessPressAt(press, i), 0, 0, dt)
+    sess.prevPt = { x: p.x, y: p.y }
+    sess.pts.push({ x: p.x, y: p.y })
+  }
+  sess.fed = pts.length
+  if (sess.log !== null) surf.dabLog = null
+}
+
+/** 먹인 앞자리가 지금 자국의 앞자리 그대로인가(점이 뒤에서만 자란다는 검증 — 어긋나면 재구축). */
+function sessPrefixOk(sess: DraftSession, m: SeamMark): boolean {
+  if (sess.fed > m.pts.length) return false
+  for (let i = 0; i < sess.fed; i++) {
+    const a = sess.pts[i]!, b = m.pts[i]!
+    if (a.x !== b.x || a.y !== b.y) return false
+  }
+  return true
+}
+
+/** 초안 세션에 «지금 자국»을 먹인다 — 새 점만. 반환: 이번에 닿은 사각(합성까지 마침) ·
+ *  'rebuild'(얼린 결정이 갈렸다/점이 앞에서 바뀌었다 — 부르는 쪽이 층을 다시 세우고 재먹임) ·
+ *  null(세션 불가 — 층 없음·바탕 크기 불일치·압력 비평행: 부르는 쪽은 옛 전량 판으로). */
+function draftFeed(g: CanvasRenderingContext2D, m: SeamMark, bg: HTMLCanvasElement): Bbox | 'rebuild' | null {
+  if (!hasLayer(g.canvas)) return null
+  if (bg.width !== g.canvas.width || bg.height !== g.canvas.height) return null
+  if (m.press && m.press.length !== m.pts.length) return null
+  if (m.pts.length < 2) return null
+  const name = presetOf(m)
+  const res = resolveMark(name, m)
+  let sess = draftSessions.get(g.canvas)
+  if (sess && (sess.head !== res.head || !sessPrefixOk(sess, m))) return 'rebuild'
+  const surf = surfaceFor(g.canvas, false)
+  lastSurface = surf
+  if (sess && sess.surf !== surf) return 'rebuild'        // 층이 갈려 다시 섰다(축출·크기)
+  if (!sess) {
+    const brush = freshBrush(name)
+    const opts = configureMark(brush, name, m, false, res)  // draft=false — 층에 «남는다»
+    surf.beginStroke(opts)
+    sess = { surf, brush, head: res.head, fed: 0, pts: [], halfDone: false, prevPt: { x: m.pts[0]!.x, y: m.pts[0]!.y }, log: dabLogOn ? [] : null }
+    draftSessions.set(g.canvas, sess)
+  }
+  feedSessionPoints(sess, m)
+  if (sess.log !== null) lastDabLog = sess.log
+  const box = surf.takePendingBox()
+  compositeBox(g, surf, bg, box, appendBreak)   // 반증(65 ①)은 세션 합성에도 같은 뜻으로 걸린다
+  return box.x1 >= box.x0 ? box : { x0: 0, y0: 0, x1: -1, y1: -1 }
+}
+
+/** 세션의 획을 «완결»한다 — 남은 점 + 펜 떼기 이벤트 + endStroke. 층의 상태가 이 획을
+ *  굽기(appendMark)로 얹은 것과 같아진다(커밋 인계의 근거). null = 세션이 그 획이 아니다. */
+function draftFinish(g: CanvasRenderingContext2D, m: SeamMark, bg: HTMLCanvasElement): Bbox | null {
+  const sess = draftSessions.get(g.canvas)
+  if (!sess) return null
+  if (m.press && m.press.length !== m.pts.length) { draftCancel(g.canvas); return null }
+  const name = presetOf(m)
+  const res = resolveMark(name, m)
+  if (sess.head !== res.head || !sessPrefixOk(sess, m)) { draftCancel(g.canvas); return null }
+  feedSessionPoints(sess, m)
+  if (sess.log !== null) sess.surf.dabLog = sess.log
+  sess.brush.strokeTo(sess.surf, sess.prevPt.x, sess.prevPt.y, 0, 0, 0, 0.001)   // 펜 떼기(runStroke의 끝)
+  sess.surf.dabLog = null
+  if (sess.log !== null) lastDabLog = sess.log
+  const v0 = sess.surf.premulViolations
+  try { sess.surf.endStroke() } finally {
+    premulViolationsTotal += sess.surf.premulViolations - v0
+    draftSessions.delete(g.canvas)
+  }
+  const box = sess.surf.takePendingBox()
+  compositeBox(g, sess.surf, bg, box, appendBreak)
+  return box.x1 >= box.x0 ? box : { x0: 0, y0: 0, x1: -1, y1: -1 }
+}
+
+/** 세션을 버린다 — 층에 남은 미완 도장은 부르는 쪽이 재굽기로 지운다. endStroke를 불러
+ *  lastStrokeBox를 남긴다(다음 beginStroke가 덮임(coverage)을 그 상자로 걷는다 — 안 부르면
+ *  버려진 획의 덮임이 남아 다음 획의 캡이 틀린다). */
+function draftCancel(canvas: HTMLCanvasElement): void {
+  const sess = draftSessions.get(canvas)
+  if (!sess) return
+  draftSessions.delete(canvas)
+  try { sess.surf.endStroke() } catch { /* DEV premul 단언 — 버리는 길이라 삼킨다(층은 재굽기가 지운다) */ }
+  sess.surf.takePendingBox()
+}
+/** 이 캔버스에 초안 세션이 열려 있는가(진단) */
+const draftOpen = (canvas: HTMLCanvasElement): boolean => draftSessions.has(canvas)
 
 export const mypaintRenderer: PaintRenderer = {
   id: 'mypaint',
@@ -680,6 +867,10 @@ export const mypaintRenderer: PaintRenderer = {
   appendMark,
   hasLayer,
   releaseLayer,
+  draftFeed,
+  draftFinish,
+  draftCancel,
+  draftOpen,
   brushChoices: () => PRESETS.map(p => p.name),
   brushOf: (tool) => tune[tool]?.base ?? DEFAULT_PRESET[tool],
   setBrush: (tool, name) => { if (PRESET_BY_NAME.has(name)) tune[tool] = { ...tune[tool], base: name } },
@@ -748,6 +939,47 @@ export function presetBaseForTest(name: string): Record<string, number> | null {
 }
 /** 마지막 획의 덮임 캡 최대(«획 불투명도» — 게이트 ④: 자기교차가 이것을 못 넘는다) */
 export const lastStrokeCapForTest = (): number => lastSurface?.maxCap ?? 0
+
+/** web2-66 §2 — **자국 단면 프로브**(게이트 「가로/세로 폭이 갈린다 · 단면이 직사각형에
+ *  가깝다」의 자). 방향 dirDeg의 직선 자국 하나를 제 표면에 굽고, 궤적에 수직인 프로파일로
+ *  ① 반최대 폭의 중앙값 ② 평평한 몫(최대의 80% 위 ÷ 20% 위 — 직사각형 단면 ≈ 1 · 둥근 감쇠 < 1)을
+ *  잰다. 제품 경로는 안 부른다. */
+export function markBandProbeForTest(tool: Instr58, preset: string | undefined, wPx: number, dirDeg: number): { width_median: number; flat_share: number; n_cols: number } {
+  const PW = 420, PH = 420                        // 판 크기(주점 아님 — static.test의 주점 직계산 검사 밖 이름)
+  const surf = new StrokeSurface(new Layer(PW, PH))
+  const rad = (dirDeg * Math.PI) / 180
+  const cx = PW / 2, cy = PH / 2, L = 150
+  const pts = Array.from({ length: 41 }, (_, k) => ({
+    x: cx + Math.cos(rad) * ((k / 40) * 2 - 1) * L,
+    y: cy + Math.sin(rad) * ((k / 40) * 2 - 1) * L,
+  }))
+  const m: SeamMark = { pts, color: '#000000', wPx, seed: 66, tool, preset }
+  paintOne(surf, m, false)                       // 층에 남긴다 — 알파가 자다(#107: 되돌리기 없음)
+  const a = surf.alphaMap()
+  const nx = -Math.sin(rad), ny = Math.cos(rad)
+  const widths: number[] = []
+  const flats: number[] = []
+  for (let k = 8; k <= 32; k++) {
+    const px = cx + Math.cos(rad) * ((k / 40) * 2 - 1) * L
+    const py = cy + Math.sin(rad) * ((k / 40) * 2 - 1) * L
+    const prof: number[] = []
+    for (let t = -60; t <= 60; t++) {
+      const x = Math.round(px + nx * t), y = Math.round(py + ny * t)
+      prof.push(x >= 0 && y >= 0 && x < PW && y < PH ? a[y * PW + x]! : 0)
+    }
+    const mx = Math.max(...prof)
+    if (mx < 0.05) continue
+    const above = (f: number) => prof.filter(v => v > mx * f).length
+    widths.push(above(0.5))
+    flats.push(above(0.8) / Math.max(1, above(0.2)))
+  }
+  widths.sort((p, q) => p - q); flats.sort((p, q) => p - q)
+  return {
+    width_median: widths[Math.floor(widths.length / 2)] ?? 0,
+    flat_share: +((flats[Math.floor(flats.length / 2)] ?? 0)).toFixed(3),
+    n_cols: widths.length,
+  }
+}
 
 /** 탐침(bake62.spec) — 실재 · 결정론 · 비용(면 20×획 40 · 획별) · 보정표 · 층 · 사상 */
 export function mypaintProbeForTest(): Record<string, unknown> {

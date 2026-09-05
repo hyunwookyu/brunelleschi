@@ -1859,6 +1859,16 @@ import type { Person } from '../core/types'
 
 export const paintActive = (app: Pick<App, 'tool'>): boolean => app.tool === 'paint'
 
+/** web2-66 반증(D-3 · paint66 ① — e2e 전용): 굵기 환산의 옛 표집(획 첫→끝 중점 — 미래 입력의
+ *  함수)을 되살린다. 켜면 그리는 중 w가 흘러 «이미 지나간 도장»이 움직인다(pre의 그 증상). */
+let paintWLegacyForTest = false
+export function setPaintWLegacyForTest(v: boolean): void { paintWLegacyForTest = v }
+/** web2-66 진단(리뷰어 [H5]) — 임의 두 화면 점의 굵기 환산(같은 함수 — 표집 대가를 값으로 잰다) */
+export function worldPerPxPerpProbeForTest(app: App, faceId: number, a: Pt, b: Pt): number | null {
+  const rf = app.faces.find(x => x.id === faceId)
+  return rf ? worldPerPxPerp(app, rf, a, b) : null
+}
+
 /** 한 붓을 확정한다 — 지나간 면마다 나뉘어 얹힌다(지시 문면 · 사용자는 의식하지 않는다).
  *  면 밖 점은 센다(조용히 버리지 않는다 — 진단이 읽는다). */
 export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: number; offFace: number; offOwn: number } {
@@ -1978,10 +1988,17 @@ export function buildPaintStrokes(
     }
     // 재료 칠(46 → 48-7 → 51 → **64**) — 색·슬롯·브러시 id·불투명이 한 자리에서 실린다(stampPaintSel · #54).
     stampPaintSel(app, s)
-    // 굵기(48-2 → 50 → 51) — 트레이 값은 화면 px이고 저장은 **세계 단위**다. 환산은
-    // **그 획 중점의 수직 방향**(폭의 방향)이다 — u축 환산은 원근 비등방에서 폭을
+    // 굵기(48-2 → 50 → 51 → **66**) — 트레이 값은 화면 px이고 저장은 **세계 단위**다. 환산은
+    // **그 획 수직 방향**(폭의 방향)이다 — u축 환산은 원근 비등방에서 폭을
     // 절반 대역으로 틀리게 냈다(brush51 ⑤ 실측 · worldPerPxPerp 머리주석).
-    const wpp = worldPerPxPerp(app, rf, r.pts[0]!, r.pts[r.pts.length - 1]!)
+    // ⚠ web2-66 ㉠ — 표집 자리는 **첫 걸음**(pts[0]→pts[1])이다. 종전(첫→끝의 중점)은 미래
+    // 입력의 함수라 그리는 중 매 프레임 값이 흘렀고, 그 흐름이 «이미 지나간 도장»을 통째로
+    // 움직였다(perf66_pre (c): 400점 끝에서 평균 4.5px·최대 9.0px — 지시의 「곡선 맞춤」
+    // 가설은 반증됐다, 이 코드에 곡선 맞춤이 없다 · AS-C194). 붓이 닿은 첫 걸음은 인과적이다 —
+    // 새 점이 들어와도 안 변하고, 미리보기(얼린 세션)와 확정이 같은 값을 본다(게이트 ⑤의 전제).
+    // 반증 스위치(D-3 · paint66 ①): 옛 표집(첫→끝 중점)을 되살리면 이동이 돌아온다.
+    const wTail = paintWLegacyForTest ? r.pts[r.pts.length - 1]! : r.pts[1]!
+    const wpp = r.pts.length >= 2 ? worldPerPxPerp(app, rf, r.pts[0]!, wTail) : null
     const ppu = pxPerUnitOnScreen(app, rf)
     s.paint!.w = wpp ? app.paintSel.w * wpp
       : ppu ? app.paintSel.w / ppu : C.PAINT_W_FALLBACK_UNITS
