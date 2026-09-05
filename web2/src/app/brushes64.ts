@@ -42,4 +42,32 @@ export const APP_PRESETS: readonly Preset[] = [
       speed1_slowness: [0.04],
     },
   },
+  // ── 마커(web2-66 §2) — 사람 판정: 「마커의 단면은 원형이 아니다. 보통은(넓게 칠할 때)
+  // 직사각형에 가까운 형태이다.」 도구는 이미 있다(지시 문면 — libmypaint elliptical_dab_ratio·
+  // angle · 62가 이식했다): 종전 기본(ramon/100%_Opaque — 원형)의 값 위에 **납작한 타원 도장**을
+  // 얹는다. ⚠ 각도는 «획 방향»이 아니라 «손»을 따른다(지시 — 방향 입력에 매면 서예가 된다):
+  // 고정값 72°(오른손이 촉을 쥔 각의 근사 — 가로로 넓게 칠할 때 넓고, 세로로 그으면 좁다).
+  // ramon/Classic_Paint의 direction 곡선(elliptical_dab_angle ← direction)은 **일부러 안 쓴다**.
+  // 간격: 납작해진 짧은 축이 도장 사이 골을 만들므로 dabs_per_actual_radius를 2.2 → 4.6으로
+  // 올린다(빨라 보이게 하는 조정이 아니라 단면 변경의 짝 — 게이트 ②의 자는 pre 마커가 아니라
+  // 이 프리셋 자체로 잰다). 크기는 자가 보정(radiusFor)이 «가로 획 반최대 폭»으로 잡는다.
+  {
+    name: 'brunelleschi/marker', group: APP_GROUP,
+    desc: '마커(web2-66) — 납작한 촉(타원 도장 · 고정 각 72°). 가로로 넓게, 세로로 좁게 — 실물 마커의 단면',
+    s: {
+      dabs_per_actual_radius: [4.6],
+      dabs_per_basic_radius: [4.56],
+      elliptical_dab_ratio: [3.4],
+      elliptical_dab_angle: [72],
+      hardness: [0.95],
+      opaque_linearize: [0],
+      opaque_multiply: [0, { pressure: [[0, 0], [0.015, 0], [0.025, 1], [1, 1]] }],
+      radius_logarithmic: [3.01],
+      slow_tracking: [0.65],
+      slow_tracking_per_dab: [0.8],
+      speed1_gamma: [2.87],
+      stroke_duration_logarithmic: [1.18],
+      stroke_holdtime: [10],
+    },
+  },
 ]
