@@ -124,7 +124,7 @@ test('① ⛳ 도장이 안 움직인다 — 확정 구간 이동량 0(기록 + 
   const HEAD = [540, 380, 90, 60] as const     // 획 머리 사각(처음 ~1/4 지점 주변)
   const run = async (freezeOff: boolean) => {
     // 반증 판은 pre 상태의 «전부»를 되살린다: 전량 되그리기(얼리기 끔) + 옛 굵기 표집(첫→끝
-    // 중점 — 이동의 실제 원인 · AS-C193). 굵기 표집이 뿌리에서 고쳐졌으므로 얼리기 끔만으로는
+    // 중점 — 이동의 실제 원인 · AS-C194). 굵기 표집이 뿌리에서 고쳐졌으므로 얼리기 끔만으로는
     // 이동이 안 돌아온다 — 그것이 «원인이 w였다»는 실증이기도 하다(값은 아래 콘솔·NOTES).
     await page.evaluate((v) => { (window as any).__b2.diag.setPaintFreezeOffForTest(v) }, freezeOff)
     await page.evaluate((v) => { (window as any).__b2.diag.setPaintWLegacyForTest(v) }, freezeOff)
