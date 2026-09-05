@@ -12,6 +12,9 @@ import { PRESETS, PRESET_BY_NAME } from '../src/app/mypaintpaint'
 import { lerpPreset, PENCIL_LERP_T, PENCIL_FAMILY, familySizeK } from '../src/app/brushes64'
 import { SETTINGS } from '../src/mypaint/settings.gen'
 import { BRUSH_LABEL_EXACT } from '../src/core/brushnames'
+import { readFileSync } from 'node:fs'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 describe('web2-68 §2 — 경도 축', () => {
   it('① 경도 축의 프리셋 전수가 실재한다(연필 여섯 · 목탄 셋 · 서로 다르다)', () => {
@@ -69,5 +72,14 @@ describe('web2-68 §2 — 경도 축', () => {
 
   it('⑤ 반증(D-3) — 모르는 원본이면 던진다(조용한 폴백 ⛔)', () => {
     expect(() => lerpPreset('brunelleschi/x', 'tanda/pencil-2b', 'zzz/nope', 0.5, '')).toThrow()
+  })
+
+  it('⑥ KEY_ORDER 무변(CHAIN6 68~71 게이트) — 열쇠 수 85(67 마감 값) · 경도·필통의 열쇠는 없다(경도는 br에 실리고 필통은 기기 저장) · 반증은 roundtrip43 ②', () => {
+    const src = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../src/core/file.ts'), 'utf8')
+    const i = src.indexOf('const KEY_ORDER: string[] = [')
+    const j = src.indexOf('\n]', i)
+    const keys = [...src.slice(i, j).matchAll(/'([^']+)'/g)].map(m => m[1]!)
+    expect(keys.length, "KEY_ORDER 열쇠 수 == 88(같은 셈법으로 67 트리 3c6f259도 88 — 68은 새 저장 필드 0)").toBe(88)
+    for (const k of ['grade68', 'case', 'pencilcase', 'family', 'sizeK']) expect(keys, `${k}는 저장 열쇠가 아니다`).not.toContain(k)
   })
 })

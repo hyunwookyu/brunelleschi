@@ -16,7 +16,8 @@
   "selfcheck_notes": {
     "identical_pairs": "⑤ 견본 해시 «같음»은 «견본 = 그리는 그 함수»의 뜻 그 자체(62 규약) — 다른 입력(다른 hex)의 해시가 다르다(반증 열)",
     "exact_ratio": "① 왕복 5/5 · ④ 획 br 일치는 구성 게이트(43 ② 선례) — 이주 시험이 «옛 저장물 → 새 판»을 값으로 든다",
-    "exact_one": "g01_case.migrated_count = 1은 «이주는 한 번»의 뜻 그 자체(#109 — 옛 판을 바꿔도 새 판이 정본인 것을 같은 시험이 든다) — 비율이 아니라 횟수"
+    "exact_one": "g01_case.migrated_count = 1은 «이주는 한 번»의 뜻 그 자체(#109 — 옛 판을 바꿔도 새 판이 정본인 것을 같은 시험이 든다) — 비율이 아니라 횟수",
+    "dead_ref_109": "#109는 PITFALLS.md에 계보 표·최근 다섯 표 행만 있고 본문 절이 없다(web2-64 등재가 표만 넣었다 — 리뷰어 [L3]) · 인용은 그 표 행의 규칙(옛 엔진을 지우는 절 · 이음매 둘 살아남기 ⛔)이다"
   },
   "g01_case": {
     "def": "필통 칸 수 8(도구 7 + 지우개 1 — 마지막 칸 id paint-erase · 끌어 바꿀 손잡이 없음) · 옛 판 여섯 → 새 판 앞 여섯(사양 포함) · 일곱째 기본(잉크펜) · 이주 «한 번»(새 판이 쓰인 뒤 옛 판은 다시 안 읽는다)",
@@ -743,7 +744,13 @@
       "tanda/charcoal-01",
       "tanda/pencil-8b"
     ],
-    "set_on_reopen": "Tanda"
+    "set_on_reopen": "Tanda",
+    "set_rule": {
+      "def": "[M10] 다시 열 때의 세트 = 지금 브러시의 세트 — 마지막 고른 세트(Tanda) ≠ 지금 브러시(classic/brush)의 세트(Classic)로 갈랐다",
+      "last_picked_set": "Tanda",
+      "now_brush": "classic/brush",
+      "set_on_open": "Classic"
+    }
   },
   "g06_ticks": {
     "def": "눈금 값 = PAINT68_TICK_BASE × √2^k(≥ 최소 · ≤ 그 도구의 최대) · 점 탭 → w == 값 · input 17.5 → 17.5 그대로(연속 · step .5) · 슬롯 바꿈 → 눈금이 그 도구의 최대까지",
@@ -885,5 +892,54 @@
     "grade": {
       "hit": true
     }
+  },
+  "constants_used": {
+    "PAINT68_CASE_N": 7,
+    "PAINT68_GRADE_STEP_PX": 10,
+    "PAINT68_GRADE_DENSITY_STEP_MIN": 0.03,
+    "PAINT68_GRADE_WIDTH_STEP_MIN": 0.5,
+    "PAINT68_CHARCOAL_DENSITY_STEP_MIN": 0.04,
+    "PAINT68_GRADE_8B_TARGET": 0.45,
+    "PAINT68_GRADE_8B_TOL": 0.03,
+    "PAINT68_WIDTH_RATIO_8B_HB": 2,
+    "PAINT68_WIDTH_RATIO_TOL": 0.15,
+    "PAINT68_FIT_TOL": 0.01,
+    "PAINT68_FIT_MAX_ITER": 8,
+    "PAINT68_FIT_OPAQUE_TOL": 0.025,
+    "PAINT68_WIDTH_HONEST_TOL": 0.25,
+    "PAINT68_TICK_BASE": 0.57,
+    "PAINT68_TICK_RATIO": 1.4142135623730951,
+    "PAINT68_RECENT_N": 8,
+    "PAINT68_TIP_BRIGHT_V": 0.92,
+    "WRITE_HOLD_MS": 450,
+    "PAINT58_MIN_W": 1,
+    "PAINT58_MAX_W": {
+      "brush": 500,
+      "marker": 100,
+      "cp": 50,
+      "pencil": 50
+    }
+  },
+  "thresholds": {
+    "CASE68_LIST_ROW_H": {
+      "MIN": 44,
+      "MAX": 56
+    }
+  },
+  "census_always_visible": {
+    "def": "지시 §4 — 칠 패널에 «늘 보이는 누를 것»의 수(button · input · 눈금 점 .tick · 경도 글자 .pcgrade — 보이는 것만) · 슬롯에 따라 눈금 수가 다르다(연필 11 · 마커 13 · 잉크펜 18) · 69 인벤토리의 입력",
+    "total": 34,
+    "by": {
+      "paint-brush-btn": 1,
+      "input:paint-size-range": 1,
+      "tick": 11,
+      "input:paint-opacity-range": 1,
+      "paint-color-btn": 1,
+      "swatch": 6,
+      "cell": 8,
+      "grade": 4,
+      "btn-paint-front": 1
+    },
+    "slot": "pencil"
   }
 }

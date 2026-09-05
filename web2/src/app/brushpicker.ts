@@ -108,8 +108,9 @@ export function initBrushPicker(opts: {
         r.setTip!(tool, it.key)
         persistTune()
         for (const q of tipRow.querySelectorAll('button')) q.classList.toggle('on', q === b)
-        // 견본을 다시 그린다(팁이 바뀌면 자국이 바뀐다)
-        for (const { name, cv } of samples) if (drawn.has(cv)) sampleOf(name, cv)
+        // 견본을 다시 그린다(팁이 바뀌면 자국이 바뀐다) — «보이는 세트»만 · 프레임마다 넷씩(밤 68이 잡았다: 두 칸이 되며 세트 하나(36)가
+        // 늘 그려져 있고 팁마다 보정(calib — 프리셋|팁 열쇠)이 새로 서서 한 번에 다시 그리면 화면이 60s 넘게 멈췄다 — shots63)
+        redrawVisible()
         opts.notify(`${INSTR_NAME[tool]} 팁 ← ${it.label}(이 기기에 남는다)`)
       })
       tipRow.append(b)
@@ -140,6 +141,24 @@ export function initBrushPicker(opts: {
 
   /** «최근» 세트의 행을 지금 저장에서 다시 짓는다(고를 때마다 바뀌는 유일한 세트) */
   let fillRecent: () => void = () => {}
+  /** «보이는 행»의 견본만 그린다(판 안에 든 행 — 굴리면 더 그린다). 세트 하나가 36행이고 팁마다 보정(calib — 프리셋|팁)이 새로
+   *  서서, 전부 그리면 화면이 60s 넘게 멈췄다(밤 68 shots63이 잡았다). 안 보이는 행은 굴려서 닿을 때 그린다. */
+  const drawVisibleRows = (): void => {
+    const det = details.get(currentSet)
+    if (!det || det.hidden) return
+    const rr = root.getBoundingClientRect()
+    for (const b of det.querySelectorAll<HTMLButtonElement>('button[data-name]')) {
+      const cv = b.querySelector('canvas')
+      if (!cv || drawn.has(cv)) continue
+      const r = b.getBoundingClientRect()
+      if (r.bottom < rr.top - 40 || r.top > rr.bottom + 40) continue
+      sampleOf(b.dataset.name!, cv); drawn.add(cv)
+    }
+  }
+  /** 팁이 바뀌었다 — 그린 것을 전부 «안 그린 것»으로 되돌리고 보이는 행부터 다시 */
+  const redrawVisible = (): void => { drawn.clear(); drawVisibleRows() }
+  let scrollRaf = 0
+  root.addEventListener('scroll', () => { if (!scrollRaf) scrollRaf = requestAnimationFrame(() => { scrollRaf = 0; drawVisibleRows() }) })
   /** 세트 하나를 고른다 — 그 세트의 details만 보이고 열린다(견본은 그때 그린다 · 196개를 한 번에 그리지 않는다) */
   const selectSet = (group: string): void => {
     currentSet = group
@@ -148,12 +167,9 @@ export function initBrushPicker(opts: {
       const on = g === group
       det.hidden = !on
       if (det.open !== on) det.open = on
-      if (on) for (const b of det.querySelectorAll<HTMLButtonElement>('button[data-name]')) {
-        const cv = b.querySelector('canvas')
-        if (cv && !drawn.has(cv)) { sampleOf(b.dataset.name!, cv); drawn.add(cv) }
-      }
     }
     for (const [g, b] of setBtns) b.classList.toggle('on', g === group)
+    drawVisibleRows()
   }
 
   const rowOf = (name: string, tool: Instr58, cur: string | undefined, recent: boolean): HTMLButtonElement => {
@@ -268,7 +284,7 @@ export function initBrushPicker(opts: {
       open = v
       root.hidden = !v
       root.style.display = v ? 'flex' : 'none'
-      if (v) { build(); place() }
+      if (v) { build(); place(); drawVisibleRows() }
     },
     currentSet: () => currentSet,
   }

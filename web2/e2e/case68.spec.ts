@@ -18,6 +18,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { PENCIL_PRESET_OF_GRADE, CHARCOAL_PRESET_OF_GRADE } from '../src/core/grades68'
+import { CASE68_LIST_ROW_H } from './thresholds'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const OUT: Record<string, unknown> = {
@@ -28,6 +29,7 @@ const OUT: Record<string, unknown> = {
     identical_pairs: '⑤ 견본 해시 «같음»은 «견본 = 그리는 그 함수»의 뜻 그 자체(62 규약) — 다른 입력(다른 hex)의 해시가 다르다(반증 열)',
     exact_ratio: '① 왕복 5/5 · ④ 획 br 일치는 구성 게이트(43 ② 선례) — 이주 시험이 «옛 저장물 → 새 판»을 값으로 든다',
     exact_one: 'g01_case.migrated_count = 1은 «이주는 한 번»의 뜻 그 자체(#109 — 옛 판을 바꿔도 새 판이 정본인 것을 같은 시험이 든다) — 비율이 아니라 횟수',
+    dead_ref_109: '#109는 PITFALLS.md에 계보 표·최근 다섯 표 행만 있고 본문 절이 없다(web2-64 등재가 표만 넣었다 — 리뷰어 [L3]) · 인용은 그 표 행의 규칙(옛 엔진을 지우는 절 · 이음매 둘 살아남기 ⛔)이다',
   },
 }
 const LEDGER_OF = (projectName: string) =>
@@ -87,6 +89,8 @@ test('① 칸 8 · 지우개 맨 끝 고정 · 옛 여섯 → 새 판 앞 여섯
   const migrated = await page.evaluate(() => (window as any).__b2.diag.paintCaseMigratedForTest() as number)
   const newKey = await page.evaluate(() => localStorage.getItem('b2.pencilcase68.v1'))
   const cells = await cellsOf(page)
+  OUT.constants_used = await page.evaluate(() => (window as any).__b2.diag.constantsForTest())
+  OUT.thresholds = { CASE68_LIST_ROW_H }
   OUT.g01_case = { def: '필통 칸 수 8(도구 7 + 지우개 1 — 마지막 칸 id paint-erase · 끌어 바꿀 손잡이 없음) · 옛 판 여섯 → 새 판 앞 여섯(사양 포함) · 일곱째 기본(잉크펜) · 이주 «한 번»(새 판이 쓰인 뒤 옛 판은 다시 안 읽는다)',
     cells: cells.map(c => ({ id: c.id, kind: c.kind, br: c.br })), migrated_count: migrated, new_key_written: newKey !== null, favs_after: favs, old: OLD }
   expect(cells.length, '칸 8').toBe(8)
@@ -263,6 +267,9 @@ test('⑤ §3-1 목록 두 칸 — 패널 오른쪽에 붙는다 · 세트 8 + �
   const visible = await page.evaluate(() => Array.from(document.querySelectorAll('#brushpick-list details')).filter(d => !(d as HTMLElement).hidden).map(d => (d as HTMLElement).dataset.group))
   const rowH = await page.evaluate(() => { const r = document.querySelector('#brushpick-list details[data-group="Tanda"] button[data-name]') as HTMLElement; return Math.round(r.getBoundingClientRect().height) })
   // 견본 해시 == 같은 입력의 drawBrushSample(제품 함수 · 다른 hex는 다른 해시 — 반증)
+  // 견본은 «보이는 행»만 그려진다(68 — 밤 1차 shots63이 잡은 60s 멈춤의 수리): 행을 판 안으로 굴려 그려진 뒤 읽는다
+  await page.evaluate(() => (document.querySelector('#brushpick-list details[data-group="Tanda"] button[data-name="tanda/pencil-2b"]') as HTMLElement).scrollIntoView())
+  await page.waitForTimeout(250)
   const sample = await page.evaluate(() => {
     const b2 = (window as any).__b2
     const row = document.querySelector('#brushpick-list details[data-group="Tanda"] button[data-name="tanda/pencil-2b"]') as HTMLElement
@@ -284,6 +291,12 @@ test('⑤ §3-1 목록 두 칸 — 패널 오른쪽에 붙는다 · 세트 8 + �
   await page.click('#brushpick-set-recent'); await page.waitForTimeout(200)
   const recentRows = await page.evaluate(() => Array.from(document.querySelectorAll('#brushpick-list details[data-group="최근"] button[data-name]')).map(b => (b as HTMLElement).dataset.name))
   await page.click('#brushpick-close')
+  // [M10] 다시 열 때의 세트 = «지금 브러시의 세트»(마지막 고른 세트가 아니다): 마지막 고른 세트는 Tanda인데, 지금 브러시를 Classic으로 바꾸고 연다
+  await page.evaluate(() => (window as any).__b2.diag.pickBrushForTest('brush', 'classic/brush'))
+  await page.click('#paint-brush-btn'); await page.waitForTimeout(250)
+  const setAfterClassic = await page.evaluate(() => (document.querySelector('#brushpick-sets button.on') as HTMLElement | null)?.dataset.group ?? null)
+  await page.click('#brushpick-close')
+  await page.evaluate(() => (window as any).__b2.diag.pickBrushForTest('brush', 'tanda/water-01'))
   // 재시작 생존
   await page.goto('/')
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
@@ -293,13 +306,14 @@ test('⑤ §3-1 목록 두 칸 — 패널 오른쪽에 붙는다 · 세트 8 + �
   const recent2 = await page.evaluate(() => JSON.parse(localStorage.getItem('b2.brushRecent68.v1') ?? '[]') as string[])
   const curSet = await page.evaluate(() => (document.querySelector('#brushpick-sets button.on') as HTMLElement | null)?.dataset.group ?? null)
   OUT.g05_list = { def: '목록이 패널 오른쪽 가장자리에 붙는다(gap == FLYOUT_GAP_PX 8 · 화면 안) · 왼쪽 세트 열 = 최근 + 8 · 세트를 고르면 오른쪽에 그 세트만(hidden 아닌 details 1) · 행 높이 ≈ 48 · 견본 해시 == 같은 입력의 제품 함수(다른 hex는 다른 해시) · 최근: 9 고름 → 8 · 고른 순 · 재시작 생존',
-    place, sets, visible_after_tanda: visible, row_height: rowH, sample, picked, recent, recent_rows: recentRows, recent_after_reload: recent2, set_on_reopen: curSet }
+    place, sets, visible_after_tanda: visible, row_height: rowH, sample, picked, recent, recent_rows: recentRows, recent_after_reload: recent2, set_on_reopen: curSet,
+    set_rule: { def: '[M10] 다시 열 때의 세트 = 지금 브러시의 세트 — 마지막 고른 세트(Tanda) ≠ 지금 브러시(classic/brush)의 세트(Classic)로 갈랐다', last_picked_set: 'Tanda', now_brush: 'classic/brush', set_on_open: setAfterClassic } }
   expect(place.gap, '패널 오른쪽에 붙는다(FLYOUT_GAP_PX)').toBe(8)
   expect(place.pick_right, '화면 안').toBeLessThanOrEqual(place.vw)
   expect(sets.length, '세트 8 + 최근').toBe(9)
   expect(sets[0]!.group).toBe('최근')
   expect(visible, '고른 세트만 선다').toEqual(['Tanda'])
-  expect(rowH, '행 높이 ≈ 48').toBeGreaterThanOrEqual(44); expect(rowH).toBeLessThanOrEqual(56)
+  expect(rowH, '행 높이 ≈ 48(thresholds CASE68_LIST_ROW_H)').toBeGreaterThanOrEqual(CASE68_LIST_ROW_H.MIN); expect(rowH).toBeLessThanOrEqual(CASE68_LIST_ROW_H.MAX)
   expect(sample.row_hash, '견본 해시 == 제품 함수(같은 입력)').toBe(sample.fresh_hash)
   expect(sample.row_hash !== sample.other_hex_hash, '반증 — 다른 hex는 다른 해시').toBe(true)
   expect(picked.length, '아홉을 골랐다(픽스처)').toBe(9)
@@ -307,6 +321,7 @@ test('⑤ §3-1 목록 두 칸 — 패널 오른쪽에 붙는다 · 세트 8 + �
   expect(recent, '고른 순(마지막이 맨 앞)').toEqual(picked.slice().reverse().slice(0, 8))
   expect(recentRows).toEqual(recent)
   expect(recent2, '재시작 생존').toEqual(recent)
+  expect(setAfterClassic, '[M10] 다시 열면 «지금 브러시의 세트»(마지막 고른 세트 Tanda가 아니라 Classic)').toBe('Classic')
 })
 
 test('⑥ §3-2 눈금 표식 — 점 탭 → w == 눈금 값 · 끌기 → 임의 값(연속) · √2 등비 · ⑦ 34-0 몫(툴팁·닿음)', async ({ page }) => {
@@ -332,6 +347,16 @@ test('⑥ §3-2 눈금 표식 — 점 탭 → w == 눈금 값 · 끌기 → 임�
   const tickHit = await page.evaluate(() => { const strip = document.getElementById('paint-size-ticks') as HTMLElement; const t = strip.querySelector('.tick') as HTMLElement; const r = t.getBoundingClientRect(); const at = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return { hit: at === strip || strip.contains(at), top: (at as HTMLElement | null)?.id || at?.className || null } })
   const gradeHit = await page.evaluate(() => { const t = document.querySelector('#paint-fav-1 .pcgrade') as HTMLElement; const r = t.getBoundingClientRect(); const at = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return { hit: at === t } })
   OUT.g06_ticks = { def: '눈금 값 = PAINT68_TICK_BASE × √2^k(≥ 최소 · ≤ 그 도구의 최대) · 점 탭 → w == 값 · input 17.5 → 17.5 그대로(연속 · step .5) · 슬롯 바꿈 → 눈금이 그 도구의 최대까지', ticks_brush: ticks, ratios, pick, w_after_tap: wTap, w_after_drag: wDrag, step, ticks_pencil: ticksPencil, constants: { base: C.PAINT68_TICK_BASE, ratio: C.PAINT68_TICK_RATIO, max: C.PAINT58_MAX_W } }
+  // [M8] 상시 요소 셈(지시 §4 — 69 인벤토리의 입력 · 원장 값으로): 칠 패널에 늘 보이는 누를 것(button · input · 눈금 점 · 경도 글자)
+  const always = await page.evaluate(() => {
+    const t = document.getElementById('painttray')!
+    const vis = (e: Element) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 }
+    const all = Array.from(t.querySelectorAll('button,input,.tick,.pcgrade')).filter(vis)
+    const by: Record<string, number> = {}
+    for (const e of all) { const k = e.matches('.tick') ? 'tick' : e.matches('.pcgrade') ? 'grade' : e.matches('.favbtn') ? 'cell' : e.matches('input') ? 'input:' + e.id : e.matches('.swatch') ? 'swatch' : e.id || e.className; by[k] = (by[k] ?? 0) + 1 }
+    return { total: all.length, by, slot: (window as any).__b2.app.paintSel.i }
+  })
+  OUT.census_always_visible = { def: '지시 §4 — 칠 패널에 «늘 보이는 누를 것»의 수(button · input · 눈금 점 .tick · 경도 글자 .pcgrade — 보이는 것만) · 슬롯에 따라 눈금 수가 다르다(연필 11 · 마커 13 · 잉크펜 18) · 69 인벤토리의 입력', ...always }
   OUT.g07_census = { def: '34-0 몫 — 새 손잡이(필통 칸·지우개 칸·경도·눈금)의 툴팁(#96 · 기존 규약 — 눈금·경도 글자는 새 툴팁 없음(지시 ⛔))과 elementFromPoint 닿음(#97)', census, tick: tickHit, grade: gradeHit }
   expect(ticks.length, '눈금이 있다').toBeGreaterThan(5)
   for (const r of ratios) expect(Math.abs(r - Math.SQRT2), '√2 등비').toBeLessThan(0.02)

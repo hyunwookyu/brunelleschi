@@ -88,7 +88,8 @@ test('작업대 — 열림·손잡이·브러시 선택·값의 왕복', async (
     Array.from(document.querySelectorAll('#tunelab-brushes button')).map(b => (b as HTMLElement).title))
   // web2-62 판갈이: 후보는 p5 내장 셋이 아니라 mypaint 프리셋 196 전부다(단추는 짧은 이름 · 툴팁에 전체 이름)
   // web2-66 판갈이: 앱 프리셋이 둘이 됐다(64 colored_pencil + 66 brunelleschi/marker — 납작 촉)
-  expect(brushBtns.length, '연필의 브러시 후보 — mypaint 196 전부 + 앱 프리셋 2(64 colored_pencil · 66 marker)').toBe(198)
+  // web2-68 §2 개정 자 판갈이 — 앱 프리셋 2 → **11**(+ 경도 가족 아홉: pencil_HB…_8B · charcoal_H/M/S)
+  expect(brushBtns.length, '연필의 브러시 후보 — mypaint 196 전부 + 앱 프리셋 11(64 colored_pencil · 66 marker · 68 경도 가족 아홉)').toBe(207)
   expect(brushBtns.some(t => t?.includes('classic/pencil')), '현행 기본(classic/pencil)이 후보 안').toBe(true)
   OUT.structure = { knobs: shape.knobs, params: shape.params, pencil_brush_candidates: brushBtns.length }
 
