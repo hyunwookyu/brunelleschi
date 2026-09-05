@@ -15,6 +15,8 @@
   --ink-paper: #3c3831;      /* 종이 «위»에 사는 글자·아이콘(띠·세로바·탭·상태줄) — 어두운 판에서도 종이는 밝으니 값이 안 바뀐다([M2]) */
   --ink-2-paper: #6f6a63;    /* 종이 위의 보조 잉크 */
   --line: #d8d2c4;           /* 구분선(쓰면 1px · 최소) */
+  --mark: #8a7f6a;           /* 캔버스 작도 표식(작도선·소실점 ✕) — 옛 값 그대로(70은 UI의 생김새만 · 그림 표식은 무변) */
+  --mark-2: #8d8880;         /* 뷰 큐브 모서리·면(«아이콘과 같은 무게» web2-48) — 옛 값 그대로 · files43 썸네일 대조군이 이 무게를 잰다 */
   --guide: #555555;          /* 축 스냅 안내 파선 — «무채색»(web2-10 지시 7 · draw.spec 채도 ≤ 12): 잉크 토큰은 따뜻한 회색이라 못 쓴다 */
   --accent: #2b5bd7;         /* 강조색 하나 — §2 대비 판정(원장 tokens70) */
   --select: #1a9c50;         /* 선택된 획 · 면 미리보기 초록(기존 값 — Feather 관습) */
@@ -46,6 +48,6 @@
 [data-theme=dark] {
   --panel: #262626;  --panel-2: #303030;  --panel-down: #1c1c1c;
   --ink: #e8e6e1;  --ink-2: #a09c95;  --line: #3d3d3d;
-  --accent: #7e9cf0;  --select: #4fc27c;  --warn: #d9a05a;  --guide: #9a9a9a;
+  --accent: #7e9cf0;  --select: #4fc27c;  --warn: #d9a05a;  --guide: #9a9a9a;   /* --mark·--mark-2는 종이 위 그림 — 같이 쓴다 */
   --pic-window: #2e2e2e;
 }

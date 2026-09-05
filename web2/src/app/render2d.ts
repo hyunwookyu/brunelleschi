@@ -127,7 +127,7 @@ const COL = {
   // 지평선(web2-12 7번) — 작도 대역으로 이관(재료가 아니다 — 위 지평선 블록 주석이 정본).
   // 격자(0.18)보다는 서고(작도의 뼈대) 종전 2H(알파 0.5)보다 옅다. 토글이 하한을 푼다.
   horizon: 'rgba(150,147,141,0.32)',
-  get construction() { return tok('--ink-2') },   // web2-70 — 작도 표식은 보조 잉크 토큰(옛 #8a7f6a → --ink-2 · 값 하나)
+  get construction() { return tok('--mark') },   // web2-70 — 작도 표식 토큰(옛 #8a7f6a 그대로)
   // ⚙️ **대기 획의 몸체 색은 여기 없다** — `core/waitfade.ts`의 `WAIT_INK`(논포토 블루)가
   // 그 자리다(web2-37 2번). 세 겹(#brushc·#ink·#layerc)이 다 읽어야 하는데 이 객체는
   // render2d 안에만 있고 filmlayer가 못 읽는다(순환) — 그래서 core로 갔다.
@@ -136,7 +136,7 @@ const COL = {
   get preview() { return tok('--accent') },
   // ⚠ 붉은색이었다 — 화면에 **상시** 떠 있는 표식이라 그림보다 눈에 띄었다(지시 3-c 대조표).
   // 소실점은 지평선과 같은 급의 작도 표식이므로 같은 색으로 물러난다.
-  get vpMark() { return tok('--ink-2') },
+  get vpMark() { return tok('--mark') },
   // 축 스냅 안내 — 무채색 파선(web2-10 지시 7). 선 자체는 재료색이고 «축에 붙었다»는
   // 이 파선이 말한다. 오스냅(2H·0.5)과 다른 대역(불투명 #555)이어야 한다 — 위 정본.
   get axisGuide() { return tok('--guide') },   // 무채색(web2-10 지시 7)
@@ -157,8 +157,8 @@ const COL = {
   // 모서리는 `--ui` 그대로다 — 세로바의 아이콘이 쓰는 바로 그 색이다(#54: 새 색 ⛔).
   // 알파 0.16의 근거는 **아이콘과 같은 무게**라는 지시 하나다(눈이 고른 값 — #12
   // 동작점이고 스윕이 없다). 되돌릴 조건: 밝은 배경에서 큐브의 면이 안 읽힌다.
-  get cubeFace() { return tokAlpha('--ink-2', 0.16) },
-  get cubeEdge() { return tok('--ink-2') },
+  get cubeFace() { return tokAlpha('--mark-2', 0.16) },
+  get cubeEdge() { return tok('--mark-2') },
 }
 
 // ── 잉크 번짐(web2-12 9번) — **획에 내재한 것만**: 머무름(체류) · 내림·뗌 · 가장자리 ──

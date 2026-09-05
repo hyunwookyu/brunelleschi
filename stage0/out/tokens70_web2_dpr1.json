@@ -2,12 +2,12 @@
   "conditions": {
     "project": "dpr1",
     "workers": 1,
-    "tree": "bf91433",
+    "tree": "b60b808",
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/tokens70.spec.ts (#99)"
   },
-  "run_id": "bf91433-0-mtoqj5",
+  "run_id": "b60b808-0-mtostt",
   "what": "web2-70 시각 시스템 게이트 — §1 토큰(16진수 0 · 토큰 수 · dark 덮음) · §2 강조색 대비(값) · 상태 셋(클래스만 · 못 누름 .35 실측) · §3 아이콘(이모지 0 · 글자만인 도구 단추 0 · 선 굵기 하나 · 세트 잔존 0 · 라이선스) · §4 판(둥글기 1종 · 여백 8의 배수 · 글자 크기 3종) · 반증 넷",
-  "tree": "bf91433",
+  "tree": "b60b808",
   "pitfall_citations": [
     109,
     108,
@@ -151,8 +151,8 @@
       }
     ],
     "offenders": [],
-    "token_count": 49,
-    "color_tokens": 37,
+    "token_count": 51,
+    "color_tokens": 39,
     "dark_overrides": 11,
     "must_dark": [
       "--panel",
@@ -172,6 +172,8 @@
       "--paper",
       "--ink-paper",
       "--ink-2-paper",
+      "--mark",
+      "--mark-2",
       "--pic-wood",
       "--pic-wood-hi",
       "--pic-wood-lo",
@@ -605,7 +607,7 @@
     },
     "bundle_grep": {
       "files": 2,
-      "phosphor_word": 1,
+      "phosphor_word": 0,
       "phosphor_paths": 0,
       "viewbox_256": 0
     },
