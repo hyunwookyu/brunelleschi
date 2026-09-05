@@ -126,9 +126,12 @@ test('① 칠 패널(64) — 도구를 들면 뜨고 놓으면 사라진다 · �
   expect(await page.locator('#painttray.open').count(), '도구를 놓으면 사라진다(작도 중에는 없다)').toBe(0)
   await page.click('#btn-paint')
   const rows = await page.locator('#painttray .rrow').count()
-  // 46 → 48(10) → 51(11) → 52(15) → 54(16) → 62(17) → **64: 여섯** — 브러시 견본 · 크기 · 불투명 · 색(원 + 최근) · 즐겨찾기 · 정면.
-  // 이 팔이 지키는 요구(「자리마다 무엇이 있는지가 값으로 못 박혀 있다」)는 그대로이고 표가 «줄어든» 것이다(64-7 · 지시 §2 도식).
-  expect(rows, '브러시 + 크기 + 불투명 + 색 + 즐겨찾기 + 정면(6)').toBe(6)
+  // 46 → 48(10) → 51(11) → 52(15) → 54(16) → 62(17) → 64(6) → **67: 여덟** — 브러시 견본 · 크기 ·
+  // 불투명 · 색(원 + 최근) · **색상 휠 행**(0-4 — 옆 펼침에서 패널 «안»으로 · 평소 hidden이되 DOM에
+  // 있다) · 즐겨찾기 · **지우개 행**(0-6 — 고정 칸 · 안의 단추 둘은 .ebtn이라 줄 셈 밖) · 정면.
+  // 이 팔이 지키는 요구(「자리마다 무엇이 있는지가 값으로 못 박혀 있다」)는 그대로다(67 판갈이).
+  expect(rows, '브러시 + 크기 + 불투명 + 색 + 휠 행 + 즐겨찾기 + 지우개 행 + 정면(8)').toBe(8)
+  expect(await page.locator('#paint-erase').count(), '지우개 고정 칸(67 0-6)').toBe(1)
   await page.evaluate(() => { const b2 = (window as any).__b2; b2.diag.setPaintHexForTest(b2.diag.materialToneForTest('wood', 2)) })
   const sel = await page.evaluate(() => (window as any).__b2.diag.mats46().paintSel)
   // 48-7: (재료, 톤) 쌍이 아니라 **색 hex 하나**다(#54). 64: 색을 골라도 슬롯은 안 바뀐다(잉크펜도 색을 쓴다).

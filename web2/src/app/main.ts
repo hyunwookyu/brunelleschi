@@ -2553,7 +2553,7 @@ let clampDotEl: HTMLElement | null = null
     row.className = 'rrow prow'
     const b = document.createElement('button')
     b.id = 'paint-erase'
-    b.className = 'rrow'
+    b.className = 'ebtn'         // ⚠ .rrow가 아니다 — 줄(.rrow) 셈(mats46 ①)은 «행»의 자다
     b.dataset.act = 'state'
     b.title = '지우개 — 펜 한 붓이 칠의 덮임을 지운다 · 다시 누르면 붓으로 · 스타일러스 뒷꼭지도 지우개다'
     b.innerHTML = '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 25 L5.5 17.5 L17.5 5.5 L25 13 Z"/><path d="M9.2 21.2 L13.7 25.7"/><path d="M5 27 h13" stroke-width="1.1"/></svg><span id="paint-erase-lbl">지우개</span>'
@@ -2567,7 +2567,7 @@ let clampDotEl: HTMLElement | null = null
     })
     const soft = document.createElement('button')
     soft.id = 'paint-erase-soft'
-    soft.className = 'rrow'
+    soft.className = 'ebtn'
     soft.dataset.act = 'state'
     soft.title = '지우개의 부드러움 — 경도 축 하나: 딱딱한(기본 — 마른 매체) / 부드러운'
     soft.addEventListener('click', () => {

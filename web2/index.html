@@ -459,9 +459,13 @@
        동안만 · 설명은 호버). 흐름 밖(absolute)이라 줄 배치를 안 민다. */
     #paint-clamp-dot { position: absolute; top: 5px; right: 5px; width: 9px; height: 9px;
                        border-radius: 50%; background: #c4813a; pointer-events: auto; }
-    /* 지우개 고정 칸(web2-67 0-6) — 즐겨찾기 옆 한 줄: [지우개] [경도]. 68(필통)이 자리를 다시 볼 수 있다. */
+    /* 지우개 고정 칸(web2-67 0-6) — 즐겨찾기 옆 한 줄: [지우개] [경도]. 68(필통)이 자리를 다시 볼 수 있다.
+       단추는 .ebtn(줄이 아니다 — .rrow 줄 셈(mats46 ①)을 오염시키면 안 된다). */
     #paint-erase-row { display: flex; gap: 6px; align-items: stretch; }
+    .ebtn { border: 1px solid rgba(60,56,49,.14); border-radius: 4px; background: rgba(255,255,255,.55);
+            cursor: pointer; touch-action: none; font: 13px system-ui, sans-serif; color: #3c3831; }
     #paint-erase { flex: 1; display: flex; align-items: center; gap: 6px; padding: 5px 8px; }
+    #paint-erase svg { width: 20px; height: 20px; }
     #paint-erase-soft { flex-shrink: 0; padding: 5px 8px; font-size: 12px; }
     #paint-erase.on, #paint-erase-soft.on { background: rgba(60, 56, 49, .14); }
     #painttray .rrow { box-shadow: none; background: transparent; }
