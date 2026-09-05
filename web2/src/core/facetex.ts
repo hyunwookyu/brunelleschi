@@ -21,7 +21,7 @@
 // «흰 장막»이 구조로 소멸한다. DEFERRED «칠은 제 겹을 가져야 한다» 행이 이 형태로 닫혔다).
 
 import type { Stroke, Face, CamPose } from './types'
-import { drawMark, drawMarksSeam, appendMarkSeam, instrOfTag, type SeamMark, type MarkBox } from './paintseam'
+import { drawMark, drawMarksSeam, appendMarkSeam, draftFeedSeam, draftFinishSeam, draftCancelSeam, draftSeamSupported, instrOfTag, type SeamMark, type MarkBox } from './paintseam'
 import { repBasis, repSegments, repVisibleFamilies, isRepId, type MatRepId } from './matrep'
 import type { ResolvedFace } from './face'
 import { hatch2d } from './hatch'
@@ -240,6 +240,56 @@ export function appendMarkOnTex(
   if (bg.width !== dims.w || bg.height !== dims.h) return null
   if (!inTex(s, rf.id, side)) return null
   return appendMarkSeam(canvas.getContext('2d')!, markOfStroke(s, box, dims), bg)
+}
+
+// ── web2-66 §1 ㉠㉡ — 초안 세션의 배선(자국 변환은 굽기와 **같은 함수** markOfStroke — #54) ──
+
+/** 그리는 중인 획을 세션에 먹인다(새 점만 · 닿은 사각만 합성). 'rebuild'/null의 뜻은 이음매. */
+export function draftFeedOnTex(
+  canvas: HTMLCanvasElement, bg: HTMLCanvasElement, rf: ResolvedFace, box: UvBox,
+  level: number, s: Stroke, side: 1 | -1 | 'e',
+): MarkBox | 'rebuild' | null {
+  const dims = texDims(box, level)
+  if (canvas.width !== dims.w || canvas.height !== dims.h) return null
+  if (bg.width !== dims.w || bg.height !== dims.h) return null
+  if (!inTex(s, rf.id, side)) return null
+  return draftFeedSeam(canvas.getContext('2d')!, markOfStroke(s, box, dims), bg)
+}
+
+/** 세션의 획을 완결한다(펜 떼기까지) — 층이 이 획을 굽기로 얹은 것과 같아진다(커밋 인계). */
+export function draftFinishOnTex(
+  canvas: HTMLCanvasElement, bg: HTMLCanvasElement, rf: ResolvedFace, box: UvBox,
+  level: number, s: Stroke, side: 1 | -1 | 'e',
+): MarkBox | null {
+  const dims = texDims(box, level)
+  if (canvas.width !== dims.w || canvas.height !== dims.h) return null
+  if (bg.width !== dims.w || bg.height !== dims.h) return null
+  if (!inTex(s, rf.id, side)) return null
+  return draftFinishSeam(canvas.getContext('2d')!, markOfStroke(s, box, dims), bg)
+}
+
+/** 세션을 버린다 — 층의 미완 도장은 rebuildStrokesOnTex/재굽기가 지운다. */
+export const draftCancelOnTex = (canvas: HTMLCanvasElement): void => draftCancelSeam(canvas)
+export const draftSupported = (): boolean => draftSeamSupported()
+
+/** **획들만 다시 세운다**(초안 재구축의 바닥) — 캔버스 ← 바탕(획 없는 판) 사본, 그 위에
+ *  확정 획 전부를 굽기 통로(drawMarksSeam — 층을 새로 세운다)로. bakeFaceTex에서 바탕
+ *  구성(흰/재료/해칭)만 뺀 것이라 그 결과와 픽셀로 같다(같은 함수 · #54). */
+export function rebuildStrokesOnTex(
+  canvas: HTMLCanvasElement, bg: HTMLCanvasElement, rf: ResolvedFace, box: UvBox,
+  level: number, strokes: Stroke[], side: 1 | -1 | 'e',
+): boolean {
+  const dims = texDims(box, level)
+  if (canvas.width !== dims.w || canvas.height !== dims.h) return false
+  if (bg.width !== dims.w || bg.height !== dims.h) return false
+  const g = canvas.getContext('2d')!
+  g.setTransform(1, 0, 0, 1, 0, 0)
+  g.globalCompositeOperation = 'copy'
+  g.globalAlpha = 1
+  g.drawImage(bg, 0, 0)
+  g.globalCompositeOperation = 'source-over'
+  drawMarksSeam(g, strokes.filter(s => inTex(s, rf.id, side)).map(s => markOfStroke(s, box, dims)))
+  return true
 }
 
 /** web2-52 — 재료를 텍스처에: 기본 톤(밝음)으로 바탕을 물들이고(곱 — 종이가 그 톤이 된다)

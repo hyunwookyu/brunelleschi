@@ -20,10 +20,11 @@ import { paintSideAt } from '../core/paint'
 import { borderQuads } from '../core/border'
 import { vkey } from '../core/joint'
 import { norm3, add3, mul3, type V3 } from '../core/vec'
-import { uvBoxOf, texLevel, bakeFaceTex, drawDraftOnTex, appendMarkOnTex, type UvBox, type RepBake } from '../core/facetex'
+import { uvBoxOf, texLevel, bakeFaceTex, drawDraftOnTex, appendMarkOnTex, draftFeedOnTex, draftFinishOnTex, draftCancelOnTex, draftSupported, rebuildStrokesOnTex, type UvBox, type RepBake } from '../core/facetex'
 import { paintLayerAlive, releasePaintLayer, type MarkBox } from '../core/paintseam'
 import { faceHatchSpacingWorld } from '../core/hatch'
 import type { Grade, Stroke, Face } from '../core/types'
+import type { ResolvedFace } from '../core/face'
 
 export interface R3D {
   renderer: THREE.WebGLRenderer
@@ -500,6 +501,7 @@ export interface PaintBakeStat {
   /** 그 재굽기들이 다시 그린 획의 합 */ bakedStrokes: number
   /** 누적 얹기(65) 횟수 — 수리 전에는 0이다 */ appends: number
   /** 얹기로 그린 획 수 */ appendStrokes: number
+  /** web2-66 — 커밋이 초안 세션의 층을 «넘겨받은» 획 수(다시 안 그렸다 — 게이트 ⑤의 짝) */ handoverStrokes: number
   /** 텍스처 업로드 횟수 */ uploads: number
   /** 텍스처 업로드 바이트(전량 = w·h·4 · 부분 = 더티 사각) */ uploadBytes: number
   /** 굽기·얹기에 든 시간(ms — 곁값) */ ms: number
@@ -510,7 +512,7 @@ export interface PaintBakeStat {
   /** 캔버스 크기가 바뀌어 GPU 텍스처를 다시 할당시킨 횟수(아래 ⚠⚠ — 0이면 옛 그림이 늘어난다) */ texReallocs: number
 }
 const zeroBakeStat = (): PaintBakeStat => ({
-  bakes: 0, bakedStrokes: 0, appends: 0, appendStrokes: 0,
+  bakes: 0, bakedStrokes: 0, appends: 0, appendStrokes: 0, handoverStrokes: 0,
   uploads: 0, uploadBytes: 0, ms: 0, drops: 0, rebuilds: 0, syncs: 0, evicts: 0, texReallocs: 0,
 })
 let bakeStat: PaintBakeStat = zeroBakeStat()
@@ -527,12 +529,27 @@ export function resetPaintBakeStats(): void { bakeStat = zeroBakeStat() }
 let paintAccumOff = false
 export function setPaintAccumOffForTest(v: boolean): void {
   paintAccumOff = v
-  for (const e of paintTexes.values()) { e.bakeSig = ''; e.level = 0; if (v) e.bg = null }
+  for (const e of paintTexes.values()) { e.bakeSig = ''; e.level = 0; if (v) e.bg = null; draftCancelOnTex(e.canvas) }
+  draftRecs.clear()                              // web2-66 — bg 없이는 세션도 없다(옛 전량 판으로)
 }
 export const paintAccumOffForTest = (): boolean => paintAccumOff
 /** 부분 업로드를 끈다 → 업로드 바이트가 전량으로 돌아간다(픽셀은 같아야 한다 — ④의 반증) */
 let paintPartialOff = false
 export function setPaintPartialOffForTest(v: boolean): void { paintPartialOff = v }
+
+// ── web2-66 §1 ㉠ — 초안 «얼리기»의 장부와 반증 스위치 ─────────────────────────────────
+/** 캔버스별 초안 장부 — 세션이 층에 «완결»로 담은 초안 획들(차례)과 지금 열린 획의 id.
+ *  커밋 인계(gatePaintTex)가 이 장부로 «이미 층에 있는 획»을 다시 안 그린다. */
+interface DraftRec { done: { id: number; sig: string }[]; openId: number | null }
+const draftRecs = new Map<HTMLCanvasElement, DraftRec>()
+/** 게이트 ①의 반증(D-3) — 얼리기를 끄면 옛 전량 되그리기 판으로: pre의 이동량이 돌아온다 */
+let paintFreezeOff = false
+export function setPaintFreezeOffForTest(v: boolean): void {
+  paintFreezeOff = v
+  for (const e of paintTexes.values()) draftCancelOnTex(e.canvas)
+  draftRecs.clear()
+}
+export const paintFreezeOffForTest = (): boolean => paintFreezeOff
 
 // ── web2-65 ⑤ 메모리 상한과 LRU ──────────────────────────────────────────────────
 let texBudget = C.PAINT65_TEX_BUDGET_BYTES
@@ -586,6 +603,8 @@ function dropPaintTex(r: R3D, e: PaintTexEntry): void {
   e.mesh.geometry.dispose()
   ;(e.mesh.material as THREE.Material).dispose()
   e.tex.dispose()
+  draftCancelOnTex(e.canvas)                     // web2-66 — 초안 세션·장부도 함께 버린다
+  draftRecs.delete(e.canvas)
   releasePaintLayer(e.canvas)
   bakeStat.drops++
 }
@@ -871,24 +890,53 @@ function gatePaintTex(r: R3D, app: App) {
         const t0 = performance.now()
         let dirty: MarkBox | null = null
         let ok = true
+        // web2-66 — **초안 인계**: 그리는 동안 세션이 층에 담은 획은 다시 안 그린다.
+        // 완결된 것(rec.done — 캔버스·GPU까지 이미 올라갔다)은 장부만 지우고, 열린 것은
+        // draftFinishOnTex가 펜 떼기까지 완결한다(그 층 상태 = 이 획을 얹은 것과 같다 —
+        // 이음매 draftFinish 머리주석). 장부와 커밋이 한 자라도 어긋나면 전량 재굽기다.
+        const rec = draftRecs.get(e.canvas)
+        let recDone = 0
         for (let i = e.sigs.length; i < strokes.length; i++) {
-          const b = appendMarkOnTex(e.canvas, e.bg!, rf, e.box, lv, strokes[i]!, e.side as 1 | -1 | 'e')
-          if (!b) { ok = false; break }
-          bakeStat.appendStrokes++
+          const s = strokes[i]!
+          let b: MarkBox | null
+          if (rec && recDone < rec.done.length) {
+            if (rec.done[recDone]!.id === s.id && rec.done[recDone]!.sig === sigs[i]) {
+              recDone++
+              bakeStat.handoverStrokes++
+              continue                                   // 이미 층·캔버스·GPU에 있다(초안 프레임이 올렸다)
+            }
+            ok = false; break
+          } else if (rec && rec.openId !== null) {
+            if (rec.openId !== s.id) { ok = false; break }
+            b = draftFinishOnTex(e.canvas, e.bg!, rf, e.box, lv, s, e.side as 1 | -1 | 'e')
+            if (!b) { ok = false; break }
+            rec.openId = null
+            bakeStat.handoverStrokes++
+          } else {
+            b = appendMarkOnTex(e.canvas, e.bg!, rf, e.box, lv, s, e.side as 1 | -1 | 'e')
+            if (!b) { ok = false; break }
+            bakeStat.appendStrokes++
+          }
           if (b.x1 >= b.x0) {
             dirty = dirty ? { x0: Math.min(dirty.x0, b.x0), y0: Math.min(dirty.y0, b.y0), x1: Math.max(dirty.x1, b.x1), y1: Math.max(dirty.y1, b.y1) } : b
           }
         }
+        // 장부가 정확히 소진됐어야 한다 — 남으면 커밋 안 된 초안이 층에 있다(전량으로)
+        if (ok && rec && (recDone !== rec.done.length || rec.openId !== null)) ok = false
         bakeStat.ms += performance.now() - t0
         if (ok) {
           bakeStat.appends++
           e.sigs = sigs
+          draftRecs.delete(e.canvas)                     // 인계 끝 — 장부를 접는다
           if (dirty) uploadPaintRect(r, e, dirty)      // ④ 부분 업로드 — 더티 사각만
           done = true
         }
-        // ok가 false면 층이 도중에 죽은 것이다 — 아래 전량 재굽기가 받는다(조용한 갈림 ⛔)
+        // ok가 false면 층이 도중에 죽었거나 초안 장부가 어긋난 것이다 — 아래 전량 재굽기가 받는다(조용한 갈림 ⛔)
       }
       if (!done && (bakeSig !== e.bakeSig || !sigsArePrefix(sigs, e.sigs) || sigs.length !== e.sigs.length)) {
+        // web2-66 — 전량 재굽기는 층을 새로 세운다: 초안 세션·장부도 여기서 접는다
+        draftCancelOnTex(e.canvas)
+        draftRecs.delete(e.canvas)
         if (!e.bg && !paintAccumOff) e.bg = document.createElement('canvas')
         if (paintAccumOff) e.bg = null
         const t0 = performance.now()
@@ -940,15 +988,21 @@ let partialTex: THREE.CanvasTexture | null = null
  *  ⚠ `flipY`가 참이라 전량 업로드에서 캔버스 행 y는 GL 행 H−1−y에 앉는다. 부분도 같은 자리에
  *  앉히려면 도착 y는 `H − (y0 + h)`다(FLIP_Y가 사각 «안»을 다시 뒤집는다).
  *  못 하는 조건(반증 스위치·사각이 전량만 하다·던짐)에서는 전량으로 올린다 — 조용히 안 올리지 않는다. */
-function uploadPaintRect(r: R3D, e: PaintTexEntry, b: MarkBox): void {
+function uploadPaintRect(r: R3D, e: PaintTexEntry, b: MarkBox, forDraft = false): void {
   const W = e.canvas.width, H = e.canvas.height
   const x0 = Math.max(0, b.x0), y0 = Math.max(0, b.y0)
   const x1 = Math.min(W - 1, b.x1), y1 = Math.min(H - 1, b.y1)
   const w = x1 - x0 + 1, h = y1 - y0 + 1
+  // web2-66 — 초안 프레임의 업로드는 제 계수기(draftStat)에 센다: 굽기 계수기(perf65의 자)에
+  // 섞이면 커밋 한 번의 값이 그 붓의 «그리는 중» 몫까지 든 것으로 읽힌다(#89 — 초록의 범위).
+  const st = forDraft
+    ? { up: () => { draftStat.uploads++ }, bytes: (n: number) => { draftStat.uploadBytes += n } }
+    : { up: () => { bakeStat.uploads++ }, bytes: (n: number) => { bakeStat.uploadBytes += n } }
   const full = () => {
     e.tex.needsUpdate = true
-    bakeStat.uploads++
-    bakeStat.uploadBytes += W * H * 4
+    st.up()
+    st.bytes(W * H * 4)
+    if (forDraft) draftStat.fullUploads++
   }
   if (w <= 0 || h <= 0) return
   if (paintPartialOff || W === 0 || H === 0 || w * h >= W * H) { full(); return }
@@ -966,8 +1020,8 @@ function uploadPaintRect(r: R3D, e: PaintTexEntry, b: MarkBox): void {
     pg.globalAlpha = 1
     pg.drawImage(e.canvas, x0, y0, w, h, 0, 0, w, h)
     r.renderer.copyTextureToTexture(partialTex, e.tex, null, new THREE.Vector2(x0, H - (y0 + h)))
-    bakeStat.uploads++
-    bakeStat.uploadBytes += w * h * 4
+    st.up()
+    st.bytes(w * h * 4)
   } catch {
     // 부분 업로드가 안 서는 환경 — 전량으로 떨어진다(값으로 보인다: uploadBytes가 전량이다)
     full()
@@ -985,6 +1039,8 @@ function evictPaintTex(r: R3D): void {
   for (const e of cands) {
     if (bytes <= texBudget) break
     bytes -= e.canvas.width * e.canvas.height * 4 + (e.bg ? e.bg.width * e.bg.height * 4 : 0)
+    draftCancelOnTex(e.canvas)                   // web2-66 — 세션·장부는 층과 운명을 같이한다
+    draftRecs.delete(e.canvas)
     releasePaintLayer(e.canvas)
     e.canvas.width = 0; e.canvas.height = 0
     e.bg = null
@@ -1008,14 +1064,64 @@ function evictPaintTex(r: R3D): void {
  *  ⚠ 상한 포화(gate.clamped)는 여기서 읽는다 — «조용히 뭉개지 마라»의 알림은 main이 낸다. */
 let draftClampedNow = false
 let draftAppliedNow = 0
+// ── web2-66 초안 계수기(D-1 표식 — «그리는 중» 프레임마다 무엇이 얼마나 도는가) ─────────
+export interface PaintDraftStat {
+  /** draft가 실제로 그려진 프레임 수 */ frames: number
+  /** 그 프레임들에 든 시간 합(ms — 곁값 · 정본은 도장 수) */ ms: number
+  /** 마지막 프레임의 시간(ms) */ lastMs: number
+  /** 덧그린 획 수 합(pre = 매 프레임 전체 획) */ strokes: number
+  /** 업로드 횟수 */ uploads: number
+  /** 업로드 바이트(pre = 매 프레임 캔버스 전량 w·h·4) */ uploadBytes: number
+  /** 전량 업로드 횟수(66 ⑥ — post에서 0이어야 한다) */ fullUploads: number
+  /** 세션 재구축 횟수(66 — 얼린 매개변수가 갈릴 때만 · pre에는 개념이 없다 = 0) */ rebuilds: number
+}
+const zeroDraftStat = (): PaintDraftStat => ({ frames: 0, ms: 0, lastMs: 0, strokes: 0, uploads: 0, uploadBytes: 0, fullUploads: 0, rebuilds: 0 })
+let draftStat: PaintDraftStat = zeroDraftStat()
+export function paintDraftFrameStats(): PaintDraftStat {
+  return { ...draftStat, ms: Math.round(draftStat.ms * 100) / 100, lastMs: Math.round(draftStat.lastMs * 100) / 100 }
+}
+export function resetPaintDraftFrameStats(): void { draftStat = zeroDraftStat() }
+/** 이 (면,쪽)의 확정 칠 획들(굽기 입력과 같은 함수 — 아래 인계·재구축이 쓴다) */
+function committedStrokesOf(app: App, e: PaintTexEntry): Stroke[] {
+  return e.side === 'e' ? borderStrokesOf(app, e.faceId)
+    : e.side === 0 ? [] : paintStrokesOf(app, e.faceId, e.side)
+}
+
+/** 옛 전량 되그리기 판(59~65) — **폴백·반증 전용**(paintFreezeOff · 누적 끔 · 세션 불가).
+ *  base 사본 ← canvas, canvas ← base, 그 위에 draft 전체를 덧그리고 전량 업로드. */
+function applyDraftFullRedraw(e: PaintTexEntry, rf: ResolvedFace, mine: Stroke[]): number {
+  if (!e.base) {
+    const b = document.createElement('canvas')
+    b.width = e.canvas.width; b.height = e.canvas.height
+    b.getContext('2d')!.drawImage(e.canvas, 0, 0)
+    e.base = b
+  }
+  const g = e.canvas.getContext('2d')!
+  g.setTransform(1, 0, 0, 1, 0, 0)
+  g.globalCompositeOperation = 'source-over'
+  g.globalAlpha = 1
+  g.drawImage(e.base, 0, 0)
+  const applied = drawDraftOnTex(e.canvas, rf, e.box, e.level, mine, e.side === 0 ? 1 : e.side)
+  e.tex.needsUpdate = true
+  draftStat.uploads++
+  draftStat.fullUploads++
+  draftStat.uploadBytes += e.canvas.width * e.canvas.height * 4
+  return applied
+}
+
 function applyPaintDraft(r: R3D, app: App) {
   const d = app.paintDraft
   draftClampedNow = false
   draftAppliedNow = 0
+  const t0 = performance.now()
+  let drew = false
   for (const e of paintTexes.values()) {
     const mine = d ? d.filter(s => s.paint !== undefined && s.paint.f === e.faceId &&
       (e.side === 'e' ? s.paint.e === 1 : s.paint.e === undefined && s.paint.s === e.side)) : []
+    const rf = app.faces.find(x => x.id === e.faceId)
+    const side = e.side === 0 ? 1 : e.side
     if (mine.length === 0) {
+      // 옛 판의 사본 되돌림(폴백이 얹었을 때 — 59 그대로)
       if (e.base) {
         const g = e.canvas.getContext('2d')!
         g.setTransform(1, 0, 0, 1, 0, 0)
@@ -1025,25 +1131,121 @@ function applyPaintDraft(r: R3D, app: App) {
         e.base = null
         e.tex.needsUpdate = true
       }
+      // web2-66 — 세션 고아: 초안이 커밋 없이 떠났다(어긋냄 반증·면 이탈). 층의 미완 도장을
+      // 걷고 확정 획만으로 되세운다. (커밋된 초안은 gatePaintTex의 인계가 이미 접었다 —
+      // 프레임 안에서 gate가 이 함수보다 먼저 돈다.)
+      const rec = draftRecs.get(e.canvas)
+      if (rec) {
+        draftRecs.delete(e.canvas)
+        draftCancelOnTex(e.canvas)
+        if (rf && e.bg && e.level > 0 &&
+            rebuildStrokesOnTex(e.canvas, e.bg, rf, e.box, e.level, committedStrokesOf(app, e), side)) {
+          e.tex.needsUpdate = true
+          draftStat.uploads++
+          draftStat.fullUploads++
+          draftStat.uploadBytes += e.canvas.width * e.canvas.height * 4
+          drew = true
+        } else { e.bakeSig = ''; e.docKey = '' }         // 다음 게이트가 전량으로 받는다
+      }
       continue
     }
-    const rf = app.faces.find(x => x.id === e.faceId)
     if (!rf || e.level === 0) continue
-    if (!e.base) {
-      const b = document.createElement('canvas')
-      b.width = e.canvas.width; b.height = e.canvas.height
-      b.getContext('2d')!.drawImage(e.canvas, 0, 0)
-      e.base = b
+    // ── 세션 경로(66 ㉠㉡㉢) — 얼린 확정 구간 + 새 도장만 + 부분 업로드 ────────────────
+    const useSess = !paintFreezeOff && !paintAccumOff && e.bg !== null && draftSupported()
+    if (!useSess) {
+      draftAppliedNow += applyDraftFullRedraw(e, rf, mine)
+      drew = true
+      draftStat.strokes += mine.length
+      const gateF = e.mesh.userData.gate as { clamped?: boolean } | undefined
+      if (gateF?.clamped) draftClampedNow = true
+      continue
     }
-    const g = e.canvas.getContext('2d')!
-    g.setTransform(1, 0, 0, 1, 0, 0)
-    g.globalCompositeOperation = 'source-over'
-    g.globalAlpha = 1
-    g.drawImage(e.base, 0, 0)
-    draftAppliedNow += drawDraftOnTex(e.canvas, rf, e.box, e.level, mine, e.side === 0 ? 1 : e.side)
-    e.tex.needsUpdate = true
+    let rec = draftRecs.get(e.canvas)
+    if (!rec) { rec = { done: [], openId: null }; draftRecs.set(e.canvas, rec) }
+    const finCount = mine.length - 1
+    // 장부 검증 — 끝난 초안 획들이 지금 목록의 앞자리 그대로인가(어긋나면 재구축)
+    let valid = rec.done.length <= finCount ||
+      (rec.done.length === mine.length && rec.openId === null)   // 모두 끝났고 새 점만 기다리는 프레임
+    for (let i = 0; valid && i < Math.min(rec.done.length, mine.length); i++) {
+      if (rec.done[i]!.id !== mine[i]!.id || rec.done[i]!.sig !== sigOfPaintStroke(mine[i]!)) valid = false
+    }
+    if (valid && rec.openId !== null &&
+        (rec.done.length >= mine.length || rec.openId !== mine[rec.done.length]!.id)) valid = false
+    let dirty: MarkBox | null = null
+    const addDirty = (b: MarkBox | null) => {
+      if (b && b.x1 >= b.x0) {
+        dirty = dirty ? { x0: Math.min(dirty.x0, b.x0), y0: Math.min(dirty.y0, b.y0), x1: Math.max(dirty.x1, b.x1), y1: Math.max(dirty.y1, b.y1) } : b
+      }
+    }
+    /** 층을 다시 세우고 초안 전부를 재먹임(얼린 결정이 갈렸을 때 — 드물다: cp 문턱 눈금 이동 등) */
+    const rebuildAll = (): boolean => {
+      draftCancelOnTex(e.canvas)
+      rec!.done = []; rec!.openId = null
+      if (!e.bg || !rebuildStrokesOnTex(e.canvas, e.bg, rf, e.box, e.level, committedStrokesOf(app, e), side)) return false
+      draftStat.rebuilds++
+      for (let i = 0; i < mine.length; i++) {
+        const s = mine[i]!
+        const fr = draftFeedOnTex(e.canvas, e.bg, rf, e.box, e.level, s, side)
+        if (fr === null || fr === 'rebuild') return false
+        if (i < mine.length - 1) {
+          if (!draftFinishOnTex(e.canvas, e.bg, rf, e.box, e.level, s, side)) return false
+          rec!.done.push({ id: s.id, sig: sigOfPaintStroke(s) })
+        } else rec!.openId = s.id
+      }
+      e.tex.needsUpdate = true                             // 층이 통째로 갈렸다 — 전량 업로드
+      draftStat.uploads++
+      draftStat.fullUploads++
+      draftStat.uploadBytes += e.canvas.width * e.canvas.height * 4
+      return true
+    }
+    const step = (): boolean => {
+      if (!valid) return rebuildAll()
+      // 새로 끝난 획(면을 떠났다 다시 들어온 붓)을 완결한다
+      while (rec!.done.length < finCount) {
+        const s = mine[rec!.done.length]!
+        if (rec!.openId === null) {
+          const fr = draftFeedOnTex(e.canvas, e.bg!, rf, e.box, e.level, s, side)
+          if (fr === 'rebuild' || fr === null) return rebuildAll()
+          addDirty(fr)
+        }
+        const fb = draftFinishOnTex(e.canvas, e.bg!, rf, e.box, e.level, s, side)
+        if (!fb) return rebuildAll()
+        addDirty(fb)
+        rec!.openId = null
+        rec!.done.push({ id: s.id, sig: sigOfPaintStroke(s) })
+      }
+      // 자라는 획 — 새 점만 먹인다(확정 구간의 도장은 층에 그대로다 — 게이트 ①)
+      const cur = mine[mine.length - 1]!
+      if (rec!.done.length === mine.length) return true     // 모두 끝났다(다음 run 대기)
+      const fr = draftFeedOnTex(e.canvas, e.bg!, rf, e.box, e.level, cur, side)
+      if (fr === 'rebuild' || fr === null) return rebuildAll()
+      addDirty(fr)
+      rec!.openId = cur.id
+      return true
+    }
+    if (step()) {
+      if (dirty) { uploadPaintRect(r, e, dirty, true); drew = true }
+    } else {
+      // 마지막 폴백 — 세션이 못 서는 상태(층·바탕이 죽음): 옛 전량 판으로(조용한 미표시 ⛔)
+      draftRecs.delete(e.canvas)
+      draftCancelOnTex(e.canvas)
+      draftAppliedNow += applyDraftFullRedraw(e, rf, mine)
+      drew = true
+      draftStat.strokes += mine.length
+      const gateF = e.mesh.userData.gate as { clamped?: boolean } | undefined
+      if (gateF?.clamped) draftClampedNow = true
+      continue
+    }
+    draftAppliedNow += mine.length
+    draftStat.strokes += mine.length
     const gate = e.mesh.userData.gate as { clamped?: boolean } | undefined
     if (gate?.clamped) draftClampedNow = true
+  }
+  if (drew) {
+    const dt = performance.now() - t0
+    draftStat.frames++
+    draftStat.ms += dt
+    draftStat.lastMs = dt
   }
 }
 /** 지금 프레임의 미리보기가 상한 포화 텍스처에 얹혔는가 — 알림(main)의 판정자 */
