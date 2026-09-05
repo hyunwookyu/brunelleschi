@@ -12,6 +12,7 @@
 // 자리: **설정에 숨는다**(R8). #97 대비: 시험 캔버스는 전역 `canvas` 규칙에 물리므로
 // position·inset을 명시로 되돌리고, 줄들은 flex-shrink:0을 명시한다.
 
+import { tok } from '../ui/tokens'
 import { drawMark, paintRenderer, INSTRS58, type Instr58 } from '../core/paintseam'
 import { MAT } from '../core/material'
 import { C } from '../core/constants'
@@ -54,9 +55,9 @@ export function initTuneLab(opts: {
   // `hidden`을 이겨 패널이 투명하게 포인터를 삼킨 그 결함(#97의 사촌) 그대로의 처방이다.
   root.style.cssText = [
     'position:fixed', 'right:12px', 'top:56px', 'width:472px', 'max-height:calc(100vh - 80px)',
-    'overflow-y:auto', 'background:#f6f3ec', 'border:1px solid #c9c2b4', 'border-radius:8px',
+    'overflow-y:auto', 'background:var(--panel)', 'border:1px solid var(--line)', 'border-radius:var(--radius)',
     'box-shadow:0 6px 24px rgba(60,56,49,.25)', 'padding:10px', 'z-index:40',
-    'display:none', 'flex-direction:column', 'gap:8px', 'font-size:12px', 'color:#3c3831',
+    'display:none', 'flex-direction:column', 'gap:8px', 'font-size:12px', 'color:var(--ink)',
   ].join(';')
 
   const row = (gap = 6): HTMLDivElement => {
@@ -105,8 +106,8 @@ export function initTuneLab(opts: {
   // 내려도 판이 위에 붙는다. #97의 전역 canvas 규칙을 명시로 덮는 것은 종전과 같다.
   cv.style.cssText = [
     'position:sticky', 'top:0', 'inset:auto', 'z-index:1',
-    `width:${CV_W}px`, `height:${CV_H}px`, 'background:#fffdf8',
-    'border:1px solid #d8d2c4', 'border-radius:4px', 'touch-action:none', 'flex-shrink:0',
+    `width:${CV_W}px`, `height:${CV_H}px`, 'background:var(--panel)',
+    'border:1px solid var(--line)', 'border-radius:var(--radius)', 'touch-action:none', 'flex-shrink:0',
   ].join(';')
   cv.title = '여기에 그어 본다 — 지금 값의 자국이 그대로 남는다(제품과 같은 함수)'
 
@@ -140,7 +141,7 @@ export function initTuneLab(opts: {
     g.globalCompositeOperation = 'source-over'
     g.globalAlpha = 1
     g.clearRect(0, 0, cv.width, cv.height)
-    g.fillStyle = '#fffdf8'                                   // 흰 판(면 텍스처 규약 — 곱의 항등 쪽)
+    g.fillStyle = tok('--panel')                                   // 흰 판(면 텍스처 규약 — 곱의 항등 쪽)
     g.fillRect(0, 0, cv.width, cv.height)
     const all = [sampleStroke(), ...strokes]
     all.forEach((s, idx) => drawOne(s, idx))

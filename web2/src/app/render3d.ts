@@ -2,6 +2,7 @@
 // 사영은 core/camera.ts의 모델과 같아야 한다(불변식 k) — 주점·f를 그대로
 // 투영 행렬에 넣는다. 시야각·중심 가정을 따로 만들지 않는다.
 
+import { tok } from '../ui/tokens'
 import { filmSplit } from './filmlayer'
 import * as THREE from 'three'
 import { Line2 } from 'three/addons/lines/Line2.js'
@@ -430,11 +431,11 @@ function syncHatch(r: R3D, app: App) {
 let repKey = ''
 const repMats: Record<'major' | 'minor', THREE.LineBasicMaterial> = {
   major: new THREE.LineBasicMaterial({
-    color: new THREE.Color('#6f6a63'), transparent: true, opacity: C.REP_ALPHA_MAJOR,
+    color: new THREE.Color(tok('--ink-2')), transparent: true, opacity: C.REP_ALPHA_MAJOR,
     depthTest: false, depthWrite: false,
   }),
   minor: new THREE.LineBasicMaterial({
-    color: new THREE.Color('#6f6a63'), transparent: true, opacity: C.REP_ALPHA_MINOR,
+    color: new THREE.Color(tok('--ink-2')), transparent: true, opacity: C.REP_ALPHA_MINOR,
     depthTest: false, depthWrite: false,
   }),
 }
@@ -1349,7 +1350,7 @@ export function corruptPaintTexForTest(): number {
   let n = 0
   for (const e of paintTexes.values()) {
     const g = e.canvas.getContext('2d')!
-    g.fillStyle = '#000000'
+    g.fillStyle = C.BLACK_HEX
     g.fillRect(0, 0, Math.max(8, e.canvas.width >> 2), Math.max(8, e.canvas.height >> 2))
     e.tex.needsUpdate = true
     n++

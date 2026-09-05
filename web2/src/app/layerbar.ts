@@ -20,20 +20,15 @@ import type { Layer, Paper } from '../core/types'
 import { paperName } from '../core/types'
 import { C } from '../core/constants'
 import { registerBox, closeOtherBoxes } from './boxes'
+import { ICON_EYE, ICON_EYE_OFF, ICON_LOCK, ICON_PLUS, sized } from '../ui/icons'
 
-// Phosphor light(MIT · @phosphor-icons/core assets/light — path 그대로. web2-19 4부와 같은 이식)
-const EYE = 'M245.48,125.57c-.34-.78-8.66-19.23-27.24-37.81C201,70.54,171.38,50,128,50S55,70.54,37.76,87.76c-18.58,18.58-26.9,37-27.24,37.81a6,6,0,0,0,0,4.88c.34.77,8.66,19.22,27.24,37.8C55,185.47,84.62,206,128,206s73-20.53,90.24-37.75c18.58-18.58,26.9-37,27.24-37.8A6,6,0,0,0,245.48,125.57ZM128,194c-31.38,0-58.78-11.42-81.45-33.93A134.77,134.77,0,0,1,22.69,128,134.56,134.56,0,0,1,46.55,95.94C69.22,73.42,96.62,62,128,62s58.78,11.42,81.45,33.94A134.56,134.56,0,0,1,233.31,128C226.94,140.21,195,194,128,194Zm0-112a46,46,0,1,0,46,46A46.06,46.06,0,0,0,128,82Zm0,80a34,34,0,1,1,34-34A34,34,0,0,1,128,162Z'
-const EYE_SLASH = 'M52.44,36A6,6,0,0,0,43.56,44L64.44,67c-37.28,21.9-53.23,57-53.92,58.57a6,6,0,0,0,0,4.88c.34.77,8.66,19.22,27.24,37.8C55,185.47,84.62,206,128,206a124.91,124.91,0,0,0,52.57-11.25l23,25.29a6,6,0,0,0,8.88-8.08Zm48.62,71.32,45,49.52a34,34,0,0,1-45-49.52ZM128,194c-31.38,0-58.78-11.42-81.45-33.93A134.57,134.57,0,0,1,22.69,128c4.29-8.2,20.1-35.18,50-51.91L92.89,98.3a46,46,0,0,0,61.35,67.48l17.81,19.6A113.47,113.47,0,0,1,128,194Zm6.4-99.4a6,6,0,0,1,2.25-11.79,46.17,46.17,0,0,1,37.15,40.87,6,6,0,0,1-5.42,6.53l-.56,0a6,6,0,0,1-6-5.45A34.1,34.1,0,0,0,134.4,94.6Zm111.08,35.85c-.41.92-10.37,23-32.86,43.12a6,6,0,1,1-8-8.94A134.07,134.07,0,0,0,233.31,128a134.67,134.67,0,0,0-23.86-32.07C186.78,73.42,159.38,62,128,62a120.19,120.19,0,0,0-19.69,1.6,6,6,0,1,1-2-11.83A131.12,131.12,0,0,1,128,50c43.38,0,73,20.54,90.24,37.76,18.58,18.58,26.9,37,27.24,37.81A6,6,0,0,1,245.48,130.45Z'
-const LOCK = 'M208,82H174V56a46,46,0,0,0-92,0V82H48A14,14,0,0,0,34,96V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V96A14,14,0,0,0,208,82ZM94,56a34,34,0,0,1,68,0V82H94ZM210,208a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V96a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2Z'
+// web2-70 §3 — 눈·자물쇠·「+」는 아이콘 세트(Lucide · src/ui/icons.ts)에서 — Phosphor 이식은 지웠다(#109 지운 것의 목록 · NOTES 70)
 
 // 롤 아이콘 — docs/instrument-icons.md 「트레이싱지 롤 / 옐로 트레이스 롤」 정본 그대로
-// (path 수정 금지 · 옐로만 고리를 #e9d98a로 채운다 — 선 아이콘의 유일한 색 예외).
+// (path 수정 금지 · 옐로만 고리를 var(--pic-yellow)로 채운다 — 선 아이콘의 유일한 색 예외).
 // export — 손 띠의 롤 버튼(web2-21 3-a·main.ts)이 같은 정본을 쓴다(#54: 그림 출처 하나).
 export const ROLL_TRACING = '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="15" r="8.2"/><circle cx="13.5" cy="15" r="2.8"/><path d="M13.5 23.2 H27.5"/></svg>'
-export const ROLL_YELLOW = '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path fill="#e9d98a" stroke="none" fill-rule="evenodd" d="M13.5 6.8 a8.2 8.2 0 1 1 0 16.4 a8.2 8.2 0 1 1 0 -16.4 Z M13.5 12.2 a2.8 2.8 0 1 0 0 5.6 a2.8 2.8 0 1 0 0 -5.6 Z"/><circle cx="13.5" cy="15" r="8.2"/><circle cx="13.5" cy="15" r="2.8"/><path d="M13.5 23.2 H27.5"/></svg>'
-
-const glyph = (d: string, size = 12): string =>
-  `<svg viewBox="0 0 256 256" fill="currentColor" width="${size}" height="${size}"><path d="${d}"/></svg>`
+export const ROLL_YELLOW = '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path fill="var(--pic-yellow)" stroke="none" fill-rule="evenodd" d="M13.5 6.8 a8.2 8.2 0 1 1 0 16.4 a8.2 8.2 0 1 1 0 -16.4 Z M13.5 12.2 a2.8 2.8 0 1 0 0 5.6 a2.8 2.8 0 1 0 0 -5.6 Z"/><circle cx="13.5" cy="15" r="8.2"/><circle cx="13.5" cy="15" r="2.8"/><path d="M13.5 23.2 H27.5"/></svg>'
 
 /** 2-a 안내 문구 — 종속 탭 「+」와 손 띠 롤 버튼(web2-21 3-a)이 같은 문구를 **한 상수**로
  *  쓴다(#54 — 문자열 복제는 자동이 못 잡는 두 자리다, 3·4부 리뷰 [12]). */
@@ -128,7 +123,7 @@ export function initLayerbar(app: App, host: HTMLElement, hooks: LayerbarHooks):
     const add = document.createElement('button')
     add.id = 'layer-add'
     add.className = 'ltab ladd'
-    add.innerHTML = '<svg viewBox="0 0 256 256" fill="currentColor" width="11" height="11"><path d="M222,128a6,6,0,0,1-6,6H134v82a6,6,0,0,1-12,0V134H40a6,6,0,0,1,0-12h82V40a6,6,0,0,1,12,0v82h82A6,6,0,0,1,222,128Z"/></svg>'
+    add.innerHTML = sized(ICON_PLUS, 11)
     const done = app.lift.an.constructionDone
     add.classList.toggle('disabled', !done)
     add.title = done ? '종이를 얹는다 — 트레이싱지·옐로' : '소실점 작도가 끝나야 얹을 수 있다'
@@ -223,12 +218,12 @@ export function initLayerbar(app: App, host: HTMLElement, hooks: LayerbarHooks):
     // 켬/끔 표식(= 토글) · 잠금 표식(= 토글) — **줄이 넓어 손가락이 정확히 안 가도 된다**
     const eye = document.createElement('button')
     eye.className = 'lctl leye'
-    eye.innerHTML = glyph(lay.on ? EYE : EYE_SLASH, 14)
+    eye.innerHTML = sized(lay.on ? ICON_EYE : ICON_EYE_OFF, 14)
     eye.title = lay.on ? '끈다 — 안 보이고 3D에서 빠진다' : '켠다'
     eye.addEventListener('click', () => { setLayerOn(app, lay.id, !lay.on); render(); hooks.onChange() })
     const lock = document.createElement('button')
     lock.className = 'lctl llock'
-    lock.innerHTML = glyph(LOCK, 14)
+    lock.innerHTML = sized(ICON_LOCK, 14)
     lock.title = lay.locked ? '잠금을 푼다' : '잠근다 — 보이지만 편집이 막힌다'
     lock.addEventListener('click', () => { setLayerLocked(app, lay.id, !lay.locked); render(); hooks.onChange() })
     // 지우기 — 확인 한 번(획 수를 알린다. web2-20 2-c 규약 그대로, 자리만 줄 안으로 왔다)

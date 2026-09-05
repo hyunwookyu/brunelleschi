@@ -37,13 +37,13 @@ export interface PaperbarHooks {
  *  「종이와 갱신 화살표」 절이고 이 문자열은 그 블록에 `width/height`만 얹은 것이다
  *  (탭 줄에는 크기를 주는 CSS 급이 없어 16px을 여기서 박는다 — 옛 카메라와 **같은 상자**).
  *
- *  ⚠ **옛것은 Phosphor light `camera`였다**(web2-25 3-a). 31-3의 돋보기가 들어오면서 뜻이
+ *  ⚠ **옛것은 채운 `camera`(옛 세트)였다**(web2-25 3-a). 31-3의 돋보기가 들어오면서 뜻이
  *  겹쳤다 — 둘 다 «광학 기구»이고 하나는 화면을 채우는 일, 하나는 시점을 남기는 일이라
  *  아이콘 문법이 두 일을 안 갈랐다. 바꾼 쪽은 이쪽이고(지시 31-4), 카메라 도형은 **화면에서
  *  사라졌다**(e2e `papericon31.spec.ts`가 DOM에서 그것을 잰다).
  *  ⚠⚠ 선 문법이 됐다 — 옛 판은 `fill="currentColor"`의 **채운** 그림이라
  *  `docs/instrument-icons.md`의 「그 외 전부」와 문법이 달랐다(34-5의 톱니와 같은 자리). */
-const SHEET_ICON = '<svg viewBox="0 0 32 32" width="16" height="16" style="vertical-align:-3px" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 3.6 H12.4 L17 8.2 V19.6 H4.6 Z"/><path d="M12.4 3.6 V8.2 H17"/><path d="M26.000 18.350 A5.6 5.6 0 1 1 22.712 17.621"/><path d="M20.075 19.609 L22.712 17.621 L19.770 16.122"/></svg>'
+const SHEET_ICON = '<svg class="ico" viewBox="0 0 32 32" width="16" height="16" style="vertical-align:-3px" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 3.6 H12.4 L17 8.2 V19.6 H4.6 Z"/><path d="M12.4 3.6 V8.2 H17"/><path d="M26.000 18.350 A5.6 5.6 0 1 1 22.712 17.621"/><path d="M20.075 19.609 L22.712 17.621 L19.770 16.122"/></svg>'
 
 export interface Paperbar {
   /** 문서·활성이 바뀐 뒤 다시 그린다(loadDoc·비우기·삭제) */

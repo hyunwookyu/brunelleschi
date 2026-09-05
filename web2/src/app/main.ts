@@ -10,6 +10,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   commitPaint, buildPaintStrokes, injectPaintAt, tapSelectFace, cycleFaceClass, faceClassNow, cycleFaceFill, FILL_NAMES, cycleFaceMat, cycleFaceRep, paintActive, docToScreen, setPaintWLegacyForTest, worldPerPxPerpProbeForTest,
   placePersonAt, gripFaceArea, floorAreaNow, volumeNow, flashFaces, screenToDoc, roomsNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
+import { tok, setTheme, tokensForTest } from '../ui/tokens'   // web2-70 — 토큰 하나(tokens.css) · 캔버스 그림은 tok()로 읽는다
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
 import { initInput } from './input'
@@ -712,12 +713,12 @@ const trayEl = document.getElementById('tray')!
 function pencilRowSvg(g: Grade): string {
   const lead = MAT[g].color
   return '<svg width="96" height="24" viewBox="0 0 64 16">'
-    + '<rect x="1" y="3.5" width="9" height="9" rx="2" fill="#d8cfc0" />'
-    + '<rect x="10" y="3.5" width="5" height="9" fill="#b8b3ab" />'
-    + '<rect x="15" y="3" width="36" height="10" fill="#cfc7b6" />'
-    + '<rect x="15" y="3" width="36" height="2.6" fill="#e0d9ca" />'
-    + `<text x="21" y="11.6" font-family="system-ui, sans-serif" font-size="7" fill="#3c3831">${g}</text>`
-    + '<path d="M51 3 L59.4 7.35 L59.4 8.65 L51 13 Z" fill="#e6dfd0" />'
+    + '<rect x="1" y="3.5" width="9" height="9" rx="2" fill="var(--pic-grip)" />'
+    + '<rect x="10" y="3.5" width="5" height="9" fill="var(--line)" />'
+    + '<rect x="15" y="3" width="36" height="10" fill="var(--pic-wood)" />'
+    + '<rect x="15" y="3" width="36" height="2.6" fill="var(--pic-wood-hi)" />'
+    + `<text x="21" y="11.6" font-family="system-ui, sans-serif" font-size="7" fill="var(--ink)">${g}</text>`
+    + '<path d="M51 3 L59.4 7.35 L59.4 8.65 L51 13 Z" fill="var(--pic-wood-tip)" />'
     + `<path d="M59.4 7.35 L63 8 L59.4 8.65 Z" fill="${lead}" />`
     + '</svg>'
 }
@@ -749,13 +750,13 @@ const nibPx = (mm: number): number => Math.round(mm * C.NIB_PX_PER_MM * 100) / 1
 function nibRowSvg(mm: number): string {
   const w = nibPx(mm)
   return '<svg width="96" height="24" viewBox="0 0 64 16">'
-    + '<rect x="1" y="3.5" width="9" height="9" rx="2" fill="#8b857a" />'
-    + '<rect x="10" y="3.5" width="5" height="9" fill="#6e6a63" />'
-    + '<rect x="15" y="3" width="20" height="10" fill="#7f7a72" />'
-    + '<rect x="15" y="3" width="20" height="2.6" fill="#98938a" />'
-    + `<text x="17.5" y="11.4" font-family="system-ui, sans-serif" font-size="6.4" fill="#f2efe9">${mm.toFixed(2)}</text>`
-    + '<path d="M35 3.6 L41.6 7.4 L41.6 8.6 L35 12.4 Z" fill="#5d5952" />'
-    + `<rect class="nsample" x="41.6" y="${(8 - w / 2).toFixed(3)}" width="21.4" height="${w}" fill="#101014" />`
+    + '<rect x="1" y="3.5" width="9" height="9" rx="2" fill="var(--pic-ink-eraser-edge)" />'
+    + '<rect x="10" y="3.5" width="5" height="9" fill="var(--pic-pen-lo)" />'
+    + '<rect x="15" y="3" width="20" height="10" fill="var(--pic-pen)" />'
+    + '<rect x="15" y="3" width="20" height="2.6" fill="var(--pic-pen-hi)" />'
+    + `<text x="17.5" y="11.4" font-family="system-ui, sans-serif" font-size="6.4" fill="var(--pic-window)">${mm.toFixed(2)}</text>`
+    + '<path d="M35 3.6 L41.6 7.4 L41.6 8.6 L35 12.4 Z" fill="var(--pic-pen-tip)" />'
+    + `<rect class="nsample" x="41.6" y="${(8 - w / 2).toFixed(3)}" width="21.4" height="${w}" fill="var(--pic-pen-nib)" />`
     + '</svg>'
 }
 const nibRow = new Map<number, HTMLElement>()
@@ -1072,9 +1073,9 @@ function eraserRowSvg(r: number): string {
   const cx = ERASE_ROW_LABEL_W + 4 + rmax
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`
     + `<text x="${ERASE_ROW_LABEL_W - 6}" y="${(h / 2 + 4).toFixed(1)}" text-anchor="end"`
-    + ` font-family="system-ui, sans-serif" font-size="11" fill="#3c3831">${eraserLabel(r)}</text>`
+    + ` font-family="system-ui, sans-serif" font-size="11" fill="var(--ink)">${eraserLabel(r)}</text>`
     + `<circle class="esample" cx="${cx}" cy="${(h / 2).toFixed(1)}" r="${r}"`
-    + ` fill="none" stroke="#8a7f6a" stroke-width="1" />`
+    + ` fill="none" stroke="var(--ink-2)" stroke-width="1" />`
     + '</svg>'
 }
 const etrayEl = document.getElementById('etray')!
@@ -1860,7 +1861,7 @@ function captureThumb(): string {
   t.width = C.THUMB_W
   t.height = Math.max(1, Math.round(C.THUMB_W * ratio))
   const g = t.getContext('2d')!
-  g.fillStyle = '#f5f3ee'
+  g.fillStyle = tok('--paper')
   g.fillRect(0, 0, t.width, t.height)
   for (const id of ['gl', 'brushc', 'ink']) {
     const c = document.getElementById(id) as HTMLCanvasElement | null
@@ -1965,7 +1966,7 @@ for (const r of ROLLS) {
   b.className = 'rrow'
   b.dataset.act = 'cmd'
   b.dataset.paper = r.paper
-  b.innerHTML = `${r.svg}<span>${r.name}</span>`
+  b.innerHTML = r.svg; b.setAttribute('aria-label', r.name)   // web2-70 §3 — 아이콘이 있는 단추의 글자는 aria-label로(세 앱 합의 ⑧)
   b.addEventListener('click', () => { setRolltrayOpen(false); addRoll(r.paper) })
   rolltrayEl.append(b)
   rollRow.set(r.paper, b)
@@ -2033,7 +2034,7 @@ for (const r of GRIP_ROWS) {
   b.id = `btn-grip-${r.key}`
   b.className = 'rrow'
   b.dataset.act = 'cmd'
-  b.innerHTML = `${r.svg}<span>${r.name}</span>`
+  b.innerHTML = r.svg; b.setAttribute('aria-label', r.name)   // web2-70 §3 — 아이콘이 있는 단추의 글자는 aria-label로(세 앱 합의 ⑧)
   b.title = r.tip     // 48-10 — 통을 열기 «전»에도 설명이 있다(syncGripRows는 열어야 돈다)
   b.addEventListener('click', () => { if (!GRIP_REPEAT.has(r.key)) setGriptrayOpen(false); doGripAction(r.key) })
   griptrayEl.append(b)
@@ -2267,7 +2268,7 @@ function drawWheel(hsv: Hsv) {
     g.beginPath(); g.arc(p.x, p.y, r, 0, Math.PI * 2)
     g.lineWidth = 2; g.strokeStyle = markerInk(hex); g.stroke()
     g.beginPath(); g.arc(p.x, p.y, r + 1.6, 0, Math.PI * 2)
-    g.lineWidth = 1; g.strokeStyle = markerInk(hex) === '#000000' ? '#ffffff' : '#000000'; g.stroke()
+    g.lineWidth = 1; g.strokeStyle = markerInk(hex) === C.BLACK_HEX ? C.WHITE_HEX : C.BLACK_HEX; g.stroke()
   }
 }
 
@@ -2388,7 +2389,7 @@ let clampDotEl: HTMLElement | null = null
   sampleCv.id = 'paint-brush-sample'
   const SAMPLE_W = 120, SAMPLE_H = 26      // 65 §2 ④ — 이름 자리를 준다(150이면 부제가 잘렸다)
   sampleCv.width = SAMPLE_W * 2; sampleCv.height = SAMPLE_H * 2
-  sampleCv.style.cssText = `width:${SAMPLE_W}px;height:${SAMPLE_H}px;position:static;inset:auto;flex-shrink:0;border:1px solid #d8d2c4;border-radius:3px;background:#fffdf8`
+  sampleCv.style.cssText = `width:${SAMPLE_W}px;height:${SAMPLE_H}px;position:static;inset:auto;flex-shrink:0;border:1px solid var(--line);border-radius:3px;background:var(--panel)`
   const brushName = document.createElement('span')
   brushName.id = 'paint-brush-name'
   brushName.style.cssText = 'display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden;text-overflow:ellipsis'
@@ -2707,7 +2708,7 @@ let clampDotEl: HTMLElement | null = null
     b.title = '지우개 — 펜 한 붓이 칠의 덮임을 지운다 · 다시 누르면 붓으로 · 스타일러스 뒷꼭지도 지우개다'
     const pic = document.createElement('span')
     pic.className = 'pcpic'
-    pic.innerHTML = casePicture('eraser', '#ffffff')
+    pic.innerHTML = casePicture('eraser', C.WHITE_HEX)
     const nums = document.createElement('span')
     nums.className = 'pcnums'
     nums.id = 'paint-erase-nums'
@@ -2741,8 +2742,9 @@ let clampDotEl: HTMLElement | null = null
     const b = document.createElement('button')
     b.id = 'btn-paint-front'
     b.className = 'rrow'
+    b.setAttribute('aria-label', '정면')
     b.dataset.act = 'state'   // 시점 이동은 색 고르기를 안 끊는다
-    b.innerHTML = `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg><span id="paint-front-lbl">정면</span>`
+    b.innerHTML = `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg><span id="paint-front-lbl" class="pcnums"></span>`
     b.addEventListener('click', () => {
       const r = frontFlyTarget(app)
       if (!r) { notify('정면은 면을 골라야 한다 — 칠 도구로 면을 탭해 고른 뒤 누른다'); return }
@@ -2785,7 +2787,7 @@ let clampDotEl: HTMLElement | null = null
       drawBrushSample(sampleCv, ps.i, ps.br, ps.hex)
     }
     // 65 §2 ③④ — 이름은 사람 쪽 사상, 부제는 **원 이름 그대로**(줄바꿈 허용 — 안 잘린다)
-    brushName.innerHTML = `<b>${brushLabel(ps.br)}</b><span style="color:#8d8880">${SLOT_NAME[ps.i]} · ${brushOrigin(ps.br)}</span>`
+    brushName.innerHTML = `<b>${brushLabel(ps.br)}</b><span class="ink2">${SLOT_NAME[ps.i]} · ${brushOrigin(ps.br)}</span>`
     brushBtn.title = `지금 브러시 «${brushLabel(ps.br)}» — 원 이름 ${ps.br}(${SLOT_NAME[ps.i]} 족). 누르면 브러시 목록이 열린다`
     syncSizeRow(); syncOpRow()
     colorBtn.style.background = ps.hex
@@ -2858,7 +2860,8 @@ function syncPainttray() {
     if (b && lbl) {
       const n = liveFaceSel(app).length
       const can = lastSelFace(app) !== null
-      lbl.textContent = n > 1 ? `정면 · 면 ${n}장 고름` : n === 1 ? '정면 · 면 1장 고름' : '정면'
+      lbl.textContent = n > 1 ? String(n) : ''   // web2-70 §3 — 글자 라벨은 뗀다 · 고른 면 수만 숫자 라벨(예외)로
+      b.setAttribute('aria-label', n > 1 ? `정면 · 면 ${n}장 고름` : n === 1 ? '정면 · 면 1장 고름' : '정면')
       b.classList.toggle('disabled', !can)
       b.title = can
         ? (app.frontBack ? '정면 — 다시 누르면 직전 시점으로 돌아온다'
@@ -2955,13 +2958,13 @@ window.addEventListener('pointerdown', (ev) => {
   let lines: { x: number; y: number }[][] = []
   const paint = () => {
     g.clearRect(0, 0, cv.width, cv.height)
-    g.strokeStyle = '#b8b2a6'; g.setLineDash([4, 3]); g.lineWidth = 1
+    g.strokeStyle = tok('--line'); g.setLineDash([4, 3]); g.lineWidth = 1
     g.beginPath(); g.moveTo(0, EYE_Y); g.lineTo(cv.width, EYE_Y); g.stroke()   // 눈높이
     g.beginPath(); g.moveTo(0, FOOT_Y); g.lineTo(cv.width, FOOT_Y); g.stroke() // 바닥
     g.setLineDash([])
-    g.fillStyle = '#b8b2a6'; g.font = '10px system-ui'
+    g.fillStyle = tok('--ink-2'); g.font = '10px system-ui'
     g.fillText('눈높이', 4, EYE_Y - 3); g.fillText('바닥', 4, FOOT_Y - 3)
-    g.strokeStyle = '#3c3833'; g.lineWidth = 1.6; g.lineJoin = 'round'; g.lineCap = 'round'
+    g.strokeStyle = tok('--ink'); g.lineWidth = 1.6; g.lineJoin = 'round'; g.lineCap = 'round'
     for (const ln of lines) {
       if (ln.length < 2) continue
       g.beginPath()
@@ -3323,6 +3326,9 @@ import { geomSize3 } from '../core/osnap'
 
 const diag = {
   /** web2-68 — 판정에 드는 상수를 원장이 스스로 든다(#88 · constants_used) */
+  /** web2-70 — 테마(밝은 판/어두운 판) · 토큰 캐시(프레임마다 getComputedStyle을 안 부른다는 값) */
+  setThemeForTest: (t: 'light' | 'dark') => { setTheme(t); invalidate() },
+  tokensForTest: () => ({ theme: tokensForTest.theme(), cacheSize: tokensForTest.cacheSize(), accent: tok('--accent'), panel: tok('--panel'), ink: tok('--ink') }),
   constantsForTest: () => ({
     PAINT68_CASE_N: C.PAINT68_CASE_N, PAINT68_GRADE_STEP_PX: C.PAINT68_GRADE_STEP_PX,
     PAINT68_GRADE_DENSITY_STEP_MIN: C.PAINT68_GRADE_DENSITY_STEP_MIN, PAINT68_GRADE_WIDTH_STEP_MIN: C.PAINT68_GRADE_WIDTH_STEP_MIN,
@@ -3431,7 +3437,7 @@ const diag = {
   /** web2-64 — 등급 흑연색(MAT — 잉크펜 기본 색의 대조 · 리뷰어 [H6]) */
   matColorForTest: (g: string): string => MAT[g as keyof typeof MAT]?.color ?? '',
   /** web2-64 — 재료의 톤 색(palette 그대로 — 46의 (재료, 톤) 사상 · 견본 줄이 지워진 자리의 팔 통로) */
-  materialToneForTest: (mat: string, tone: number): string => materialOf(mat as MatId)?.tones[tone] ?? '#000000',
+  materialToneForTest: (mat: string, tone: number): string => materialOf(mat as MatId)?.tones[tone] ?? C.BLACK_HEX,
   /** web2-64 — 필통·최근 색 읽기(기기 저장 — 값으로) · 68: 이주 횟수(favMigrated)도 값으로 */
   paintFavsForTest: () => readFavs(),
   paintCaseMigratedForTest: () => favMigrated,
@@ -3456,13 +3462,13 @@ const diag = {
     ext?: { preset?: string; over?: Record<string, number>; color?: string; bg?: string; tip?: string }) => {
     const c = document.createElement('canvas'); c.width = W; c.height = H
     const g2 = c.getContext('2d')!
-    g2.fillStyle = ext?.bg ?? '#ffffff'; g2.fillRect(0, 0, W, H)
+    g2.fillStyle = ext?.bg ?? C.WHITE_HEX; g2.fillRect(0, 0, W, H)
     const sm = markShape(shape, W, H)
     setAlphaCaptureForTest(true)                 // 초안 통로는 층을 되돌린다 — 되돌리기 전 알파를 떠 둔다(팔의 자)
     try {
       drawMark(g2, {
         pts: sm.pts, press: sm.press, wPx, seed, tool: i,
-        color: ext?.color ?? (i === 'brush' ? MAT.HB.color : '#8a4a3a'),
+        color: ext?.color ?? (i === 'brush' ? MAT.HB.color : C.TEST_INK_PEN_HEX),
         preset: ext?.preset, over: ext?.over, tip: ext?.tip,
       })
     } finally { setAlphaCaptureForTest(false) }
@@ -3479,7 +3485,7 @@ const diag = {
   markMultiForTest: (
     items: { tool: Instr58; shape: MarkShape; wPx: number; seed: number; dx?: number; dy?: number;
       preset?: string; over?: Record<string, number>; color?: string; press?: number; tip?: string }[],
-    W = 480, H = 240, bake = false, bg = '#ffffff',
+    W = 480, H = 240, bake = false, bg = C.WHITE_HEX,
   ) => {
     const c = document.createElement('canvas'); c.width = W; c.height = H
     const g2 = c.getContext('2d')!
@@ -3490,7 +3496,7 @@ const diag = {
         pts: sm.pts.map(p => ({ x: p.x + (it.dx ?? 0), y: p.y + (it.dy ?? 0) })),
         press: it.press !== undefined ? sm.press.map(() => it.press! * C.PRESS_Q) : sm.press,
         wPx: it.wPx, seed: it.seed, tool: it.tool,
-        color: it.color ?? (it.tool === 'brush' ? MAT.HB.color : '#8a4a3a'),
+        color: it.color ?? (it.tool === 'brush' ? MAT.HB.color : C.TEST_INK_PEN_HEX),
         preset: it.preset, over: it.over, tip: it.tip,
       }
     })

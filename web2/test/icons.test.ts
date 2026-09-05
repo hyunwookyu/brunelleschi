@@ -55,18 +55,24 @@ describe('web2-19 4부 ③ — path 문자열 대조', () => {
     for (const p of paths) expect(html.includes(p), `접힌 펜 path: ${p.slice(0, 30)}…`).toBe(true)
   })
 
-  it('Phosphor light path가 그대로 이식됐다(ruler·arrows-out·eye·eye-slash·compass-tool·grid-four·camera)', () => {
-    for (const n of ['ruler', 'arrows-out', 'eye', 'eye-slash', 'compass-tool', 'grid-four']) {
-      expect(html.includes(phosphor(n)), n).toBe(true)
+  it('web2-70 — 아이콘 세트는 Lucide(ISC) 하나다: index.html·icons.ts의 lucide-* svg 내용이 lucide-static 파일과 같고, Phosphor는 남아 있지 않다(#109 지운 것)', () => {
+    const lucideInner = (name: string): string => {
+      const f = readLF(resolve(__dirname, `../node_modules/lucide-static/icons/${name}.svg`)).replace(/<!--[^]*?-->/g, '')
+      return /<svg[^>]*>\s*([^]*?)\s*<\/svg>/.exec(f)![1]!.replace(/\s*\n\s*/g, '')
     }
-    // ⚠ **web2-25 3-a에서 갈렸고 web2-31 4번이 되돌렸다**: 종이 띠의 단추가 「+」→
-    //   **셔터(camera)** → **종이 + 갱신 화살표**(자작)가 됐다. 31-3의 돋보기가 들어오면서
-    //   카메라와 뜻이 겹쳤기 때문이다(지시 31-4). 그러므로 **Phosphor camera 계열은 더
-    //   이상 이식 대상이 아니다** — 아래 「카메라 도형 없음」 절이 그 자리를 잰다.
-    expect(paperbar.includes(phosphor('camera')), 'camera는 이제 안 쓴다(31-4)').toBe(false)
-    // 그리고 **겹의 「+」는 여전히 plus**다 — 그쪽은 뜻이 맞는다(겹을 하나 더 얹는다)
+    const iconsTs = readLF(resolve(__dirname, '../src/ui/icons.ts'))
+    const uses = [...(html + iconsTs).matchAll(/<svg class="ico lucide-([\w-]+)"[^>]*>([^]*?)<\/svg>/g)]
+    expect(uses.length, 'lucide-* svg가 있다').toBeGreaterThanOrEqual(30)
+    for (const u of uses) expect(u[2], u[1]).toBe(lucideInner(u[1]!))
     const lb = readLF(resolve(__dirname, '../src/app/layerbar.ts'))
-    expect(lb.includes(phosphor('plus')), 'plus(겹 「+」)').toBe(true)
+    for (const n of ['ruler', 'arrows-out', 'eye', 'eye-slash', 'compass-tool', 'grid-four', 'plus']) {
+      const f = resolve(__dirname, `../node_modules/@phosphor-icons/core/assets/light/${n}-light.svg`)
+      let d = ''
+      try { d = /<path d="([^"]*)"/.exec(readLF(f))?.[1] ?? '' } catch { d = '' }
+      if (d) { expect(html.includes(d), `Phosphor ${n} 잔존(index.html)`).toBe(false); expect(lb.includes(d), `Phosphor ${n} 잔존(layerbar)`).toBe(false) }
+    }
+    expect(/phosphor/i.test(JSON.stringify(JSON.parse(readLF(resolve(__dirname, '../package.json'))).dependencies ?? {})), '출하 의존(dependencies)에 phosphor가 없다(반증 견본은 devDependencies)').toBe(false)
+    expect(readLF(resolve(__dirname, '../vendor/lucide/LICENSE'))).toContain('ISC')
   })
 
   it('펜·지우개 둘·면은 손대지 않았다 — 스냅샷(앞으로의 드리프트 방지)', () => {
@@ -81,10 +87,10 @@ describe('web2-19 4부 ③ — path 문자열 대조', () => {
 })
 
 describe('web2-19 4부 ⑤ — LICENSE', () => {
-  it('Phosphor 세트 줄이 있다(받은 패키지의 LICENSE를 읽고 적었다 — MIT)', () => {
+  it('Lucide 세트 줄이 있다(받은 패키지의 LICENSE를 읽고 적었다 — ISC · web2-70)', () => {
     const lic = readFileSync(resolve(__dirname, '../../LICENSE'), 'utf-8')
-    expect(lic).toContain('Phosphor')
-    expect(lic).toContain('@phosphor-icons/core')
+    expect(lic).toContain('Lucide')
+    expect(lic).toContain('lucide-static')
   })
 })
 
@@ -152,15 +158,15 @@ describe('web2-31 4번 — 종이 + 갱신 화살표(자작)로 갈렸다', () =
     expect(CANON).toContain('viewBox="0 0 32 32"')
   })
 
-  it('카메라 계열 훑기 — Phosphor camera 넷 × 여섯 굵기가 소스 어디에도 없다 (+심어서 반증)', () => {
-    const weights = ['thin', 'light', 'regular', 'bold', 'fill', 'duotone']
-    const names = ['camera', 'camera-plus', 'camera-rotate', 'camera-slash']
+  it('카메라 계열 훑기 — 세트의 camera 계열 path가 소스 어디에도 없다 (+심어서 반증 · web2-70: Lucide)', () => {
+    // web2-70 — 세트가 Lucide로 바뀌었다: 훑는 바늘은 lucide-static의 camera 계열 전부(camera · camera-off · switch-camera · video …)
+    const dir = resolve(__dirname, '../node_modules/lucide-static/icons')
+    const names = readdirSync(dir).filter(f => /^(camera|switch-camera|video)/.test(f))
     const needles: string[] = []
-    for (const w of weights) {
-      for (const n of names) {
-        const file = resolve(__dirname, `../node_modules/@phosphor-icons/core/assets/${w}/${n}${w === 'regular' ? '' : `-${w}`}.svg`)
-        for (const m of readLF(file).matchAll(/<path[^>]*\sd="([^"]+)"/g)) needles.push(m[1]!)
-      }
+    for (const n of names) {
+      const file = resolve(dir, n)
+      // 20자 아래의 짧은 path(「m2 2 20 20」 — 빗금 하나)는 eye-off·x 같은 다른 아이콘과 겹친다 — 카메라의 «형태»가 아니다
+      for (const m of readLF(file).matchAll(/<(?:path|circle|rect)[^>]*\sd="([^"]+)"/g)) if (m[1]!.length > 20) needles.push(m[1]!)
     }
     // 훑는 자리 — 화면을 짓는 소스 전부(정본 문서 포함). 세어서 값으로 남긴다.
     const files = [
@@ -173,7 +179,7 @@ describe('web2-31 4번 — 종이 + 갱신 화살표(자작)로 갈렸다', () =
       const text = readLF(f)
       for (const nd of needles) if (text.includes(nd)) hits.push(`${f}: ${nd.slice(0, 24)}…`)
     }
-    expect(needles.length, '카메라 계열 path 수(넷 × 여섯 굵기 · duotone은 둘)').toBeGreaterThanOrEqual(24)
+    expect(needles.length, '카메라 계열 path 수(Lucide camera·switch-camera·video 계열)').toBeGreaterThanOrEqual(6)
     expect(files.length, '훑은 파일 수').toBeGreaterThan(20)
     expect(hits, '카메라 계열 path가 소스에 없다').toEqual([])
     // 반증(D-3) — 같은 훑기가 **실제로 걸린다**: 옛 아이콘 그대로의 문자열을 건초더미에 심는다

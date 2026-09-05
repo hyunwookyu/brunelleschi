@@ -209,7 +209,7 @@ export function bakeFaceTex(
   g.setTransform(1, 0, 0, 1, 0, 0)
   g.globalCompositeOperation = 'source-over'
   g.globalAlpha = 1
-  g.fillStyle = '#ffffff'                      // 곱의 항등 — 안 칠한 자리는 아래를 안 바꾼다
+  g.fillStyle = C.WHITE_HEX                      // 곱의 항등 — 안 칠한 자리는 아래를 안 바꾼다
   g.fillRect(0, 0, dims.w, dims.h)
   // 차례는 제도 그대로(52-4): 톤·무늬가 바닥 → 도면 위 면 고정 해칭 → 손으로 그은 칠
   if (rep) drawRepTex(g, rf, box, dims, rep)

@@ -1,0 +1,436 @@
+{
+  "conditions": {
+    "project": "dpr2",
+    "workers": 1,
+    "tree": "70dc21e",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/tokens70.spec.ts (#99)"
+  },
+  "run_id": "70dc21e-0-mtonxp",
+  "what": "web2-70 시각 시스템 게이트 — §1 토큰(16진수 0 · 토큰 수 · dark 덮음) · §2 강조색 대비(값) · 상태 셋(클래스만 · 못 누름 .35 실측) · §3 아이콘(이모지 0 · 글자만인 도구 단추 0 · 선 굵기 하나 · 세트 잔존 0 · 라이선스) · §4 판(둥글기 1종 · 여백 8의 배수 · 글자 크기 3종) · 반증 넷",
+  "tree": "70dc21e",
+  "pitfall_citations": [
+    109,
+    108,
+    107,
+    42,
+    12,
+    54
+  ],
+  "constants_used": {
+    "TOKENS70_CONTRAST_TEXT_MIN": 4.5,
+    "TOKENS70_CONTRAST_ICON_MIN": 3,
+    "TOKENS70_MUTED": 0.35,
+    "TOKENS70_ICON_STROKE": 1.75,
+    "TOKENS70_FONT_SIZES": [
+      10,
+      12,
+      14
+    ],
+    "TOKENS70_RADIUS_PX": 12,
+    "TOKENS70_GAP_PX": 8,
+    "ACCENT_CAND_YELLOW_HEX": "#9a7b1c",
+    "ACCENT_CAND_BLUE_HEX": "#2b5bd7"
+  },
+  "s1_tokens": {
+    "def": "16진수 색 리터럴 = HEX_RE(뒤에 글자·하이픈이 오면 id — 안 센다) · 주석은 뺀 셈(n)과 든 셈(n_with_comments)을 갈라 적는다 · 예외 파일은 HEX_EXCEPTIONS(그림 재료·논리·진단 상수)",
+    "files_scanned": 87,
+    "rows": [
+      {
+        "file": "index.html",
+        "n": 0,
+        "n_with_comments": 2,
+        "exception": null,
+        "sample": []
+      },
+      {
+        "file": "src/app/brushes64.ts",
+        "n": 0,
+        "n_with_comments": 1,
+        "exception": null,
+        "sample": []
+      },
+      {
+        "file": "src/app/filmlayer.ts",
+        "n": 0,
+        "n_with_comments": 1,
+        "exception": null,
+        "sample": []
+      },
+      {
+        "file": "src/app/main.ts",
+        "n": 0,
+        "n_with_comments": 2,
+        "exception": null,
+        "sample": []
+      },
+      {
+        "file": "src/app/mypaintpaint.ts",
+        "n": 0,
+        "n_with_comments": 1,
+        "exception": null,
+        "sample": []
+      },
+      {
+        "file": "src/app/render2d.ts",
+        "n": 0,
+        "n_with_comments": 5,
+        "exception": null,
+        "sample": []
+      },
+      {
+        "file": "src/app/render3d.ts",
+        "n": 0,
+        "n_with_comments": 1,
+        "exception": null,
+        "sample": []
+      },
+      {
+        "file": "src/core/colorwheel.ts",
+        "n": 6,
+        "n_with_comments": 6,
+        "exception": "마커 잉크의 흑/백 판정(논리)",
+        "sample": [
+          "#000000",
+          "#000000",
+          "#ffffff",
+          "#000000",
+          "#000000",
+          "#ffffff"
+        ]
+      },
+      {
+        "file": "src/core/constants.ts",
+        "n": 8,
+        "n_with_comments": 9,
+        "exception": "PAPER_HEX(캔버스 종이 — tokens.css --paper와 같은 값 · 아래 단언) · WHITE/BLACK(곱의 항등·해시 판) · TEST_INK_*(진단 견본 잉크 — 원장 비교 값 유지)",
+        "sample": [
+          "#f5f3ee",
+          "#ffffff",
+          "#000000",
+          "#8a4a3a",
+          "#3a3a44",
+          "#4a4a52"
+        ]
+      },
+      {
+        "file": "src/core/material.ts",
+        "n": 7,
+        "n_with_comments": 7,
+        "exception": "연필 경도의 심 색(재료 — 그림)",
+        "sample": [
+          "#9c9c9c",
+          "#868686",
+          "#707070",
+          "#5a5a5a",
+          "#454545",
+          "#303030"
+        ]
+      },
+      {
+        "file": "src/core/palette.ts",
+        "n": 25,
+        "n_with_comments": 25,
+        "exception": "면 재료의 톤(벽돌·콘크리트… — 그림)",
+        "sample": [
+          "#d9a08a",
+          "#c07a5b",
+          "#8f5340",
+          "#cfcac2",
+          "#a8a29a",
+          "#7d776f"
+        ]
+      },
+      {
+        "file": "src/core/waitfade.ts",
+        "n": 1,
+        "n_with_comments": 2,
+        "exception": "대기 획의 잉크색(획의 상태색 — 그림)",
+        "sample": [
+          "#a4dded"
+        ]
+      }
+    ],
+    "offenders": [],
+    "token_count": 46,
+    "color_tokens": 34,
+    "dark_overrides": 10,
+    "must_dark_missing": [],
+    "shared_light_dark": [
+      "--paper",
+      "--pic-wood",
+      "--pic-wood-hi",
+      "--pic-wood-lo",
+      "--pic-wood-tip",
+      "--pic-pen",
+      "--pic-pen-hi",
+      "--pic-pen-lo",
+      "--pic-pen-tip",
+      "--pic-pen-nib",
+      "--pic-pen-edge",
+      "--pic-eraser",
+      "--pic-eraser-hi",
+      "--pic-eraser-lo",
+      "--pic-eraser-edge",
+      "--pic-ink-eraser",
+      "--pic-ink-eraser-lo",
+      "--pic-ink-eraser-edge",
+      "--pic-face",
+      "--pic-grip",
+      "--pic-yellow",
+      "--pic-lead",
+      "--white",
+      "--black"
+    ],
+    "paper_const_eq_token": true,
+    "theme_color_meta": "#f5f3ee",
+    "theme_color_eq_paper": true,
+    "falsify": {
+      "id_not_counted": true,
+      "color_counted": true,
+      "revived_one": true
+    }
+  },
+  "s2_accent": {
+    "def": "WCAG 대비 비(상대 휘도) — 판(--panel) 위 글자 ≥ 4.5 · 아이콘 ≥ 3(constants) · 둘 다 넘으면 노랑 · 하나만 넘으면 그것",
+    "candidates": {
+      "yellow": "#9a7b1c",
+      "blue": "#2b5bd7"
+    },
+    "ratio": {
+      "yellow": 3.8513277516342135,
+      "blue": 5.619233248974625,
+      "accent_live": 5.619233248974625,
+      "ink_on_panel": 11.163973199548256,
+      "accent_on_paper": 5.289151877653499
+    },
+    "judge": {
+      "yellow": {
+        "text": false,
+        "icon": true
+      },
+      "blue": {
+        "text": true,
+        "icon": true
+      }
+    },
+    "verdict": "blue",
+    "live": {
+      "accent": "#2b5bd7",
+      "panel": "#fbfaf7",
+      "ink": "#3c3831",
+      "paper": "#f5f3ee",
+      "muted": ".35"
+    },
+    "falsify_same_color_ratio": 1,
+    "inline_style_state_count": 0,
+    "inline_style_state": [],
+    "muted": {
+      "undo": {
+        "disabled": false,
+        "opacity": 1
+      },
+      "redo": {
+        "disabled": false,
+        "opacity": 1
+      },
+      "lens": {
+        "disabled": true,
+        "opacity": 0.35
+      },
+      "roll": {
+        "disabled": true,
+        "opacity": 0.35
+      }
+    },
+    "muted_expected": 0.35,
+    "pressed_rule_present": true,
+    "selected_pencil": {
+      "on": true,
+      "color": "#2b5bd7",
+      "is_accent": true
+    }
+  },
+  "s3_icons": {
+    "def": "이모지 = \\p{Extended_Pictographic} 전수(index.html + src) · 글자만인 단추 = svg/canvas/img 없는 button(예외: 숫자판·종이 탭·경도 글자·개발 작업대 — 값) · 선 굵기 = svg.ico 첫 도형의 computed stroke-width(non-scaling-stroke) · 세트 = lucide-* 클래스 수 · 256격자(옛 세트) 0",
+    "emoji_count": 0,
+    "emoji": [],
+    "emoji_in_src_strings": 175,
+    "buttons": 113,
+    "text_only": [
+      "(ptab on):작도",
+      "(button):7",
+      "(button):8",
+      "(button):9",
+      "(button):⌫",
+      "(button):4",
+      "(button):5",
+      "(button):6",
+      "(button):C",
+      "(button):1",
+      "(button):2",
+      "(button):3",
+      "(button):적용",
+      "(button):0",
+      "(button):.",
+      "tunelab-close:닫는다",
+      "tunelab-pick-brush:잉크펜",
+      "tunelab-pick-marker:마커",
+      "tunelab-pick-cp:색연필",
+      "tunelab-pick-pencil:연필",
+      "tunelab-clear:판 비우기",
+      "tunelab-reset:기본값",
+      "tunelab-bake:굳힌다",
+      "tunelab-export:값 꺼내기",
+      "tunelab-import:가져온다"
+    ],
+    "text_only_offenders": [],
+    "tool_text_only": [],
+    "icon_and_text": [
+      "btn-pencil:HB",
+      "btn-pen:.35",
+      "btn-pencil-old:HB",
+      "btn-eraser-pencil:6",
+      "btn-eraser-ink:6",
+      "tray-2H:2H",
+      "tray-H:H",
+      "tray-F:F",
+      "tray-HB:HB",
+      "tray-B:B",
+      "tray-2B:2B",
+      "nib-0_18:0.18",
+      "nib-0_25:0.25",
+      "nib-0_35:0.35",
+      "nib-0_5:0.50",
+      "nib-0_7:0.70",
+      "erase-5:2",
+      "erase-12:6",
+      "erase-27:13",
+      "erase-60:28"
+    ],
+    "icon_and_text_offenders": [],
+    "missing_aria": [],
+    "ico_count": 38,
+    "lucide_count": 37,
+    "phosphor_256_grid": 0,
+    "stroke_widths_computed": [
+      "1.75px"
+    ],
+    "stroke_width_attrs_on_ico": [],
+    "icon_sizes": [
+      "16×16",
+      "11×11",
+      "30×30",
+      "29×29",
+      "0×0",
+      "24×24",
+      "27×27",
+      "39×39"
+    ],
+    "license": {
+      "file": "web2/vendor/lucide/LICENSE",
+      "isc": true,
+      "source": "lucide-static 1.41.0 (npm) · https://lucide.dev"
+    },
+    "phosphor_in_dependencies": false,
+    "phosphor_in_devDependencies": true,
+    "phosphor_dev_reason": "e2e/icons.spec·papericon31.spec의 반증 견본(옛 채운 카메라·톱니 — 번들 밖)",
+    "aria_labels_in_html": 42,
+    "stripped_labels_expected": 35
+  },
+  "s4_panels": {
+    "def": "둥글기 = <style>의 border-radius 값 종류(0과 50%는 «없음/원» — 판의 값이 아니다) + 판 8종의 computed · 여백 = padding/margin/gap의 px 리터럴(토큰이면 0개) + 허용 집합 {4, 8k} · 글자 = 판 안 글자 노드의 computed font-size 집합",
+    "radius_css_kinds": [
+      "0",
+      "var(--radius)",
+      "50%"
+    ],
+    "radius_live": [
+      "12px",
+      "0px"
+    ],
+    "spacing_px_literals": [],
+    "spacing_offenders": [],
+    "font_px_literals": [],
+    "font_sizes_live": [
+      "10px",
+      "12px",
+      "14px"
+    ],
+    "font_offenders": [],
+    "svg_engraved_text": [
+      "fold-lead-text:8.5px",
+      "fold-nib-text:8.5px",
+      "lead-text:8.5px",
+      "fold-erase-pencil-text:8.5px",
+      "fold-erase-ink-text:8.5px"
+    ],
+    "bold_count": 5,
+    "bold_sample": [
+      "B",
+      "pcgrade",
+      "pcgrade",
+      "pcgrade",
+      "paint-erase-soft"
+    ],
+    "shadows_css": [],
+    "panels_live": [
+      {
+        "sel": "#painttray",
+        "radius": "12px",
+        "bg": "rgb(251, 250, 247)",
+        "shadow": "none",
+        "border": "0px"
+      },
+      {
+        "sel": "details#pane-settings > div",
+        "radius": "0px",
+        "bg": "rgb(251, 250, 247)",
+        "shadow": "none",
+        "border": "0px"
+      },
+      {
+        "sel": "#dimpanel",
+        "radius": "0px",
+        "bg": "rgb(251, 250, 247)",
+        "shadow": "none",
+        "border": "0px"
+      },
+      {
+        "sel": "#display-pop",
+        "radius": "0px",
+        "bg": "rgb(251, 250, 247)",
+        "shadow": "none",
+        "border": "0px"
+      },
+      {
+        "sel": "#lens-pop",
+        "radius": "0px",
+        "bg": "rgb(251, 250, 247)",
+        "shadow": "none",
+        "border": "0px"
+      },
+      {
+        "sel": "#snap-pop",
+        "radius": "0px",
+        "bg": "rgb(251, 250, 247)",
+        "shadow": "none",
+        "border": "0px"
+      },
+      {
+        "sel": "#stencil-box",
+        "radius": "0px",
+        "bg": "rgb(251, 250, 247)",
+        "shadow": "none",
+        "border": "0px"
+      }
+    ],
+    "translucent_panels": [],
+    "shadowed_panels": [],
+    "bordered_panels": [],
+    "rgba_in_css": [],
+    "falsify": {
+      "radius_two_kinds": true,
+      "spacing_offender_if_added": true
+    }
+  }
+}

@@ -50,14 +50,13 @@ into the deployed web2 app for the paper-texture stroke renderer (web2-11 §3
 MIT text as above and is included in node_modules/p5.brush/LICENSE.md; this
 notice preserves the required copyright and permission notice for distribution.
 
-Third-party: icon path data in web2/index.html, web2/src/app/paperbar.ts and
-web2/src/app/layerbar.ts copied from Phosphor Icons (@phosphor-icons/core, light
-weight) is MIT licensed, Copyright (c) 2023 Phosphor Icons
-(https://github.com/phosphor-icons/core); the package's LICENSE file was read at
-import (web2-19) and its full text is the same MIT text as above. No Material
-Design Icons (mdi) path is bundled -- the set-square icon considered in
-docs/DRAFTING-MAP.md was dropped (docs/instrument-icons.md), so the only icon
-source in the bundle is Phosphor plus this repository's own drawings.
+Third-party: icon path data in web2/index.html and web2/src/ui/icons.ts is copied
+from Lucide (lucide-static 1.41.0), ISC licensed, Copyright (c) 2026 Lucide Icons
+and Contributors (https://lucide.dev); the package's LICENSE file is kept verbatim
+at web2/vendor/lucide/LICENSE (web2-70). The earlier Phosphor Icons (MIT) paths
+were removed in web2-70 -- no Phosphor path ships in the bundle. No Material
+Design Icons (mdi) path is bundled either (docs/instrument-icons.md), so the only
+icon source in the bundle is Lucide plus this repository's own drawings.
 
 Third-party: three.js (MIT, Copyright (c) 2010-2026 three.js authors), Vite (MIT),
 TypeScript (Apache-2.0), vitest (MIT) and Playwright (Apache-2.0) are used; only

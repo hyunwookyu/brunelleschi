@@ -5,6 +5,7 @@
 // `applyDimInput`(필기·음성 공용) 하나다. 값 표시는 main이 부른다(`show`) —
 // 「한 곳에서 계산해 셋이 읽는다」(4-5)의 셋째 자리가 이 패널이다.
 
+import { tok } from '../ui/tokens'
 import { recognizeStrokes } from '../core/handwriting'
 import type { Pt } from '../core/vec'
 
@@ -56,7 +57,7 @@ export function initDimPanel(
   }
   function redraw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.strokeStyle = '#3c3831'
+    ctx.strokeStyle = tok('--ink')
     ctx.lineWidth = 1.6
     ctx.lineJoin = ctx.lineCap = 'round'
     for (const st of strokes.concat(cur ? [cur] : [])) {

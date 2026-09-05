@@ -23,7 +23,7 @@
 ### ⚠ 색 예외 하나 — 옐로 트레이스 롤
 
 선 아이콘은 전부 무채색인데 **옐로 롤만 고리(외곽 원 ↔ 심지 원 사이)를 채운다.**
-값은 **`#e9d98a`**(사람이 세 농도 중 「진한 것」을 골랐다).
+값은 **`#e9d98a`**(사람이 세 농도 중 「진한 것」을 골랐다) — web2-70부터 그 값은 `src/ui/tokens.css`의 `--pic-yellow` 하나에 살고 path는 `fill="var(--pic-yellow)"`로 읽는다(토큰 하나 · 색 예외는 그대로 하나).
 
 - 근거: **옐로 트레이스는 이름 자체가 색**이다. 색 칩을 따로 두면 정체가 아이콘 밖으로
   나간다. 예외는 이 하나뿐이고, 정확히 색이 정체인 자리에만 쓴다.
@@ -218,7 +218,7 @@
 
 ### 옐로 트레이스 롤 — 겹 랙 (색 예외)
 ```svg
-<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path fill="#e9d98a" stroke="none" fill-rule="evenodd" d="M13.5 6.8 a8.2 8.2 0 1 1 0 16.4 a8.2 8.2 0 1 1 0 -16.4 Z M13.5 12.2 a2.8 2.8 0 1 0 0 5.6 a2.8 2.8 0 1 0 0 -5.6 Z"/><circle cx="13.5" cy="15" r="8.2"/><circle cx="13.5" cy="15" r="2.8"/><path d="M13.5 23.2 H27.5"/></svg>
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path fill="var(--pic-yellow)" stroke="none" fill-rule="evenodd" d="M13.5 6.8 a8.2 8.2 0 1 1 0 16.4 a8.2 8.2 0 1 1 0 -16.4 Z M13.5 12.2 a2.8 2.8 0 1 0 0 5.6 a2.8 2.8 0 1 0 0 -5.6 Z"/><circle cx="13.5" cy="15" r="8.2"/><circle cx="13.5" cy="15" r="2.8"/><path d="M13.5 23.2 H27.5"/></svg>
 ```
 
 ### 삼각 스케일 — 축척

@@ -985,7 +985,7 @@ export function markBandProbeForTest(tool: Instr58, preset: string | undefined, 
     x: cx + Math.cos(rad) * ((k / 40) * 2 - 1) * L,
     y: cy + Math.sin(rad) * ((k / 40) * 2 - 1) * L,
   }))
-  const m: SeamMark = { pts, color: '#000000', wPx, seed: 66, tool, preset }
+  const m: SeamMark = { pts, color: C.BLACK_HEX, wPx, seed: 66, tool, preset }
   paintOne(surf, m, false)                       // 층에 남긴다 — 알파가 자다(#107: 되돌리기 없음)
   const a = surf.alphaMap()
   const nx = -Math.sin(rad), ny = Math.cos(rad)
@@ -1022,10 +1022,10 @@ export function mypaintProbeForTest(): Record<string, unknown> {
     const t = document.createElement('canvas')
     t.width = 480; t.height = 240
     const g = t.getContext('2d')!
-    g.fillStyle = '#fff'; g.fillRect(0, 0, 480, 240)
+    g.fillStyle = C.WHITE_HEX; g.fillRect(0, 0, 480, 240)
     const pts: { x: number; y: number }[] = []
     for (let i = 0; i <= 24; i++) pts.push({ x: 40 + i * 16, y: 120 + Math.sin(i / 4) * 30 })
-    drawOne(g, { pts, color: '#3a3a44', wPx: 20, seed, tool: 'pencil' })
+    drawOne(g, { pts, color: C.TEST_INK_SEAM_HEX, wPx: 20, seed, tool: 'pencil' })
     const d = g.getImageData(0, 0, 480, 240).data
     let h = 0, ink = 0
     for (let i = 0; i < d.length; i += 4) {
@@ -1051,7 +1051,7 @@ export function mypaintProbeForTest(): Record<string, unknown> {
       const y = 20 + (s % 20) * 24
       const pts: { x: number; y: number }[] = []
       for (let i = 0; i <= 12; i++) pts.push({ x: 20 + i * 30, y: y + Math.sin(i / 2) * 8 })
-      list.push({ pts, color: '#4a4a52', wPx: 16, seed: f * 100 + s, tool: tl })
+      list.push({ pts, color: C.TEST_INK_CAP_HEX, wPx: 16, seed: f * 100 + s, tool: tl })
     }
     return list
   }

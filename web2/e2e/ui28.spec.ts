@@ -237,7 +237,7 @@ test('28-3 ③ 화면 문구 — 「바꿈」으로 판정한 자리', async ({ 
   //   첫째가 「그때 그리던 것으로 돌아간다」이므로 그 자리가 맨 위다.
   expect(heads).toEqual(['문서', '최근', '원본 .brnl', '내보내기'])   // web2-69: 「종이」(질감)는 설정 서랍으로(R-B)
   for (const h of heads) expect(h).not.toContain('—')
-  expect(await text('#btn-brush')).toBe('질감')          // 상위(「종이」)가 이미 말한 낱말을 뺐다
+  expect(await page.getAttribute('#btn-brush', 'aria-label')).toBe('질감')          // 상위(「종이」)가 이미 말한 낱말을 뺐다 · web2-70: 아이콘 단추의 글자는 aria-label로
   // 눈 팝업 — 설명 꼬리가 빠졌다
   await page.evaluate(() => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = true })   // web2-69: 표시 토글은 설정 서랍(R-B)
   const labels = await page.evaluate(() =>

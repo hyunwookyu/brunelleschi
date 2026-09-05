@@ -13,6 +13,7 @@
 //
 // ⚠ **새 패널을 안 만든다**(지시 「하지 말 것」 · R5) — 파일 서랍 `#pane-file` 안이다.
 
+import { ICON_X } from '../ui/icons'
 import type { App } from './state'
 import type { BrnlData } from '../core/file'
 import { C } from '../core/constants'
@@ -210,7 +211,7 @@ export function initFilePanel(deps: FileDeps): FilePanel {
       // 접으면 앵커가 사라져 확인이 미아가 된다(비우기와 같은 자리 · `data-fold="late"`).
       del.dataset.act = 'cmd'
       del.dataset.fold = 'late'
-      del.textContent = '×'
+      del.innerHTML = ICON_X; del.setAttribute('aria-label', '지운다')   // web2-70 §3
       del.title = '지운다'
       del.addEventListener('click', () => {
         // 되돌릴 수 없는 것 — **무엇이 지워지는지 말한다**(R4 예외 규칙)

@@ -12,6 +12,8 @@
 // «최근»은 이 기기에서 고른 순(PAINT68_RECENT_N · 기기 저장). 세트마다 <details data-group>는 그대로 산다(옛 스펙이
 // details.open으로 여는 통로 — 열리면 그 세트가 «고른 세트»가 된다 · 나머지는 hidden).
 
+import { tok } from '../ui/tokens'
+import { ICON_X } from '../ui/icons'
 import { drawMark, paintRenderer, type Instr58 } from '../core/paintseam'
 import { brushLabel, brushRawExact } from '../core/brushnames'
 import { PRESET_CATALOG, PRESET_BY_NAME } from './mypaintpaint'
@@ -55,9 +57,9 @@ export function initBrushPicker(opts: {
   root.hidden = true
   root.style.cssText = [
     'position:fixed', 'right:12px', 'top:56px', 'width:400px', 'max-height:calc(100vh - 80px)',
-    'overflow-y:auto', 'background:#f6f3ec', 'border:1px solid #c9c2b4', 'border-radius:8px',
+    'overflow-y:auto', 'background:var(--panel)', 'border:1px solid var(--line)', 'border-radius:var(--radius)',
     'box-shadow:0 6px 24px rgba(60,56,49,.25)', 'padding:10px', 'z-index:40',
-    'display:none', 'flex-direction:column', 'gap:6px', 'font-size:12px', 'color:#3c3831',
+    'display:none', 'flex-direction:column', 'gap:6px', 'font-size:12px', 'color:var(--ink)',
   ].join(';')
 
   const head = document.createElement('div')
@@ -68,19 +70,19 @@ export function initBrushPicker(opts: {
   const closeBtn = document.createElement('button')
   closeBtn.id = 'brushpick-close'
   closeBtn.dataset.act = 'state'
-  closeBtn.textContent = '닫는다'
+  closeBtn.setAttribute('aria-label', '닫는다'); closeBtn.innerHTML = ICON_X   // web2-70 §3 — 아이콘이 있는 단추의 글자는 aria-label로
   closeBtn.title = '고르개를 닫는다'
   closeBtn.addEventListener('click', () => api.setOpen(false))
   head.append(title, closeBtn)
 
   const note = document.createElement('div')
-  note.style.cssText = 'font-size:11px;color:#6b665c;flex-shrink:0'
+  note.style.cssText = 'font-size:11px;color:var(--ink-2);flex-shrink:0'
   note.textContent = '세트를 고르면 견본이 그려진다(제품과 같은 함수). 누르면 지금 브러시가 된다 — 이미 그린 획은 안 변한다(64-1).'
 
   // web2-63 — 팁 줄: 지금 슬롯의 비트맵 팁(없음 · 다섯) — 프리셋 기본(null)이면 «기본» 표시. 기기 조정(tune.tip)이고 곧바로 굳힌다.
   const tipRow = document.createElement('div')
   tipRow.id = 'brushpick-tips'
-  tipRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;align-items:center;flex-shrink:0;padding:2px 0;border-bottom:1px solid #d8d2c4'
+  tipRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;align-items:center;flex-shrink:0;padding:2px 0;border-bottom:1px solid var(--line)'
   const buildTips = (): void => {
     tipRow.replaceChildren()
     const r = paintRenderer()
@@ -124,7 +126,7 @@ export function initBrushPicker(opts: {
   const sets = document.createElement('div')
   sets.id = 'brushpick-sets'
   // 세트 열은 굴러가도 제자리(sticky) — 목록이 길어도 세트를 갈아탈 수 있다(Procreate 채록 §C-3). 판 전체가 하나로 구른다(65 §2 ④ «잘린 글자 0»의 자가 hidden 조상을 자름으로 세므로 안쪽 상자를 hidden으로 두지 않는다).
-  sets.style.cssText = 'display:flex;flex-direction:column;gap:2px;width:96px;flex-shrink:0;align-self:flex-start;position:sticky;top:0;border-right:1px solid #d8d2c4;padding-right:6px'
+  sets.style.cssText = 'display:flex;flex-direction:column;gap:2px;width:96px;flex-shrink:0;align-self:flex-start;position:sticky;top:0;border-right:1px solid var(--line);padding-right:6px'
   const list = document.createElement('div')
   list.id = 'brushpick-list'
   list.style.cssText = 'display:flex;flex-direction:column;gap:4px;flex:1;min-width:0'
@@ -183,7 +185,7 @@ export function initBrushPicker(opts: {
     row.style.cssText = 'display:flex;align-items:center;gap:8px;text-align:left;padding:3px 4px;min-height:48px;box-sizing:border-box'
     const cv = document.createElement('canvas')
     cv.width = CV_W * 2; cv.height = CV_H * 2
-    cv.style.cssText = `width:${CV_W}px;height:${CV_H}px;position:static;inset:auto;flex-shrink:0;border:1px solid #d8d2c4;border-radius:3px;background:#fffdf8`
+    cv.style.cssText = `width:${CV_W}px;height:${CV_H}px;position:static;inset:auto;flex-shrink:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)`
     // web2-65 §2 ③④ — 사람이 읽는 이름이 먼저, 원 이름은 **부제로 남는다**(안 없앤다). 자르지 않는다(줄바꿈 — 게이트 ④).
     const lab = document.createElement('span')
     lab.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;white-space:normal;overflow-wrap:anywhere'
@@ -192,7 +194,7 @@ export function initBrushPicker(opts: {
     labMain.textContent = brushLabel(name)
     const labRaw = document.createElement('span')
     labRaw.className = 'brushpick-raw'
-    labRaw.style.cssText = 'font-size:10px;color:#8d8880'
+    labRaw.style.cssText = 'font-size:10px;color:var(--ink-2)'
     labRaw.textContent = brushRawExact(name)
     lab.append(labMain, labRaw)
     row.append(cv, lab)
@@ -240,7 +242,7 @@ export function initBrushPicker(opts: {
         wrap.replaceChildren()
         if (names.length === 0) {
           const empty = document.createElement('div')
-          empty.style.cssText = 'font-size:11px;color:#8d8880;padding:4px'
+          empty.style.cssText = 'font-size:11px;color:var(--ink-2);padding:4px'
           empty.textContent = cat.group === RECENT_GROUP ? '아직 없다 — 목록에서 고르면 여기 남는다(이 기기 · 8개)' : '비어 있다'
           wrap.append(empty)
         }
@@ -300,7 +302,7 @@ export function drawBrushSample(cv: HTMLCanvasElement, tool: Instr58, preset: st
   g.setTransform(1, 0, 0, 1, 0, 0)
   g.globalCompositeOperation = 'source-over'
   g.globalAlpha = 1
-  g.fillStyle = '#fffdf8'
+  g.fillStyle = tok('--panel')
   g.fillRect(0, 0, cv.width, cv.height)
   const pts: { x: number; y: number }[] = []
   const press: number[] = []
@@ -314,7 +316,7 @@ export function drawBrushSample(cv: HTMLCanvasElement, tool: Instr58, preset: st
   try {
     drawMark(g, { pts, press, wPx: 9 * 2, seed: 62, tool, preset, color: hex })
   } catch {
-    g.fillStyle = '#b04a3a'; g.font = '11px system-ui'; g.fillText('견본 실패', 6, 18)
+    g.fillStyle = tok('--warn'); g.font = '11px system-ui'; g.fillText('견본 실패', 6, 18)
   }
 }
 

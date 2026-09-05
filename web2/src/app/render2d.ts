@@ -4,6 +4,7 @@
 // 뷰 오프셋(화면 팬·줌)은 그리기 변환으로만 얹는다 — 문서 좌표는 안 바뀐다.
 // 선 굵기·표식 크기는 화면 고정(배율로 나눈다).
 
+import { tok, tokAlpha } from '../ui/tokens'
 import type { App, ViewOffset } from './state'
 import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos, viewXf, inkMix, manipLabel, screenToDoc, docToScreen, roomsNow } from './state'
 import { scaleBarAt } from '../core/scalebar'
@@ -126,23 +127,23 @@ const COL = {
   // 지평선(web2-12 7번) — 작도 대역으로 이관(재료가 아니다 — 위 지평선 블록 주석이 정본).
   // 격자(0.18)보다는 서고(작도의 뼈대) 종전 2H(알파 0.5)보다 옅다. 토글이 하한을 푼다.
   horizon: 'rgba(150,147,141,0.32)',
-  construction: '#8a7f6a',
+  get construction() { return tok('--ink-2') },   // web2-70 — 작도 표식은 보조 잉크 토큰(옛 #8a7f6a → --ink-2 · 값 하나)
   // ⚙️ **대기 획의 몸체 색은 여기 없다** — `core/waitfade.ts`의 `WAIT_INK`(논포토 블루)가
   // 그 자리다(web2-37 2번). 세 겹(#brushc·#ink·#layerc)이 다 읽어야 하는데 이 객체는
   // render2d 안에만 있고 filmlayer가 못 읽는다(순환) — 그래서 core로 갔다.
   // 종전의 `waiting: '#555'`·`waitingDim`은 **한 번도 안 쓰였다**(죽은 항목이라 걷었다):
   // 대기 몸체는 web2-16 3-a부터 재료색이었고 이제 상태색이다.
-  preview: '#1a6ac2',
+  get preview() { return tok('--accent') },
   // ⚠ 붉은색이었다 — 화면에 **상시** 떠 있는 표식이라 그림보다 눈에 띄었다(지시 3-c 대조표).
   // 소실점은 지평선과 같은 급의 작도 표식이므로 같은 색으로 물러난다.
-  vpMark: '#8a7f6a',
+  get vpMark() { return tok('--ink-2') },
   // 축 스냅 안내 — 무채색 파선(web2-10 지시 7). 선 자체는 재료색이고 «축에 붙었다»는
   // 이 파선이 말한다. 오스냅(2H·0.5)과 다른 대역(불투명 #555)이어야 한다 — 위 정본.
-  axisGuide: '#555',
+  get axisGuide() { return tok('--ink') },
   // ⚠ 강조색(#1a6ac2)으로 합치려다 되돌렸다 — 옛 vp1 축 색(#1a7fc2)과 사실상 같은 파랑이라
   // 「축에 붙었다」와 「점에 붙었다」가 화면에서 안 갈린다. 순간 피드백끼리는 갈려야 한다.
   // **면 미리보기(«만든다»의 초록)에만 남는다** — 오스냅 기호는 mark()의 2H(무채색)다.
-  snap: '#1a9c50',
+  get snap() { return tok('--select') },
   // 오스냅 기호 — 무채색이고 **2H 급**이다(web2-10 지시 6 — 「HB 대역이라 진하다」는
   // 실기기 관측으로 내렸다). 값은 경도표를 그대로 읽는다(MAT['2H'] — 지평선과 같은 방식,
   // 숫자를 새로 짓지 않는다). mark()가 색·알파를 MAT에서 직접 읽으므로 여기 항목이 없다.
@@ -156,8 +157,8 @@ const COL = {
   // 모서리는 `--ui` 그대로다 — 세로바의 아이콘이 쓰는 바로 그 색이다(#54: 새 색 ⛔).
   // 알파 0.16의 근거는 **아이콘과 같은 무게**라는 지시 하나다(눈이 고른 값 — #12
   // 동작점이고 스윕이 없다). 되돌릴 조건: 밝은 배경에서 큐브의 면이 안 읽힌다.
-  cubeFace: 'rgba(141,136,128,0.16)',
-  cubeEdge: '#8d8880',
+  get cubeFace() { return tokAlpha('--ink-2', 0.16) },
+  get cubeEdge() { return tok('--ink-2') },
 }
 
 // ── 잉크 번짐(web2-12 9번) — **획에 내재한 것만**: 머무름(체류) · 내림·뗌 · 가장자리 ──
@@ -716,7 +717,7 @@ export function draw2d(
         const k = (a2.y - e2.y) / (st.footY - st.eyeY)     // 캔버스 px → 문서 px
         if (!(k > 0)) continue                              // 뒤집힘·퇴화 — 안 그린다
         const cx = 90                                       // 스텐실 캔버스 가로 중심(180px 판)
-        ctx.strokeStyle = '#3c3833'
+        ctx.strokeStyle = tok('--ink')
         ctx.lineWidth = Math.max(0.6 * is, 1.3 * k)
         ctx.lineJoin = 'round'; ctx.lineCap = 'round'
         for (const line of st.lines) {
@@ -840,7 +841,7 @@ function grain(
   const p = press ?? 0.5
   const rnd = rng32(seed * 2654435761)
   const n = Math.min(400, Math.round(L * amount * (0.5 + p)))
-  ctx.fillStyle = '#404040'
+  ctx.fillStyle = tok('--ink')
   ctx.globalAlpha = alpha * 0.28 * (0.5 + p)
   for (let i = 0; i < n; i++) {
     const t = rnd()

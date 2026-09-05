@@ -1,0 +1,48 @@
+/* web2-70 §1 — 시각 토큰, 파일 하나.
+   앱의 모든 색·둥글기·간격·글자 크기는 여기서 나온다. index.html의 <style>과 src/의 문자열에
+   16진수 색이 남지 않는다(게이트: tokens.css 밖 16진수 0 — e2e/tokens70.spec.ts가 센다).
+   기본은 밝은 종이 판(앱 아이콘의 종이색이 그렇다 · Feather 1.x · Trace 종이). 어두운 판은
+   [data-theme=dark]가 «같은 이름»에 값만 바꾼다 — 사람이 사진 둘(70-panels · 70-panels-dark)을 보고 고른다.
+   그림자 없음 · 테두리 없음(판은 색 차로만 뜬다) · 반투명 없음(3D 선이 뒤에 있다 — UX-FLOWS §G-5). */
+:root {
+  /* ── 색 ── */
+  --paper: #f5f3ee;          /* 종이(캔버스 바탕) — 앱 아이콘의 그 색 · 바꾸지 않는다 */
+  --panel: #fbfaf7;          /* 판(알약·카드) — 종이보다 한 단 밝고 불투명 */
+  --panel-2: #f0eee9;        /* 판 위의 판(카드 안 단추·선택된 행) — --panel보다 한 단 어둡게(색 차 ≈ 4%) */
+  --panel-down: #e7e4dd;     /* 눌림 — --panel을 8% 어둡게 */
+  --ink: #3c3831;            /* 아이콘·글자 */
+  --ink-2: #8d8880;          /* 보조 글자·숫자 라벨·안 고른 도구 */
+  --line: #d8d2c4;           /* 구분선(쓰면 1px · 최소) */
+  --accent: #2b5bd7;         /* 강조색 하나 — §2 대비 판정(원장 tokens70) */
+  --select: #1a9c50;         /* 선택된 획 · 면 미리보기 초록(기존 값 — Feather 관습) */
+  --warn: #a8763a;           /* 경고 표식(치수 기울기 · 예산 초과 점 · 견본 실패) — 강조색이 아니라 «상태»의 색 · 하나 */
+  /* ── 크기 ── */
+  --radius: 12px;            /* 판 둥글기(Feather 12 · Procreate 14 · Trace 4 사이) */
+  --gap: 8px;                /* 간격 단위 — 모든 여백은 8의 배수 · 아이콘 안 여백 4 */
+  --gap-in: 4px;             /* 아이콘 안 여백 */
+  --icon: 24px;              /* 아이콘 격자 */
+  --icon-stroke: 1.75;       /* 아이콘 선 굵기(px — vector-effect: non-scaling-stroke) */
+  --tap: 44px;               /* 누를 것의 최소 크기(손가락 — 67) */
+  --fs-num: 10px;            /* 숫자 라벨 · tabular-nums */
+  --fs-body: 12px;           /* 본문 */
+  --fs-title: 14px;          /* 제목(볼드는 제목만) */
+  --font: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* ── 상태 셋(§2) ── */
+  --muted: .35;              /* 못 누름 — 자리는 그대로 · 불투명 .35 */
+  /* ── 실물 도구 그림의 재료색(index.html의 연필·펜·지우개 그림 — 사람 승인 정본 path는 그대로, fill만 변수로) ── */
+  --pic-wood: #cfc7b6;  --pic-wood-hi: #e0d9ca;  --pic-wood-lo: #bbb2a0;  --pic-wood-tip: #e6dfd0;  --pic-window: #faf8f3;
+  --pic-pen: #7f7a72;   --pic-pen-hi: #98938a;   --pic-pen-lo: #6e6a63;   --pic-pen-tip: #5d5952;   --pic-pen-nib: #101014;  --pic-pen-edge: #837f78;
+  --pic-eraser: #d5cdbb; --pic-eraser-hi: #e4ddcd; --pic-eraser-lo: #c9c0ad; --pic-eraser-edge: #b3ab9a;
+  --pic-ink-eraser: #3a3833; --pic-ink-eraser-lo: #2b2925; --pic-ink-eraser-edge: #8b857a;
+  --pic-face: #8d8880;  --pic-grip: #d8cfc0;  --pic-yellow: #e9d98a;   /* 옐로 롤의 고리(docs/instrument-icons.md 색 예외 하나) */
+  --pic-lead: #5a5a5a;  /* 접힌 연필의 심(기본 HB — main.ts가 경도로 갱신) */
+  /* ── 종이 겹 색 상수(캔버스 그림이 읽는다 — src/ui/tokens.ts) ── */
+  --white: #ffffff;  --black: #000000;
+}
+[data-theme=dark] {
+  --panel: #262626;  --panel-2: #303030;  --panel-down: #1c1c1c;
+  --ink: #e8e6e1;  --ink-2: #a09c95;  --line: #3d3d3d;
+  --accent: #7e9cf0;  --select: #4fc27c;  --warn: #d9a05a;
+  --pic-window: #2e2e2e;
+}

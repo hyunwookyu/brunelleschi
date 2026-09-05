@@ -157,7 +157,7 @@ test('R6 접힌 겹 요약 — 롤이 **지금 그리는 겹**을 말한다(맨 
         active: (window as any).__b2.app.activeLayer as number | null,
         shown: sum.dataset.paper!, n: sum.dataset.active!,
         // 옐로 롤만 고리를 `#e9d98a`로 채운다 — 그림 자체가 어느 종이인지 말한다
-        yellowInk: sum.querySelector('svg')!.outerHTML.includes('e9d98a'),
+        yellowInk: sum.querySelector('svg')!.outerHTML.includes('pic-yellow'),   // web2-70: 색 값은 토큰 --pic-yellow(#e9d98a) 하나 — 고리 fill이 그 변수다
         count: sum.querySelector('.lsum-n')!.textContent,
       }
     })

@@ -681,6 +681,23 @@ export const C = {
    *  CSS이고 한쪽은 GL이라 한 자리에 못 둔다 — `test/paint48.test.ts`가 둘의 일치를 잰다).
    *  칠한 면이 «서 있는 종이 한 장»으로 보이려면 이 색이다(48-9). */
   PAPER_HEX: '#f5f3ee',
+  /** web2-70 — 토큰이 아닌 색 상수(그림·논리·진단). UI 색은 src/ui/tokens.css 하나다(16진수 0 게이트 — test/tokens70.test.ts가
+   *  이 파일의 아래 키·material·palette·waitfade·colorwheel만 예외로 센다). PAPER_HEX는 tokens.css --paper와 같은 값(단위 시험이 대조). */
+  WHITE_HEX: '#ffffff',     // 곱의 항등(면 텍스처 · 견본 판 바탕) · 지우개 칸 촉
+  BLACK_HEX: '#000000',     // 해시 판 · 이음매 견본 · 진단 기본 잉크
+  TEST_INK_PEN_HEX: '#8a4a3a',   // 진단 견본의 펜 색(64 markSampleForTest 기본 — 값 유지)
+  TEST_INK_SEAM_HEX: '#3a3a44',  // 66 이음매 견본 잉크(값 유지 — 원장 비교)
+  TEST_INK_CAP_HEX: '#4a4a52',   // 66 선 끝 견본 잉크(값 유지)
+  /** web2-70 — 시각 시스템의 임계·후보(게이트가 읽는다 · e2e/tokens70.spec.ts) */
+  TOKENS70_CONTRAST_TEXT_MIN: 4.5,   // WCAG AA 글자(판 위)
+  TOKENS70_CONTRAST_ICON_MIN: 3,     // WCAG 비텍스트(아이콘)
+  TOKENS70_MUTED: 0.35,              // 못 누름 불투명(tokens.css --muted와 같은 값 — 단언)
+  TOKENS70_ICON_STROKE: 1.75,        // 아이콘 선 굵기 px(--icon-stroke)
+  TOKENS70_FONT_SIZES: [10, 12, 14] as const,   // 숫자 · 본문 · 제목
+  TOKENS70_RADIUS_PX: 12,            // 판 둥글기(--radius)
+  TOKENS70_GAP_PX: 8,                // 간격 단위(--gap · 아이콘 안 4)
+  ACCENT_CAND_YELLOW_HEX: '#9a7b1c', // 강조색 후보 — 옐로(#e9d98a · H 50°)를 «노랑으로 읽히는 하한»(L 36%)까지 진하게 한 판
+  ACCENT_CAND_BLUE_HEX: '#2b5bd7',   // 강조색 후보 — 잉크 파랑(지시 문면 근방값)
   /** 해칭 선의 불투명도 — 면 채움(0.22)보다 약간 짙되 2H 잉크(0.5)보다 옅게:
    *  해칭은 «톤»이지 «선»이 아니다(지시: 선이 위에 얹힌다). */
   HATCH_ALPHA: 0.3,

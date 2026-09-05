@@ -268,7 +268,8 @@ function installLint(page: Page) {
       const svg = document.querySelector(sel) as SVGSVGElement | null
       if (!svg) return [`${sel}: svg가 없다`]
       const out: string[] = []
-      if (svg.getAttribute('viewBox') !== '0 0 32 32') out.push(`viewBox=${svg.getAttribute('viewBox')}`)
+      // web2-70 §3 — 격자는 24(Lucide 세트) 또는 32(자작 선 문법) 둘 · 채운 세트의 256은 걸린다
+      if (!['0 0 32 32', '0 0 24 24'].includes(svg.getAttribute('viewBox') || '')) out.push(`viewBox=${svg.getAttribute('viewBox')}`)
       const shapes = [...svg.querySelectorAll('path,circle,rect,ellipse,line,polygon,polyline')]
       if (shapes.length === 0) out.push('그리는 요소가 없다')
       for (const el of shapes) {
@@ -281,8 +282,9 @@ function installLint(page: Page) {
         // ③ round cap/join
         if (cs.strokeLinecap !== 'round') out.push(`${tag}:cap=${cs.strokeLinecap}`)
         if (cs.strokeLinejoin !== 'round') out.push(`${tag}:join=${cs.strokeLinejoin}`)
-        // ④ 굵기 1.6 (뷰박스 32 기준 — 사용자 단위로 잰다)
-        if (cs.strokeWidth !== '1.6px') out.push(`${tag}:width=${cs.strokeWidth}`)
+        // ④ 굵기 1.75 (web2-70 — CSS 하나 · 화면 px)
+        // web2-70 §3 — 굵기는 CSS --icon-stroke 하나(1.75 · non-scaling-stroke): 옛 1.6/32 속성은 지웠다
+        if (cs.strokeWidth !== '1.75px') out.push(`${tag}:width=${cs.strokeWidth}`)
       }
       return out
     }
@@ -317,15 +319,15 @@ test('34-5 설정 톱니 — 선 문법이고 채우지 않았다 · 바깥 톱�
     return {
       paths: paths.length, circles: circles.length,
       closed: /z\s*$/i.test(d.trim()),
-      teeth: (d.match(/A/g) || []).length,          // 뿌리 호 하나 = 톱니 하나
+      teeth: (d.match(/a/gi) || []).length,         // 뿌리 호 하나 = 톱니 하나(web2-70: Lucide는 소문자 상대 호)
       gear: { x: +gb.x.toFixed(2), y: +gb.y.toFixed(2), w: +gb.width.toFixed(2), h: +gb.height.toFixed(2) },
       hub: { x: +hb.x.toFixed(2), y: +hb.y.toFixed(2), w: +hb.width.toFixed(2), h: +hb.height.toFixed(2) },
     }
   }, SEL)
   expect(shape.paths, '톱니 실루엣 하나').toBe(1)
   expect(shape.circles, '중앙 원 하나').toBe(1)
-  expect(shape.closed, '닫힌 실루엣이다').toBe(true)
-  expect(shape.teeth, '톱니 여덟').toBe(8)
+  // web2-70 §3 — 톱니는 세트(Lucide settings)의 그림이다: 옛 자작 톱니의 «닫힌 실루엣·호 여덟» 단언 둘은 그 그림의 자였다 → 값으로만 남긴다(대체한 시험 — NOTES 70 판갈이)
+  console.log(`[34-5 · 70] 닫힘 ${shape.closed} · 호 ${shape.teeth}(세트 그림의 값)`)
   // 중앙 원이 **안쪽에 있고 가운데**다 — 이름값을 기하로 확인한다(bbox 중심 일치 · 더 작다)
   const c = (b: { x: number; y: number; w: number; h: number }): [number, number] => [b.x + b.w / 2, b.y + b.h / 2]
   const [gx, gy] = c(shape.gear), [hx, hy] = c(shape.hub)

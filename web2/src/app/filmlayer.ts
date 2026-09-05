@@ -442,7 +442,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
       for (const seg of u.segs) { g.moveTo(seg.a.x, seg.a.y); g.lineTo(seg.b.x, seg.b.y) }
     }
     // ① 선 자리 도려내기 — 밑그림이 대체하는 3D 획을 그 자리에서만 지운다
-    g.strokeStyle = '#f5f3ee'
+    g.strokeStyle = C.PAPER_HEX
     g.lineWidth = C.NIB_MAX * is
     path()
     g.stroke()
@@ -525,7 +525,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     for (const b of boxes) g.rect(b.x + b.dx, b.y, b.w, b.h)
     g.clip()
     // ① 막 영역(합집합)에 아래 화면을 재조립 — 종이색 + #gl + 흑연(제스처면 스냅샷)
-    g.fillStyle = '#f5f3ee'
+    g.fillStyle = C.PAPER_HEX
     g.fillRect(0, 0, film.width, film.height)
     // ⚠ **바탕 결(#paperfilm)이 목록의 맨 앞이다**(web2-30 9번) — 막 영역 안에서도
     //    종이의 결이 살아 있어야 한다. 안 넣으면 겹 아래에서만 종이가 밋밋해진다.
