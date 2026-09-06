@@ -40,7 +40,8 @@ const OUT: Record<string, unknown> = {
   no_constants_snapshot: true,
   constants_used: { note: 'web2 라인은 constantsSnapshot 기계가 없다(lens31·paint50의 no_constants_snapshot이 정본)' },
   selfcheck_notes: {
-    zero_counters: '수리 «후»의 orbit.bakes 0 · evicts 0은 §1·§2·§3의 통과값이다 — 같은 자가 수리 «전»(perf72_pre)에서 큰 값을 낸다(짝이 원장 둘로 남는다)',
+    zero_counters: '수리 «후»의 A_orbit*.bake.bakes 0 · evicts 0은 §1·§2·§3의 통과값이다 — 같은 자가 수리 «전»(perf72_pre)에서 큰 값을 낸다(짝이 원장 둘로 남는다: 전 9회·획 360 → 후 0). sig_change_small의 조각들이 전부 0인 것은 **기본 배율에서는 단계가 안 움직인다**는 사실이다(면이 작다) — 그래서 D-5로 대역을 넓힌 sig_change_zoomed가 옆에 있고 거기서 lv가 9를 낸다(수리 전). h2의 evicts 0은 «퇴출이 안 돌았다»는 관측이고 그것이 가설 2의 반증이다(AS-C210)',
+    single_category: 'fixture.levels·C_memory.levels가 한 값(256×23)인 것은 픽스처의 구성이다 — 격자 벽의 칸이 화면에서 서로 비슷한 크기라 같은 단계에 든다. 단계의 변별은 **줌으로 대역을 넓힌** C_memory_zoomed·A_orbit_zoomed가 든다(D-5 — 첫 판이 그 대역을 안 덮어 가설 1이 반증으로 나왔고, 넓히자 실증이 됐다)',
   },
 }
 const LEDGER_OF = (p: string) =>

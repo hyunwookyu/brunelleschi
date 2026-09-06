@@ -3374,9 +3374,6 @@ function frame() {
           w: widthOfMat({ grade: g, w: app.tool === 'pen' && app.nib !== C.NIB_PX ? app.nib : undefined }) }
       : null)
     render3d(r3d, app)
-    // web2-72 §1 — 프레임 예산에 걸려 «다음 프레임으로 미룬» 굽기가 있으면 한 프레임 더 부른다
-    // (정착 전이·겹 동작과 같은 꼴 — 미룬 것이 없으면 평소의 «바뀔 때만»으로 돌아간다).
-    if (paintBakePending()) invalidate()
     // 상한 포화 «표식»(web2-67 0-1 — 59-1의 토스트를 갈았다: 사람 판정 「이거 걸리면 자꾸
     // 멈추는데」 — 뜻(조용히 뭉개지 마라 · 43-1)은 그대로, «형태»가 토스트 → 패널 구석의
     // 작은 점이다. 걸려 있는 동안 켜지고 안 걸리면 꺼진다 · 한 줄 설명은 호버(title)에.
@@ -3392,6 +3389,14 @@ function frame() {
     if (frameCosts.length >= FRAME_COST_N) frameCosts.shift()
     frameCosts.push({ r3: fc1 - fc0, bs: fc2 - fc1, d2: fc3 - fc2, total: fc3 - fc0 })
     syncHorizonBox()   // 체크박스가 실제 표시 상태를 비춘다(5-a — 그려진 프레임과 같은 판정)
+  } else if (paintBakePending()) {
+    // ── web2-72 §1 — **칠만 이어 굽는 프레임**. 미룬 굽기가 남았는데 다른 것은 안 바뀌었다:
+    //   3D만 다시 그린다(굽기와 GPU 업로드가 거기서 돈다). 흑연 겹·막·2D는 «안 바뀐 것»이라
+    //   다시 그릴 이유가 없다 — invalidate로 전량을 부르면 그 몫이 프레임을 먹어 «칠이 다
+    //   채워지기까지»가 길어진다(실측: 전량 판 21.6초 · 이 판은 그보다 짧다).
+    //   ⚠ frameCosts에 안 담는다 — 이 프레임은 «사람이 보는 그림»의 비용이 아니다(#89).
+    render3d(r3d, app)
+    if (clampDotEl) clampDotEl.hidden = !(painttrayOpen && paintClampedVisible())
   }
   requestAnimationFrame(frame)
 }

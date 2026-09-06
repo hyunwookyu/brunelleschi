@@ -18,6 +18,12 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { buildHeavy, orbitProbe, zoomIn, type BakeStat } from './heavy72'
+
+// ⚠ 게이트의 픽스처는 **계측의 절반**이다(면마다 칠 획 16 · 계측 perf72는 지시대로 40).
+//   게이트가 재는 것은 «규칙»(굽기 0 · 픽셀 항등 · 훑기 = 그 면의 획 수)이라 획 수의
+//   절대값에 안 걸리고, 밤 전량이 이 스펙을 다섯 번 돌므로 픽스처 비용이 곧 밤 시간이다.
+//   계측이 대역을 덮고(920 획) 게이트가 규칙을 지킨다 — 갈라 둔 이유가 그것이다.
+const PER_FACE = 16
 import { PAINT72_BOUNDARY_REBAKE_MAX } from './thresholds'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -28,8 +34,10 @@ const OUT: Record<string, unknown> = {
   thresholds: { PAINT72_BOUNDARY_REBAKE_MAX, note_alloc: '흐림 하한(텍셀/px)은 앱 상수 C.PAINT72_ALLOC_TEXEL_PER_PX_MIN — 아래 g3_alloc.texel_floor에 그 값이 그대로 든다(D-C4)' },
   no_constants_snapshot: true,
   selfcheck_notes: {
-    zero_counters: '§2의 bakes 0 · §3의 evicts 0은 **통과값**이다 — 같은 자가 반증(동결 끔 · 옛 퇴출)에서 0이 아닌 값을 낸다(같은 원장에 짝으로 든다)',
-    identical_pairs: '§1-1의 «조각 == 한 번에» 해시 같음과 §1-2의 목록 같음은 게이트의 뜻 그 자체다 — 반증 스위치가 다른 값을 내는 것이 판별력이다',
+    zero_counters: '§2의 orbit_freeze_on.bakes 0 · level_down 0 · empty_frames 0과 §3의 evicts 0은 **통과값**이다 — 같은 자가 반증에서 0이 아닌 값을 낸다(orbit_freeze_off.bakes · 같은 원장에 짝으로 든다). g1_index.mismatched_n 0도 같은 꼴이고, 집계가 도는 증거는 같은 실행의 lists 23 · index_off.per_call 934다',
+    identical_pairs: '§1-1의 «조각 == 한 번에» 픽셀 같음(pixels_equal)과 §1-2의 목록 같음은 게이트의 뜻 그 자체다 — 반증 스위치(분할 끔 · 색인 끔)가 다른 값을 내는 것이 판별력이다',
+    zero_error_metric: 'g1_slice.whole.deferred 0은 **설계 보장**이다(분할을 끄면 미룰 것이 없다 — 반증 판의 정의). 임계를 안 건다: 임계는 켬 판의 deferred > 0에 건다',
+    single_category: 'g4_open.fixture.levels가 한 값(256×23)인 것은 픽스처의 구성이다 — 격자 벽의 칸이 화면에서 «서로 비슷한 크기»라 같은 단계에 든다. 단계의 변별은 §2·§3이 **줌으로 대역을 넓혀** 잰다(그 표는 g2_freeze·g3_alloc의 texel_per_px)',
   },
 }
 const LEDGER_OF = (p: string) => resolve(HERE, `../../stage0/out/gates72_web2_dpr${p === 'dpr2' ? 2 : 1}.json`)
@@ -60,8 +68,8 @@ const rebake = async (page: Page) => {
 
 test('§1 — 시간 분할이 프레임을 안 막는다 · 조각내 구운 픽셀 == 한 번에 구운 픽셀(반증: 분할 끔)', async ({ page }) => {
   test.setTimeout(900_000)
-  const built = await buildHeavy(page)
-  expect(built.paintStrokes, '칠 획이 섰다(#103)').toBeGreaterThanOrEqual(600)
+  const built = await buildHeavy(page, PER_FACE)
+  expect(built.paintStrokes, '칠 획이 섰다(#103)').toBeGreaterThanOrEqual(300)
   // ── 분할 «켬»으로 전량 재굽기 — 미룬 것이 있고(값), 그림은 아래 «끔» 판과 같아야 한다
   await bakeReset(page)
   await rebake(page)
@@ -87,7 +95,7 @@ test('§1 — 시간 분할이 프레임을 안 막는다 · 조각내 구운 �
 
 test('§1-2 — 색인: 편집 한 번에 훑는 획 수 == 그 면의 획 수 · 목록은 옛 훑기와 한 획도 안 다르다(반증: 색인 끔)', async ({ page }) => {
   test.setTimeout(900_000)
-  const built = await buildHeavy(page)
+  const built = await buildHeavy(page, PER_FACE)
   await settle(page)
   // ① 두 길의 목록 대조 — 색인이 낸 것과 옛 훑기가 낸 것
   const lists = await page.evaluate(() => (window as any).__b2.diag.paintStrokeListsForTest() as { key: string; index: number[]; scan: number[] }[])
@@ -129,7 +137,7 @@ test('§1-2 — 색인: 편집 한 번에 훑는 획 수 == 그 면의 획 수 �
 
 test('§2 — 궤도 4초 동안 굽기 0 · 단계 내림에서 굽기 0 · 경계 왕복 재굽기 ≤ 2 (반증: 동결 끔)', async ({ page }) => {
   test.setTimeout(1_200_000)
-  await buildHeavy(page)
+  await buildHeavy(page, PER_FACE)
   await zoomIn(page, 5)                                  // 면을 키워 단계가 실제로 움직일 대역으로(D-5)
   await settle(page)
   const visible = await page.evaluate(() => ((window as any).__b2.diag.paintTex() as any[]).filter(e => e.visible).length)
@@ -170,7 +178,7 @@ test('§2 — 궤도 4초 동안 굽기 0 · 단계 내림에서 굽기 0 · 경
 
 test('§3 — 예산이 좁아도 «보이는 것»은 안 버린다: 퇴출 0 · 합 ≤ 예산 · 내려간 면의 텍셀/px ≥ 값', async ({ page }) => {
   test.setTimeout(900_000)
-  await buildHeavy(page)
+  await buildHeavy(page, PER_FACE)
   await zoomIn(page, 4)
   await settle(page)
   const floor = await page.evaluate(() => (window as any).__b2.diag.constantsForTest().PAINT72_ALLOC_TEXEL_PER_PX_MIN as number)
@@ -215,7 +223,7 @@ test('§3 — 예산이 좁아도 «보이는 것»은 안 버린다: 퇴출 0 �
 
 test('§4 — 열 때: 첫 상호작용 프레임과 최장 차단(대조군과 함께) · 저장 왕복 5/5 · KEY_ORDER 무변', async ({ page }) => {
   test.setTimeout(900_000)
-  const built = await buildHeavy(page)
+  const built = await buildHeavy(page, PER_FACE)
   await settle(page)
   // 저장 왕복 5/5 — 형식이 안 바뀌었는가(⛔ 저장 형식 무변)
   const round: { bytes: number; sha: string }[] = []
@@ -243,5 +251,5 @@ test('§4 — 열 때: 첫 상호작용 프레임과 최장 차단(대조군과 
     note: '열 때의 ms 값은 계측(perf72)이 든다 — 여기서는 저장 형식이 안 움직였음과 픽스처가 섰음을 지킨다(⛔ 저장 형식 무변).',
   }
   expect(round.every(r => r.sha === round[0]!.sha), '저장 왕복 5/5 — 같은 바이트').toBe(true)
-  expect(built.paintStrokes, '칠 획이 섰다').toBeGreaterThanOrEqual(600)
+  expect(built.paintStrokes, '칠 획이 섰다').toBeGreaterThanOrEqual(300)
 })

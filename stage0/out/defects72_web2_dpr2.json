@@ -1,6 +1,6 @@
 {
   "conditions": {
-    "project": "dpr1",
+    "project": "dpr2",
     "workers": 1,
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/defects72.spec.ts (#99)"
   },
@@ -15,189 +15,13 @@
     108,
     111
   ],
+  "thresholds": {
+    "PAINT72_RELEASE_INK_RATIO_MAX": 0.08
+  },
   "selfcheck_notes": {
     "zero_counters": "a1.blind_whole_stroke_n 0 = **이 라운드의 결론**이다(획을 긋는 동안 한 번도 안 보이는 프리셋이 없다 — 지시 §A-1의 가설 반증 · AS-C208). 집계가 도는 증거는 같은 실행의 slow_first_dab_n 62 · no_mark_on_blank_n 52 · distinct_held_ink 148(자가 프리셋을 실제로 가른다). / a3.on_before.grade·on_switched.grade 0 = 연필통(경도 줄)이 «접혀 있어서» 그 묶음에 켜진 것이 없다(칠 패널만 열려 있다 — 화면 상태의 사실) · a3.*.recent 0은 그 판에서 최근 색을 한 번도 안 골랐다는 사실이다",
     "identical_pairs": "a1.sample_rows[*].releaseInkRatio 0은 「미리보기 == 확정본」(59 규약 · 66 초안 인계)의 뜻 그 자체다 — **설계 보장이지 측정이 아니다**. 그래서 이 값에는 임계를 안 걸고, 임계는 «0이 될 수 없는 것들»의 상한(release_ink_ratio_max ≤ PAINT72_RELEASE_INK_RATIO_MAX)에만 건다. 0이 아닌 셋(ramon/Glow_Airbrush 0.0548 · tanda/marker-01 0.0087 · classic/textured_ink 0.0003)이 그 자의 변별력이다. / a4의 open_after_* 참 나열은 규약이고, 짝인 closed_after_canvas_tap·closed_after_button_again·closed_by_other_box_r7이 거짓/참을 가른다",
     "exact_one": "a2.migrated_flag = 1은 비율이 아니라 **횟수**다(옛 판 → 새 판 이주가 «한 번» 돌았다 — #109의 규약: 새 판이 서면 다시 안 본다). 이 팔의 반증 짝이 그것이다: 0이면 이주 경로가 안 돈 것이고 그러면 이 시험은 아무것도 안 잰다"
-  },
-  "a1": {
-    "presets": 207,
-    "blind_whole_stroke": [],
-    "blind_whole_stroke_n": 0,
-    "slow_first_dab": [
-      {
-        "name": "deevad/spray",
-        "first_ink_travel_px": 28.6
-      },
-      {
-        "name": "tanda/splatter-04",
-        "first_ink_travel_px": 43
-      }
-    ],
-    "slow_first_dab_n": 2,
-    "first_ink_travel_px": {
-      "min": 14.3,
-      "median": 14.3,
-      "max": 43
-    },
-    "no_mark_on_blank": [
-      "Dieterle/Dissolver",
-      "Dieterle/Eraser",
-      "classic/blur",
-      "deevad/kneaded_eraser",
-      "deevad/kneaded_eraser_large",
-      "deevad/large_hard_eraser",
-      "ramon/Hard_Eraser",
-      "ramon/Knife",
-      "ramon/Soft_Eraser",
-      "tanda/water-02",
-      "tanda/water-05",
-      "tanda/water-06"
-    ],
-    "no_mark_on_blank_n": 12,
-    "release_ink_ratio_nonzero": [
-      {
-        "name": "classic/textured_ink",
-        "ratio": 0.0003
-      },
-      {
-        "name": "ramon/Glow_Airbrush",
-        "ratio": 0.0548
-      },
-      {
-        "name": "tanda/marker-01",
-        "ratio": 0.0087
-      }
-    ],
-    "release_ink_ratio_nonzero_n": 3,
-    "release_ink_ratio_max": 0.0548,
-    "sample_rows": [
-      {
-        "name": "brunelleschi/colored_pencil",
-        "firstInk": 1,
-        "firstInkTravelPx": 14.3,
-        "heldInk": 3814,
-        "upInk": 3814,
-        "releaseInkRatio": 0,
-        "blindWholeStroke": false,
-        "noMarkOnBlank": false
-      },
-      {
-        "name": "brunelleschi/marker",
-        "firstInk": 1,
-        "firstInkTravelPx": 14.3,
-        "heldInk": 2713,
-        "upInk": 2713,
-        "releaseInkRatio": 0,
-        "blindWholeStroke": false,
-        "noMarkOnBlank": false
-      },
-      {
-        "name": "brunelleschi/pencil_HB",
-        "firstInk": 1,
-        "firstInkTravelPx": 14.3,
-        "heldInk": 3157,
-        "upInk": 3157,
-        "releaseInkRatio": 0,
-        "blindWholeStroke": false,
-        "noMarkOnBlank": false
-      },
-      {
-        "name": "brunelleschi/pencil_B",
-        "firstInk": 1,
-        "firstInkTravelPx": 14.3,
-        "heldInk": 3838,
-        "upInk": 3838,
-        "releaseInkRatio": 0,
-        "blindWholeStroke": false,
-        "noMarkOnBlank": false
-      },
-      {
-        "name": "brunelleschi/pencil_2B",
-        "firstInk": 1,
-        "firstInkTravelPx": 14.3,
-        "heldInk": 4658,
-        "upInk": 4658,
-        "releaseInkRatio": 0,
-        "blindWholeStroke": false,
-        "noMarkOnBlank": false
-      },
-      {
-        "name": "brunelleschi/pencil_4B",
-        "firstInk": 1,
-        "firstInkTravelPx": 14.3,
-        "heldInk": 5606,
-        "upInk": 5606,
-        "releaseInkRatio": 0,
-        "blindWholeStroke": false,
-        "noMarkOnBlank": false
-      },
-      {
-        "name": "brunelleschi/pencil_6B",
-        "firstInk": 1,
-        "firstInkTravelPx": 14.3,
-        "heldInk": 5583,
-        "upInk": 5583,
-        "releaseInkRatio": 0,
-        "blindWholeStroke": false,
-        "noMarkOnBlank": false
-      },
-      {
-        "name": "brunelleschi/pencil_8B",
-        "firstInk": 1,
-        "firstInkTravelPx": 14.3,
-        "heldInk": 7227,
-        "upInk": 7227,
-        "releaseInkRatio": 0,
-        "blindWholeStroke": false,
-        "noMarkOnBlank": false
-      },
-      {
-        "name": "brunelleschi/charcoal_H",
-        "firstInk": 1,
-        "firstInkTravelPx": 14.3,
-        "heldInk": 2507,
-        "upInk": 2507,
-        "releaseInkRatio": 0,
-        "blindWholeStroke": false,
-        "noMarkOnBlank": false
-      },
-      {
-        "name": "brunelleschi/charcoal_M",
-        "firstInk": 1,
-        "firstInkTravelPx": 14.3,
-        "heldInk": 2820,
-        "upInk": 2820,
-        "releaseInkRatio": 0,
-        "blindWholeStroke": false,
-        "noMarkOnBlank": false
-      },
-      {
-        "name": "brunelleschi/charcoal_S",
-        "firstInk": 1,
-        "firstInkTravelPx": 14.3,
-        "heldInk": 3535,
-        "upInk": 3535,
-        "releaseInkRatio": 0,
-        "blindWholeStroke": false,
-        "noMarkOnBlank": false
-      },
-      {
-        "name": "Dieterle/8B_Pencil#1",
-        "firstInk": 1,
-        "firstInkTravelPx": 14.3,
-        "heldInk": 2616,
-        "upInk": 2616,
-        "releaseInkRatio": 0,
-        "blindWholeStroke": false,
-        "noMarkOnBlank": false
-      }
-    ],
-    "note": "자: 칠 텍스처의 잉크 픽셀 수(diag.paintTexHash — 굽기가 실제로 쓰는 캔버스). 「대는 동안」은 pointerdown 뒤 이동 여덟까지(총 114.5px) 매 프레임. ⚠ 지시의 게이트 문면(「60ms 안 첫 잉크 > 0」)은 **이동량과 뒤섞인 자**였다 — 합성 펜의 한 이동이 14.3px이라 도장 간격이 그보다 큰 브러시는 첫 프레임에 뜰 수 없다(브러시의 성질 · D-4). 결함의 자는 「획을 긋는 동안 한 번도 안 뜬다」로 좁혔다.",
-    "distinct_held_ink": 152
-  },
-  "thresholds": {
-    "PAINT72_RELEASE_INK_RATIO_MAX": 0.08
   },
   "a2": {
     "base": [

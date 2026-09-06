@@ -63,6 +63,11 @@ async function paintStroke(page: Page, x0: number, y0: number, len = 34) {
 
 export async function buildHeavy(page: Page, perFace = 40): Promise<Heavy> {
   await page.goto('/?reset')
+  // ⚠⚠ `?reset`은 **비동기로 `location.replace`를 부른다**(main.ts — 서비스 워커·캐시를 지운
+  //   뒤 매개를 떼고 다시 연다). 그 항해가 오기 «전»에 긴 evaluate를 시작하면 실행 맥락이
+  //   부서진다(실측: A-1 전수 팔이 dpr2에서 「Execution context was destroyed」로 죽었다).
+  //   그래서 매개가 떨어질 때까지 먼저 기다린다(상한 있는 대기 — #81).
+  await page.waitForFunction(() => !location.search.includes('reset'), null, { timeout: 20_000 })
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await page.waitForLoadState('networkidle')
   await page.waitForFunction(() => (window as any).__b2.diag.tipsReadyForTest().ready, null, { timeout: 20_000 })

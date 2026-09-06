@@ -28,8 +28,9 @@ const OUT: Record<string, unknown> = {
   pitfall_citations: [42, 99, 101, 103, 107, 108, 111],
   thresholds: { PAINT72_RELEASE_INK_RATIO_MAX },
   selfcheck_notes: {
-    zero_counters: 'a1.release_diff_ink 0은 «미리보기 == 확정본»(59)의 통과값이다 — 같은 자가 반증(freeze off)에서 0이 아닌 값을 낸다',
-    identical_pairs: 'a4의 open_after_* 참 나열은 규약 그 자체다(패널 안 조작은 안 닫는다) — 짝인 close_after_canvas_tap이 거짓/참을 가른다',
+    zero_counters: 'a1.blind_whole_stroke_n 0 = **이 라운드의 결론**이다(획을 긋는 동안 한 번도 안 보이는 프리셋이 없다 — 지시 §A-1의 가설 반증 · AS-C208). 집계가 도는 증거는 같은 실행의 slow_first_dab_n 62 · no_mark_on_blank_n 52 · distinct_held_ink 148(자가 프리셋을 실제로 가른다). / a3.on_before.grade·on_switched.grade 0 = 연필통(경도 줄)이 «접혀 있어서» 그 묶음에 켜진 것이 없다(칠 패널만 열려 있다 — 화면 상태의 사실) · a3.*.recent 0은 그 판에서 최근 색을 한 번도 안 골랐다는 사실이다',
+    identical_pairs: 'a1.sample_rows[*].releaseInkRatio 0은 「미리보기 == 확정본」(59 규약 · 66 초안 인계)의 뜻 그 자체다 — **설계 보장이지 측정이 아니다**. 그래서 이 값에는 임계를 안 걸고, 임계는 «0이 될 수 없는 것들»의 상한(release_ink_ratio_max ≤ PAINT72_RELEASE_INK_RATIO_MAX)에만 건다. 0이 아닌 셋(ramon/Glow_Airbrush 0.0548 · tanda/marker-01 0.0087 · classic/textured_ink 0.0003)이 그 자의 변별력이다. / a4의 open_after_* 참 나열은 규약이고, 짝인 closed_after_canvas_tap·closed_after_button_again·closed_by_other_box_r7이 거짓/참을 가른다',
+    exact_one: 'a2.migrated_flag = 1은 비율이 아니라 **횟수**다(옛 판 → 새 판 이주가 «한 번» 돌았다 — #109의 규약: 새 판이 서면 다시 안 본다). 이 팔의 반증 짝이 그것이다: 0이면 이주 경로가 안 돈 것이고 그러면 이 시험은 아무것도 안 잰다',
   },
 }
 const LEDGER_OF = (p: string) => resolve(HERE, `../../stage0/out/defects72_web2_dpr${p === 'dpr2' ? 2 : 1}.json`)
@@ -57,6 +58,11 @@ async function drawLine(page: Page, x0: number, y0: number, x1: number, y1: numb
 /** paint50·65·67의 그 상자 — 오른쪽 벽 하나(원근). */
 async function bigBox(page: Page) {
   await page.goto('/?reset')
+  // ⚠⚠ `?reset`은 **비동기로 `location.replace`를 부른다**(main.ts — 서비스 워커·캐시를 지운
+  //   뒤 매개를 떼고 다시 연다). 그 항해가 오기 «전»에 긴 evaluate를 시작하면 실행 맥락이
+  //   부서진다(실측: A-1 전수 팔이 dpr2에서 「Execution context was destroyed」로 죽었다).
+  //   그래서 매개가 떨어질 때까지 먼저 기다린다(상한 있는 대기 — #81).
+  await page.waitForFunction(() => !location.search.includes('reset'), null, { timeout: 20_000 })
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(200)
@@ -225,6 +231,11 @@ test('A-2 — 필통 여덟 칸: {슬롯, br}이 전부 다르다(기본 · 이�
   test.setTimeout(120_000)
   // ① 기본 채움
   await page.goto('/?reset')
+  // ⚠⚠ `?reset`은 **비동기로 `location.replace`를 부른다**(main.ts — 서비스 워커·캐시를 지운
+  //   뒤 매개를 떼고 다시 연다). 그 항해가 오기 «전»에 긴 evaluate를 시작하면 실행 맥락이
+  //   부서진다(실측: A-1 전수 팔이 dpr2에서 「Execution context was destroyed」로 죽었다).
+  //   그래서 매개가 떨어질 때까지 먼저 기다린다(상한 있는 대기 — #81).
+  await page.waitForFunction(() => !location.search.includes('reset'), null, { timeout: 20_000 })
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await page.click('#btn-paint'); await page.waitForTimeout(80)
   const base = await favPairs(page)
@@ -293,6 +304,11 @@ const onCounts = (page: Page) => page.evaluate(() => ({
 test('A-3 — 지금 선택을 바꿔도 «제 사양을 안 든 칸»의 생김새는 안 바뀐다 · 묶음마다 on은 하나', async ({ page }) => {
   test.setTimeout(120_000)
   await page.goto('/?reset')
+  // ⚠⚠ `?reset`은 **비동기로 `location.replace`를 부른다**(main.ts — 서비스 워커·캐시를 지운
+  //   뒤 매개를 떼고 다시 연다). 그 항해가 오기 «전»에 긴 evaluate를 시작하면 실행 맥락이
+  //   부서진다(실측: A-1 전수 팔이 dpr2에서 「Execution context was destroyed」로 죽었다).
+  //   그래서 매개가 떨어질 때까지 먼저 기다린다(상한 있는 대기 — #81).
+  await page.waitForFunction(() => !location.search.includes('reset'), null, { timeout: 20_000 })
   await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
   await page.click('#btn-paint'); await page.waitForTimeout(150)
   const onBefore = await onCounts(page)
