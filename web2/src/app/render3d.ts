@@ -1068,9 +1068,15 @@ function gatePaintTex(r: R3D, app: App) {
     const hs = hatch && face ? hatchSpecOf(face) : null
     // web2-67 §2 — 무늬 선 굵기의 «계단»(위 repTexelSigOff 주석이 정본): 무늬 있는 재료만.
     // ⚠ web2-72 §2 — 이것도 **같은 동결 아래** 둔다(무늬 굵기는 멈춘 뒤 맞으면 된다).
-    const texelQ = !repTexelSigOff && rep && isRepId(rep.m)
-      ? (frozen && e.sigParts && e.frozenTexelQ !== undefined && e.frozenTexelQ !== null ? e.frozenTexelQ : Math.round(Math.log2(Math.max(1e-9, rep.texelPerPx)) * C.REP67_TEXEL_STEPS_PER_OCT))
-      : null
+    const texelQRaw = !repTexelSigOff && rep && isRepId(rep.m)
+      ? Math.round(Math.log2(Math.max(1e-9, rep.texelPerPx)) * C.REP67_TEXEL_STEPS_PER_OCT) : null
+    const texelQ = texelQRaw === null ? null
+      : (frozen && e.sigParts && e.frozenTexelQ !== undefined && e.frozenTexelQ !== null ? e.frozenTexelQ : texelQRaw)
+    // ⚠⚠ 동결이 가리는 것은 **단계만이 아니다** — 무늬 굵기의 계단(texelQ)도 얼린다. 그것도
+    //   «가려진 변화»에 넣어야 멈춘 뒤 한 번 재평가가 온다. 첫 판은 lv만 봐서, 단계가 그대로이고
+    //   계단만 갈린 줌(대역 «안» 줌)에서 프레임을 안 불러 **낡은 무늬가 그대로 남았다**
+    //   (paint67 ⑦ 「0.72옥타브가 계단을 최소 한 번 밟는다」가 0으로 빨갛게 잡았다 · 67 §2 무회귀).
+    if (frozen && e.sigParts && texelQ !== texelQRaw) freezeMasked = true
     plans.push({ e, rf, face, sideOk, screenPx, lv, rep, famBits, hatch, hs, texelQ })
   }
 
@@ -1620,7 +1626,7 @@ export function setPaintBlendForTest(v: boolean) {
 }
 
 /** 진단·팔용 — 지금 서 있는 텍스처들의 요약(자리·단계·양자화 전 크기·포화·합성). */
-export function paintTexStats(): { key: string; faceId: number; side: number | string; level: number; gateSide: boolean | null; w: number; h: number; visible: boolean; blending: number; screenPx: number | null; want: number | null; clamped: boolean; famBits: number }[] {
+export function paintTexStats(): { key: string; faceId: number; side: number | string; level: number; gateSide: boolean | null; w: number; h: number; visible: boolean; blending: number; screenPx: number | null; want: number | null; texelQ: string | null; frozenTexelQ: number | null; clamped: boolean; famBits: number }[] {
   const out: ReturnType<typeof paintTexStats> = []
   for (const [k, e] of paintTexes) {
     const gate = e.mesh.userData.gate as { side?: boolean; screenPx?: number; want?: number; clamped?: boolean } | undefined
@@ -1629,6 +1635,9 @@ export function paintTexStats(): { key: string; faceId: number; side: number | s
       w: e.canvas.width, h: e.canvas.height, visible: e.mesh.visible,
       blending: (e.mesh.material as THREE.MeshBasicMaterial).blending,
       screenPx: gate?.screenPx ?? null,
+      // web2-72 — 무늬 굵기의 계단(얼린 값과 지금 값). §2의 동결이 «가린 것»을 값으로 본다.
+      texelQ: e.sigParts?.texelQ ?? null,
+      frozenTexelQ: e.frozenTexelQ ?? null,
       // web2-72 — «그 화면 크기가 요구하는 단계». 실제 단계와 나란히 두면 「메모리가 적다」와
       // 「줌이 안 걸렸다」가 갈리고, 「멈춘 뒤에는 맞는 단계다」(§2)가 값으로 선다.
       want: gate?.want ?? null,

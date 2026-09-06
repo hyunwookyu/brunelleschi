@@ -165,17 +165,18 @@
       "start": 512,
       "band_bottom": 1024,
       "after_zoom": 1024,
-      "after_zoom_out": 1024
+      "before_zoom_out": 2048,
+      "after_zoom_out": 2048
     },
     "old_key": {
       "bakes_after_zoom": 0,
       "bakes_after_unrelated_edit": 0,
       "stale_differs_from_fresh": true,
       "stale_hash": [
-        -1963892595
+        1615281648
       ],
       "fresh_hash": [
-        -699034657
+        -1183975741
       ]
     },
     "fixed": {
@@ -183,8 +184,48 @@
       "hash_equals_fresh": true,
       "idle_bakes": 0,
       "step_zoom": {
-        "bakes": 2,
+        "bakes": 1,
         "level_same": true,
+        "out_steps": 2,
+        "tq_before": "|tq2",
+        "rows_before": [
+          {
+            "key": "9:1",
+            "faceId": 9,
+            "side": 1,
+            "level": 2048,
+            "gateSide": true,
+            "w": 2048,
+            "h": 1831,
+            "visible": true,
+            "blending": 4,
+            "screenPx": 1087,
+            "texelQ": "|tq2",
+            "frozenTexelQ": 2,
+            "want": 2048,
+            "clamped": false,
+            "famBits": 3
+          }
+        ],
+        "rows_after": [
+          {
+            "key": "9:1",
+            "faceId": 9,
+            "side": 1,
+            "level": 2048,
+            "gateSide": true,
+            "w": 2048,
+            "h": 1831,
+            "visible": true,
+            "blending": 4,
+            "screenPx": 806,
+            "texelQ": "|tq3",
+            "frozenTexelQ": 3,
+            "want": 1024,
+            "clamped": false,
+            "famBits": 3
+          }
+        ],
         "hash_equals_rebake": false
       }
     }

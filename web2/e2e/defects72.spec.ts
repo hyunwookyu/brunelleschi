@@ -29,8 +29,9 @@ const OUT: Record<string, unknown> = {
   pitfall_citations: [42, 99, 101, 103, 107, 108, 111],
   thresholds: { PAINT72_RELEASE_INK_RATIO_MAX },
   selfcheck_notes: {
-    zero_counters: 'a1.blind_whole_stroke_n 0 = **이 라운드의 결론**이다(획을 긋는 동안 한 번도 안 보이는 프리셋이 없다 — 지시 §A-1의 가설 반증 · AS-C208). 집계가 도는 증거는 같은 실행의 slow_first_dab_n 62 · no_mark_on_blank_n 52 · distinct_held_ink 148(자가 프리셋을 실제로 가른다). / a3.on_before.grade·on_switched.grade 0 = 연필통(경도 줄)이 «접혀 있어서» 그 묶음에 켜진 것이 없다(칠 패널만 열려 있다 — 화면 상태의 사실) · a3.*.recent 0은 그 판에서 최근 색을 한 번도 안 골랐다는 사실이다',
+    zero_counters: 'a1.blind_whole_stroke_n 0과 a1_load.blind_n 0 = **이 라운드의 결론**이다(획을 긋는 동안 한 번도 안 보이는 프리셋이 없다 — 지시 §A-1의 가설 반증 · AS-C208). 집계가 도는 증거는 같은 실행의 slow_first_dab_n 62 · no_mark_on_blank_n 52 · distinct_held_ink 148(자가 프리셋을 실제로 가른다). / a3.on_before.grade·on_switched.grade 0 = 연필통(경도 줄)이 «접혀 있어서» 그 묶음에 켜진 것이 없다(칠 패널만 열려 있다 — 화면 상태의 사실) · a3.*.recent 0은 그 판에서 최근 색을 한 번도 안 골랐다는 사실이다',
     identical_pairs: 'a1.sample_rows[*].releaseInkRatio 0은 「미리보기 == 확정본」(59 규약 · 66 초안 인계)의 뜻 그 자체다 — **설계 보장이지 측정이 아니다**. 그래서 이 값에는 임계를 안 걸고, 임계는 «0이 될 수 없는 것들»의 상한(release_ink_ratio_max ≤ PAINT72_RELEASE_INK_RATIO_MAX)에만 건다. 0이 아닌 셋(ramon/Glow_Airbrush 0.0548 · tanda/marker-01 0.0087 · classic/textured_ink 0.0003)이 그 자의 변별력이다. / a4의 open_after_* 참 나열은 규약이고, 짝인 closed_after_canvas_tap·closed_after_button_again·closed_by_other_box_r7이 거짓/참을 가른다',
+    single_category: 'a1_load.scene.levels가 한 값인 것은 픽스처의 구성이다(격자 칸이 화면에서 서로 비슷한 크기라 같은 단계에 든다) — 이 팔이 재는 것은 «부하에서 첫 잉크가 언제 뜨는가»이지 단계 분포가 아니다. 단계의 변별은 perf72·gates72가 목표 단계까지 확대해서 잰다(D-5)',
     exact_one: 'a2.migrated_flag = 1은 비율이 아니라 **횟수**다(옛 판 → 새 판 이주가 «한 번» 돌았다 — #109의 규약: 새 판이 서면 다시 안 본다). 이 팔의 반증 짝이 그것이다: 0이면 이주 경로가 안 돈 것이고 그러면 이 시험은 아무것도 안 잰다',
   },
 }

@@ -625,8 +625,22 @@ test('⑦ §2 낡은 그림 — 재현(반증 스위치 = 옛 열쇠): 단계 �
   //   작을 수 있다 — PAINT72_LEVEL_UP의 뜻). 「이 줌도 단계 안이다」의 기준은 **줌 직전의 단계**다.
   await settled()
   const lvBeforeOut = (await texHash(page))[0]!.level
-  for (let i = 0; i < ZOOM_IN; i++) { await page.mouse.wheel(0, 100); await page.waitForTimeout(80) }
+  const rowsBeforeOut = await page.evaluate(() => (window as any).__b2.diag.paintTex() as unknown[])
+  // ⚠⚠ **계단이 실제로 갈릴 때까지 줄인다**(자를 스스로 맞춘다 — D-3). 첫 판은 「휠 다섯 걸음 =
+  //   0.72옥타브」로 가정했는데 **실측은 0.36옥타브였다**(dpr2: 화면 크기 1694 → 1319 · tq 1 → 1)
+  //   — 반옥타브 계단을 안 넘었고 그래서 「최소 한 번 밟는다」가 0이 됐다. 걸음 수가 아니라
+  //   **계단이 갈렸는가**가 이 팔의 전제다(72 §1-2로 내림은 단계를 안 바꾸므로 마음껏 줄여도 된다).
+  const tqOf = async () => (await page.evaluate(() => ((window as any).__b2.diag.paintTex() as { texelQ: string | null }[])[0]?.texelQ ?? null))
+  const tq0 = await tqOf()
+  let outSteps = 0
+  for (; outSteps < 24; outSteps++) {
+    await page.mouse.wheel(0, 100)
+    await page.waitForTimeout(80)
+    await settled()
+    if (await tqOf() !== tq0) break
+  }
   await settled()
+  const rowsAfterOut = await page.evaluate(() => (window as any).__b2.diag.paintTex() as unknown[])
   const lv2 = (await texHash(page))[0]!.level
   const stStep = await bakeStat(page)
   const stepTex = await texHash(page)
@@ -640,7 +654,7 @@ test('⑦ §2 낡은 그림 — 재현(반증 스위치 = 옛 열쇠): 단계 �
     level: { start: lvStart, band_bottom: lv0, after_zoom: lv1, before_zoom_out: lvBeforeOut, after_zoom_out: lv2 },
     old_key: { bakes_after_zoom: stZoom.bakes, bakes_after_unrelated_edit: stEdit.bakes, stale_differs_from_fresh: staleDiffers, stale_hash: staleTex.map(t => t.hash), fresh_hash: freshTex.map(t => t.hash) },
     fixed: { bakes_on_reenable: stFix.bakes, hash_equals_fresh: JSON.stringify(fixedTex.map(t => t.hash)) === JSON.stringify(freshTex.map(t => t.hash)), idle_bakes: stIdle.bakes,
-      step_zoom: { bakes: stStep.bakes, level_same: lv2 === lvBeforeOut, hash_equals_rebake: JSON.stringify(stepTex.map(t => t.hash)) === JSON.stringify(stepRef.map(t => t.hash)) } },
+      step_zoom: { bakes: stStep.bakes, level_same: lv2 === lvBeforeOut, out_steps: outSteps, tq_before: tq0, rows_before: rowsBeforeOut, rows_after: rowsAfterOut, hash_equals_rebake: JSON.stringify(stepTex.map(t => t.hash)) === JSON.stringify(stepRef.map(t => t.hash)) } },
   }
   expect(lv1, '줌이 단계 «안»이다(전제 — 아니면 이 팔은 아무것도 안 잰다)').toBe(lv0)
   expect(stZoom.bakes, '재현 — 옛 열쇠에서 단계 안 줌은 재굽기 0(낡음의 기제)').toBe(0)
@@ -651,6 +665,7 @@ test('⑦ §2 낡은 그림 — 재현(반증 스위치 = 옛 열쇠): 단계 �
   expect(JSON.stringify(fixedTex.map(t => t.hash)), '수리 ② — 그림이 정본(전량 굽기)과 같다(낡음 0)').toBe(JSON.stringify(freshTex.map(t => t.hash)))
   expect(stIdle.bakes, '수리 ② — 가만히 두면 더 안 굽는다(매 프레임 재굽기 ⛔)').toBe(0)
   expect(lv2, '수리 ③ — 이 줌도 단계 안이다(기준은 줌 «직전»의 단계 — 72 히스테리시스)').toBe(lvBeforeOut)
-  expect(stStep.bakes, '수리 ③ — 0.72옥타브가 계단(반옥타브)을 최소 한 번 밟는다').toBeGreaterThanOrEqual(1)
-  expect(stStep.bakes, '수리 ③ — 그리고 폭주가 아니다(1~2 + 경계 여유)').toBeLessThanOrEqual(3)
+  expect(outSteps, '수리 ③ — 계단이 실제로 갈렸다(전제 · 안 갈리면 이 팔은 아무것도 안 잰다)').toBeLessThan(24)
+  expect(stStep.bakes, '수리 ③ — 계단을 밟으면 다시 굽는다(최소 한 번)').toBeGreaterThanOrEqual(1)
+  expect(stStep.bakes, '수리 ③ — 그리고 폭주가 아니다(계단 하나에 몇 번 · 경계 여유)').toBeLessThanOrEqual(4)
 })
