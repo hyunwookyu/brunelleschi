@@ -1,0 +1,167 @@
+{
+  "conditions": {
+    "project": "dpr1",
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/gates73.spec.ts (#99)"
+  },
+  "what": "web2-73 게이트 — g0 프로브 움직임 · g1 걸음별 자 · g2 ?perf=1 실기기 모드 · g3 열기 분해의 장부. 전부 같은 실행 안에 «빨강» 짝이 있다(CLOSING 「게이트의 조건」)",
+  "note_pitfalls": "#12·#14 · #42 · #81(대기에 상한) · #89 · #99 · #101 · #103 · #105 · #108(단언 판과 반증 판이 같은 값이면 자를 의심 — 빨강 짝이 그 검사다) · #112",
+  "pitfall_citations": [
+    12,
+    14,
+    42,
+    81,
+    89,
+    99,
+    101,
+    103,
+    105,
+    108,
+    112
+  ],
+  "thresholds": {
+    "PAINT73_PROBE_MIN_DEG": 20,
+    "PAINT73_SUM_TOL": 0.05
+  },
+  "no_constants_snapshot": true,
+  "selfcheck_notes": {
+    "zero_counters": "g2의 hud_without_flag 0은 «미생성»의 뜻이고 짝(hud_with_flag 1)이 같은 원장에 있다 · g1의 red_frames_after_reset 0은 빨강 팔의 정의(리셋 직후)다",
+    "identical_pairs": "g1의 걸음 합 == 전체는 게이트의 뜻 그 자체(같은 시계로 찍은 여덟 구간의 합) — 판정력은 «프레임마다 돈다»(frames > 0)와 빨강 짝에 있다"
+  },
+  "g0_probe": {
+    "human": {
+      "totalDeg": 154.9,
+      "pxDragged": 720,
+      "frames": 119,
+      "fps": 58.82,
+      "p95": 18.1
+    },
+    "red_orbitByForTest": {
+      "totalDeg": 0,
+      "calls": 120,
+      "degRequested": 360
+    },
+    "min_deg": 20,
+    "note": "빨강 팔은 요청한 각(360°)과 실제 돈 각의 차가 곧 «되접힘»이다 — 그 값이 문(PAINT73_PROBE_MIN_DEG) 아래면 이 게이트가 그 프로브를 실제로 잡는다"
+  },
+  "g1_walk": {
+    "frames": 119,
+    "sample": 119,
+    "step_sum_ms": 68.2,
+    "total_sum_ms": 68.2,
+    "per_frame_gap_ms": 0,
+    "red_frames_after_reset": 0
+  },
+  "g2_hud": {
+    "hud_without_flag": 0,
+    "hud_with_flag": 1,
+    "hud": {
+      "on": true,
+      "fps": 58,
+      "p95": 18.1,
+      "longestBlockMs": 175,
+      "longtaskSupported": true,
+      "openMs": 118.90000003576279,
+      "maxGapMs": 152.20000004768372,
+      "text": "fps 58 · p95 18.1ms\n최장 차단 175ms\n열기 119ms",
+      "pressable": false,
+      "under": "ink",
+      "rect": {
+        "w": 291,
+        "h": 121
+      },
+      "fontPx": 26
+    },
+    "orbit_deg": 104.1,
+    "note": "눌리지 않는다(pointer-events:none)라 69의 전수 표에는 +0 — docs/reference/INVENTORY.md 「개발(?perf=1)」 행"
+  },
+  "g3_open": {
+    "now": {
+      "firstInteractiveMs": 2731,
+      "allPaintMs": 3215,
+      "longestBlockMs": 874,
+      "parts": {
+        "bake_ms": 2405.2,
+        "upload_ms": 7.1,
+        "wait_ms": 600.7,
+        "other_ms": 201.6,
+        "wall_ms": 3214.6,
+        "sum_ms": 3214.6,
+        "other_boot_ms": 95,
+        "other_frame_ms": 106.6,
+        "pct": {
+          "bake": 74.8,
+          "upload": 0.2,
+          "wait": 18.7,
+          "other": 6.3
+        }
+      },
+      "check": {
+        "accounted_ms": 3214.6,
+        "accounted_over_wall": 1,
+        "steps_total_ms": 2471.6,
+        "steps_over_work": 0.981,
+        "raf_ticks": 40,
+        "raf_gap_sum_ms": 3201.9,
+        "raf_over_wall": 0.996,
+        "bake_plus_upload_over_work": 0.958
+      },
+      "loop": {
+        "frames": 35,
+        "drawFrames": 3,
+        "bakeFrames": 30,
+        "workMs": 2518.9,
+        "gapMs": 600.7,
+        "maxGapMs": 225.6,
+        "firstFrameAt": 133.80000001192093,
+        "firstFrameEndAt": 143,
+        "lastEndAt": 3253.400000035763,
+        "now": 3266.400000035763
+      }
+    },
+    "red_legacy72": {
+      "firstInteractiveMs": 3177,
+      "allPaintMs": 3179,
+      "longestBlockMs": 1643,
+      "parts": {
+        "bake_ms": 2668.4,
+        "upload_ms": 11.6,
+        "wait_ms": 347.8,
+        "other_ms": 151.1,
+        "wall_ms": 3178.9,
+        "sum_ms": 3178.9,
+        "other_boot_ms": 77.5,
+        "other_frame_ms": 71.6,
+        "pct": {
+          "bake": 83.9,
+          "upload": 0.4,
+          "wait": 10.9,
+          "other": 4.8
+        }
+      },
+      "check": {
+        "accounted_ms": 3176.9,
+        "accounted_over_wall": 0.999,
+        "steps_total_ms": 2705.5,
+        "steps_over_work": 0.983,
+        "raf_ticks": 12,
+        "raf_gap_sum_ms": 3170.5,
+        "raf_over_wall": 0.997,
+        "bake_plus_upload_over_work": 0.974
+      },
+      "loop": {
+        "frames": 8,
+        "drawFrames": 3,
+        "bakeFrames": 0,
+        "workMs": 2751.6,
+        "gapMs": 347.8,
+        "maxGapMs": 216.4,
+        "firstFrameAt": 111.60000002384186,
+        "firstFrameEndAt": 120.10000002384186,
+        "lastEndAt": 3211,
+        "now": 3215.100000023842
+      }
+    },
+    "tol": 0.05
+  }
+}

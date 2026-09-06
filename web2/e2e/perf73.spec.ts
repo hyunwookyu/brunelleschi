@@ -38,7 +38,9 @@ const OUT: Record<string, unknown> = {
     single_category: 'B_open의 levels가 한 값인 것은 픽스처의 구성(72와 같다) — 단계의 변별은 §1의 zoom(512까지 확대)이 든다',
   },
 }
-const LEDGER_OF = (p: string) => resolve(HERE, `../../stage0/out/perf73_web2_dpr${p === 'dpr2' ? 2 : 1}${HEADED ? '_headed' : ''}.json`)
+// 원장 꼬리표 — 머리 있는 판은 `_headed`, 그 밖의 대조군(예: Edge 헤드리스 — 이진과 GPU를 가르는 «라» 팔)은 PW_LEDGER_TAG로 준다
+const TAG = process.env.PW_LEDGER_TAG ?? (HEADED ? '_headed' : '')
+const LEDGER_OF = (p: string) => resolve(HERE, `../../stage0/out/perf73_web2_dpr${p === 'dpr2' ? 2 : 1}${TAG}.json`)
 test.afterEach(async ({}, info) => {
   const f = LEDGER_OF(info.project.name)
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
@@ -46,7 +48,7 @@ test.afterEach(async ({}, info) => {
   try { prev = JSON.parse(readFileSync(f, 'utf8')) as Record<string, unknown> } catch { /* 첫 쓰기 */ }
   writeFileSync(f, JSON.stringify({
     ...prev,
-    conditions: { project: info.project.name, headed: HEADED, workers: 1,
+    conditions: { project: info.project.name, headed: HEADED, ledger_tag: TAG, chromium_exe: process.env.PW_CHROMIUM_EXE ?? null, workers: 1,
       canonical: `${HEADED ? 'PW_HEADED=1 ' : ''}LEDGER=1 node tools/e2e.mjs ledger e2e/perf73.spec.ts --project=${info.project.name} (워커 1 — #99)`,
       viewport: 'playwright 기본(1200×800) · dpr는 project가 정한다(지시의 1194×834는 아이패드 꼴 — 이 판은 72와 같은 1200×800이라 72의 값과 나란히 선다)',
       machine_note: 'GPU 이름은 gl.renderer(UNMASKED_RENDERER_WEBGL)이 정본이고 software 플래그는 그 이름의 정규식(swiftshader|llvmpipe|software…)이다 — 절대 ms는 그 기계의 값이고 팔 사이의 «몫»만 옮겨 읽는다(#12·#14)',
