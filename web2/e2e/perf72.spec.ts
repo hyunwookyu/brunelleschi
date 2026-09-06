@@ -1,51 +1,48 @@
-// web2-72 §0 — **부하 계측**: 「돌릴 때」와 「열 때」. 수리 «전» 판은 `PRE72=1`로 동결한다.
+// web2-72 §0 — **부하 계측**: 「돌릴 때」와 「열 때」.
 //
-//   A 돌릴 때   한 손가락 궤도 4초(등속) — 프레임 시간 p50·p95·최대 · bakeFaceTex 호출 수 ·
-//               굽힌 획 수 · LRU 퇴출 수 · **열쇠가 갈린 원인별 수**(가설 1의 판별자)
-//   B 열 때     새로고침 → 첫 상호작용 가능 프레임(ms) · 칠 전부 보이기(ms) · 메인 최장 차단(ms)
-//   C 메모리    칠 텍스처 바이트 · 예산 · 보이는 (면,쪽) 수 · 예산 초과 여부
+// ⚠⚠ **전/후를 같은 트리에서 낸다**(리뷰어 [H3]). 첫 판은 옛 트리(PRE72=1)와 새 트리의 실행을
+//   나란히 놨는데 ① 궤도가 `각속도 × dt`라 느린 트리가 두 배 돌았고(354° vs 182°)
+//   ② 「칠 전부 보이기」의 자를 그 사이에 고쳤다(#105) — 조건이 둘 갈렸다.
+//   지금은 **반증 스위치 셋**(동결 끔 · 분할 끔 · 색인 끔)이 «수리 전의 거동»을 같은 실행 안에
+//   세운다: 같은 픽스처·같은 프로브·같은 기계다. 옛 트리 원장(`perf72_pre_*`)은 «동결 기록»으로
+//   남기고 표제 배수는 여기서 낸다.
+//   그리고 **칠을 걷어낸 대조군**이 기계 몫의 눈금이다(A·B 둘 다 — B에만 있던 것을 A에도).
 //
-// 가설 넷(지시 §0)을 값으로 실증/반증한다:
-//   1. bakeSig에 lv가 들어 있어 궤도 중 2^n 경계를 넘을 때마다 그 면을 전량 재굽기
-//      → 자: `sigChange.lv` · `levelDown` · 궤도 중 `bakes`·`bakedStrokes`
-//   2. LRU 예산이 좁아 보이는 면이 예산을 넘으면 매 프레임 퇴출→재굽기 순환
-//      → 자: 궤도 중 `evicts` · `bytes/budget` · 보이는 (면,쪽) 수
-//   3. 열 때 보이는 면 전부를 첫 프레임에 «동기»로 굽는다
-//      → 자: 첫 프레임의 메인 최장 차단(ms) · 그 동안의 `bakes`
-//   4. paintStrokesOf가 «문서의 획 전부»를 면마다 훑는다
-//      → 자: `scans`(훑은 획 수) ÷ `scanCalls` == 문서 획 수이면 실증
+//   A 돌릴 때   고정 걸음 × 고정 각(60걸음 × 1.5° = 90°) — 프레임 p50·p95·최대 · fps ·
+//               **메인 최장 차단** · bakeFaceTex 호출 · 굽힌 획 · 퇴출 · 열쇠 갈림(조각별)
+//   B 열 때     새로고침 → 첫 상호작용 프레임(ms) · 칠 전부 보이기(ms) · 메인 최장 차단
+//   C 메모리    바이트 · 예산 · 보이는 (면,쪽) · **자리마다 «요구 단계»와 «실제 단계»**
 //
-// 픽스처: 사람 문서(`e2e/fixtures/heavy-paint-01.brnl`)가 있으면 **그것이 정본**이고,
-// 없으면 합성한다(격자 벽 — 면 23 · 면마다 칠 획 40 · 큰 면은 2048 단계에 걸린다).
-// 두 픽스처의 값을 다 남긴다(사람 문서가 오면 «바꿔 다시 잰다»의 자리가 이미 있다).
+// 가설 넷(지시 §0)의 판정은 **`legacy` 팔**이 낸다(그것이 «수리 전»이다).
 //
+// 픽스처: 사람 문서(`e2e/fixtures/heavy-paint-01.brnl`)가 있으면 **그것이 정본**이고, 없으면 합성한다.
 // ⚠ 계측 스펙이다(MEASURE_SPECS — stage0/out에 쓴다). 게이트는 `gates72.spec.ts`다.
-//   수리 전: LEDGER=1 PRE72=1 node tools/e2e.mjs ledger e2e/perf72.spec.ts --project=dpr2
-//   수리 후: LEDGER=1        node tools/e2e.mjs ledger e2e/perf72.spec.ts --project=dpr2
+//   LEDGER=1 node tools/e2e.mjs ledger e2e/perf72.spec.ts --project=dpr1
+//   LEDGER=1 node tools/e2e.mjs ledger e2e/perf72.spec.ts --project=dpr2
 
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { readFileSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { buildHeavy, orbitProbe, openProbe, memProbe, zoomIn, HUMAN_FIXTURE, type Heavy } from './heavy72'
+import {
+  buildHeavy, orbitProbe, openProbe, memProbe, zoomToLevel, setLegacy, stripPaint,
+  settleBake, settleStat, snapshotCamera, restoreCamera, HUMAN_FIXTURE, type Heavy,
+} from './heavy72'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
-const PRE = process.env.PRE72 === '1'
 const OUT: Record<string, unknown> = {
-  what: 'web2-72 §0 — 부하 계측(A 돌릴 때 · B 열 때 · C 메모리)과 가설 넷의 실증/반증',
-  tree: PRE ? '수리 전(pre — 동결)' : '수리 후(post)',
-  note_pitfalls: '#12·#14(동작점 하나·ms로 주장하지 않는다 — 정본은 «호출 수·훑은 획 수»이고 ms는 곁값) · #47(수치는 원장이 정본) · #99(워커 1) · #101(web2 안) · #103(장면 확인 — 면·칠 획 수) · #110(열쇠를 그 파생의 입력으로 좁힌다 — 가설 1이 그 형태의 잔여) · #111(미리보기의 자는 시간과 이동량 둘)',
-  pitfall_citations: [12, 14, 42, 47, 99, 101, 103, 110, 111],
+  what: 'web2-72 §0 — 부하 계측(A 돌릴 때 · B 열 때 · C 메모리)과 가설 넷. 전/후는 **같은 실행 안의 두 팔**이다(legacy = 반증 스위치 셋 켬 = 수리 전 거동 · post = 셋 다 끔). bare = 칠을 걷어낸 대조군(기계 몫).',
+  note_pitfalls: '#12·#14(동작점 하나·ms로 주장하지 않는다 — 정본은 «호출 수·훑은 획 수» · 두 dpr) · #16(분모 — 궤도는 «같은 걸음·같은 각»이고 훑기는 «호출당»이다) · #47(수치는 원장이 정본) · #89(초록의 범위 — 굽기가 끝난 뒤에 잰다) · #99(워커 1) · #101(web2 안) · #103(장면 확인) · #105(«보이는 것»으로 자를 잡지 않는다) · #110 · #111',
+  pitfall_citations: [12, 14, 16, 42, 47, 89, 99, 101, 103, 105, 110, 111],
   no_constants_snapshot: true,
   constants_used: { note: 'web2 라인은 constantsSnapshot 기계가 없다(lens31·paint50의 no_constants_snapshot이 정본)' },
   selfcheck_notes: {
-    zero_counters: '수리 «후»의 A_orbit*.bake.bakes 0 · evicts 0은 §1·§2·§3의 통과값이다 — 같은 자가 수리 «전»(perf72_pre)에서 큰 값을 낸다(짝이 원장 둘로 남는다: 전 9회·획 360 → 후 0). sig_change_small의 조각들이 전부 0인 것은 **기본 배율에서는 단계가 안 움직인다**는 사실이다(면이 작다) — 그래서 D-5로 대역을 넓힌 sig_change_zoomed가 옆에 있고 거기서 lv가 9를 낸다(수리 전). h2의 evicts 0은 «퇴출이 안 돌았다»는 관측이고 그것이 가설 2의 반증이다(AS-C210)',
-    single_category: 'fixture.levels·C_memory.levels가 한 값(256×23)인 것은 픽스처의 구성이다 — 격자 벽의 칸이 화면에서 서로 비슷한 크기라 같은 단계에 든다. 단계의 변별은 **줌으로 대역을 넓힌** C_memory_zoomed·A_orbit_zoomed가 든다(D-5 — 첫 판이 그 대역을 안 덮어 가설 1이 반증으로 나왔고, 넓히자 실증이 됐다)',
+    zero_counters: 'post 팔의 bakes 0 · levelDown 0 · evicts 0은 §1·§2·§3의 통과값이다 — **같은 실행의 legacy 팔**이 0이 아닌 값을 낸다(짝이 한 원장 안에 있다). h2의 evicts 0은 관측이고 그것이 가설 2의 반증이다(AS-C210)',
+    single_category: 'levels가 한 값인 것은 픽스처의 구성이다(격자 칸이 화면에서 비슷한 크기) — 단계의 변별은 **목표 단계까지 확대한** zoom 팔이 든다(D-5). rows에 자리마다 «요구 단계»가 있어 단일 범주가 «못 잰 것»인지 «맞는 것»인지 갈린다',
   },
 }
-const LEDGER_OF = (p: string) =>
-  resolve(HERE, `../../stage0/out/perf72${PRE ? '_pre' : ''}_web2_dpr${p === 'dpr2' ? 2 : 1}.json`)
+const LEDGER_OF = (p: string) => resolve(HERE, `../../stage0/out/perf72_web2_dpr${p === 'dpr2' ? 2 : 1}.json`)
 test.afterEach(async ({}, info) => {
   const f = LEDGER_OF(info.project.name)
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
@@ -54,72 +51,108 @@ test.afterEach(async ({}, info) => {
   writeFileSync(f, JSON.stringify({
     ...prev,
     conditions: { project: info.project.name, workers: 1,
-      canonical: `LEDGER=1 ${PRE ? 'PRE72=1 ' : ''}node tools/e2e.mjs ledger e2e/perf72.spec.ts (워커 1 — #99)`,
+      canonical: 'LEDGER=1 node tools/e2e.mjs ledger e2e/perf72.spec.ts (워커 1 — #99)',
       viewport: 'playwright 기본(1200×800) · dpr는 project가 정한다 — 지시의 「ipad 꼴」은 dpr2가 그 자리다',
-      human_fixture: existsSync(resolve(HERE, HUMAN_FIXTURE)) ? HUMAN_FIXTURE : null },
+      machine: '헤드리스 크로뮴 · 소프트웨어 GL(swiftshader) — **절대 ms는 실기기와 다르다**. 정본은 호출 수·훑은 획 수이고 ms는 팔 사이의 배수로만 읽는다(#12·#14). bare 팔이 그 기계 몫의 눈금이다',
+      human_fixture: existsSync(resolve(HERE, HUMAN_FIXTURE)) ? HUMAN_FIXTURE : null,
+      // ⚠ 0이 아니면 그 실행의 어느 값은 «다 구워진 상태»가 아니다(#105 — 조용한 폴백 ⛔)
+      settle_timeouts: settleStat.timeouts, settle_last_stage: settleStat.lastStage, settle_rows: settleStat.rows },
     ...OUT,
   }, null, 2))
 })
 
-test('§0 — A 돌릴 때 · B 열 때 · C 메모리 · 가설 넷', async ({ page }) => {
-  test.setTimeout(600_000)
+test('§0 A·C — 돌릴 때와 메모리(legacy ↔ post ↔ bare · 같은 각·같은 걸음)', async ({ page }) => {
+  test.setTimeout(1_800_000)
   const built: Heavy = await buildHeavy(page)
   expect(built.faces, '면이 섰다(#103)').toBeGreaterThanOrEqual(16)
   expect(built.paintStrokes, '칠 획이 섰다(#103)').toBeGreaterThanOrEqual(600)
-
-  const C = await memProbe(page)
-  const A = await orbitProbe(page)
-  // ⚠ D-5 — **픽스처가 실사용 대역을 덮는가.** 첫 판(격자 벽 · 기본 배율)은 면이 전부 단계
-  //   256이라 「돌릴 때 단계가 바뀐다」를 못 잰다. 사람이 본 것은 «면이 화면을 채운» 상태다 —
-  //   배율을 올려 큰 면(1024·2048)을 만들고 **같은 궤도를 한 번 더** 돈다. 가설 1·2는 여기 산다.
-  await zoomIn(page, 5)
-  const Cz = await memProbe(page)
-  const Az = await orbitProbe(page)
-  const B = await openProbe(page)
-
   OUT.fixture = built
-  OUT.A_orbit = A
-  OUT.A_orbit_zoomed = Az
-  OUT.B_open = B
-  OUT.C_memory = C
-  OUT.C_memory_zoomed = Cz
-  // ── 가설 넷 — 값이 가르는 자리 ──────────────────────────────────────────────────
-  // 훑기의 자는 «편집 한 번»이다(지시 §0 가설 4의 문면) — 궤도 중에는 열쇠가 안 갈리면 0이다
-  const scanPerCall = B.editScanCalls > 0 ? B.editScans / B.editScanCalls : 0
-  OUT.hypotheses = {
-    h1_level_in_bake_key: {
-      verdict: Az.bake.sigChange.lv > 0 || Az.bake.sigChange.texelQ > 0 || A.bake.sigChange.lv > 0 ? '실증' : '반증',
-      sig_change_small: A.bake.sigChange, sig_change_zoomed: Az.bake.sigChange,
-      level_up: Az.bake.levelUp, level_down: Az.bake.levelDown,
-      bakes_during_orbit_small: A.bake.bakes, bakes_during_orbit_zoomed: Az.bake.bakes,
-      baked_strokes_during_orbit_zoomed: Az.bake.bakedStrokes,
-      note: '궤도 중 열쇠가 갈린 원인을 조각별로 센다 — lv(단계)·tq(무늬 굵기 반옥타브)가 0이 아니면 「화면 크기가 굽기 열쇠에 들어 있다」가 실증된다.',
-    },
-    h2_lru_thrash: {
-      verdict: Az.bake.evicts > 0 || A.bake.evicts > 0 ? '실증' : '반증',
-      evicts_during_orbit_small: A.bake.evicts, evicts_during_orbit_zoomed: Az.bake.evicts,
-      bytes: C.bytes, bytes_zoomed: Cz.bytes, budget: C.budget,
-      visible_paint_faces: C.visible, levels_zoomed: Cz.levels,
-      over_budget: Cz.bytes > Cz.budget,
-      note: '퇴출이 궤도 중에 돌면 「보이는 면이 예산을 넘어 매 프레임 퇴출→재굽기」다.',
-    },
-    h3_sync_bake_on_open: {
-      verdict: B.longestBlockMs >= 50 ? '실증' : '반증',
-      longest_block_ms: B.longestBlockMs, first_interactive_ms: B.firstInteractiveMs,
-      all_paint_ms: B.allPaintMs, bakes_on_open: B.bakes,
-      bare_first_interactive_ms: B.bareFirstInteractiveMs, bare_longest_block_ms: B.bareLongestBlockMs, bare_strokes: B.bareStrokes,
-      note: '열 때 보이는 면을 첫 프레임에 «동기»로 구우면 메인 스레드가 그만큼 막힌다(50ms = 지시 §4의 상한). ⚠ bare_*는 **칠을 걷어낸 같은 문서**의 대조군이다 — 그만큼은 칠의 몫이 아니라 문서·3D 동기의 몫이고 이 라운드의 칠 수리로는 못 줄인다(D-3).',
-    },
-    h4_paint_strokes_scan: {
-      verdict: scanPerCall >= built.docStrokes * 0.9 ? '실증' : '반증',
-      scans_during_orbit: A.bake.scans, scan_calls_during_orbit: A.bake.scanCalls,
-      scan_per_call: Math.round(scanPerCall),
-      doc_strokes: built.docStrokes,
-      edit_scans: B.editScans, edit_scan_calls: B.editScanCalls,
-      note: '호출 한 번에 훑는 획 수가 «문서 전체»면 실증. 수리 후에는 «그 면의 획 수»로 떨어진다(§1-2 색인).',
-    },
+
+  // ── post(수리 후) — 목표 단계까지 확대하고, **그 카메라를 떠 둔다**(세 팔의 출발점) ────────
+  const zPost = await zoomToLevel(page, 512)
+  const cam = await snapshotCamera(page)
+  const cPost = await memProbe(page)
+  const aPost = await orbitProbe(page)
+  // 멈춘 뒤 재평가(§2 · 67 §2 무회귀) — 카메라를 되돌려 «보이는 자리»에서 잰다: 대역 밖 0이어야 한다
+  await restoreCamera(page, cam)
+  const cPostAfterStop = await memProbe(page)
+  // 줌 인 → 줌 아웃 왕복 뒤 바이트(리뷰어 [M5] — 그림 탑이 단조 증가하는가)
+  await page.mouse.move(700, 480)
+  for (let k = 0; k < zPost.steps + 4; k++) { await page.mouse.wheel(0, 240); await page.waitForTimeout(60) }
+  await settleBake(page, 400, 'A/zoom-out')
+  const cPostZoomOut = await memProbe(page)
+  await restoreCamera(page, cam)
+
+  // ── legacy(반증 스위치 셋 = 수리 전 거동) — **같은 픽스처·같은 카메라·같은 몸짓** ────────
+  //   ⚠⚠ 여기서 **다시 확대하지 않는다**(리뷰어 [H4]의 그 형태): 팔마다 zoomToLevel을 부르면
+  //   legacy가 목표 단계에 못 닿아 ×10.9까지 확대해 면을 화면 밖으로 밀어낸다(보이는 칠 면 0).
+  await setLegacy(page, true)
+  const cLegacy = await memProbe(page)
+  const aLegacy = await orbitProbe(page)
+  await setLegacy(page, false)
+  await settleBake(page, 400, 'A/legacy-off')
+  await restoreCamera(page, cam)
+
+  // ── bare(칠을 걷어낸 대조군) — **같은 카메라**에서. 남은 프레임 시간이 기계 몫인지 가른다 ──
+  const stripped = await stripPaint(page)
+  const aBare = await orbitProbe(page)
+
+  OUT.A_orbit = { post: aPost, legacy: aLegacy, bare: aBare }
+  OUT.A_zoom = { post: zPost, stripped_paint_strokes: stripped, note: '세 팔은 **같은 카메라**에서 출발한다(값으로 떠 두고 값으로 되돌린다) — 휠로 되돌리면 걸음이 안 맞아 다른 자리에 선다' }
+  OUT.C_memory = { post: cPost, post_after_stop: cPostAfterStop, post_zoom_out: cPostZoomOut, legacy: cLegacy }
+  OUT.A_ratios = {
+    note: '**같은 몸짓**(가운데 단추 끌기 120걸음 × 6px = 720px)·**같은 카메라**를 도는 데 든 것의 비. ⚠ legacy 팔은 시간 상한에 닿아 걸음을 다 못 돈다 — 그 사실이 값이다(steps·pxDragged·totalDeg를 나란히 둔다). p50은 legacy가 **양극단**이라(대부분 프레임은 빠르고 몇 프레임이 분 단위) 뒤집혀 보일 수 있다 — 사람이 느끼는 자는 **p95·최악·fps**다. ms는 이 기계의 값이고 배수만 읽는다(#12·#14)',
+    steps: `${aLegacy.steps} → ${aPost.steps}`,
+    px_dragged: `${aLegacy.pxDragged} → ${aPost.pxDragged}`,
+    total_deg: `${aLegacy.totalDeg} → ${aPost.totalDeg}`,
+    frame_p95: r2(aLegacy.frames.p95 / Math.max(1e-9, aPost.frames.p95)),
+    longest_block: r2(aLegacy.longestBlockMs / Math.max(1e-9, aPost.longestBlockMs)),
+    frame_p50: r2(aLegacy.frames.p50 / Math.max(1e-9, aPost.frames.p50)),
+    frame_max: r2(aLegacy.frames.max / Math.max(1e-9, aPost.frames.max)),
+    duration: r2(aLegacy.durationMs / Math.max(1e-9, aPost.durationMs)),
+    fps: r2(aPost.fps / Math.max(1e-9, aLegacy.fps)),
+    bakes: `${aLegacy.bake.bakes} → ${aPost.bake.bakes}`,
+    baked_strokes: `${aLegacy.bake.bakedStrokes} → ${aPost.bake.bakedStrokes}`,
+    level_down: `${aLegacy.bake.levelDown} → ${aPost.bake.levelDown}`,
+    bake_ms: `${Math.round(aLegacy.bake.ms)} → ${Math.round(aPost.bake.ms)}`,
+    bare_frame_p50: aBare.frames.p50,
+    bare_frame_p95: aBare.frames.p95,
+    bare_longest_block_ms: aBare.longestBlockMs,
   }
-  // 이 스펙은 **계측**이다 — 게이트(상한)는 gates72.spec.ts가 진다. 여기서는 자가 살아 있는지만 본다.
-  expect(A.frames.n, '궤도 프레임 표본이 모였다').toBeGreaterThan(30)
+  // ── 지시 §1·§2의 게이트 문면을 **값으로** 적는다(통과/미달까지 · 리뷰어 [H6]) ──────────
+  OUT.A_gate_lines = {
+    '§1 궤도 중 메인 최장 차단 ≤ 8ms': { post: aPost.longestBlockMs, bare: aBare.longestBlockMs, legacy: aLegacy.longestBlockMs, pass: aPost.longestBlockMs <= 8 },
+    '§1 프레임 p95 ≤ 16.7ms(60Hz)': { post: aPost.frames.p95, bare: aBare.frames.p95, legacy: aLegacy.frames.p95, pass: aPost.frames.p95 <= 16.7 },
+    '§1 빈 프레임 0': { post: aPost.emptyFrames, pass: aPost.emptyFrames === 0 },
+    '§2 궤도 중 bakeFaceTex 호출 0': { post: aPost.bake.bakes, legacy: aLegacy.bake.bakes, pass: aPost.bake.bakes === 0 },
+    '§2 멈춘 뒤에는 맞는 단계다(대역 밖 0)': { post: cPostAfterStop.outOfBand, pass: cPostAfterStop.outOfBand === 0 },
+    note: '⚠ ms 두 줄은 **이 기계에서 도달 불가능**하다 — 칠을 거의 걷어낸 bare 팔도 상한 밖이다(그 값이 옆에 있다). 도달 가능한 자(호출 수·빈 프레임·대역)는 통과한다.',
+  }
+  expect(aPost.steps, '궤도 걸음이 다 돌았다').toBeGreaterThan(30)
+  expect(aLegacy.steps, 'legacy 팔도 같은 걸음을 돌았다').toBeGreaterThan(30)
+})
+
+test('§0 B — 열 때(post ↔ bare · 편집 한 번의 훑기)', async ({ page }) => {
+  test.setTimeout(1_800_000)
+  const built: Heavy = await buildHeavy(page)
+  expect(built.paintStrokes, '칠 획이 섰다(#103)').toBeGreaterThanOrEqual(600)
+  const B = await openProbe(page)
+  OUT.B_open = B
+  OUT.B_attribution = {
+    note: '「칠 전부 보이기」가 어디로 가는가 — 굽기 CPU의 몫과 나머지(프레임 예산의 선택)를 가른다(리뷰어 [M1])',
+    bake_ms_on_open: B.bakeMsOnOpen,
+    all_paint_ms: B.allPaintMs,
+    bake_share: r2(B.bakeMsOnOpen / Math.max(1, B.allPaintMs)),
+    rest_ms: B.allPaintMs - B.bakeMsOnOpen,
+    rest_is: '굽기 CPU가 아니라 «쉬는 중 예산(PAINT72_BAKE_MS_IDLE)과 프레임 하나의 고정 비용»이다 — Worker·캐시 없이도 예산 하나로 줄어들 수 있는 몫',
+  }
+  OUT.B_gate_lines = {
+    '§4 첫 상호작용 프레임 ≤ 1000ms': { post: B.firstInteractiveMs, bare: B.bareFirstInteractiveMs, pass: B.firstInteractiveMs <= 1000 },
+    '§4 메인 최장 차단 ≤ 50ms': { post: B.longestBlockMs, bare: B.bareLongestBlockMs, pass: B.longestBlockMs <= 50 },
+    '§4 칠 전부 ≤ 5000ms(캐시 없음)': { post: B.allPaintMs, bake_cpu: B.bakeMsOnOpen, pass: B.allPaintMs <= 5000 },
+    note: '⚠ 세 줄 다 이 기계에서 미달이고, bare 팔(칠을 거의 걷어낸 문서)이 그 중 얼마가 기계 몫인지 말한다. 캐시는 이월(§4 둘째)이다.',
+  }
   expect(B.firstInteractiveMs, '열기 측정이 값을 냈다').toBeGreaterThan(0)
 })
+
+const r2 = (v: number): number => Math.round(v * 100) / 100

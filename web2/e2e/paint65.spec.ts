@@ -496,7 +496,10 @@ test('⑤ 무회귀 트리거가 «산다» — 여섯 전수', async ({ page })
     await page.mouse.move(700, 480)
     for (let k = 0; k < 14 && lvAfter === lvBefore; k++) {
       await page.mouse.wheel(0, -300)
-      await page.waitForTimeout(70)
+      // web2-72 §2 — 단계는 «멈추고 150ms 뒤»에 한 번 재평가된다(동결). 걸음마다 그 창을
+      // 넘겨야 여기서 읽는 단계가 «지금 화면 크기의 단계»다(70ms면 늘 한 걸음 뒤에 선다).
+      await page.waitForTimeout(280)
+      await settleBake(page)
       lvAfter = await levelNow()
     }
   })
@@ -586,6 +589,7 @@ test('⑦ 메모리 — 상한이 지켜진다 · 버린 뒤 다시 보면 같�
   // 상한을 되돌리고 다시 보이게 → 그 자리에서 다시 굽는다. 그 그림이 정본 굽기와 같아야 한다.
   await page.evaluate(() => { (window as any).__b2.diag.setPaintTexBudgetForTest(134217728) })
   await orbit(700)
+  await settleBake(page)                 // web2-72 §1 — 다시 굽기가 프레임에 나뉜다: 다 구워진 뒤에 잰다
   const backTex = await texHash(page)
   const backScr = await screenHash(page)
   expect(backTex.length, '다시 보인다').toBeGreaterThan(0)

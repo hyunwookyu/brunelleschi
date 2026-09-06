@@ -61,49 +61,56 @@ async function barChart(page: Page, title: string, note: string,
   return Buffer.from(b64, 'base64')
 }
 
-test('72-orbit.png — 궤도 중 프레임 시간(수리 전/후 · 원장 인용)', async ({ page }) => {
-  const pre = readLedger(true), post = readLedger(false)
-  test.skip(!pre || !post, '원장이 없다 — 먼저 perf72를 pre/post로 돌린다')
-  const P = pre!, Q = post!
-  const az = (d: Record<string, any>) => d.A_orbit_zoomed ?? d.A_orbit
-  const buf = await barChart(page, 'web2-72 §0 A — 「돌릴 때」(궤도 4초 · dpr2 · 면 23 · 칠 획 920)',
-    '원장 perf72_pre_web2_dpr2.json / perf72_web2_dpr2.json — 면을 키운 판(단계가 실제로 움직이는 대역).', [
-      { label: '프레임 시간 p50', unit: 'ms', bars: [
-        { name: '수리 전', v: az(P).frames.p50, color: '#c25b4a' },
-        { name: '수리 후', v: az(Q).frames.p50, color: '#3f7d5a' }] },
-      { label: '프레임 시간 최악', unit: 'ms', bars: [
-        { name: '수리 전', v: az(P).frames.max, color: '#c25b4a' },
-        { name: '수리 후', v: az(Q).frames.max, color: '#3f7d5a' }] },
-      { label: '궤도 4초 동안 bakeFaceTex 호출', unit: '회', bars: [
-        { name: '수리 전', v: az(P).bake.bakes, color: '#c25b4a' },
-        { name: '수리 후', v: az(Q).bake.bakes, color: '#3f7d5a' }] },
+test('72-orbit.png — 궤도 중 프레임 시간(수리 전 거동 ↔ 수리 후 ↔ 칠 없음 · 원장 인용)', async ({ page }) => {
+  const post = readLedger(false)
+  test.skip(!post || !(post as any).A_orbit, '원장이 없다 — 먼저 perf72를 돌린다')
+  const A = (post as any).A_orbit as Record<string, any>
+  const buf = await barChart(page, 'web2-72 §0 A — 「돌릴 때」(같은 카메라 · 같은 몸짓 720px · dpr2 · 면 23 · 칠 획 920)',
+    '원장 perf72_web2_dpr2.json@A_orbit — 세 팔이 **한 실행 안**에 있다: legacy(반증 스위치 셋 = 수리 전 거동) · post(수리 후) · bare(칠을 걷어낸 대조군 = 기계 몫).', [
+      { label: '프레임 p95', unit: 'ms', bars: [
+        { name: '수리 전 거동', v: A.legacy.frames.p95, color: '#c25b4a' },
+        { name: '수리 후', v: A.post.frames.p95, color: '#3f7d5a' },
+        { name: '칠 없음(기계 몫)', v: A.bare.frames.p95, color: '#8a8378' }] },
+      { label: '메인 스레드 최장 차단', unit: 'ms', bars: [
+        { name: '수리 전 거동', v: A.legacy.longestBlockMs, color: '#c25b4a' },
+        { name: '수리 후', v: A.post.longestBlockMs, color: '#3f7d5a' },
+        { name: '칠 없음(기계 몫)', v: A.bare.longestBlockMs, color: '#8a8378' }] },
+      { label: '같은 몸짓을 도는 데 든 시간', unit: 'ms', bars: [
+        { name: '수리 전 거동', v: A.legacy.durationMs, color: '#c25b4a' },
+        { name: '수리 후', v: A.post.durationMs, color: '#3f7d5a' },
+        { name: '칠 없음(기계 몫)', v: A.bare.durationMs, color: '#8a8378' }] },
+      { label: '그 동안 bakeFaceTex 호출', unit: '회', bars: [
+        { name: '수리 전 거동', v: A.legacy.bake.bakes, color: '#c25b4a' },
+        { name: '수리 후', v: A.post.bake.bakes, color: '#3f7d5a' }] },
       { label: '그 굽기가 다시 그린 획', unit: '획', bars: [
-        { name: '수리 전', v: az(P).bake.bakedStrokes, color: '#c25b4a' },
-        { name: '수리 후', v: az(Q).bake.bakedStrokes, color: '#3f7d5a' }] },
+        { name: '수리 전 거동', v: A.legacy.bake.bakedStrokes, color: '#c25b4a' },
+        { name: '수리 후', v: A.post.bake.bakedStrokes, color: '#3f7d5a' }] },
+      { label: '칠 텍스처', unit: 'B', bars: [
+        { name: '수리 전 거동', v: (post as any).C_memory.legacy.bytes, color: '#c25b4a' },
+        { name: '수리 후', v: (post as any).C_memory.post.bytes, color: '#3f7d5a' }] },
     ])
   saveBuf('72-orbit.png', buf)
 })
 
-test('72-open.png — 열기 시간(수리 전/후 · 칠 걷어낸 대조군)', async ({ page }) => {
-  const pre = readLedger(true), post = readLedger(false)
-  test.skip(!pre || !post, '원장이 없다 — 먼저 perf72를 pre/post로 돌린다')
-  const P = pre!.B_open, Q = post!.B_open
+test('72-open.png — 열 때(수리 후 ↔ 칠 없음 대조군 · 옛 트리 동결 기록)', async ({ page }) => {
+  const post = readLedger(false), pre = readLedger(true)
+  test.skip(!post || !(post as any).B_open, '원장이 없다 — 먼저 perf72를 돌린다')
+  const B = (post as any).B_open as Record<string, any>
+  const P = pre ? (pre as any).B_open as Record<string, any> | undefined : undefined
+  const bars = (k: string, cur: number, bare: number | null) => {
+    const out = [{ name: '수리 후', v: cur, color: '#3f7d5a' }]
+    if (bare !== null) out.push({ name: '칠 없음(기계 몫)', v: bare, color: '#8a8378' })
+    if (P && typeof P[k] === 'number') out.unshift({ name: '옛 트리(동결 기록)', v: P[k] as number, color: '#c25b4a' })
+    return out
+  }
   const buf = await barChart(page, 'web2-72 §0 B — 「열 때」(새로고침 · dpr2 · 획 936 · 칠 획 920)',
-    '원장 perf72_pre_web2_dpr2.json / perf72_web2_dpr2.json — 「대조군」은 **칠만 걷어낸 같은 문서**(그만큼은 칠의 몫이 아니다).', [
-      { label: '첫 상호작용 프레임', unit: 'ms', bars: [
-        { name: '수리 전', v: P.firstInteractiveMs, color: '#c25b4a' },
-        { name: '수리 후', v: Q.firstInteractiveMs, color: '#3f7d5a' },
-        { name: '대조군(칠 없음)', v: Q.bareFirstInteractiveMs ?? 0, color: '#8a8378' }] },
-      { label: '메인 스레드 최장 차단', unit: 'ms', bars: [
-        { name: '수리 전', v: P.longestBlockMs, color: '#c25b4a' },
-        { name: '수리 후', v: Q.longestBlockMs, color: '#3f7d5a' },
-        { name: '대조군(칠 없음)', v: Q.bareLongestBlockMs ?? 0, color: '#8a8378' }] },
-      { label: '첫 창에서 구운 획', unit: '획', bars: [
-        { name: '수리 전', v: P.bakedStrokes, color: '#c25b4a' },
-        { name: '수리 후', v: Q.bakedStrokes, color: '#3f7d5a' }] },
-      { label: '편집 한 번에 훑은 획', unit: '회', bars: [
-        { name: '수리 전', v: P.editScans, color: '#c25b4a' },
-        { name: '수리 후', v: Q.editScans, color: '#3f7d5a' }] },
+    '원장 perf72_web2_dpr2.json@B_open — 「칠 없음」은 **칠만 걷어낸 같은 문서**(그만큼은 칠의 몫이 아니다). 「옛 트리」는 수리 전 트리의 동결 기록(perf72_pre)이다.', [
+      { label: '첫 상호작용 프레임', unit: 'ms', bars: bars('firstInteractiveMs', B.firstInteractiveMs, B.bareFirstInteractiveMs) },
+      { label: '메인 스레드 최장 차단', unit: 'ms', bars: bars('longestBlockMs', B.longestBlockMs, B.bareLongestBlockMs) },
+      { label: '칠이 전부 채워지기까지', unit: 'ms', bars: [
+        { name: '그 중 굽기 CPU', v: B.bakeMsOnOpen, color: '#8a8378' },
+        { name: '수리 후 전체', v: B.allPaintMs, color: '#3f7d5a' }] },
+      { label: '편집 한 번에 훑은 획', unit: '회', bars: bars('editScans', B.editScans, null) },
     ])
   saveBuf('72-open.png', buf)
 })

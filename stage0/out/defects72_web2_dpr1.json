@@ -21,6 +21,16 @@
     "exact_one": "a2.migrated_flag = 1은 비율이 아니라 **횟수**다(옛 판 → 새 판 이주가 «한 번» 돌았다 — #109의 규약: 새 판이 서면 다시 안 본다). 이 팔의 반증 짝이 그것이다: 0이면 이주 경로가 안 돈 것이고 그러면 이 시험은 아무것도 안 잰다"
   },
   "a1": {
+    "scene": {
+      "faces": 1,
+      "docStrokes": 9,
+      "paintStrokes": 1,
+      "texEntries": 1,
+      "levels": {
+        "512": 1
+      }
+    },
+    "scene_note": "⚠ 이 팔은 **가벼운 장면**에서 잰다(면 하나 · 프리셋마다 앞 획을 지운다) — 프리셋의 성질을 가르려면 다른 획이 없어야 한다. 사람이 본 대역(칠을 꽤 많이 한 뒤)은 아래 「A-1 부하」 팔이 잰다.",
     "presets": 207,
     "blind_whole_stroke": [],
     "blind_whole_stroke_n": 0,
@@ -469,5 +479,71 @@
     "closed_after_button_again": true,
     "closed_by_other_box_r7": true,
     "hex_after_case_tap": "#8a4a3a"
+  },
+  "a1_load": {
+    "scene": {
+      "source": "synthetic",
+      "faces": 23,
+      "docStrokes": 936,
+      "paintStrokes": 920,
+      "texEntries": 23,
+      "clampedFaces": 0,
+      "levels": {
+        "128": 23
+      }
+    },
+    "rows": [
+      {
+        "name": "classic/pencil",
+        "first_ink_travel_px": 14.3,
+        "first_ink_ms": 49,
+        "visible_while_down": true,
+        "marked_after_up": true,
+        "stroke_ms": 561
+      },
+      {
+        "name": "deevad/liner",
+        "first_ink_travel_px": 14.3,
+        "first_ink_ms": 61,
+        "visible_while_down": true,
+        "marked_after_up": true,
+        "stroke_ms": 570
+      },
+      {
+        "name": "brunelleschi/marker",
+        "first_ink_travel_px": 14.3,
+        "first_ink_ms": 42,
+        "visible_while_down": true,
+        "marked_after_up": true,
+        "stroke_ms": 557
+      },
+      {
+        "name": "deevad/watercolor_expressive",
+        "first_ink_travel_px": 14.3,
+        "first_ink_ms": 46,
+        "visible_while_down": true,
+        "marked_after_up": true,
+        "stroke_ms": 565
+      },
+      {
+        "name": "classic/slow_ink",
+        "first_ink_travel_px": 28.6,
+        "first_ink_ms": 83,
+        "visible_while_down": true,
+        "marked_after_up": true,
+        "stroke_ms": 558
+      },
+      {
+        "name": "deevad/spray",
+        "first_ink_travel_px": 28.6,
+        "first_ink_ms": 85,
+        "visible_while_down": true,
+        "marked_after_up": true,
+        "stroke_ms": 560
+      }
+    ],
+    "blind_while_down": [],
+    "blind_n": 0,
+    "note": "⛳ 사람이 본 대역에서 다시 잰 A-1. 자는 둘이다(#111): 첫 잉크까지의 **이동량**(px)과 **시간**(ms). 「획을 긋는 동안 한 번도 안 보이고 떼면 나타나는」 프리셋이 이 대역에서도 없으면 A-1은 프리셋의 것이 아니다."
   }
 }

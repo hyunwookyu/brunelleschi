@@ -20,7 +20,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest, paintBakePending, setPaintPointerDown, setPaintLevelFreezeOffForTest, paintLevelFreezeOffForTest, setPaintBakeSliceOffForTest, paintBakeSliceOffForTest, setPaintIndexOffForTest, paintIndexOffForTest, paintStrokeListsForTest } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest, paintBakePending, paintPendingRowsForTest, setPaintPointerDown, setPaintLevelFreezeOffForTest, paintLevelFreezeOffForTest, setPaintBakeSliceOffForTest, paintBakeSliceOffForTest, setPaintIndexOffForTest, paintIndexOffForTest, paintStrokeListsForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, bootCost, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -55,6 +55,17 @@ import { cubeLayoutFor, viewName, parallelAllowed } from '../core/viewcube'
 const W = window.innerWidth
 const H = window.innerHeight
 const dpr = window.devicePixelRatio || 1
+
+// ── web2-72 반증(D-3 · e2e 전용) — **새로 고침 너머로 잇는 스위치 셋**. 「열 때」의 수리 전/후를
+//   **같은 트리에서** 재려면 동결·분할·색인 끔이 부팅 시점에 이미 서 있어야 한다(리뷰어 [H3]).
+//   sessionStorage라 탭과 함께 죽고, 사람의 저장물(localStorage)에는 한 자도 안 남는다.
+try {
+  if (sessionStorage.getItem('b2.legacy72') === '1') {
+    setPaintLevelFreezeOffForTest(true)
+    setPaintBakeSliceOffForTest(true)
+    setPaintIndexOffForTest(true)
+  }
+} catch { /* 세션 저장소가 없는 환경 — 평상시 경로 그대로 */ }
 
 const ink = document.getElementById('ink') as HTMLCanvasElement
 // web2-72 §2 — **손이 닿아 있는 동안 칠 텍스처의 단계를 얼린다**(그리는 중·끄는 중에 재굽기 0).
@@ -3567,9 +3578,17 @@ const diag = {
   /** §1 — **아직 이어 구울 것이 남았는가.** 팔의 대기 조건이 이것이다(고정 ms 대기 ⛔ #81):
    *  72부터 굽기가 프레임에 나뉘므로 「300ms 기다리면 다 구워졌다」가 참이 아니다. */
   paintBakePendingForTest: () => paintBakePending(),
+  paintPendingRowsForTest: () => paintPendingRowsForTest(),
   /** §1-2 — 면별 색인을 끈다: 옛 훑기(문서 전체 × 면)로 돌아간다. **목록은 같아야 한다** */
   setPaintIndexOffForTest: (v: boolean) => { setPaintIndexOffForTest(v); rebakePaintTexForTest(); invalidate() },
   paintIndexOffForTest: () => paintIndexOffForTest(),
+  /** §0 대조군 — 스위치 셋을 한꺼번에, **새로 고침 너머로**(sessionStorage). 켜면 «수리 전»의 거동이다 */
+  setLegacy72ForTest: (v: boolean) => {
+    try { if (v) sessionStorage.setItem('b2.legacy72', '1'); else sessionStorage.removeItem('b2.legacy72') } catch { /* 없으면 이 세션만 */ }
+    setPaintLevelFreezeOffForTest(v); setPaintBakeSliceOffForTest(v); setPaintIndexOffForTest(v)
+    rebakePaintTexForTest(); invalidate()
+  },
+  legacy72ForTest: () => paintLevelFreezeOffForTest() && paintBakeSliceOffForTest() && paintIndexOffForTest(),
   /** §1-2 반증의 자 — 두 길(색인 · 옛 훑기)이 낸 (면,쪽)별 획 id 목록 */
   paintStrokeListsForTest: () => paintStrokeListsForTest(app),
   /** web2-66 반증 둘째 — 옛 굵기 표집(첫→끝 중점 — 이동의 실제 원인)을 되살린다 */

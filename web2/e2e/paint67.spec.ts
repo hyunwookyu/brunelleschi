@@ -463,9 +463,15 @@ test('⑥ 0-6 지우개 — 알파 감소·다른 면 무변 · 순서 · undo �
   expect(rCtl1.hash, '① 안 지운 자리는 픽셀 불변').toBe(rCtl.hash)
   if (floorKey) expect(afterErase[floorKey]!, '① 다른 면(바닥)은 무변').toBe(before[floorKey]!)
   // ③ 되돌리기가 지우개 획에 먹는다 — undo → 지운 것이 «돌아온다» · redo → 다시 지워진다
-  await page.click('#btn-undo'); await page.waitForTimeout(200)
+  // web2-72 §1 — 되돌리기가 부르는 재굽기는 **프레임에 나뉜다**: 다 구워진 뒤에 픽셀을 잰다
+  // (고정 ms 대기 ⛔ · #81). 재는 것은 그대로다 — 언제 재는가만 규약에 맞춘다.
+  const settle67 = async () => {
+    await page.waitForTimeout(200)
+    await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 60_000 })
+  }
+  await page.click('#btn-undo'); await settle67()
   const rUndo = await regionHash(page, 525, 350, 60, 22)
-  await page.click('#btn-redo'); await page.waitForTimeout(200)
+  await page.click('#btn-redo'); await settle67()
   const rRedo = await regionHash(page, 525, 350, 60, 22)
   expect(rUndo.hash, '③ undo — 지우기 «전» 픽셀로 돌아온다').toBe(r0.hash)
   expect(rRedo.hash, '③ redo — 다시 지워진다').toBe(r1.hash)

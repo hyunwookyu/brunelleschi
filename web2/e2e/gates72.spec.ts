@@ -17,7 +17,7 @@ import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { buildHeavy, orbitProbe, zoomIn, type BakeStat } from './heavy72'
+import { buildHeavy, orbitProbe, zoomToLevel, memProbe, settleBake, setLegacy, type BakeStat } from './heavy72'
 
 // ⚠ 게이트의 픽스처는 **계측의 절반**이다(면마다 칠 획 16 · 계측 perf72는 지시대로 40).
 //   게이트가 재는 것은 «규칙»(굽기 0 · 픽셀 항등 · 훑기 = 그 면의 획 수)이라 획 수의
@@ -57,10 +57,7 @@ type TexHash = { key: string; level: number; hash: number; ink: number; w: numbe
 const texHash = (page: Page) => page.evaluate(() => (window as any).__b2.diag.paintTexHash() as TexHash[])
 const bake = (page: Page) => page.evaluate(() => (window as any).__b2.diag.paintBake() as BakeStat)
 const bakeReset = (page: Page) => page.evaluate(() => { (window as any).__b2.diag.paintBakeReset() })
-const settle = async (page: Page) => {
-  await page.waitForTimeout(300)
-  await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 240_000 })
-}
+const settle = (page: Page) => settleBake(page)
 const rebake = async (page: Page) => {
   await page.evaluate(() => { (window as any).__b2.diag.rebakePaintTex() })
   await settle(page)
@@ -138,15 +135,21 @@ test('§1-2 — 색인: 편집 한 번에 훑는 획 수 == 그 면의 획 수 �
 test('§2 — 궤도 4초 동안 굽기 0 · 단계 내림에서 굽기 0 · 경계 왕복 재굽기 ≤ 2 (반증: 동결 끔)', async ({ page }) => {
   test.setTimeout(1_200_000)
   await buildHeavy(page, PER_FACE)
-  await zoomIn(page, 5)                                  // 면을 키워 단계가 실제로 움직일 대역으로(D-5)
+  await zoomToLevel(page, 512)                           // 면을 키워 단계가 실제로 움직일 대역으로(D-5)
   await settle(page)
   const visible = await page.evaluate(() => ((window as any).__b2.diag.paintTex() as any[]).filter(e => e.visible).length)
   // ── ① 궤도(동결 켬) — 굽기 0
   const on = await orbitProbe(page)
-  // ── ② 멈춘 뒤 재평가 — 보이는 면 수를 넘지 않는다
+  // ── ② 멈춘 뒤 재평가 — 보이는 면 수를 넘지 않고, **단계가 맞는다**
+  //   ⚠ 리뷰어 [H5]: 「재굽기 0」만으로는 «올바르게 재평가했다»와 «영영 안 바뀐다»가 안 갈린다
+  //   (#105의 형태 — 첫 프레임부터 참인 자). 그래서 자리마다 «요구 단계»와 «실제 단계»를 견준다:
+  //   히스테리시스 대역(실제 ≥ 요구/2) 밖인 자리가 0이어야 「멈춘 뒤에는 맞는 단계다」다.
   await bakeReset(page)
   await settle(page)
   const afterStop = await bake(page)
+  const memAfterStop = await memProbe(page)
+  // 반증(D-3) — 동결·히스테리시스를 끄고 **확대만 하고 멈추지 않으면** 대역 밖이 생기는가:
+  //   그 값이 0이 아니어야 이 자가 무언가를 재는 것이다(그 실행은 아래 ④가 겸한다).
   // ── ③ 경계 왕복 — 줌 인아웃 10회에서 재굽기 ≤ 2
   await bakeReset(page)
   await page.mouse.move(700, 480)
@@ -156,6 +159,21 @@ test('§2 — 궤도 4초 동안 굽기 0 · 단계 내림에서 굽기 0 · 경
   }
   await settle(page)
   const boundary = await bake(page)
+  // 반증(D-3) — **히스테리시스를 끄고 같은 왕복**을 한다: 경계에서 널뛰면 그 수가 크게 는다.
+  //   절대 수 하나로는 픽스처 크기(보이는 면 23)에 값이 끌려간다 — 견줄 짝이 있어야 «널뛰기가
+  //   죽었다»가 값으로 선다(#12 — 동작점 하나로 주장하지 않는다).
+  await page.evaluate(() => { (window as any).__b2.diag.setPaintLevelFreezeOffForTest(true) })
+  await settle(page)
+  await bakeReset(page)
+  await page.mouse.move(700, 480)
+  for (let k = 0; k < 10; k++) {
+    await page.mouse.wheel(0, k % 2 === 0 ? -160 : 160)
+    await page.waitForTimeout(60)
+  }
+  await settle(page)
+  const boundaryOff = await bake(page)
+  await page.evaluate(() => { (window as any).__b2.diag.setPaintLevelFreezeOffForTest(false) })
+  await settle(page)
   // ── ④ 반증(D-3) — 동결·히스테리시스를 끄면 궤도 중 재굽기가 돌아온다
   await page.evaluate(() => { (window as any).__b2.diag.setPaintLevelFreezeOffForTest(true) })
   await settle(page)
@@ -165,21 +183,27 @@ test('§2 — 궤도 4초 동안 굽기 0 · 단계 내림에서 굽기 0 · 경
     visible_paint_faces: visible,
     orbit_freeze_on: { bakes: on.bake.bakes, baked_strokes: on.bake.bakedStrokes, level_down: on.bake.levelDown, level_up: on.bake.levelUp, sig_lv: on.bake.sigChange.lv, frozen_frames: on.bake.frozenFrames, frames: on.frames, empty_frames: on.emptyFrames, ms: on.bake.ms },
     orbit_freeze_off: { bakes: off.bake.bakes, baked_strokes: off.bake.bakedStrokes, level_down: off.bake.levelDown, sig_lv: off.bake.sigChange.lv, frames: off.frames, ms: off.bake.ms },
-    after_stop: { bakes: afterStop.bakes },
+    after_stop: { bakes: afterStop.bakes, out_of_band: memAfterStop.outOfBand, rows: memAfterStop.rows },
     boundary_10: { bakes: boundary.bakes, level_up: boundary.levelUp, level_down: boundary.levelDown },
+    boundary_10_hysteresis_off: { bakes: boundaryOff.bakes, level_up: boundaryOff.levelUp, level_down: boundaryOff.levelDown },
+    boundary_per_visible_face: Math.round((boundary.bakes / Math.max(1, visible)) * 1000) / 1000,
+    boundary_note: '지시 §2의 「경계 왕복 10회에서 재굽기 ≤ 2」는 **면 하나**의 자다 — 보이는 면이 23이면 그 절대 수는 픽스처 크기에 끌려간다. 여기서는 ① 면당 재굽기와 ② 히스테리시스 끔과의 대조로 «경계에서 널뛰기 0»을 잰다.',
   }
   expect(on.bake.bakes, '궤도 4초 동안 bakeFaceTex 호출 0').toBe(0)
   expect(on.bake.levelDown, '단계 «내림»에서 굽기 0(그림 탑 — 내림은 GPU 표집의 몫)').toBe(0)
   expect(on.emptyFrames, '빈 프레임 0(칠 면이 흰 채로 그려진 프레임)').toBe(0)
   expect(afterStop.bakes, '멈춘 뒤 재굽기 ≤ 보이는 면 수').toBeLessThanOrEqual(Math.max(1, visible))
-  expect(boundary.bakes, '경계 왕복 10회에서 재굽기 ≤ 값(히스테리시스)').toBeLessThanOrEqual(PAINT72_BOUNDARY_REBAKE_MAX)
+  expect(memAfterStop.outOfBand, '멈춘 뒤에는 «맞는 단계»다 — 히스테리시스 대역 밖 자리 0(67 §2 무회귀)').toBe(0)
+  // 면 하나로 환산해 지시의 값과 견준다(면당 ≤ 2) · 그리고 반증과 갈린다
+  expect(boundary.bakes / Math.max(1, visible), '경계 왕복 10회 — **면당** 재굽기 ≤ 값(히스테리시스)').toBeLessThanOrEqual(PAINT72_BOUNDARY_REBAKE_MAX)
+  expect(boundary.bakes, '반증 — 히스테리시스를 끄면 경계 왕복의 재굽기가 는다').toBeLessThan(boundaryOff.bakes)
   expect(off.bake.bakes, '반증 — 동결을 끄면 궤도 중 재굽기가 돌아온다').toBeGreaterThan(0)
 })
 
 test('§3 — 예산이 좁아도 «보이는 것»은 안 버린다: 퇴출 0 · 합 ≤ 예산 · 내려간 면의 텍셀/px ≥ 값', async ({ page }) => {
   test.setTimeout(900_000)
   await buildHeavy(page, PER_FACE)
-  await zoomIn(page, 4)
+  await zoomToLevel(page, 512)
   await settle(page)
   const floor = await page.evaluate(() => (window as any).__b2.diag.constantsForTest().PAINT72_ALLOC_TEXEL_PER_PX_MIN as number)
   const before = await page.evaluate(() => (window as any).__b2.diag.paintTex() as any[])
@@ -191,6 +215,14 @@ test('§3 — 예산이 좁아도 «보이는 것»은 안 버린다: 퇴출 0 �
   await page.evaluate(() => { (window as any).__b2.diag.invalidate() })
   await settle(page)
   const st = await bake(page)
+  // 지시 §3의 넷째 게이트 — **프레임마다 굽기 0**(배분이 매 프레임 다시 도는데 그때 굽는가)
+  await bakeReset(page)
+  const idle = await page.evaluate(async () => {
+    const b2 = (window as any).__b2
+    for (let i = 0; i < 20; i++) { b2.diag.invalidate(); await new Promise<void>(r => requestAnimationFrame(() => r())) }
+    const s = b2.diag.paintBake()
+    return { frames: 20, bakes: s.bakes, allocDowns: s.allocDowns }
+  })
   const after = await page.evaluate(() => (window as any).__b2.diag.paintTex() as any[])
   const vis = after.filter(e => e.visible)
   // 배분으로 내려간 면의 «흐림»: 텍셀/px = 단계 ÷ 화면 크기
@@ -201,6 +233,10 @@ test('§3 — 예산이 좁아도 «보이는 것»은 안 버린다: 퇴출 0 �
     visible_before: visN, visible_after: vis.length,
     bytes_before: bytes0, budget_forced: Math.floor(bytes0 / 2), bytes_after: st.bytes,
     alloc_downs: st.allocDowns, alloc_bytes: st.allocBytes, evicts: st.evicts,
+    // ⚠ alloc_downs는 «자리 수»가 아니라 «프레임마다 다시 내린 결정의 합»이다(리뷰어 [M3]).
+    // 실제로 내려간 자리 수는 아래 lowered_places(요구 단계보다 낮은 자리)가 든다.
+    lowered_places: null as number | null,
+    idle_20_frames: idle,
     texel_per_px: texelPerPx, worst, texel_floor: floor,
     note: '65 ⑤는 예산을 넘으면 **버렸다**(보이는 면이 예산을 넘으면 퇴출→재굽기 순환). 72 §3은 «화면에서 작은 면부터 단계를 한 칸 내려» 합을 예산 안에 넣는다 — 퇴출은 안 보이는 것에만.',
   }
@@ -211,7 +247,22 @@ test('§3 — 예산이 좁아도 «보이는 것»은 안 버린다: 퇴출 0 �
   const allAtFloor = texelPerPx.every(t => t.screenPx <= 0 || t.level / 2 < t.screenPx * floor)
   ;(OUT.g3_alloc as Record<string, unknown>).over_budget = st.allocBytes > Math.floor(bytes0 / 2)
   ;(OUT.g3_alloc as Record<string, unknown>).all_at_blur_floor = allAtFloor
+  ;(OUT.g3_alloc as Record<string, unknown>).lowered_places = texelPerPx.filter(t => t.level < (after.find(e => e.key === t.key)?.want ?? 0)).length
+  // ⚠ 리뷰어 [M5] — **그림 탑은 내려오지 않는다**: 줌 인 → 줌 아웃 왕복 뒤에도 바이트가
+  //   그대로면 세션이 길수록 단조 증가한다는 뜻이다. 값으로 남긴다(상한은 §3의 배분과 퇴출).
+  await settle(page)
+  const memIn = await memProbe(page)
+  await page.mouse.move(700, 480)
+  for (let k = 0; k < 12; k++) { await page.mouse.wheel(0, 240); await page.waitForTimeout(60) }
+  await settle(page)
+  const memOut = await memProbe(page)
+  ;(OUT.g3_alloc as Record<string, unknown>).zoom_roundtrip = {
+    bytes_zoomed_in: memIn.bytes, bytes_after_zoom_out: memOut.bytes,
+    levels_in: memIn.levels, levels_out: memOut.levels,
+    note: '그림 탑(§1-2)은 내림을 안 굽는다 — 줌 아웃 뒤에도 단계·바이트가 그대로면 그것이 설계다. 내려오는 길은 §3 배분과 퇴출(안 보이는 것)뿐이고, 그 둘이 상한을 진다.',
+  }
   expect(st.allocDowns, '배분이 실제로 돌았다(안 돌면 이 팔은 아무것도 안 잰다)').toBeGreaterThan(0)
+  expect(idle.bakes, '§3 — 배분이 선 뒤에는 프레임마다 굽지 않는다(20 프레임에 굽기 0)').toBe(0)
   expect(st.evicts, '보이는 것을 안 버린다 — 퇴출 0').toBe(0)
   expect(st.allocBytes <= Math.floor(bytes0 / 2) || allAtFloor,
     '요구 합이 예산 안이거나, 더 못 내린다(전부 흐림 바닥) — 둘 중 하나여야 한다').toBe(true)

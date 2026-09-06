@@ -20,6 +20,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { PAINT72_RELEASE_INK_RATIO_MAX } from './thresholds'
+import { buildHeavy, settleBake } from './heavy72'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const OUT: Record<string, unknown> = {
@@ -181,7 +182,19 @@ test('A-1 — 프리셋 전수: 펜을 «대는 동안» 첫 잉크 > 0 · 떼�
   const noInkAtAll = rows.filter(r => r.noMarkOnBlank)
   const releaseChanged = rows.filter(r => r.releaseInkRatio > 0 && !r.blindWholeStroke)
   const travel = rows.map(r => r.firstInkTravelPx ?? Infinity).filter(v => Number.isFinite(v)).sort((a, b) => a - b)
+  // #103 — **장면을 값으로**(이 팔이 어느 대역에서 잰 것인가). 리뷰어 [H8]이 그 빈자리를 잡았다.
+  const scene = await page.evaluate(() => {
+    const b2 = (window as any).__b2
+    const paint = b2.app.doc.strokes.filter((x: any) => x.paint?.uv)
+    return {
+      faces: b2.app.faces.length, docStrokes: b2.app.doc.strokes.length, paintStrokes: paint.length,
+      texEntries: b2.diag.paintBake().entries,
+      levels: (b2.diag.paintTex() as any[]).reduce((m: any, e: any) => { m[String(e.level)] = (m[String(e.level)] ?? 0) + 1; return m }, {}),
+    }
+  })
   OUT.a1 = {
+    scene,
+    scene_note: '⚠ 이 팔은 **가벼운 장면**에서 잰다(면 하나 · 프리셋마다 앞 획을 지운다) — 프리셋의 성질을 가르려면 다른 획이 없어야 한다. 사람이 본 대역(칠을 꽤 많이 한 뒤)은 아래 「A-1 부하」 팔이 잰다.',
     presets: rows.length,
     /** ⛳ 정본 게이트 — 획을 긋는 «동안» 잉크가 한 번도 안 뜨는 프리셋(그것이 결함이다) */
     blind_whole_stroke: blindWhole.map(r => r.name),
@@ -209,6 +222,68 @@ test('A-1 — 프리셋 전수: 펜을 «대는 동안» 첫 잉크 > 0 · 떼�
   expect(blindWhole.length, `획을 긋는 동안 한 번도 안 보이고 떼면 나타나는 프리셋: ${blindWhole.map(r => r.name).join(', ')}`).toBe(0)
   // 문지름류(바탕을 읽는 브러시)는 미리보기와 확정본이 같을 수 없다 — **상한을 값으로 둔다**
   expect((OUT.a1 as any).release_ink_ratio_max, '떼기 전/후 잉크 차 비율의 상한(문지름류 예외 — thresholds가 단일 출처)').toBeLessThanOrEqual(PAINT72_RELEASE_INK_RATIO_MAX)
+})
+
+test('A-1 부하 — 사람이 본 대역(면 23 · 칠 920)에서 «대는 동안» 첫 잉크까지의 이동량과 ms', async ({ page }) => {
+  test.setTimeout(1_200_000)
+  // ⚠ 리뷰어 [H8] — 위 전수 팔은 **가벼운 장면**에서 잰다. 사람 판정은 「칠을 꽤 많이 한 뒤」였고
+  //   같은 라운드가 그 부하에서 프레임이 초 단위로 막히는 것을 실증했다(가설 3). 그러면 A-1의
+  //   결론(「재현 못 했다」)은 **그 대역에서도** 성립해야 한다 — 여기서 잰다.
+  //   ⛳ 이 팔의 자에는 **ms**가 있다(#111 「미리보기의 자는 시간과 이동량 둘」).
+  const built = await buildHeavy(page)
+  expect(built.paintStrokes, '부하 장면이 섰다(#103)').toBeGreaterThanOrEqual(600)
+  await page.evaluate(() => {
+    const b2 = (window as any).__b2
+    b2.diag.setPaintInstrForTest('brush')
+    Object.assign(b2.app.paintSel, { hex: '#1a3fa0', w: 20, o: 1 })
+  })
+  await page.click('#btn-paint')
+  await settleBake(page, 200)
+  const NAMES = ['classic/pencil', 'deevad/liner', 'brunelleschi/marker', 'deevad/watercolor_expressive', 'classic/slow_ink', 'deevad/spray']
+  const rows: Record<string, unknown>[] = []
+  for (const nm of NAMES) {
+    await page.evaluate((n) => {
+      const b2 = (window as any).__b2
+      b2.diag.pickBrushForTest('brush', n)
+      Object.assign(b2.app.paintSel, { hex: '#1a3fa0', w: 20, o: 1 })
+    }, nm)
+    await settleBake(page, 200)
+    // **이미 칠해진 면 위**에 긋는다(사람이 본 그 자리) — 첫 잉크까지의 «이동량»과 «ms»
+    const r = await page.evaluate(async () => {
+      const b2 = (window as any).__b2
+      const el = document.getElementById('ink')!
+      const rr = el.getBoundingClientRect()
+      const fire = (t: string, x: number, y: number, p: number, b: number) =>
+        el.dispatchEvent(new PointerEvent(t, { pointerId: 1, pointerType: 'pen', isPrimary: true, buttons: b, pressure: p, clientX: rr.left + x, clientY: rr.top + y, bubbles: true, cancelable: true }))
+      const raf = () => new Promise<void>(res => requestAnimationFrame(() => requestAnimationFrame(() => res())))
+      const hash = () => (b2.diag.paintTexHash() as { hash: number }[]).reduce((a, b) => (Math.imul(a, 31) + b.hash) | 0, 0)
+      const STEP = 14.3178
+      const base = hash()
+      const t0 = performance.now()
+      fire('pointerdown', 545, 365, 0.5, 1)
+      await raf()
+      let travel: number | null = null, ms: number | null = null
+      for (let i = 1; i <= 8; i++) {
+        fire('pointermove', 545 + 14 * i, 365 + 3 * i, 0.5, 1)
+        await raf()
+        if (travel === null && hash() !== base) { travel = STEP * i; ms = performance.now() - t0 }
+      }
+      const heldChanged = hash() !== base
+      fire('pointerup', 545 + 112, 365 + 24, 0, 0)
+      await raf()
+      await new Promise<void>(res => setTimeout(res, 200))
+      const upChanged = hash() !== base
+      return { travel, ms: ms === null ? null : Math.round(ms), heldChanged, upChanged, totalMs: Math.round(performance.now() - t0) }
+    })
+    rows.push({ name: nm, first_ink_travel_px: r.travel === null ? null : Math.round(r.travel * 10) / 10, first_ink_ms: r.ms, visible_while_down: r.heldChanged, marked_after_up: r.upChanged, stroke_ms: r.totalMs })
+  }
+  const blind = rows.filter(r => r.visible_while_down === false && r.marked_after_up === true)
+  OUT.a1_load = {
+    scene: built, rows,
+    blind_while_down: blind.map(r => r.name), blind_n: blind.length,
+    note: '⛳ 사람이 본 대역에서 다시 잰 A-1. 자는 둘이다(#111): 첫 잉크까지의 **이동량**(px)과 **시간**(ms). 「획을 긋는 동안 한 번도 안 보이고 떼면 나타나는」 프리셋이 이 대역에서도 없으면 A-1은 프리셋의 것이 아니다.',
+  }
+  expect(blind.length, `부하 대역에서도 «긋는 동안 안 보이고 떼면 나타나는» 프리셋: ${blind.map(r => r.name).join(', ')}`).toBe(0)
 })
 
 // ── A-2 ─────────────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 {
   "conditions": {
-    "project": "dpr2",
+    "project": "dpr1",
     "workers": 1,
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/perf72.spec.ts (워커 1 — #99)",
     "viewport": "playwright 기본(1200×800) · dpr는 project가 정한다 — 지시의 「ipad 꼴」은 dpr2가 그 자리다",
@@ -11,7 +11,6 @@
     "settle_rows": null
   },
   "what": "web2-72 §0 — 부하 계측(A 돌릴 때 · B 열 때 · C 메모리)과 가설 넷. 전/후는 **같은 실행 안의 두 팔**이다(legacy = 반증 스위치 셋 켬 = 수리 전 거동 · post = 셋 다 끔). bare = 칠을 걷어낸 대조군(기계 몫).",
-  "tree": "수리 후(post)",
   "note_pitfalls": "#12·#14(동작점 하나·ms로 주장하지 않는다 — 정본은 «호출 수·훑은 획 수» · 두 dpr) · #16(분모 — 궤도는 «같은 걸음·같은 각»이고 훑기는 «호출당»이다) · #47(수치는 원장이 정본) · #89(초록의 범위 — 굽기가 끝난 뒤에 잰다) · #99(워커 1) · #101(web2 안) · #103(장면 확인) · #105(«보이는 것»으로 자를 잡지 않는다) · #110 · #111",
   "pitfall_citations": [
     12,
@@ -43,32 +42,32 @@
     "texEntries": 23,
     "clampedFaces": 0,
     "levels": {
-      "256": 23
+      "128": 23
     }
   },
   "A_orbit": {
     "post": {
       "frames": {
         "n": 119,
-        "p50": 46.8,
-        "p95": 62.6,
-        "max": 233.6
+        "p50": 17.2,
+        "p95": 29.2,
+        "max": 123
       },
-      "fps": 20.65,
+      "fps": 51.62,
       "steps": 120,
       "degPerStep": 0,
       "totalDeg": 154.9,
       "pxDragged": 720,
-      "durationMs": 5812,
-      "longestBlockMs": 245,
+      "durationMs": 2325,
+      "longestBlockMs": 127,
       "cost": {
         "n": 119,
         "r3": 0.3999999761581421,
-        "bs": 0.19999998807907104,
+        "bs": 0.10000002384185791,
         "d2": 0.19999998807907104,
         "total": 0.800000011920929,
-        "p95": 1.600000023841858,
-        "totalMax": 217.19999998807907
+        "p95": 1.5999999642372131,
+        "totalMax": 105.69999998807907
       },
       "bake": {
         "bakes": 0,
@@ -106,7 +105,7 @@
         "indexRebuilds": 0,
         "indexScans": 0,
         "entries": 23,
-        "bytes": 11919360,
+        "bytes": 36005888,
         "budget": 268435456,
         "accum": true,
         "partial": true
@@ -116,44 +115,44 @@
     "legacy": {
       "frames": {
         "n": 119,
-        "p50": 50.7,
-        "p95": 1650.1,
-        "max": 6033.3
+        "p50": 17.2,
+        "p95": 2798.7,
+        "max": 5547.9
       },
-      "fps": 2.11,
+      "fps": 2.62,
       "steps": 120,
       "degPerStep": 0,
       "totalDeg": 154.9,
       "pxDragged": 720,
-      "durationMs": 56761,
-      "longestBlockMs": 6029,
+      "durationMs": 45844,
+      "longestBlockMs": 5539,
       "cost": {
         "n": 119,
-        "r3": 1,
+        "r3": 0.5,
         "bs": 0.10000002384185791,
         "d2": 0.19999998807907104,
-        "total": 1.2999999523162842,
-        "p95": 1604.0999999642372,
-        "totalMax": 5989.399999976158
+        "total": 0.8999999761581421,
+        "p95": 2782,
+        "totalMax": 5526.400000035763
       },
       "bake": {
-        "bakes": 55,
-        "bakedStrokes": 2200,
+        "bakes": 35,
+        "bakedStrokes": 1400,
         "appends": 0,
         "appendStrokes": 0,
         "handoverStrokes": 0,
-        "uploads": 55,
-        "uploadBytes": 56522752,
-        "ms": 50936.6,
+        "uploads": 35,
+        "uploadBytes": 46964736,
+        "ms": 43619.4,
         "drops": 0,
         "rebuilds": 0,
         "syncs": 0,
         "evicts": 0,
-        "texReallocs": 55,
-        "scans": 51480,
-        "scanCalls": 55,
+        "texReallocs": 35,
+        "scans": 32760,
+        "scanCalls": 35,
         "sigChange": {
-          "lv": 55,
+          "lv": 35,
           "texelQ": 0,
           "fam": 0,
           "hatch": 0,
@@ -161,8 +160,8 @@
           "box": 0,
           "doc": 0
         },
-        "levelUp": 28,
-        "levelDown": 27,
+        "levelUp": 20,
+        "levelDown": 15,
         "frozenFrames": 0,
         "allocDowns": 0,
         "allocBytes": 0,
@@ -172,7 +171,7 @@
         "indexRebuilds": 0,
         "indexScans": 0,
         "entries": 23,
-        "bytes": 48295936,
+        "bytes": 71012352,
         "budget": 268435456,
         "accum": true,
         "partial": true
@@ -182,25 +181,25 @@
     "bare": {
       "frames": {
         "n": 119,
-        "p50": 44.6,
-        "p95": 52.6,
-        "max": 218.8
+        "p50": 16.8,
+        "p95": 18.2,
+        "max": 121.4
       },
-      "fps": 21.75,
+      "fps": 56.76,
       "steps": 120,
       "degPerStep": 0,
       "totalDeg": 154.9,
       "pxDragged": 720,
-      "durationMs": 5516,
-      "longestBlockMs": 232,
+      "durationMs": 2114,
+      "longestBlockMs": 114,
       "cost": {
         "n": 119,
-        "r3": 0.800000011920929,
-        "bs": 0.10000002384185791,
+        "r3": 0.699999988079071,
+        "bs": 0.09999996423721313,
         "d2": 0.19999998807907104,
-        "total": 1,
-        "p95": 1.2000000476837158,
-        "totalMax": 201.79999995231628
+        "total": 0.9000000357627869,
+        "p95": 1.100000023841858,
+        "totalMax": 105.29999995231628
       },
       "bake": {
         "bakes": 0,
@@ -246,609 +245,536 @@
       "emptyFrames": 0
     }
   },
-  "A_orbit_zoomed": {
-    "frames": {
-      "n": 24,
-      "p50": 81.1,
-      "p95": 423.6,
-      "max": 439.7
+  "A_zoom": {
+    "post": {
+      "steps": 6,
+      "maxLevel": 512
     },
-    "cost": {
-      "n": 24,
-      "r3": 0.40000003576278687,
-      "bs": 26.5,
-      "d2": 0.20000004768371582,
-      "total": 27.700000047683716,
-      "p95": 170.60000002384186,
-      "totalMax": 170.9000000357628
-    },
-    "bake": {
-      "bakes": 0,
-      "bakedStrokes": 0,
-      "appends": 0,
-      "appendStrokes": 0,
-      "handoverStrokes": 0,
-      "uploads": 0,
-      "uploadBytes": 0,
-      "ms": 0,
-      "drops": 0,
-      "rebuilds": 0,
-      "syncs": 0,
-      "evicts": 0,
-      "texReallocs": 0,
-      "scans": 0,
-      "scanCalls": 0,
-      "sigChange": {
-        "lv": 0,
-        "texelQ": 0,
-        "fam": 0,
-        "hatch": 0,
-        "rep": 0,
-        "box": 0,
-        "doc": 0
-      },
-      "levelUp": 0,
-      "levelDown": 0,
-      "frozenFrames": 24,
-      "allocDowns": 0,
-      "allocBytes": 0,
-      "deferred": 0,
-      "sliced": 0,
-      "indexRebuilds": 0,
-      "indexScans": 0,
-      "entries": 23,
-      "bytes": 10752000,
-      "budget": 268435456,
-      "accum": true,
-      "partial": true
-    },
-    "emptyFrames": 0,
-    "durationMs": 4047,
-    "orbitDeg": 182
-  },
-  "B_open": {
-    "firstInteractiveMs": 1251,
-    "allPaintMs": 18667,
-    "longestBlockMs": 891,
-    "bakes": 24,
-    "bakedStrokes": 931,
-    "bakeMsOnOpen": 6449,
-    "boot": {
-      "bootAt": 161.60000002384186,
-      "parseMs": 4,
-      "applyMs": 6,
-      "bytes": 235452,
-      "strokes": 936
-    },
-    "restoredStrokes": 936,
-    "editScans": 678,
-    "editScanCalls": 17,
-    "bareFirstInteractiveMs": 708,
-    "bareLongestBlockMs": 346,
-    "bareStrokes": 16
+    "stripped_paint_strokes": 920,
+    "note": "세 팔은 **같은 카메라**에서 출발한다(값으로 떠 두고 값으로 되돌린다) — 휠로 되돌리면 걸음이 안 맞아 다른 자리에 선다"
   },
   "C_memory": {
     "post": {
-      "bytes": 11919360,
+      "bytes": 36005888,
       "budget": 268435456,
       "entries": 23,
       "visible": 23,
       "levels": {
-        "256": 22,
-        "512": 1
+        "256": 5,
+        "512": 18
       },
       "clamped": 0,
       "rows": [
         {
           "key": "17:1",
-          "level": 256,
-          "screenPx": 290,
+          "level": 512,
+          "screenPx": 336,
           "want": 512,
-          "texelPerPx": 0.883
+          "texelPerPx": 1.524
         },
         {
           "key": "18:1",
-          "level": 256,
-          "screenPx": 290,
+          "level": 512,
+          "screenPx": 336,
           "want": 512,
-          "texelPerPx": 0.883
+          "texelPerPx": 1.524
         },
         {
           "key": "19:1",
-          "level": 256,
-          "screenPx": 290,
+          "level": 512,
+          "screenPx": 336,
           "want": 512,
-          "texelPerPx": 0.883
+          "texelPerPx": 1.524
         },
         {
           "key": "20:1",
-          "level": 256,
-          "screenPx": 290,
+          "level": 512,
+          "screenPx": 336,
           "want": 512,
-          "texelPerPx": 0.883
+          "texelPerPx": 1.524
         },
         {
           "key": "21:1",
           "level": 512,
-          "screenPx": 327,
+          "screenPx": 378,
           "want": 512,
-          "texelPerPx": 1.566
+          "texelPerPx": 1.354
         },
         {
           "key": "22:1",
-          "level": 256,
-          "screenPx": 292,
+          "level": 512,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 0.877
+          "texelPerPx": 1.515
         },
         {
           "key": "23:1",
-          "level": 256,
-          "screenPx": 292,
+          "level": 512,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 0.877
+          "texelPerPx": 1.515
         },
         {
           "key": "24:1",
-          "level": 256,
-          "screenPx": 292,
+          "level": 512,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 0.877
+          "texelPerPx": 1.515
         },
         {
           "key": "25:1",
-          "level": 256,
-          "screenPx": 292,
+          "level": 512,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 0.877
+          "texelPerPx": 1.515
         },
         {
           "key": "26:1",
-          "level": 256,
-          "screenPx": 292,
+          "level": 512,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 0.877
+          "texelPerPx": 1.515
         },
         {
           "key": "27:1",
           "level": 256,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 0.928
+          "texelPerPx": 0.803
         },
         {
           "key": "28:1",
           "level": 256,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 0.928
+          "texelPerPx": 0.803
         },
         {
           "key": "29:1",
           "level": 256,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 0.928
+          "texelPerPx": 0.803
         },
         {
           "key": "30:1",
           "level": 256,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 0.928
+          "texelPerPx": 0.803
         },
         {
           "key": "31:1",
           "level": 256,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 0.928
+          "texelPerPx": 0.803
         },
         {
           "key": "32:1",
-          "level": 256,
-          "screenPx": 307,
+          "level": 512,
+          "screenPx": 356,
           "want": 512,
-          "texelPerPx": 0.834
+          "texelPerPx": 1.438
         },
         {
           "key": "33:1",
-          "level": 256,
-          "screenPx": 307,
+          "level": 512,
+          "screenPx": 356,
           "want": 512,
-          "texelPerPx": 0.834
+          "texelPerPx": 1.438
         },
         {
           "key": "34:1",
-          "level": 256,
-          "screenPx": 307,
+          "level": 512,
+          "screenPx": 356,
           "want": 512,
-          "texelPerPx": 0.834
+          "texelPerPx": 1.438
         },
         {
           "key": "35:1",
-          "level": 256,
-          "screenPx": 307,
+          "level": 512,
+          "screenPx": 356,
           "want": 512,
-          "texelPerPx": 0.834
+          "texelPerPx": 1.438
         },
         {
           "key": "36:1",
-          "level": 256,
-          "screenPx": 293,
+          "level": 512,
+          "screenPx": 339,
           "want": 512,
-          "texelPerPx": 0.874
+          "texelPerPx": 1.51
         },
         {
           "key": "37:1",
-          "level": 256,
-          "screenPx": 293,
+          "level": 512,
+          "screenPx": 339,
           "want": 512,
-          "texelPerPx": 0.874
+          "texelPerPx": 1.51
         },
         {
           "key": "38:1",
-          "level": 256,
-          "screenPx": 293,
+          "level": 512,
+          "screenPx": 339,
           "want": 512,
-          "texelPerPx": 0.874
+          "texelPerPx": 1.51
         },
         {
           "key": "39:1",
-          "level": 256,
-          "screenPx": 293,
+          "level": 512,
+          "screenPx": 339,
           "want": 512,
-          "texelPerPx": 0.874
+          "texelPerPx": 1.51
         }
       ],
       "outOfBand": 0
     },
     "post_after_stop": {
-      "bytes": 11919360,
+      "bytes": 36005888,
       "budget": 268435456,
       "entries": 23,
       "visible": 23,
       "levels": {
-        "256": 22,
-        "512": 1
+        "256": 5,
+        "512": 18
       },
       "clamped": 0,
       "rows": [
         {
           "key": "17:1",
-          "level": 256,
-          "screenPx": 290,
+          "level": 512,
+          "screenPx": 336,
           "want": 512,
-          "texelPerPx": 0.883
+          "texelPerPx": 1.524
         },
         {
           "key": "18:1",
-          "level": 256,
-          "screenPx": 290,
+          "level": 512,
+          "screenPx": 336,
           "want": 512,
-          "texelPerPx": 0.883
+          "texelPerPx": 1.524
         },
         {
           "key": "19:1",
-          "level": 256,
-          "screenPx": 290,
+          "level": 512,
+          "screenPx": 336,
           "want": 512,
-          "texelPerPx": 0.883
+          "texelPerPx": 1.524
         },
         {
           "key": "20:1",
-          "level": 256,
-          "screenPx": 290,
+          "level": 512,
+          "screenPx": 336,
           "want": 512,
-          "texelPerPx": 0.883
+          "texelPerPx": 1.524
         },
         {
           "key": "21:1",
           "level": 512,
-          "screenPx": 327,
+          "screenPx": 378,
           "want": 512,
-          "texelPerPx": 1.566
+          "texelPerPx": 1.354
         },
         {
           "key": "22:1",
-          "level": 256,
-          "screenPx": 292,
+          "level": 512,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 0.877
+          "texelPerPx": 1.515
         },
         {
           "key": "23:1",
-          "level": 256,
-          "screenPx": 292,
+          "level": 512,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 0.877
+          "texelPerPx": 1.515
         },
         {
           "key": "24:1",
-          "level": 256,
-          "screenPx": 292,
+          "level": 512,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 0.877
+          "texelPerPx": 1.515
         },
         {
           "key": "25:1",
-          "level": 256,
-          "screenPx": 292,
+          "level": 512,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 0.877
+          "texelPerPx": 1.515
         },
         {
           "key": "26:1",
-          "level": 256,
-          "screenPx": 292,
+          "level": 512,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 0.877
+          "texelPerPx": 1.515
         },
         {
           "key": "27:1",
           "level": 256,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 0.928
+          "texelPerPx": 0.803
         },
         {
           "key": "28:1",
           "level": 256,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 0.928
+          "texelPerPx": 0.803
         },
         {
           "key": "29:1",
           "level": 256,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 0.928
+          "texelPerPx": 0.803
         },
         {
           "key": "30:1",
           "level": 256,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 0.928
+          "texelPerPx": 0.803
         },
         {
           "key": "31:1",
           "level": 256,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 0.928
+          "texelPerPx": 0.803
         },
         {
           "key": "32:1",
-          "level": 256,
-          "screenPx": 307,
+          "level": 512,
+          "screenPx": 356,
           "want": 512,
-          "texelPerPx": 0.834
+          "texelPerPx": 1.438
         },
         {
           "key": "33:1",
-          "level": 256,
-          "screenPx": 307,
+          "level": 512,
+          "screenPx": 356,
           "want": 512,
-          "texelPerPx": 0.834
+          "texelPerPx": 1.438
         },
         {
           "key": "34:1",
-          "level": 256,
-          "screenPx": 307,
+          "level": 512,
+          "screenPx": 356,
           "want": 512,
-          "texelPerPx": 0.834
+          "texelPerPx": 1.438
         },
         {
           "key": "35:1",
-          "level": 256,
-          "screenPx": 307,
+          "level": 512,
+          "screenPx": 356,
           "want": 512,
-          "texelPerPx": 0.834
+          "texelPerPx": 1.438
         },
         {
           "key": "36:1",
-          "level": 256,
-          "screenPx": 293,
+          "level": 512,
+          "screenPx": 339,
           "want": 512,
-          "texelPerPx": 0.874
+          "texelPerPx": 1.51
         },
         {
           "key": "37:1",
-          "level": 256,
-          "screenPx": 293,
+          "level": 512,
+          "screenPx": 339,
           "want": 512,
-          "texelPerPx": 0.874
+          "texelPerPx": 1.51
         },
         {
           "key": "38:1",
-          "level": 256,
-          "screenPx": 293,
+          "level": 512,
+          "screenPx": 339,
           "want": 512,
-          "texelPerPx": 0.874
+          "texelPerPx": 1.51
         },
         {
           "key": "39:1",
-          "level": 256,
-          "screenPx": 293,
+          "level": 512,
+          "screenPx": 339,
           "want": 512,
-          "texelPerPx": 0.874
+          "texelPerPx": 1.51
         }
       ],
       "outOfBand": 0
     },
     "post_zoom_out": {
-      "bytes": 11919360,
+      "bytes": 36005888,
       "budget": 268435456,
       "entries": 23,
       "visible": 23,
       "levels": {
-        "256": 22,
-        "512": 1
+        "256": 5,
+        "512": 18
       },
       "clamped": 0,
       "rows": [
         {
           "key": "17:1",
-          "level": 256,
-          "screenPx": 98,
-          "want": 128,
-          "texelPerPx": 2.612
+          "level": 512,
+          "screenPx": 30,
+          "want": 64,
+          "texelPerPx": 17.067
         },
         {
           "key": "18:1",
-          "level": 256,
-          "screenPx": 98,
-          "want": 128,
-          "texelPerPx": 2.612
+          "level": 512,
+          "screenPx": 30,
+          "want": 64,
+          "texelPerPx": 17.067
         },
         {
           "key": "19:1",
-          "level": 256,
-          "screenPx": 98,
-          "want": 128,
-          "texelPerPx": 2.612
+          "level": 512,
+          "screenPx": 30,
+          "want": 64,
+          "texelPerPx": 17.067
         },
         {
           "key": "20:1",
-          "level": 256,
-          "screenPx": 98,
-          "want": 128,
-          "texelPerPx": 2.612
+          "level": 512,
+          "screenPx": 30,
+          "want": 64,
+          "texelPerPx": 17.067
         },
         {
           "key": "21:1",
           "level": 512,
-          "screenPx": 111,
-          "want": 128,
-          "texelPerPx": 4.613
+          "screenPx": 34,
+          "want": 64,
+          "texelPerPx": 15.059
         },
         {
           "key": "22:1",
-          "level": 256,
-          "screenPx": 99,
-          "want": 128,
-          "texelPerPx": 2.586
+          "level": 512,
+          "screenPx": 31,
+          "want": 64,
+          "texelPerPx": 16.516
         },
         {
           "key": "23:1",
-          "level": 256,
-          "screenPx": 99,
-          "want": 128,
-          "texelPerPx": 2.586
+          "level": 512,
+          "screenPx": 31,
+          "want": 64,
+          "texelPerPx": 16.516
         },
         {
           "key": "24:1",
-          "level": 256,
-          "screenPx": 99,
-          "want": 128,
-          "texelPerPx": 2.586
+          "level": 512,
+          "screenPx": 31,
+          "want": 64,
+          "texelPerPx": 16.516
         },
         {
           "key": "25:1",
-          "level": 256,
-          "screenPx": 99,
-          "want": 128,
-          "texelPerPx": 2.586
+          "level": 512,
+          "screenPx": 31,
+          "want": 64,
+          "texelPerPx": 16.516
         },
         {
           "key": "26:1",
-          "level": 256,
-          "screenPx": 99,
-          "want": 128,
-          "texelPerPx": 2.586
+          "level": 512,
+          "screenPx": 31,
+          "want": 64,
+          "texelPerPx": 16.516
         },
         {
           "key": "27:1",
           "level": 256,
-          "screenPx": 94,
-          "want": 128,
-          "texelPerPx": 2.723
+          "screenPx": 29,
+          "want": 64,
+          "texelPerPx": 8.828
         },
         {
           "key": "28:1",
           "level": 256,
-          "screenPx": 94,
-          "want": 128,
-          "texelPerPx": 2.723
+          "screenPx": 29,
+          "want": 64,
+          "texelPerPx": 8.828
         },
         {
           "key": "29:1",
           "level": 256,
-          "screenPx": 94,
-          "want": 128,
-          "texelPerPx": 2.723
+          "screenPx": 29,
+          "want": 64,
+          "texelPerPx": 8.828
         },
         {
           "key": "30:1",
           "level": 256,
-          "screenPx": 94,
-          "want": 128,
-          "texelPerPx": 2.723
+          "screenPx": 29,
+          "want": 64,
+          "texelPerPx": 8.828
         },
         {
           "key": "31:1",
           "level": 256,
-          "screenPx": 94,
-          "want": 128,
-          "texelPerPx": 2.723
+          "screenPx": 29,
+          "want": 64,
+          "texelPerPx": 8.828
         },
         {
           "key": "32:1",
-          "level": 256,
-          "screenPx": 104,
-          "want": 128,
-          "texelPerPx": 2.462
+          "level": 512,
+          "screenPx": 32,
+          "want": 64,
+          "texelPerPx": 16
         },
         {
           "key": "33:1",
-          "level": 256,
-          "screenPx": 104,
-          "want": 128,
-          "texelPerPx": 2.462
+          "level": 512,
+          "screenPx": 32,
+          "want": 64,
+          "texelPerPx": 16
         },
         {
           "key": "34:1",
-          "level": 256,
-          "screenPx": 104,
-          "want": 128,
-          "texelPerPx": 2.462
+          "level": 512,
+          "screenPx": 32,
+          "want": 64,
+          "texelPerPx": 16
         },
         {
           "key": "35:1",
-          "level": 256,
-          "screenPx": 104,
-          "want": 128,
-          "texelPerPx": 2.462
+          "level": 512,
+          "screenPx": 32,
+          "want": 64,
+          "texelPerPx": 16
         },
         {
           "key": "36:1",
-          "level": 256,
-          "screenPx": 99,
-          "want": 128,
-          "texelPerPx": 2.586
+          "level": 512,
+          "screenPx": 31,
+          "want": 64,
+          "texelPerPx": 16.516
         },
         {
           "key": "37:1",
-          "level": 256,
-          "screenPx": 99,
-          "want": 128,
-          "texelPerPx": 2.586
+          "level": 512,
+          "screenPx": 31,
+          "want": 64,
+          "texelPerPx": 16.516
         },
         {
           "key": "38:1",
-          "level": 256,
-          "screenPx": 99,
-          "want": 128,
-          "texelPerPx": 2.586
+          "level": 512,
+          "screenPx": 31,
+          "want": 64,
+          "texelPerPx": 16.516
         },
         {
           "key": "39:1",
-          "level": 256,
-          "screenPx": 99,
-          "want": 128,
-          "texelPerPx": 2.586
+          "level": 512,
+          "screenPx": 31,
+          "want": 64,
+          "texelPerPx": 16.516
         }
       ],
       "outOfBand": 0
@@ -866,280 +792,198 @@
         {
           "key": "17:1",
           "level": 512,
-          "screenPx": 290,
+          "screenPx": 336,
           "want": 512,
-          "texelPerPx": 1.766
+          "texelPerPx": 1.524
         },
         {
           "key": "18:1",
           "level": 512,
-          "screenPx": 290,
+          "screenPx": 336,
           "want": 512,
-          "texelPerPx": 1.766
+          "texelPerPx": 1.524
         },
         {
           "key": "19:1",
           "level": 512,
-          "screenPx": 290,
+          "screenPx": 336,
           "want": 512,
-          "texelPerPx": 1.766
+          "texelPerPx": 1.524
         },
         {
           "key": "20:1",
           "level": 512,
-          "screenPx": 290,
+          "screenPx": 336,
           "want": 512,
-          "texelPerPx": 1.766
+          "texelPerPx": 1.524
         },
         {
           "key": "21:1",
           "level": 512,
-          "screenPx": 327,
+          "screenPx": 378,
           "want": 512,
-          "texelPerPx": 1.566
+          "texelPerPx": 1.354
         },
         {
           "key": "22:1",
           "level": 512,
-          "screenPx": 292,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 1.753
+          "texelPerPx": 1.515
         },
         {
           "key": "23:1",
           "level": 512,
-          "screenPx": 292,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 1.753
+          "texelPerPx": 1.515
         },
         {
           "key": "24:1",
           "level": 512,
-          "screenPx": 292,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 1.753
+          "texelPerPx": 1.515
         },
         {
           "key": "25:1",
           "level": 512,
-          "screenPx": 292,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 1.753
+          "texelPerPx": 1.515
         },
         {
           "key": "26:1",
           "level": 512,
-          "screenPx": 292,
+          "screenPx": 338,
           "want": 512,
-          "texelPerPx": 1.753
+          "texelPerPx": 1.515
         },
         {
           "key": "27:1",
           "level": 512,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 1.855
+          "texelPerPx": 1.605
         },
         {
           "key": "28:1",
           "level": 512,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 1.855
+          "texelPerPx": 1.605
         },
         {
           "key": "29:1",
           "level": 512,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 1.855
+          "texelPerPx": 1.605
         },
         {
           "key": "30:1",
           "level": 512,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 1.855
+          "texelPerPx": 1.605
         },
         {
           "key": "31:1",
           "level": 512,
-          "screenPx": 276,
+          "screenPx": 319,
           "want": 512,
-          "texelPerPx": 1.855
+          "texelPerPx": 1.605
         },
         {
           "key": "32:1",
           "level": 512,
-          "screenPx": 307,
+          "screenPx": 356,
           "want": 512,
-          "texelPerPx": 1.668
+          "texelPerPx": 1.438
         },
         {
           "key": "33:1",
           "level": 512,
-          "screenPx": 307,
+          "screenPx": 356,
           "want": 512,
-          "texelPerPx": 1.668
+          "texelPerPx": 1.438
         },
         {
           "key": "34:1",
           "level": 512,
-          "screenPx": 307,
+          "screenPx": 356,
           "want": 512,
-          "texelPerPx": 1.668
+          "texelPerPx": 1.438
         },
         {
           "key": "35:1",
           "level": 512,
-          "screenPx": 307,
+          "screenPx": 356,
           "want": 512,
-          "texelPerPx": 1.668
+          "texelPerPx": 1.438
         },
         {
           "key": "36:1",
           "level": 512,
-          "screenPx": 293,
+          "screenPx": 339,
           "want": 512,
-          "texelPerPx": 1.747
+          "texelPerPx": 1.51
         },
         {
           "key": "37:1",
           "level": 512,
-          "screenPx": 293,
+          "screenPx": 339,
           "want": 512,
-          "texelPerPx": 1.747
+          "texelPerPx": 1.51
         },
         {
           "key": "38:1",
           "level": 512,
-          "screenPx": 293,
+          "screenPx": 339,
           "want": 512,
-          "texelPerPx": 1.747
+          "texelPerPx": 1.51
         },
         {
           "key": "39:1",
           "level": 512,
-          "screenPx": 293,
+          "screenPx": 339,
           "want": 512,
-          "texelPerPx": 1.747
+          "texelPerPx": 1.51
         }
       ],
       "outOfBand": 0
     }
-  },
-  "C_memory_zoomed": {
-    "bytes": 10752000,
-    "budget": 268435456,
-    "entries": 23,
-    "visible": 23,
-    "levels": {
-      "256": 23
-    },
-    "clamped": 0
-  },
-  "hypotheses": {
-    "h1_level_in_bake_key": {
-      "verdict": "반증",
-      "sig_change_small": {
-        "lv": 0,
-        "texelQ": 0,
-        "fam": 0,
-        "hatch": 0,
-        "rep": 0,
-        "box": 0,
-        "doc": 0
-      },
-      "sig_change_zoomed": {
-        "lv": 0,
-        "texelQ": 0,
-        "fam": 0,
-        "hatch": 0,
-        "rep": 0,
-        "box": 0,
-        "doc": 0
-      },
-      "level_up": 0,
-      "level_down": 0,
-      "bakes_during_orbit_small": 0,
-      "bakes_during_orbit_zoomed": 0,
-      "baked_strokes_during_orbit_zoomed": 0,
-      "note": "궤도 중 열쇠가 갈린 원인을 조각별로 센다 — lv(단계)·tq(무늬 굵기 반옥타브)가 0이 아니면 「화면 크기가 굽기 열쇠에 들어 있다」가 실증된다."
-    },
-    "h2_lru_thrash": {
-      "verdict": "반증",
-      "evicts_during_orbit_small": 0,
-      "evicts_during_orbit_zoomed": 0,
-      "bytes": 10752000,
-      "bytes_zoomed": 10752000,
-      "budget": 268435456,
-      "visible_paint_faces": 23,
-      "levels_zoomed": {
-        "256": 23
-      },
-      "over_budget": false,
-      "note": "퇴출이 궤도 중에 돌면 「보이는 면이 예산을 넘어 매 프레임 퇴출→재굽기」다."
-    },
-    "h3_sync_bake_on_open": {
-      "verdict": "실증",
-      "longest_block_ms": 889,
-      "first_interactive_ms": 1165,
-      "all_paint_ms": 18340,
-      "bakes_on_open": 24,
-      "bare_first_interactive_ms": 720,
-      "bare_longest_block_ms": 357,
-      "bare_strokes": 16,
-      "note": "열 때 보이는 면을 첫 프레임에 «동기»로 구우면 메인 스레드가 그만큼 막힌다(50ms = 지시 §4의 상한). ⚠ bare_*는 **칠을 걷어낸 같은 문서**의 대조군이다 — 그만큼은 칠의 몫이 아니라 문서·3D 동기의 몫이고 이 라운드의 칠 수리로는 못 줄인다(D-3)."
-    },
-    "h4_paint_strokes_scan": {
-      "verdict": "반증",
-      "scans_during_orbit": 0,
-      "scan_calls_during_orbit": 0,
-      "scan_per_call": 40,
-      "doc_strokes": 936,
-      "edit_scans": 678,
-      "edit_scan_calls": 17,
-      "note": "호출 한 번에 훑는 획 수가 «문서 전체»면 실증. 수리 후에는 «그 면의 획 수»로 떨어진다(§1-2 색인)."
-    }
-  },
-  "A_zoom": {
-    "post": {
-      "steps": 5,
-      "maxLevel": 512
-    },
-    "stripped_paint_strokes": 920,
-    "note": "세 팔은 **같은 카메라**에서 출발한다(값으로 떠 두고 값으로 되돌린다) — 휠로 되돌리면 걸음이 안 맞아 다른 자리에 선다"
   },
   "A_ratios": {
     "note": "**같은 몸짓**(가운데 단추 끌기 120걸음 × 6px = 720px)·**같은 카메라**를 도는 데 든 것의 비. ⚠ legacy 팔은 시간 상한에 닿아 걸음을 다 못 돈다 — 그 사실이 값이다(steps·pxDragged·totalDeg를 나란히 둔다). p50은 legacy가 **양극단**이라(대부분 프레임은 빠르고 몇 프레임이 분 단위) 뒤집혀 보일 수 있다 — 사람이 느끼는 자는 **p95·최악·fps**다. ms는 이 기계의 값이고 배수만 읽는다(#12·#14)",
     "steps": "120 → 120",
     "px_dragged": "720 → 720",
     "total_deg": "154.9 → 154.9",
-    "frame_p95": 26.36,
-    "longest_block": 24.61,
-    "frame_p50": 1.08,
-    "frame_max": 25.83,
-    "duration": 9.77,
-    "fps": 9.79,
-    "bakes": "55 → 0",
-    "baked_strokes": "2200 → 0",
-    "level_down": "27 → 0",
-    "bake_ms": "50937 → 0",
-    "bare_frame_p50": 44.6,
-    "bare_frame_p95": 52.6,
-    "bare_longest_block_ms": 232
+    "frame_p95": 95.85,
+    "longest_block": 43.61,
+    "frame_p50": 1,
+    "frame_max": 45.1,
+    "duration": 19.72,
+    "fps": 19.7,
+    "bakes": "35 → 0",
+    "baked_strokes": "1400 → 0",
+    "level_down": "15 → 0",
+    "bake_ms": "43619 → 0",
+    "bare_frame_p50": 16.8,
+    "bare_frame_p95": 18.2,
+    "bare_longest_block_ms": 114
   },
   "A_gate_lines": {
     "§1 궤도 중 메인 최장 차단 ≤ 8ms": {
-      "post": 245,
-      "bare": 232,
-      "legacy": 6029,
+      "post": 127,
+      "bare": 114,
+      "legacy": 5539,
       "pass": false
     },
     "§1 프레임 p95 ≤ 16.7ms(60Hz)": {
-      "post": 62.6,
-      "bare": 52.6,
-      "legacy": 1650.1,
+      "post": 29.2,
+      "bare": 18.2,
+      "legacy": 2798.7,
       "pass": false
     },
     "§1 빈 프레임 0": {
@@ -1148,7 +992,7 @@
     },
     "§2 궤도 중 bakeFaceTex 호출 0": {
       "post": 0,
-      "legacy": 55,
+      "legacy": 35,
       "pass": true
     },
     "§2 멈춘 뒤에는 맞는 단계다(대역 밖 0)": {
@@ -1157,28 +1001,49 @@
     },
     "note": "⚠ ms 두 줄은 **이 기계에서 도달 불가능**하다 — 칠을 거의 걷어낸 bare 팔도 상한 밖이다(그 값이 옆에 있다). 도달 가능한 자(호출 수·빈 프레임·대역)는 통과한다."
   },
+  "B_open": {
+    "firstInteractiveMs": 2569,
+    "allPaintMs": 5278,
+    "longestBlockMs": 865,
+    "bakes": 25,
+    "bakedStrokes": 965,
+    "bakeMsOnOpen": 3533,
+    "boot": {
+      "bootAt": 134.0999999642372,
+      "parseMs": 4.2,
+      "applyMs": 6.2,
+      "bytes": 235452,
+      "strokes": 936
+    },
+    "restoredStrokes": 936,
+    "editScans": 678,
+    "editScanCalls": 17,
+    "bareFirstInteractiveMs": 446,
+    "bareLongestBlockMs": 229,
+    "bareStrokes": 16
+  },
   "B_attribution": {
     "note": "「칠 전부 보이기」가 어디로 가는가 — 굽기 CPU의 몫과 나머지(프레임 예산의 선택)를 가른다(리뷰어 [M1])",
-    "bake_ms_on_open": 6449,
-    "all_paint_ms": 18667,
-    "bake_share": 0.35,
-    "rest_ms": 12218,
+    "bake_ms_on_open": 3533,
+    "all_paint_ms": 5278,
+    "bake_share": 0.67,
+    "rest_ms": 1745,
     "rest_is": "굽기 CPU가 아니라 «쉬는 중 예산(PAINT72_BAKE_MS_IDLE)과 프레임 하나의 고정 비용»이다 — Worker·캐시 없이도 예산 하나로 줄어들 수 있는 몫"
   },
   "B_gate_lines": {
     "§4 첫 상호작용 프레임 ≤ 1000ms": {
-      "post": 1251,
-      "bare": 708,
+      "post": 2569,
+      "bare": 446,
       "pass": false
     },
     "§4 메인 최장 차단 ≤ 50ms": {
-      "post": 891,
-      "bare": 346,
+      "post": 865,
+      "bare": 229,
       "pass": false
     },
     "§4 칠 전부 ≤ 5000ms(캐시 없음)": {
-      "post": 18667,
-      "bake_cpu": 6449,
+      "post": 5278,
+      "bake_cpu": 3533,
       "pass": false
     },
     "note": "⚠ 세 줄 다 이 기계에서 미달이고, bare 팔(칠을 거의 걷어낸 문서)이 그 중 얼마가 기계 몫인지 말한다. 캐시는 이월(§4 둘째)이다."

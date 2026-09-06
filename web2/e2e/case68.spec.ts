@@ -91,7 +91,7 @@ test('① 칸 8 · 지우개 맨 끝 고정 · 옛 여섯 → 새 판 앞 여섯
   const cells = await cellsOf(page)
   OUT.constants_used = await page.evaluate(() => (window as any).__b2.diag.constantsForTest())
   OUT.thresholds = { CASE68_LIST_ROW_H }
-  OUT.g01_case = { def: '필통 칸 수 8(도구 7 + 지우개 1 — 마지막 칸 id paint-erase · 끌어 바꿀 손잡이 없음) · 옛 판 여섯 → 새 판 앞 여섯(사양 포함) · 일곱째 기본(잉크펜) · 이주 «한 번»(새 판이 쓰인 뒤 옛 판은 다시 안 읽는다)',
+  OUT.g01_case = { def: '필통 칸 수 8(도구 7 + 지우개 1 — 마지막 칸 id paint-erase · 끌어 바꿀 손잡이 없음) · 옛 판 여섯 → 새 판 앞 여섯(사양 포함) · 일곱째는 «겹치지 않는» 기본(72 §A-2 — 옛 여섯에 라이너가 있으면 다른 기본으로 민다) · 이주 «한 번»(새 판이 쓰인 뒤 옛 판은 다시 안 읽는다)',
     cells: cells.map(c => ({ id: c.id, kind: c.kind, br: c.br })), migrated_count: migrated, new_key_written: newKey !== null, favs_after: favs, old: OLD }
   expect(cells.length, '칸 8').toBe(8)
   expect(cells[7]!.id, '지우개가 맨 끝').toBe('paint-erase')
@@ -103,7 +103,19 @@ test('① 칸 8 · 지우개 맨 끝 고정 · 옛 여섯 → 새 판 앞 여섯
     if (OLD[k]!.w) expect(favs[k]!.w, `이주 — 옛 ${k + 1}번 크기`).toBe(OLD[k]!.w)
     if (OLD[k]!.o) expect(favs[k]!.o, `이주 — 옛 ${k + 1}번 불투명`).toBe(OLD[k]!.o)
   }
-  expect(favs[6]!.br, '일곱째는 기본(잉크펜)').toBe('deevad/liner')
+  // ⚠⚠ **web2-72 §A-2가 이 단언을 뒤집었다**(대체된 시험 — CLOSING). 68의 판은 「일곱째는
+  //   기본(잉크펜) = deevad/liner」였는데, **옛 여섯에 이미 그 브러시가 있다**(위 OLD[1]) —
+  //   그러면 필통에 「제도 라이너」가 둘이 되고 그것이 사람이 2026-09-06에 신고한 결함이다.
+  //   72의 이주는 겹친 칸을 **아직 안 쓰인 기본**으로 민다. 그래서 재는 것을 「그 브러시」에서
+  //   **「겹치지 않는다」**로 바꾼다 — 시험을 지운 것이 아니라 규칙을 정정한 것이다.
+  //   겹침의 자는 둘이다: 정확한 {슬롯, br}과 «화면에서 읽히는 것»(도구 그림 + 경도 글자).
+  {
+    const exact = favs.map(f => `${f.i}|${f.br}`)
+    expect(exact.filter((v, i) => exact.indexOf(v) !== i), '이주 뒤 — {슬롯, br} 겹침 0').toEqual([])
+    const look = cells.filter(c => c.id !== 'paint-erase').map(c => `${c.kind}|${c.grade ?? ''}`)
+    expect(look.filter((v, i) => look.indexOf(v) !== i), '이주 뒤 — 화면에서 읽히는 정체(그림+경도) 겹침 0').toEqual([])
+    expect(favs[6]!.br, '일곱째는 (겹치지 않는) 기본이다').not.toBe(OLD[1]!.br)
+  }
   expect(migrated, '이주 한 번').toBe(1)
   expect(newKey, '새 판이 쓰였다').not.toBeNull()
   // 이주는 «한 번» — 옛 판을 바꿔도 새 판이 이긴다(#109 — 둘이 같이 살지 않는다)

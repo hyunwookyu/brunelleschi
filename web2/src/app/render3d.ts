@@ -534,6 +534,7 @@ export interface PaintBakeStat {
   /** §3 — 배분 뒤 보이는 (면,쪽)의 요구 바이트 합 */ allocBytes: number
   /** §1 — 프레임 예산이 끝나 «다음 프레임으로 미룬» 항목 수 */ deferred: number
   /** §1 — 한 굽기를 프레임에 걸쳐 나눈 횟수(이어 굽는 중으로 남긴 프레임) */ sliced: number
+  /** §1 — 이어 굽던 판의 «앞자리»가 갈려 처음부터 다시 구운 횟수(되돌리기·지우개가 그 자리) */ sliceRestarts: number
   /** §1-2 — 면별 칠 색인을 다시 세운 횟수(문서가 갈릴 때마다 한 번) */ indexRebuilds: number
   /** §1-2 — 그 색인을 세우며 훑은 획 수(문서 전체 한 번 — 면마다가 아니다) */ indexScans: number
 }
@@ -543,7 +544,7 @@ const zeroBakeStat = (): PaintBakeStat => ({
   scans: 0, scanCalls: 0,
   sigChange: { lv: 0, texelQ: 0, fam: 0, hatch: 0, rep: 0, box: 0, doc: 0 },
   levelUp: 0, levelDown: 0,
-  frozenFrames: 0, allocDowns: 0, allocBytes: 0, deferred: 0, sliced: 0,
+  frozenFrames: 0, allocDowns: 0, allocBytes: 0, deferred: 0, sliced: 0, sliceRestarts: 0,
   indexRebuilds: 0, indexScans: 0,
 })
 let bakeStat: PaintBakeStat = zeroBakeStat()
@@ -783,6 +784,12 @@ export const paintBakeSliceOffForTest = (): boolean => paintBakeSliceOff
  *  «상태»(이어 구울 판이 남았는가)와 «이번 프레임의 미룸» 둘 다를 본다: 프레임 하나가
  *  통째로 미뤄졌을 때도(예산 소진) 다음 프레임이 반드시 온다. */
 let bakePending = false
+/** 진단(팔) — 이어 굽는 중인 자리들: 어디까지 굽혔나. 대기가 안 끝나면 여기를 본다. */
+export function paintPendingRowsForTest(): { key: string; done: number; total: number; lv: number; level: number }[] {
+  const out: { key: string; done: number; total: number; lv: number; level: number }[] = []
+  for (const [k, e] of paintTexes) if (e.pending) out.push({ key: k, done: e.pending.done, total: e.pending.strokes.length, lv: e.pending.lv, level: e.level })
+  return out
+}
 export function paintBakePending(): boolean {
   if (bakePending) return true
   for (const e of paintTexes.values()) if (e.pending !== null) return true
@@ -979,7 +986,9 @@ function syncPaintTex(r: R3D, app: App) {
  *
  * 판정 내역을 userData.gate에 남긴다(rep의 규약 — 같은 계산의 기록 · #54). */
 function gatePaintTex(r: R3D, app: App) {
-  if (paintTexes.size === 0) return
+  // ⚠ 자리가 하나도 없으면 **할 일도 없다** — 여기서 안 지우면 마지막 값이 그대로 남아
+  //   「영원히 이어 구울 것이 있다」가 된다(실측: 칠을 걷어낸 뒤 대기가 안 끝났다).
+  if (paintTexes.size === 0) { bakePending = false; return }
   const vs = viewScale(app)
   const dpr = r.renderer.getPixelRatio()
   const hatchFaceMode = getHatchMode() === 'face'
@@ -991,6 +1000,8 @@ function gatePaintTex(r: R3D, app: App) {
   if (sig !== lastPoseSig) { lastPoseSig = sig; lastPoseMoveAt = nowT }
   const frozen = !paintLevelFreezeOff && (nowT - lastPoseMoveAt < C.PAINT72_SETTLE_MS || paintPointerDown)
   if (frozen) bakeStat.frozenFrames++
+  // 동결이 «가린» 단계 변화가 있는가 — 있을 때만 프레임을 더 부른다(아래 ⚠⚠)
+  let freezeMasked = false
 
   interface Plan {
     e: PaintTexEntry; rf: ResolvedFace; face: Face | undefined
@@ -1027,6 +1038,7 @@ function gatePaintTex(r: R3D, app: App) {
     // ── 단계: ① 히스테리시스 ② 그림 탑(내려가는 것은 안 굽는다) ③ 동결 ────────────────
     let lv = levelWithHysteresis(screenPx, e.level)
     if (!paintLevelFreezeOff && e.level > 0 && lv < e.level) lv = e.level   // §1-2 그림 탑 — 내림은 GPU 표집의 몫(반증 스위치가 이것도 끈다)
+    if (frozen && e.level > 0 && lv !== e.level) freezeMasked = true        // 동결이 «가린» 변화가 있다
     if (frozen && e.level > 0) lv = e.level              // §2 동결 — 도는 동안은 열쇠가 안 움직인다
     // web2-52 — 이 (면, 쪽)의 재료 몫: 쪽이 rep.s와 같을 때만 굽는다(49의 쪽 규약).
     // px/mm은 49 gateRep의 그 자(면 중심에서 0.01 세계단위의 투영)를 그대로 쓴다(#54).
@@ -1099,10 +1111,12 @@ function gatePaintTex(r: R3D, app: App) {
   }
 
   // ══ 2차 — 굽기(큰 면부터 · 프레임 예산 안에서) ═══════════════════════════════════
-  // ⚠⚠ 동결 중에는 **프레임을 계속 부른다**. 안 그러면 「멈추고 150ms 뒤에 한 번 재평가」가
-  //   영영 안 온다 — 카메라가 멈추면 invalidate가 끊기고, 끊기면 재평가할 프레임이 없다.
-  //   (실측이 잡았다: paint65 ④-d가 줌인 뒤 단계 512에 굳었다.) 동결 창은 150ms라 유한하다.
-  bakePending = frozen
+  // ⚠⚠ 동결이 **단계 변화를 가리고 있을 때만** 프레임을 더 부른다. 안 부르면 「멈추고 150ms
+  //   뒤에 한 번 재평가」가 영영 안 온다(실측: paint65 ④-d가 줌인 뒤 단계 512에 굳었다).
+  //   ⚠ 첫 판은 `bakePending = frozen`이었는데, **자동 수평이 포즈를 계속 미세하게 움직여**
+  //   동결이 안 풀리는 판에서 그것이 «영원히 할 일이 있다»가 됐다(팔의 대기가 240초를 넘겼다).
+  //   조건을 «가려진 변화»로 좁히면 할 일이 없을 때 조용해진다.
+  bakePending = freezeMasked
   // 예산은 «지금 사람이 만지고 있는가»로 갈린다: 만지는 중이면 4ms(지연이 곧 감각이다),
   // 쉬는 중이면 12ms(칠이 빨리 채워진다 — §4의 「칠은 뒤따라 온다」).
   const budgetMs = paintBakeSliceOff ? Infinity
@@ -1133,7 +1147,7 @@ function gatePaintTex(r: R3D, app: App) {
         bakePending = true
         bakeStat.deferred++
         e.mesh.visible = sideOk && e.level > 0
-        e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
+        e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), want: texLevel(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
         continue
       }
       if (e.bakeSig !== '' && e.sigParts) {
@@ -1218,7 +1232,15 @@ function gatePaintTex(r: R3D, app: App) {
         // 이어 굽는 도중에도 캔버스는 늘 온전한 그림이다(바탕 + 지금까지의 획) — 빈 프레임이 없다.
         const t0 = performance.now()
         let pend = e.pending
-        const fresh = pend === null || pend.sig !== bakeSig
+        let fresh = pend === null || pend.sig !== bakeSig
+        // ⚠⚠ **이어 굽는 중에 «앞자리»가 갈리면 처음부터 굽는다.** 되돌리기·지우개가 오면
+        //   이미 층에 얹은 획이 지금 목록에 없을 수 있고, 그러면 «조용히 틀린 그림»이 완성된
+        //   것으로 표시된다(⛔ 43-1). 열쇠(bakeSig)는 획 목록을 안 들므로 그것만으로는 못 잡는다.
+        if (!fresh && pend !== null &&
+            (sigs.length < pend.done || !sigsArePrefix(pend.sigs.slice(0, pend.done), sigs))) {
+          fresh = true
+          bakeStat.sliceRestarts++
+        }
         if (fresh) {
           // web2-66 — 층을 새로 세운다: 초안 세션·장부도 여기서 접는다
           draftCancelOnTex(e.canvas)
@@ -1268,7 +1290,7 @@ function gatePaintTex(r: R3D, app: App) {
         e.level = lv
         e.famBits = famBits
         e.mesh.visible = sideOk && e.level > 0
-        e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
+        e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), want: texLevel(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
         continue
       }
       e.bakeSig = bakeSig
@@ -1279,7 +1301,7 @@ function gatePaintTex(r: R3D, app: App) {
     e.mesh.visible = sideOk && e.level > 0
     // screenPx(양자화 «전» 값)와 포화 여부를 기록한다(2차 [8] — 상한 포화와 «비슷한
     // 크기»를 팔이 가르는 재료. 같은 계산의 기록이지 두 벌 계산이 아니다 #54).
-    e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
+    e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), want: texLevel(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
   }
   evictPaintTex(r)
 }
@@ -1598,15 +1620,19 @@ export function setPaintBlendForTest(v: boolean) {
 }
 
 /** 진단·팔용 — 지금 서 있는 텍스처들의 요약(자리·단계·양자화 전 크기·포화·합성). */
-export function paintTexStats(): { key: string; faceId: number; side: number | string; level: number; gateSide: boolean | null; w: number; h: number; visible: boolean; blending: number; screenPx: number | null; clamped: boolean; famBits: number }[] {
+export function paintTexStats(): { key: string; faceId: number; side: number | string; level: number; gateSide: boolean | null; w: number; h: number; visible: boolean; blending: number; screenPx: number | null; want: number | null; clamped: boolean; famBits: number }[] {
   const out: ReturnType<typeof paintTexStats> = []
   for (const [k, e] of paintTexes) {
-    const gate = e.mesh.userData.gate as { side?: boolean; screenPx?: number; clamped?: boolean } | undefined
+    const gate = e.mesh.userData.gate as { side?: boolean; screenPx?: number; want?: number; clamped?: boolean } | undefined
     out.push({
       key: k, faceId: e.faceId, side: e.side, level: e.level, gateSide: gate?.side ?? null,
       w: e.canvas.width, h: e.canvas.height, visible: e.mesh.visible,
       blending: (e.mesh.material as THREE.MeshBasicMaterial).blending,
-      screenPx: gate?.screenPx ?? null, clamped: gate?.clamped ?? false,
+      screenPx: gate?.screenPx ?? null,
+      // web2-72 — «그 화면 크기가 요구하는 단계». 실제 단계와 나란히 두면 「메모리가 적다」와
+      // 「줌이 안 걸렸다」가 갈리고, 「멈춘 뒤에는 맞는 단계다」(§2)가 값으로 선다.
+      want: gate?.want ?? null,
+      clamped: gate?.clamped ?? false,
       // web2-52 — 무늬 계열 보임(major<<1|minor · 4=단색 · -1=재료 없음): LOD 판정의 기록
       famBits: e.famBits,
     })

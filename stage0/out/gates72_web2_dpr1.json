@@ -1,6 +1,6 @@
 {
   "conditions": {
-    "project": "dpr2",
+    "project": "dpr1",
     "workers": 1,
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/gates72.spec.ts (#99)"
   },
@@ -32,18 +32,18 @@
   },
   "g1_slice": {
     "sliced": {
-      "deferred": 1508,
-      "sliced": 133,
+      "deferred": 523,
+      "sliced": 46,
       "bakes": 23,
       "baked_strokes": 368,
-      "ms": 2219.1
+      "ms": 627.9
     },
     "whole": {
       "deferred": 0,
       "sliced": 0,
       "bakes": 23,
       "baked_strokes": 368,
-      "ms": 2190
+      "ms": 617.6
     },
     "pixels_equal": true,
     "note": "⚠ 지시 §1은 «Worker/분할 두 경로의 해시 동일»을 요구한다. 이 라운드는 **분할만** 섰다(Worker + OffscreenCanvas는 이월 — DEFERRED web2-72). 그래서 항등의 짝은 «분할 켬 ↔ 분할 끔(한 프레임에 전량)»이고, 그것이 「나눠 구워도 그림이 안 바뀐다」를 정확히 잰다."
@@ -79,34 +79,34 @@
       "frozen_frames": 119,
       "frames": {
         "n": 119,
-        "p50": 47.8,
-        "p95": 66.4,
-        "max": 238
+        "p50": 17.1,
+        "p95": 31.8,
+        "max": 125.9
       },
       "empty_frames": 0,
       "ms": 0
     },
     "orbit_freeze_off": {
       "bakes": 16,
-      "baked_strokes": 171,
-      "level_down": 7,
-      "sig_lv": 13,
+      "baked_strokes": 174,
+      "level_down": 8,
+      "sig_lv": 14,
       "frames": {
         "n": 119,
-        "p50": 133.9,
-        "p95": 314.9,
-        "max": 347.8
+        "p50": 116.2,
+        "p95": 304.5,
+        "max": 324.9
       },
-      "ms": 8496.2
+      "ms": 10621.3
     },
     "after_stop": {
-      "bakes": 12,
+      "bakes": 5,
       "out_of_band": 0,
       "rows": []
     },
     "boundary_10": {
-      "bakes": 3,
-      "level_up": 3,
+      "bakes": 2,
+      "level_up": 2,
       "level_down": 0
     },
     "boundary_10_hysteresis_off": {
@@ -114,8 +114,187 @@
       "level_up": 1,
       "level_down": 0
     },
-    "boundary_per_visible_face": 0.13,
+    "boundary_per_visible_face": 0.087,
     "boundary_note": "지시 §2의 「경계 왕복 10회에서 재굽기 ≤ 2」는 **면 하나**의 자다 — 보이는 면이 23이면 그 절대 수는 픽스처 크기에 끌려간다. 여기서는 ① 면당 재굽기와 ② 히스테리시스 끔과의 대조로 «경계에서 널뛰기 0»을 잰다."
+  },
+  "g3_alloc": {
+    "visible_before": 23,
+    "visible_after": 23,
+    "bytes_before": 36005888,
+    "budget_forced": 18002944,
+    "bytes_after": 17702912,
+    "alloc_downs": 1066,
+    "alloc_bytes": 17702912,
+    "evicts": 0,
+    "lowered_places": 18,
+    "idle_20_frames": {
+      "frames": 20,
+      "bakes": 0,
+      "allocDowns": 260
+    },
+    "texel_per_px": [
+      {
+        "key": "17:1",
+        "level": 256,
+        "screenPx": 336,
+        "t": 0.7619047619047619
+      },
+      {
+        "key": "18:1",
+        "level": 256,
+        "screenPx": 336,
+        "t": 0.7619047619047619
+      },
+      {
+        "key": "19:1",
+        "level": 256,
+        "screenPx": 336,
+        "t": 0.7619047619047619
+      },
+      {
+        "key": "20:1",
+        "level": 256,
+        "screenPx": 336,
+        "t": 0.7619047619047619
+      },
+      {
+        "key": "21:1",
+        "level": 512,
+        "screenPx": 378,
+        "t": 1.3544973544973544
+      },
+      {
+        "key": "22:1",
+        "level": 256,
+        "screenPx": 338,
+        "t": 0.757396449704142
+      },
+      {
+        "key": "23:1",
+        "level": 256,
+        "screenPx": 338,
+        "t": 0.757396449704142
+      },
+      {
+        "key": "24:1",
+        "level": 256,
+        "screenPx": 338,
+        "t": 0.757396449704142
+      },
+      {
+        "key": "25:1",
+        "level": 256,
+        "screenPx": 338,
+        "t": 0.757396449704142
+      },
+      {
+        "key": "26:1",
+        "level": 256,
+        "screenPx": 338,
+        "t": 0.757396449704142
+      },
+      {
+        "key": "27:1",
+        "level": 256,
+        "screenPx": 319,
+        "t": 0.8025078369905956
+      },
+      {
+        "key": "28:1",
+        "level": 256,
+        "screenPx": 319,
+        "t": 0.8025078369905956
+      },
+      {
+        "key": "29:1",
+        "level": 256,
+        "screenPx": 319,
+        "t": 0.8025078369905956
+      },
+      {
+        "key": "30:1",
+        "level": 256,
+        "screenPx": 319,
+        "t": 0.8025078369905956
+      },
+      {
+        "key": "31:1",
+        "level": 256,
+        "screenPx": 319,
+        "t": 0.8025078369905956
+      },
+      {
+        "key": "32:1",
+        "level": 512,
+        "screenPx": 356,
+        "t": 1.4382022471910112
+      },
+      {
+        "key": "33:1",
+        "level": 512,
+        "screenPx": 356,
+        "t": 1.4382022471910112
+      },
+      {
+        "key": "34:1",
+        "level": 512,
+        "screenPx": 356,
+        "t": 1.4382022471910112
+      },
+      {
+        "key": "35:1",
+        "level": 512,
+        "screenPx": 356,
+        "t": 1.4382022471910112
+      },
+      {
+        "key": "36:1",
+        "level": 256,
+        "screenPx": 339,
+        "t": 0.7551622418879056
+      },
+      {
+        "key": "37:1",
+        "level": 256,
+        "screenPx": 339,
+        "t": 0.7551622418879056
+      },
+      {
+        "key": "38:1",
+        "level": 256,
+        "screenPx": 339,
+        "t": 0.7551622418879056
+      },
+      {
+        "key": "39:1",
+        "level": 256,
+        "screenPx": 339,
+        "t": 0.7551622418879056
+      }
+    ],
+    "worst": {
+      "key": "36:1",
+      "level": 256,
+      "screenPx": 339,
+      "t": 0.7551622418879056
+    },
+    "texel_floor": 0.5,
+    "note": "65 ⑤는 예산을 넘으면 **버렸다**(보이는 면이 예산을 넘으면 퇴출→재굽기 순환). 72 §3은 «화면에서 작은 면부터 단계를 한 칸 내려» 합을 예산 안에 넣는다 — 퇴출은 안 보이는 것에만.",
+    "over_budget": false,
+    "all_at_blur_floor": false,
+    "zoom_roundtrip": {
+      "bytes_zoomed_in": 36005888,
+      "bytes_after_zoom_out": 36005888,
+      "levels_in": {
+        "256": 5,
+        "512": 18
+      },
+      "levels_out": {
+        "256": 5,
+        "512": 18
+      },
+      "note": "그림 탑(§1-2)은 내림을 안 굽는다 — 줌 아웃 뒤에도 단계·바이트가 그대로면 그것이 설계다. 내려오는 길은 §3 배분과 퇴출(안 보이는 것)뿐이고, 그 둘이 상한을 진다."
+    }
   },
   "g4_open": {
     "fixture": {
@@ -126,7 +305,7 @@
       "texEntries": 23,
       "clampedFaces": 0,
       "levels": {
-        "256": 23
+        "128": 23
       }
     },
     "save_roundtrip": {
@@ -147,184 +326,5 @@
       "drawView"
     ],
     "note": "열 때의 ms 값은 계측(perf72)이 든다 — 여기서는 저장 형식이 안 움직였음과 픽스처가 섰음을 지킨다(⛔ 저장 형식 무변)."
-  },
-  "g3_alloc": {
-    "visible_before": 23,
-    "visible_after": 23,
-    "bytes_before": 11919360,
-    "budget_forced": 5959680,
-    "bytes_after": 10752000,
-    "alloc_downs": 6,
-    "alloc_bytes": 10752000,
-    "evicts": 0,
-    "lowered_places": 23,
-    "idle_20_frames": {
-      "frames": 20,
-      "bakes": 0,
-      "allocDowns": 20
-    },
-    "texel_per_px": [
-      {
-        "key": "17:1",
-        "level": 256,
-        "screenPx": 290,
-        "t": 0.8827586206896552
-      },
-      {
-        "key": "18:1",
-        "level": 256,
-        "screenPx": 290,
-        "t": 0.8827586206896552
-      },
-      {
-        "key": "19:1",
-        "level": 256,
-        "screenPx": 290,
-        "t": 0.8827586206896552
-      },
-      {
-        "key": "20:1",
-        "level": 256,
-        "screenPx": 290,
-        "t": 0.8827586206896552
-      },
-      {
-        "key": "21:1",
-        "level": 256,
-        "screenPx": 327,
-        "t": 0.7828746177370031
-      },
-      {
-        "key": "22:1",
-        "level": 256,
-        "screenPx": 292,
-        "t": 0.8767123287671232
-      },
-      {
-        "key": "23:1",
-        "level": 256,
-        "screenPx": 292,
-        "t": 0.8767123287671232
-      },
-      {
-        "key": "24:1",
-        "level": 256,
-        "screenPx": 292,
-        "t": 0.8767123287671232
-      },
-      {
-        "key": "25:1",
-        "level": 256,
-        "screenPx": 292,
-        "t": 0.8767123287671232
-      },
-      {
-        "key": "26:1",
-        "level": 256,
-        "screenPx": 292,
-        "t": 0.8767123287671232
-      },
-      {
-        "key": "27:1",
-        "level": 256,
-        "screenPx": 276,
-        "t": 0.927536231884058
-      },
-      {
-        "key": "28:1",
-        "level": 256,
-        "screenPx": 276,
-        "t": 0.927536231884058
-      },
-      {
-        "key": "29:1",
-        "level": 256,
-        "screenPx": 276,
-        "t": 0.927536231884058
-      },
-      {
-        "key": "30:1",
-        "level": 256,
-        "screenPx": 276,
-        "t": 0.927536231884058
-      },
-      {
-        "key": "31:1",
-        "level": 256,
-        "screenPx": 276,
-        "t": 0.927536231884058
-      },
-      {
-        "key": "32:1",
-        "level": 256,
-        "screenPx": 307,
-        "t": 0.8338762214983714
-      },
-      {
-        "key": "33:1",
-        "level": 256,
-        "screenPx": 307,
-        "t": 0.8338762214983714
-      },
-      {
-        "key": "34:1",
-        "level": 256,
-        "screenPx": 307,
-        "t": 0.8338762214983714
-      },
-      {
-        "key": "35:1",
-        "level": 256,
-        "screenPx": 307,
-        "t": 0.8338762214983714
-      },
-      {
-        "key": "36:1",
-        "level": 256,
-        "screenPx": 293,
-        "t": 0.8737201365187713
-      },
-      {
-        "key": "37:1",
-        "level": 256,
-        "screenPx": 293,
-        "t": 0.8737201365187713
-      },
-      {
-        "key": "38:1",
-        "level": 256,
-        "screenPx": 293,
-        "t": 0.8737201365187713
-      },
-      {
-        "key": "39:1",
-        "level": 256,
-        "screenPx": 293,
-        "t": 0.8737201365187713
-      }
-    ],
-    "worst": {
-      "key": "21:1",
-      "level": 256,
-      "screenPx": 327,
-      "t": 0.7828746177370031
-    },
-    "texel_floor": 0.5,
-    "note": "65 ⑤는 예산을 넘으면 **버렸다**(보이는 면이 예산을 넘으면 퇴출→재굽기 순환). 72 §3은 «화면에서 작은 면부터 단계를 한 칸 내려» 합을 예산 안에 넣는다 — 퇴출은 안 보이는 것에만.",
-    "over_budget": true,
-    "all_at_blur_floor": true,
-    "zoom_roundtrip": {
-      "bytes_zoomed_in": 11919360,
-      "bytes_after_zoom_out": 11919360,
-      "levels_in": {
-        "256": 22,
-        "512": 1
-      },
-      "levels_out": {
-        "256": 22,
-        "512": 1
-      },
-      "note": "그림 탑(§1-2)은 내림을 안 굽는다 — 줌 아웃 뒤에도 단계·바이트가 그대로면 그것이 설계다. 내려오는 길은 §3 배분과 퇴출(안 보이는 것)뿐이고, 그 둘이 상한을 진다."
-    }
   }
 }
