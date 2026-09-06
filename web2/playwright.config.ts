@@ -34,6 +34,10 @@ const exe = process.env.PW_CHROMIUM_EXE
 // 그 길이 막힌다: `PW_PORT=5331 npx playwright test …`
 const port = Number(process.env.PW_PORT ?? 5301)
 
+// PW_HEADED — web2-73 §1-2 «다» 팔: **머리 있는** 크로뮴으로 같은 스펙을 돌린다(GPU 이름이 갈리는지).
+// 안 주면 종전 그대로(헤드리스). 원장 이름도 스펙 쪽에서 `_headed`를 붙여 가른다.
+const headed = process.env.PW_HEADED === '1'
+
 export default defineConfig({
   testDir: 'e2e',
   timeout: 60_000,
@@ -50,6 +54,7 @@ export default defineConfig({
     baseURL: `http://localhost:${port}`,
     viewport: { width: 1200, height: 800 },
     ...(exe ? { launchOptions: { executablePath: exe } } : {}),
+    ...(headed ? { headless: false } : {}),
   },
   projects: [
     { name: 'dpr1', use: { deviceScaleFactor: 1 } },

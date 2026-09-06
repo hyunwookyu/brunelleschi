@@ -285,6 +285,12 @@ export interface OrbitOut {
   cost: unknown
   bake: BakeStat
   emptyFrames: number
+  /** web2-73 §1 — 프레임 걸음마다의 ms(여덟 걸음 · p50/p95/max/sum) + 마지막 프레임의 그리기 호출·삼각형 */
+  walk: unknown
+  /** web2-73 §1 — GL 업로드 프로브(호출 수·ms) */
+  upload: unknown
+  /** web2-73 §1 — 제스처 타일(흑연 겹 굽기 — 궤도 시작의 차단이 이것인가) */
+  tiles: unknown
 }
 
 /** 한 손가락 궤도 — **사람의 경로 그대로**(가운데 단추 끌기 · 앱의 그 제스처 · #54).
@@ -295,13 +301,17 @@ export interface OrbitOut {
  *  있었다 — 그래서 화면 크기가 800에서 안 움직였고 «궤도 중 굽기 0»이 수리 전 판에서도
  *  나왔다: 반증이 아무것도 안 재는 상태 #108). 사람의 끌기는 그 되접기를 안 받는다.
  *  자는 rAF 사이 간격과 «메인 최장 차단»(longtask)이다. */
-export async function orbitProbe(page: Page, steps = 120, pxPerStep = 6, capMs = 240_000): Promise<OrbitOut> {
+export async function orbitProbe(page: Page, steps = 120, pxPerStep = 6, capMs = 240_000, opts: { invalidateEachFrame?: boolean } = {}): Promise<OrbitOut> {
+  // web2-73 ① 빈 팔 — 카메라가 없으면 끌기가 포즈를 못 돌린다(실측 0°·render3d 프레임 0). 같은 몸짓을 하되
+  // 프레임마다 invalidate로 «빈 장면의 한 프레임»을 실제로 그리게 한다(기본은 꺼짐 — 72의 팔은 한 자도 안 바뀐다).
+  const inv = opts.invalidateEachFrame === true
   await settleBake(page, 200, 'orbitProbe')
   await page.evaluate(() => {
     const b2 = (window as any).__b2
     b2.diag.paintBakeReset(); b2.diag.frameCostReset()
+    b2.diag.frameStepsReset(); b2.diag.glUploadReset(); b2.diag.tileStatsReset()   // web2-73 §1
   })
-  return await page.evaluate(async ([nSteps, per, cap]) => {
+  return await page.evaluate(async ([nSteps, per, cap, invEach]) => {
     const b2 = (window as any).__b2
     const el = document.getElementById('ink')!
     const r = el.getBoundingClientRect()
@@ -337,6 +347,7 @@ export async function orbitProbe(page: Page, steps = 120, pxPerStep = 6, capMs =
         last = now
         done++
         fire('pointermove', X0 + done * (per as number), Y0 + done * ((per as number) / 6), 4, -1)
+        if (invEach) b2.diag.invalidate()
         for (const e of b2.diag.paintTex() as any[]) if (e.visible && (e.level === 0 || e.w === 0)) { empty++; break }
         if (done < (nSteps as number) && performance.now() - t0 < (cap as number)) requestAnimationFrame(step)
         else res()
@@ -360,8 +371,11 @@ export async function orbitProbe(page: Page, steps = 120, pxPerStep = 6, capMs =
       cost: b2.diag.frameCost(),
       bake: b2.diag.paintBake(),
       emptyFrames: empty,
+      walk: b2.diag.frameSteps(),
+      upload: b2.diag.glUpload(),
+      tiles: b2.diag.tileStats(),
     }
-  }, [steps, pxPerStep, capMs] as const) as OrbitOut
+  }, [steps, pxPerStep, capMs, inv] as const) as OrbitOut
 }
 
 // ── B 열 때 ─────────────────────────────────────────────────────────────────────

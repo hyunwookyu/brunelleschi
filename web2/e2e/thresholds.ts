@@ -129,3 +129,14 @@ export const PAINT72_BOUNDARY_REBAKE_MAX = 2
 // ⚠ §3의 흐림 하한(텍셀/px)은 **앱의 상수**다(`C.PAINT72_ALLOC_TEXEL_PER_PX_MIN`) — 배분이
 //   그 값으로 «내릴 수 있는가»를 정하고 게이트가 그 값으로 «내려간 결과»를 잰다. 두 곳에 두면
 //   갈린다(D-C4) — 게이트는 `diag.constantsForTest()`로 앱에서 읽는다.
+
+// ── web2-73 — 벽 가르기·열기 분해의 임계 ─────────────────────────────────────────
+/** 프로브가 «움직였다»의 하한(도) — CLOSING 「게이트의 조건」. 사람의 끌기(720px)는 150° 근처이고,
+ *  72의 «아무것도 안 잰» 프로브(orbitByForTest 3°×120 — 자동 수평이 되접는다)는 한 걸음(3°) 근처다.
+ *  둘 사이의 골에 둔다. 이 아래면 그 실행의 다른 숫자는 버린다. */
+export const PAINT73_PROBE_MIN_DEG = 20
+/** 열기 분해(§2) — 장부가 셈한 것(부팅 전 + 일한 시간 + 논 시간)과 벽시계의 비의 허용 폭(±) */
+export const PAINT73_SUM_TOL = 0.05
+/** 첫 상호작용 프레임의 무회귀 상한(ms · dpr2 · 계측 픽스처 면 23·칠 920) — 72의 값 1,155 그대로
+ *  (perf72_web2_dpr2.json@B_open.firstInteractiveMs). «먼저 그림이 늦어지면 안 된다»의 자. */
+export const PAINT73_FIRST_INTERACTIVE_MAX_MS = 1155
