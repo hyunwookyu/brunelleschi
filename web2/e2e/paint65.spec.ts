@@ -129,9 +129,17 @@ const bakeReset = (page: Page) => page.evaluate(() => { (window as any).__b2.dia
 type TexHash = { key: string; level: number; hash: number; ink: number; w: number; h: number }
 const texHash = (page: Page) => page.evaluate(() => (window as any).__b2.diag.paintTexHash() as TexHash[])
 /** 굽기를 «실제로» 다시 돌린다(전량) — 누적과 대조할 정본 판 */
+/** web2-72 §1 — 굽기가 **프레임에 나뉘므로** 「지금 그림」을 재기 전에 이어 굽기가 끝나기를
+ *  기다린다(고정 ms ⛔ · 상한 있는 대기 #81). 재는 것은 그대로다 — 언제 재는가만 정한다. */
+const settleBake = async (page: Page) => {
+  await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 30_000 })
+}
 const rebakeAndWait = async (page: Page) => {
   await page.evaluate(() => { (window as any).__b2.diag.rebakePaintTex() })
   await page.waitForTimeout(300)
+  // web2-72 §1 — 굽기가 **프레임에 나뉘므로** 고정 ms 대기는 「다 구워졌다」를 뜻하지 않는다.
+  // 이어 구울 것이 없어질 때까지 기다린다(상한 있는 대기 — #81).
+  await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 30_000 })
 }
 /** **화면 픽셀**의 해시 — #gl(3D 겹)을 통째로 읽는다. 부분 업로드의 결함은 여기서만 보인다. */
 const screenHash = (page: Page) => page.evaluate(() => {
@@ -354,6 +362,7 @@ test('④-c 재료 면의 «줌 뒤 갈림»과 그 지속 — 값으로(리뷰�
   await page.evaluate((i) => (window as any).__b2.diag.cycleRep49(i), fid)
   await page.waitForTimeout(400)
   await zoomIn()
+  await settleBake(page)
   const repNow = await texHash(page)
   // ⚠⚠ **지속을 «재굽기 전»에 잰다**(자기참조 — §5.1 유형 3): 초판은 rebake 두 번 뒤에 편집하고
   // 읽어서 «나았다»가 나왔는데, 그것은 편집이 아니라 **그 rebake가** 만든 값이었다(자가 제 행위를
@@ -362,6 +371,7 @@ test('④-c 재료 면의 «줌 뒤 갈림»과 그 지속 — 값으로(리뷰�
   await page.click('#btn-pencil')
   await drawLine(page, 950, 150, 1100, 190)
   await page.waitForTimeout(400)
+  await settleBake(page)
   const afterEdit = await texHash(page)
   await page.click('#btn-paint'); await page.waitForTimeout(60)
   await page.evaluate(() => { const b = document.getElementById('brushpick'); if (b && getComputedStyle(b).display !== 'none') document.getElementById('brushpick-close')?.click() })   // web2-71 §4: 칠을 든 채 다시 누르면 브러시 목록이 열린다(그 통이 캔버스를 덮는다) — 이 헬퍼는 도구만 원한다
@@ -389,6 +399,7 @@ test('④-d 대조군 — 재료 «없는» 면은 줌 뒤에도 정본 굽기�
   await page.mouse.move(700, 480)
   for (let k = 0; k < 6; k++) { await page.mouse.wheel(0, -240); await page.waitForTimeout(50) }
   await page.waitForTimeout(300)
+  await settleBake(page)
   const now = await texHash(page)
   const nowScr = await screenHash(page)
   await rebakeAndWait(page)
@@ -415,6 +426,7 @@ test('⑤ 무회귀 트리거가 «산다» — 여섯 전수', async ({ page })
     await bakeReset(page)
     await fn()
     await page.waitForTimeout(400)
+    await settleBake(page)
     const st = await bakeStat(page)
     const now = await texHash(page)
     // ⚠⚠ 리뷰어 [H4] — **화면도 본다**. 이 회차가 실제로 겪은 결함 둘(부분 업로드 · GPU 크기)이
@@ -467,13 +479,27 @@ test('⑤ 무회귀 트리거가 «산다» — 여섯 전수', async ({ page })
   // 이 팔은 아무것도 안 잰 것이다 — D-3).
   const levelNow = () => page.evaluate(() => ((window as any).__b2.diag.paintTex()[0]?.level ?? 0) as number)
   let lvBefore = 0, lvAfter = 0
-  await trigger('해상도 단계(줌 — 단계가 갈릴 때까지 줄인다)', async () => {
+  // ⚠⚠ **web2-72가 이 트리거의 방향을 바꿨다**(대체된 시험 — CLOSING 「라운드가 시험을 더하면
+  //   그 라운드가 대체한 시험을 지운다」). 65의 판은 «줄여서» 단계를 내리고 재굽기를 요구했는데,
+  //   72 §1-2(그림 탑)가 **내림은 굽지 않는다**로 바꿨다 — 내려가는 것은 GPU 내려 표집의 몫이고
+  //   다시 굽는 때는 둘뿐이다(획이 바뀌었다 · 화면이 굽힌 단계보다 커졌다). 그래서 여기서는
+  //   **키운다**. 「내림에서 재굽기 0」은 `gates72.spec.ts` §2가 값으로 진다.
+  //   ⚠ dpr2에서 이 벽이 상한(2048)에 이미 걸려 있으면 키워도 단계가 안 갈린다 — 그때는 먼저
+  //   충분히 줄여 놓고(굽기 없이 내려간다) 키운다.
+  await page.mouse.move(700, 480)
+  for (let k = 0; k < 10; k++) { await page.mouse.wheel(0, 300); await page.waitForTimeout(40) }
+  await page.waitForTimeout(300)
+  await settleBake(page)
+  await trigger('해상도 단계(줌 — 단계가 갈릴 때까지 «키운다»)', async () => {
     lvBefore = await levelNow()
     lvAfter = lvBefore
     await page.mouse.move(700, 480)
-    for (let k = 0; k < 12 && lvAfter === lvBefore; k++) {
-      await page.mouse.wheel(0, 300)
-      await page.waitForTimeout(70)
+    for (let k = 0; k < 14 && lvAfter === lvBefore; k++) {
+      await page.mouse.wheel(0, -300)
+      // web2-72 §2 — 단계는 «멈추고 150ms 뒤»에 한 번 재평가된다(동결). 걸음마다 그 창을
+      // 넘겨야 여기서 읽는 단계가 «지금 화면 크기의 단계»다(70ms면 늘 한 걸음 뒤에 선다).
+      await page.waitForTimeout(280)
+      await settleBake(page)
       lvAfter = await levelNow()
     }
   })
@@ -563,6 +589,7 @@ test('⑦ 메모리 — 상한이 지켜진다 · 버린 뒤 다시 보면 같�
   // 상한을 되돌리고 다시 보이게 → 그 자리에서 다시 굽는다. 그 그림이 정본 굽기와 같아야 한다.
   await page.evaluate(() => { (window as any).__b2.diag.setPaintTexBudgetForTest(134217728) })
   await orbit(700)
+  await settleBake(page)                 // web2-72 §1 — 다시 굽기가 프레임에 나뉜다: 다 구워진 뒤에 잰다
   const backTex = await texHash(page)
   const backScr = await screenHash(page)
   expect(backTex.length, '다시 보인다').toBeGreaterThan(0)

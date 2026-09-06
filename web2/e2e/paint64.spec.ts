@@ -75,6 +75,9 @@ const texHash = (page: Page) => page.evaluate(() => (window as any).__b2.diag.pa
 const rebakeAndWait = async (page: Page) => {
   await page.evaluate(() => (window as any).__b2.diag.rebakePaintTex())
   await page.waitForTimeout(250)
+  // web2-72 §1 — 굽기가 **프레임에 나뉘므로** 고정 ms 대기는 「다 구워졌다」를 뜻하지 않는다.
+  // 이어 구울 것이 없어질 때까지 기다린다(상한 있는 대기 — #81).
+  await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 30_000 })
 }
 
 test('① D-2 재현·수리 · D-3 반증 — 브러시를 바꿔도 옛 획의 픽셀이 같다(슬롯 넷)', async ({ page }) => {

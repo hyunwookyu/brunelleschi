@@ -1,0 +1,549 @@
+{
+  "conditions": {
+    "project": "dpr1",
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/defects72.spec.ts (#99)"
+  },
+  "what": "web2-72 §A — 결함 넷(대는 동안 안 보임 · 필통 중복 · 누름 하이라이트 번짐 · 휠이 접힘)의 재현과 게이트",
+  "note_pitfalls": "#42(착수 표) · #99(워커 1) · #101(web2 안) · #103(장면 확인 — 면이 섰는가) · #107(자는 되돌리기 «전»에 뜬다 — A-1은 펜을 «든 채» 잰다) · #111(미리보기의 자는 시간과 이동량 둘 — A-1은 «첫 프레임에 잉크가 있는가»의 시간 축)",
+  "pitfall_citations": [
+    42,
+    99,
+    101,
+    103,
+    107,
+    108,
+    111
+  ],
+  "selfcheck_notes": {
+    "zero_counters": "a1.blind_whole_stroke_n 0 = **이 라운드의 결론**이다(획을 긋는 동안 한 번도 안 보이는 프리셋이 없다 — 지시 §A-1의 가설 반증 · AS-C208). 집계가 도는 증거는 같은 실행의 slow_first_dab_n 62 · no_mark_on_blank_n 52 · distinct_held_ink 148(자가 프리셋을 실제로 가른다). / a3.on_before.grade·on_switched.grade 0 = 연필통(경도 줄)이 «접혀 있어서» 그 묶음에 켜진 것이 없다(칠 패널만 열려 있다 — 화면 상태의 사실) · a3.*.recent 0은 그 판에서 최근 색을 한 번도 안 골랐다는 사실이다",
+    "identical_pairs": "a1.sample_rows[*].releaseInkRatio 0은 「미리보기 == 확정본」(59 규약 · 66 초안 인계)의 뜻 그 자체다 — **설계 보장이지 측정이 아니다**. 그래서 이 값에는 임계를 안 걸고, 임계는 «0이 될 수 없는 것들»의 상한(release_ink_ratio_max ≤ PAINT72_RELEASE_INK_RATIO_MAX)에만 건다. 0이 아닌 셋(ramon/Glow_Airbrush 0.0548 · tanda/marker-01 0.0087 · classic/textured_ink 0.0003)이 그 자의 변별력이다. / a4의 open_after_* 참 나열은 규약이고, 짝인 closed_after_canvas_tap·closed_after_button_again·closed_by_other_box_r7이 거짓/참을 가른다",
+    "exact_one": "a2.migrated_flag = 1은 비율이 아니라 **횟수**다(옛 판 → 새 판 이주가 «한 번» 돌았다 — #109의 규약: 새 판이 서면 다시 안 본다). 이 팔의 반증 짝이 그것이다: 0이면 이주 경로가 안 돈 것이고 그러면 이 시험은 아무것도 안 잰다"
+  },
+  "a1": {
+    "scene": {
+      "faces": 1,
+      "docStrokes": 9,
+      "paintStrokes": 1,
+      "texEntries": 1,
+      "levels": {
+        "512": 1
+      }
+    },
+    "scene_note": "⚠ 이 팔은 **가벼운 장면**에서 잰다(면 하나 · 프리셋마다 앞 획을 지운다) — 프리셋의 성질을 가르려면 다른 획이 없어야 한다. 사람이 본 대역(칠을 꽤 많이 한 뒤)은 아래 「A-1 부하」 팔이 잰다.",
+    "presets": 207,
+    "blind_whole_stroke": [],
+    "blind_whole_stroke_n": 0,
+    "slow_first_dab": [
+      {
+        "name": "deevad/spray",
+        "first_ink_travel_px": 28.6
+      },
+      {
+        "name": "tanda/splatter-04",
+        "first_ink_travel_px": 43
+      }
+    ],
+    "slow_first_dab_n": 2,
+    "first_ink_travel_px": {
+      "min": 14.3,
+      "median": 14.3,
+      "max": 43
+    },
+    "no_mark_on_blank": [
+      "Dieterle/Dissolver",
+      "Dieterle/Eraser",
+      "classic/blur",
+      "deevad/kneaded_eraser",
+      "deevad/kneaded_eraser_large",
+      "deevad/large_hard_eraser",
+      "ramon/Hard_Eraser",
+      "ramon/Knife",
+      "ramon/Soft_Eraser",
+      "tanda/water-02",
+      "tanda/water-05",
+      "tanda/water-06"
+    ],
+    "no_mark_on_blank_n": 12,
+    "release_ink_ratio_nonzero": [
+      {
+        "name": "classic/textured_ink",
+        "ratio": 0.0003
+      },
+      {
+        "name": "ramon/Glow_Airbrush",
+        "ratio": 0.0548
+      },
+      {
+        "name": "tanda/marker-01",
+        "ratio": 0.0087
+      }
+    ],
+    "release_ink_ratio_nonzero_n": 3,
+    "release_ink_ratio_max": 0.0548,
+    "sample_rows": [
+      {
+        "name": "brunelleschi/colored_pencil",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 3814,
+        "upInk": 3814,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/marker",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 2713,
+        "upInk": 2713,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/pencil_HB",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 3157,
+        "upInk": 3157,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/pencil_B",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 3838,
+        "upInk": 3838,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/pencil_2B",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 4658,
+        "upInk": 4658,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/pencil_4B",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 5606,
+        "upInk": 5606,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/pencil_6B",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 5583,
+        "upInk": 5583,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/pencil_8B",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 7227,
+        "upInk": 7227,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/charcoal_H",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 2507,
+        "upInk": 2507,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/charcoal_M",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 2820,
+        "upInk": 2820,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/charcoal_S",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 3535,
+        "upInk": 3535,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "Dieterle/8B_Pencil#1",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 2616,
+        "upInk": 2616,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      }
+    ],
+    "note": "자: 칠 텍스처의 잉크 픽셀 수(diag.paintTexHash — 굽기가 실제로 쓰는 캔버스). 「대는 동안」은 pointerdown 뒤 이동 여덟까지(총 114.5px) 매 프레임. ⚠ 지시의 게이트 문면(「60ms 안 첫 잉크 > 0」)은 **이동량과 뒤섞인 자**였다 — 합성 펜의 한 이동이 14.3px이라 도장 간격이 그보다 큰 브러시는 첫 프레임에 뜰 수 없다(브러시의 성질 · D-4). 결함의 자는 「획을 긋는 동안 한 번도 안 뜬다」로 좁혔다.",
+    "distinct_held_ink": 152
+  },
+  "thresholds": {
+    "PAINT72_RELEASE_INK_RATIO_MAX": 0.08
+  },
+  "a2": {
+    "base": [
+      "pencil|brunelleschi/pencil_HB",
+      "pencil|brunelleschi/pencil_4B",
+      "pencil|brunelleschi/charcoal_M",
+      "cp|brunelleschi/colored_pencil",
+      "marker|brunelleschi/marker",
+      "brush|deevad/watercolor_expressive",
+      "brush|deevad/liner"
+    ],
+    "base_dup": [],
+    "migrated": [
+      "pencil|classic/pencil",
+      "brush|deevad/liner",
+      "marker|brunelleschi/marker",
+      "cp|brunelleschi/colored_pencil",
+      "pencil|classic/charcoal",
+      "brush|deevad/watercolor_expressive",
+      "pencil|brunelleschi/pencil_4B"
+    ],
+    "migrated_dup": [],
+    "migrated_flag": 1,
+    "migrated_looks": [
+      "pencil|HB",
+      "pen|",
+      "marker|",
+      "cp|",
+      "charcoal|중",
+      "brush|",
+      "pencil|4B"
+    ],
+    "migrated_looks_dup": [],
+    "roundtrip": [
+      "pencil|classic/pencil",
+      "brush|deevad/liner",
+      "marker|brunelleschi/marker",
+      "cp|brunelleschi/colored_pencil",
+      "pencil|classic/charcoal",
+      "brush|deevad/watercolor_expressive",
+      "pencil|brunelleschi/pencil_4B"
+    ],
+    "roundtrip_dup": [],
+    "roundtrip_looks": [
+      "pencil|HB",
+      "pen|",
+      "marker|",
+      "cp|",
+      "charcoal|중",
+      "brush|",
+      "pencil|4B"
+    ],
+    "roundtrip_looks_dup": [],
+    "look": {
+      "head_has_sample_canvas": true,
+      "head_has_svg": false,
+      "head_text": "제도 라이너잉크펜 · deevad · lin",
+      "cell_has_svg": true,
+      "cell_has_sample_canvas": false
+    },
+    "note": "옛 판(64)의 2번 칸이 {brush, deevad/liner}였고 새 기본의 7번 칸도 같다 — 이주가 앞 여섯을 그대로 옮기면 두 칸이 「제도 라이너」가 된다(사람이 본 그것)."
+  },
+  "a3": {
+    "look_before": [
+      {
+        "id": "paint-fav-1",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-2",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-3",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-4",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-5",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-6",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-7",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-erase",
+        "tip": null,
+        "nums": "10px"
+      }
+    ],
+    "look_after_color": [
+      {
+        "id": "paint-fav-1",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-2",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-3",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-4",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-5",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-6",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-7",
+        "tip": "#2040ff",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-erase",
+        "tip": null,
+        "nums": "10px"
+      }
+    ],
+    "look_after_color_and_size": [
+      {
+        "id": "paint-fav-1",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-2",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-3",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-4",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-5",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-6",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-7",
+        "tip": "#ff2020",
+        "nums": "44px · 100%"
+      },
+      {
+        "id": "paint-erase",
+        "tip": null,
+        "nums": "10px"
+      }
+    ],
+    "look_after_tool_switch": [
+      {
+        "id": "paint-fav-1",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-2",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-3",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-4",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-5",
+        "tip": "#ff2020",
+        "nums": "44px · 100%"
+      },
+      {
+        "id": "paint-fav-6",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-7",
+        "tip": "#ff2020",
+        "nums": "44px · 100%"
+      },
+      {
+        "id": "paint-erase",
+        "tip": null,
+        "nums": "10px"
+      }
+    ],
+    "changed_by_color": [
+      "paint-fav-7"
+    ],
+    "changed_by_color_n": 1,
+    "changed_by_color_and_size": [
+      "paint-fav-7"
+    ],
+    "changed_by_color_and_size_n": 1,
+    "on_before": {
+      "case": 1,
+      "toolbar": 1,
+      "grade": 0,
+      "recent": 0
+    },
+    "on_during": {
+      "case": 1,
+      "toolbar": 1,
+      "grade": 0,
+      "recent": 1
+    },
+    "on_switched": {
+      "case": 1,
+      "toolbar": 1,
+      "grade": 0,
+      "recent": 1
+    },
+    "note": "⚠ 지시 §A-3의 가설(상태 클래스 on이 묶음 요소에 붙거나 선택 갱신이 전부에 on을 켠다)은 **반증됐다** — 수리 전에도 묶음마다 on은 정확히 하나였다(D-4: 사람이 준 근거는 확인 대상이다). 측정이 가리킨 것은 필통 칸의 «폴백»이다: 제 색·크기를 안 든 칸이 `f.hex ?? ps.hex`로 **지금 선택**을 그렸다 — 색 하나 바꾸면 일곱 칸의 촉이 동시에 물든다(수리 전 실측: 7/7). 수리는 폴백을 «처음 값»(CASE_FALLBACK)으로 바꾼 것이고, 따라 바뀌는 칸은 adopt가 사양을 실제로 기억한 그 칸 하나뿐이다."
+  },
+  "a4": {
+    "open_after_button": true,
+    "open_after_size_drag": true,
+    "open_after_opacity_drag": true,
+    "open_after_tick_tap": true,
+    "open_after_case_tap": true,
+    "open_after_canvas_stroke": true,
+    "closed_after_canvas_tap": true,
+    "open_after_reopen": true,
+    "closed_after_button_again": true,
+    "closed_by_other_box_r7": true,
+    "hex_after_case_tap": "#8a4a3a"
+  },
+  "a1_load": {
+    "scene": {
+      "source": "synthetic",
+      "faces": 23,
+      "docStrokes": 936,
+      "paintStrokes": 920,
+      "texEntries": 23,
+      "clampedFaces": 0,
+      "levels": {
+        "128": 23
+      }
+    },
+    "rows": [
+      {
+        "name": "classic/pencil",
+        "first_ink_travel_px": 14.3,
+        "first_ink_ms": 49,
+        "visible_while_down": true,
+        "marked_after_up": true,
+        "stroke_ms": 561
+      },
+      {
+        "name": "deevad/liner",
+        "first_ink_travel_px": 14.3,
+        "first_ink_ms": 61,
+        "visible_while_down": true,
+        "marked_after_up": true,
+        "stroke_ms": 570
+      },
+      {
+        "name": "brunelleschi/marker",
+        "first_ink_travel_px": 14.3,
+        "first_ink_ms": 42,
+        "visible_while_down": true,
+        "marked_after_up": true,
+        "stroke_ms": 557
+      },
+      {
+        "name": "deevad/watercolor_expressive",
+        "first_ink_travel_px": 14.3,
+        "first_ink_ms": 46,
+        "visible_while_down": true,
+        "marked_after_up": true,
+        "stroke_ms": 565
+      },
+      {
+        "name": "classic/slow_ink",
+        "first_ink_travel_px": 28.6,
+        "first_ink_ms": 83,
+        "visible_while_down": true,
+        "marked_after_up": true,
+        "stroke_ms": 558
+      },
+      {
+        "name": "deevad/spray",
+        "first_ink_travel_px": 28.6,
+        "first_ink_ms": 85,
+        "visible_while_down": true,
+        "marked_after_up": true,
+        "stroke_ms": 560
+      }
+    ],
+    "blind_while_down": [],
+    "blind_n": 0,
+    "note": "⛳ 사람이 본 대역에서 다시 잰 A-1. 자는 둘이다(#111): 첫 잉크까지의 **이동량**(px)과 **시간**(ms). 「획을 긋는 동안 한 번도 안 보이고 떼면 나타나는」 프리셋이 이 대역에서도 없으면 A-1은 프리셋의 것이 아니다."
+  }
+}

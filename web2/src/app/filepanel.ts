@@ -80,6 +80,11 @@ const PTR_KEY = 'b2-doc'
 const readPtr = (): string | null => { try { return localStorage.getItem(PTR_KEY) } catch { return null } }
 const writePtr = (id: string): void => { try { localStorage.setItem(PTR_KEY, id) } catch { /* 세션 한정 */ } }
 
+/** web2-72 §0·§5 — **열 때의 몫**(D-1 표식). 진단 판과 팔이 같은 값을 읽는다(#54).
+ *  parseMs = .brnl 파싱 · applyMs = 문서 앉히기(loadDoc → recompute: 리프팅·면 풀기).
+ *  칠 굽기는 여기 안 든다 — 그것은 그 뒤 프레임들의 몫이고 `paintBake().ms`가 든다. */
+export const bootCost = { bootAt: 0, parseMs: 0, applyMs: 0, bytes: 0, strokes: 0 }
+
 export function initFilePanel(deps: FileDeps): FilePanel {
   const { app, serialize, thumb, notify, applyDoc, confirmNear, now } = deps
   const nameInput = document.getElementById('doc-name') as HTMLInputElement
@@ -313,6 +318,7 @@ export function initFilePanel(deps: FileDeps): FilePanel {
 
   async function boot(): Promise<void> {
     const t = now()
+    bootCost.bootAt = performance.now()
     // ① 이전 — 복사 → 검증 → 삭제. 실패해도 옛것이 산다(그 사실을 팔이 잰다)
     let migrated: string[] = []
     try {
@@ -338,9 +344,17 @@ export function initFilePanel(deps: FileDeps): FilePanel {
     // 사람이 이미 그리기 시작했으면 **안 덮는다**(복원은 비동기다)
     if (app.docVersion !== savedVersion || app.doc.strokes.length > 0) { sync(); return }
     const { readBrnl, reportNotice } = await import('../core/file')
+    // web2-72 §0·§5 표식(D-1) — 「열 때」의 시간이 **어디로 가는가**를 경로에 심는다:
+    // 읽기(파싱) · 앉히기(loadDoc → recompute: 리프팅·면). 칠 굽기는 그 뒤 프레임의 몫이다.
+    const tParse0 = performance.now()
     const { data, report } = readBrnl(rec.data)
+    bootCost.parseMs = performance.now() - tParse0
+    bootCost.bytes = rec.data.length
     if (data && data.doc.strokes.length > 0) {
+      bootCost.strokes = data.doc.strokes.length
+      const tApply0 = performance.now()
       applyDoc(data)
+      bootCost.applyMs = performance.now() - tApply0
       cur = { id: rec.id, name: rec.name, created: rec.created, updated: rec.updated, bytes: rec.bytes }
       writePtr(cur.id)
       nameInput.value = cur.name

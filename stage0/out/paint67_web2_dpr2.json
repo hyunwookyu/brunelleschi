@@ -42,8 +42,8 @@
       "bytes_mb": 28.6
     },
     "engine_layers": {
-      "layers": 8,
-      "bytes": 75869440,
+      "layers": 2,
+      "bytes": 75247360,
       "budget": 201326592,
       "note": "층 하나 = w·h·20B(float RGBA + 덮임) — 2048에서 80MB: 예산 192MB는 최대 층 둘. 죽은 층의 커밋은 전량 폴백(픽셀 무변) · 초안 미리보기 결손(62 DEFERRED)이 더 일찍 온다 — 실기기 몫"
     }
@@ -84,11 +84,11 @@
   "g04_place": {
     "def": "0-4 — 휠이 패널 «안»(rect 포함 · 구성 몫: DOM 배치가 그렇게 지어졌다 — 측정 몫은 실제 rect 포함·폭 전후 동일·elementFromPoint 닿음이다 [M4]) · 패널 폭이 열기 전후 같다(가리는 폭 불변) · 툴팁 없음 · 캔버스가 실제로 닿는다",
     "panel_w": {
-      "before": 272,
-      "after": 272
+      "before": 276,
+      "after": 276
     },
     "wheel_inside": true,
-    "covered_w_px": 272,
+    "covered_w_px": 276,
     "tooltip": {
       "title": null,
       "role": null
@@ -143,9 +143,9 @@
       "cases": "슬롯 넷 × (딱딱한·부드러운 지우개 번갈아)"
     },
     "save": {
-      "er_in_file": 5,
-      "er_in_doc": 5,
-      "er_readback": 5,
+      "er_in_file": 2,
+      "er_in_doc": 2,
+      "er_readback": 2,
       "red_check": "KEY_ORDER 등재의 빨강 실측은 단위 roundtrip43 게이트 ②(등재 «전» missing [Stroke.er] — 2026-09-05 npm test 1101/1102 빨강 1)다: 단위는 stage0에 안 쓰므로 그 실측의 원장 몫을 이 줄이 든다([M4]) — 이 팔의 er_readback이 같은 왕복을 e2e에서 다시 잰다"
     },
     "tail_eraser": {
@@ -165,6 +165,7 @@
       "start": 1024,
       "band_bottom": 2048,
       "after_zoom": 2048,
+      "before_zoom_out": 2048,
       "after_zoom_out": 2048
     },
     "old_key": {
@@ -172,10 +173,10 @@
       "bakes_after_unrelated_edit": 0,
       "stale_differs_from_fresh": true,
       "stale_hash": [
-        892402488
+        1955061126
       ],
       "fresh_hash": [
-        1955061126
+        1615942790
       ]
     },
     "fixed": {
@@ -185,7 +186,47 @@
       "step_zoom": {
         "bakes": 1,
         "level_same": true,
-        "hash_equals_rebake": false
+        "out_steps": 6,
+        "tq_before": "|tq1",
+        "rows_before": [
+          {
+            "key": "9:1",
+            "faceId": 9,
+            "side": 1,
+            "level": 2048,
+            "gateSide": true,
+            "w": 2048,
+            "h": 1831,
+            "visible": true,
+            "blending": 4,
+            "screenPx": 1694,
+            "texelQ": "|tq1",
+            "frozenTexelQ": 1,
+            "want": 2048,
+            "clamped": false,
+            "famBits": 3
+          }
+        ],
+        "rows_after": [
+          {
+            "key": "9:1",
+            "faceId": 9,
+            "side": 1,
+            "level": 2048,
+            "gateSide": true,
+            "w": 2048,
+            "h": 1831,
+            "visible": true,
+            "blending": 4,
+            "screenPx": 1193,
+            "texelQ": "|tq2",
+            "frozenTexelQ": 2,
+            "want": 2048,
+            "clamped": false,
+            "famBits": 3
+          }
+        ],
+        "hash_equals_rebake": true
       }
     }
   },
