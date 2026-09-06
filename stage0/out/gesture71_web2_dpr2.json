@@ -2,12 +2,12 @@
   "conditions": {
     "project": "dpr2",
     "workers": 1,
-    "tree": "2be2af8",
+    "tree": "784c9fe",
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/gesture71.spec.ts (#99)"
   },
-  "run_id": "2be2af8-mtoya6",
+  "run_id": "784c9fe-mtp23b",
   "what": "web2-71 몸짓 게이트(리뷰어 뒤 판) — §1 두드림·누르고 있기(스택·면·칠 해시 = 단추와 같은 값 · 반증 문턱 0 · 대역 표) · §2 상쇄(기준선·중간·끝) · §3 정사 스냅(원근에서 새로 · 카메라 값 · 마우스 · 밖 상태줄) · §4 재누름 표 · §5 칠 멈춤(항등 · 밀도 · 결정론 · #111 값)",
-  "tree": "2be2af8",
+  "tree": "784c9fe",
   "pitfall_citations": [
     111,
     109,
@@ -66,13 +66,13 @@
       },
       "verdict": {
         "fingers": 2,
-        "durationMs": 545,
+        "durationMs": 561,
         "maxMovePx": 30,
         "spoiledAtPx": 10,
         "syncMs": 0,
         "verdict": "none",
         "why": "move 10.0px > 8",
-        "at": 1788649296109,
+        "at": 1788653480958,
         "doubleGapMs": null
       }
     },
@@ -87,13 +87,13 @@
       },
       "verdict": {
         "fingers": 2,
-        "durationMs": 66,
+        "durationMs": 83,
         "maxMovePx": 0,
         "spoiledAtPx": null,
         "syncMs": 0,
         "verdict": "tap",
         "why": null,
-        "at": 1788649296796,
+        "at": 1788653481629,
         "doubleGapMs": null
       },
       "undo_opacity_after": 1
@@ -111,21 +111,21 @@
         "hold_ms": 450,
         "repeats": 1,
         "verdict": "hold",
-        "duration": 525,
+        "duration": 533,
         "stopped_after_release": true
       },
       {
         "hold_ms": 700,
         "repeats": 2,
         "verdict": "hold",
-        "duration": 773,
+        "duration": 774,
         "stopped_after_release": true
       },
       {
         "hold_ms": 950,
         "repeats": 3,
         "verdict": "hold",
-        "duration": 1014,
+        "duration": 1017,
         "stopped_after_release": true
       }
     ],
@@ -158,13 +158,13 @@
       },
       "verdict": {
         "fingers": 2,
-        "durationMs": 376,
+        "durationMs": 398,
         "maxMovePx": 30,
         "spoiledAtPx": null,
         "syncMs": 0,
         "verdict": "tap",
         "why": null,
-        "at": 1788649305222,
+        "at": 1788653490193,
         "doubleGapMs": null
       },
       "undo_happened": true,
@@ -219,20 +219,20 @@
       {
         "dur_ms": 200,
         "verdict": "tap",
-        "durationMs": 234,
+        "durationMs": 233,
         "why": null
       },
       {
         "dur_ms": 250,
         "verdict": "none",
-        "durationMs": 265,
-        "why": "duration 265ms > 250"
+        "durationMs": 266,
+        "why": "duration 266ms > 250"
       },
       {
         "dur_ms": 300,
         "verdict": "none",
-        "durationMs": 318,
-        "why": "duration 318ms > 250"
+        "durationMs": 316,
+        "why": "duration 316ms > 250"
       }
     ],
     "mouse_pen": {
@@ -291,7 +291,7 @@
       false,
       true
     ],
-    "double_gap_ms_page": 283,
+    "double_gap_ms_page": 300,
     "hash_same": true,
     "outside_350": {
       "before": {
@@ -314,7 +314,7 @@
         true,
         true
       ],
-      "gap_ms_page": 549,
+      "gap_ms_page": 551,
       "log": [
         "tap3",
         "double3:redo-undone,grid",
@@ -522,11 +522,11 @@
     "straight_during_hold": true,
     "sample_step_doc": 15.71197707033806,
     "end_follow_frames_ms": [
-      152,
-      147,
-      150,
-      149,
-      155,
+      141,
+      162,
+      156,
+      145,
+      156,
       148
     ],
     "end_follow_samples": [
