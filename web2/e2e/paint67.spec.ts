@@ -104,6 +104,9 @@ const bakeReset = (page: Page) => page.evaluate(() => { (window as any).__b2.dia
 const rebakeAndWait = async (page: Page) => {
   await page.evaluate(() => { (window as any).__b2.diag.rebakePaintTex() })
   await page.waitForTimeout(300)
+  // web2-72 §1 — 굽기가 **프레임에 나뉘므로** 고정 ms 대기는 「다 구워졌다」를 뜻하지 않는다.
+  // 이어 구울 것이 없어질 때까지 기다린다(상한 있는 대기 — #81).
+  await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 30_000 })
 }
 const screenHash = (page: Page) => page.evaluate(() => {
   const c = document.getElementById('gl') as HTMLCanvasElement
@@ -170,6 +173,14 @@ test('① 0-1 상한 2048 — 토스트 0 · 표식은 걸린 동안만 · 메�
     for (const e of t) { if (e.visible) { lvMax = Math.max(lvMax, e.level); clamped = clamped || e.clamped } }
   }
   expect(clamped, '상한에 실제로 걸렸다(#103 — 걸려야 표식을 잰다)').toBe(true)
+  // web2-72 §2 — 단계는 **손·카메라가 멈춘 뒤** 한 번 재평가된다(동결 150ms). 줌 고리가
+  // 80ms 걸음이라 고리 «안»에서는 단계가 늘 한 걸음 뒤에 있다 — 멈춘 뒤에 다시 읽는다.
+  // (재는 것은 그대로다: 「상한이 2048까지 올라간다」. 언제 읽는가만 규약에 맞춘다.)
+  await page.waitForTimeout(400)
+  await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 30_000 })
+  for (const e of await page.evaluate(() => (window as any).__b2.diag.paintTex() as { level: number; visible: boolean }[])) {
+    if (e.visible) lvMax = Math.max(lvMax, e.level)
+  }
   expect(lvMax, '상한이 2048로 올라갔다(1024가 아니다)').toBe(2048)
   const dotOn = await page.evaluate(() => !(document.getElementById('paint-clamp-dot') as HTMLElement).hidden)
   const dotTitle = await page.evaluate(() => (document.getElementById('paint-clamp-dot') as HTMLElement).title)
@@ -554,9 +565,16 @@ test('⑦ §2 낡은 그림 — 재현(반증 스위치 = 옛 열쇠): 단계 �
   await page.mouse.move(700, 470)
   const lvStart = (await texHash(page))[0]!.level
   let lv0 = lvStart
+  // ⚠ web2-72 §2 — 단계는 «멈춘 뒤 150ms»에 한 번 재평가된다(동결). 걸음마다 그 창을 넘겨야
+  //   여기서 읽는 단계가 «지금 화면 크기의 단계»다 — 안 그러면 늘 한 걸음 뒤에 서서 대역의
+  //   바닥이 아니라 «이미 지난 자리»에 서게 되고, 아래 0.72옥타브가 대역을 넘어 버린다.
+  const settled = async () => {
+    await page.waitForTimeout(260)
+    await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 30_000 })
+  }
   for (let i = 0; i < 30; i++) {
     await page.mouse.wheel(0, -100)
-    await page.waitForTimeout(80)
+    await settled()
     const lvNow = (await texHash(page))[0]!.level
     if (lvNow !== lv0) { lv0 = lvNow; break }
   }
@@ -566,6 +584,7 @@ test('⑦ §2 낡은 그림 — 재현(반증 스위치 = 옛 열쇠): 단계 �
   await bakeReset(page)
   const ZOOM_IN = 5                                           // ×1.105^5 ≈ 0.72옥타브(대역 1옥타브 안)
   for (let i = 0; i < ZOOM_IN; i++) { await page.mouse.wheel(0, -100); await page.waitForTimeout(80) }
+  await settled()
   const lv1 = (await texHash(page))[0]!.level
   const stZoom = await bakeStat(page)
   // 상관없는 편집(하늘의 선) — 옛 열쇠의 «지속»: 이것도 못 고친다(65-post의 그 형태)
@@ -595,7 +614,13 @@ test('⑦ §2 낡은 그림 — 재현(반증 스위치 = 옛 열쇠): 단계 �
   // ── 수리 ③ — 계단의 실측: 대역 «안»에서 되돌아 나가는 줌(0.72옥타브)이 계단을 1~2번 밟는다
   //    (반옥타브 계단 — 매 프레임도, 0도 아니다). 그 뒤 그림은 다시 정본과 같다.
   await bakeReset(page)
+  // ⚠ web2-72 — 위의 강제 재굽기(rebakePaintTex)는 단계를 «0으로 두고 다시 양자화»한다.
+  //   72의 히스테리시스에서는 그 값이 lv1과 다를 수 있다(안정 단계는 화면 크기보다 최대 25%
+  //   작을 수 있다 — PAINT72_LEVEL_UP의 뜻). 「이 줌도 단계 안이다」의 기준은 **줌 직전의 단계**다.
+  await settled()
+  const lvBeforeOut = (await texHash(page))[0]!.level
   for (let i = 0; i < ZOOM_IN; i++) { await page.mouse.wheel(0, 100); await page.waitForTimeout(80) }
+  await settled()
   const lv2 = (await texHash(page))[0]!.level
   const stStep = await bakeStat(page)
   const stepTex = await texHash(page)
@@ -606,10 +631,10 @@ test('⑦ §2 낡은 그림 — 재현(반증 스위치 = 옛 열쇠): 단계 �
   //   구운 판)의 자이고, 여기는 «계단이 밟혔고 폭주가 아니다»가 자다. 두 해시는 값으로 남긴다.
   OUT.g07_rep_stale = {
     def: '§2 — D-2 재현: 옛 열쇠(스위치 켬)에서 단계 안 줌(0.72옥타브 · lv 불변) 뒤 재굽기 0 · 상관없는 편집도 0(지속 — 65-post) · 낡은 그림(정본 굽기와 해시 다름 — 무늬 선 굵기의 낡음). 수리: texel 반옥타브 계단(REP67_TEXEL_STEPS_PER_OCT=2)이 열쇠에 들어 ① 되켠 즉시 굽는다 ② 그림이 정본과 동일 · 가만히 두면 0(매 프레임 ⛔) ③ 대역 안 0.72옥타브 줌이 계단을 1~2번 밟는다(자 = «계단 횟수» — 계단 판과 «지금 순간» 전량 굽기는 ±¼옥타브 안에서 갈릴 수 있어 hash_equals_rebake는 기록값이다 · 리뷰어 [M9])',
-    level: { start: lvStart, band_bottom: lv0, after_zoom: lv1, after_zoom_out: lv2 },
+    level: { start: lvStart, band_bottom: lv0, after_zoom: lv1, before_zoom_out: lvBeforeOut, after_zoom_out: lv2 },
     old_key: { bakes_after_zoom: stZoom.bakes, bakes_after_unrelated_edit: stEdit.bakes, stale_differs_from_fresh: staleDiffers, stale_hash: staleTex.map(t => t.hash), fresh_hash: freshTex.map(t => t.hash) },
     fixed: { bakes_on_reenable: stFix.bakes, hash_equals_fresh: JSON.stringify(fixedTex.map(t => t.hash)) === JSON.stringify(freshTex.map(t => t.hash)), idle_bakes: stIdle.bakes,
-      step_zoom: { bakes: stStep.bakes, level_same: lv2 === lv1, hash_equals_rebake: JSON.stringify(stepTex.map(t => t.hash)) === JSON.stringify(stepRef.map(t => t.hash)) } },
+      step_zoom: { bakes: stStep.bakes, level_same: lv2 === lvBeforeOut, hash_equals_rebake: JSON.stringify(stepTex.map(t => t.hash)) === JSON.stringify(stepRef.map(t => t.hash)) } },
   }
   expect(lv1, '줌이 단계 «안»이다(전제 — 아니면 이 팔은 아무것도 안 잰다)').toBe(lv0)
   expect(stZoom.bakes, '재현 — 옛 열쇠에서 단계 안 줌은 재굽기 0(낡음의 기제)').toBe(0)
@@ -619,7 +644,7 @@ test('⑦ §2 낡은 그림 — 재현(반증 스위치 = 옛 열쇠): 단계 �
   expect(stFix.bakes, '수리 ① — 폭주가 아니다').toBeLessThanOrEqual(4)
   expect(JSON.stringify(fixedTex.map(t => t.hash)), '수리 ② — 그림이 정본(전량 굽기)과 같다(낡음 0)').toBe(JSON.stringify(freshTex.map(t => t.hash)))
   expect(stIdle.bakes, '수리 ② — 가만히 두면 더 안 굽는다(매 프레임 재굽기 ⛔)').toBe(0)
-  expect(lv2, '수리 ③ — 이 줌도 단계 안이다').toBe(lv1)
+  expect(lv2, '수리 ③ — 이 줌도 단계 안이다(기준은 줌 «직전»의 단계 — 72 히스테리시스)').toBe(lvBeforeOut)
   expect(stStep.bakes, '수리 ③ — 0.72옥타브가 계단(반옥타브)을 최소 한 번 밟는다').toBeGreaterThanOrEqual(1)
   expect(stStep.bakes, '수리 ③ — 그리고 폭주가 아니다(1~2 + 경계 여유)').toBeLessThanOrEqual(3)
 })

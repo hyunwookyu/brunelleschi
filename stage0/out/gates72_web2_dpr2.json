@@ -1,0 +1,300 @@
+{
+  "conditions": {
+    "project": "dpr2",
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/gates72.spec.ts (#99)"
+  },
+  "what": "web2-72 게이트 — §1(분할·색인) §2(동결·히스테리시스) §3(배분) §4(열 때)",
+  "note_pitfalls": "#12·#14(정본은 «호출 수·훑은 획 수» — ms는 곁값) · #42 · #81(대기에 상한) · #89(초록의 범위 — 굽기가 끝난 뒤에 잰다) · #99 · #101 · #103 · #105(빈 결과 폴백은 값이 아니다 — «보이는 것»으로 자를 잡지 않는다) · #110(열쇠를 그 파생의 입력으로) · #111",
+  "pitfall_citations": [
+    12,
+    14,
+    42,
+    81,
+    89,
+    99,
+    101,
+    103,
+    105,
+    110,
+    111
+  ],
+  "thresholds": {
+    "PAINT72_BOUNDARY_REBAKE_MAX": 2,
+    "note_alloc": "흐림 하한(텍셀/px)은 앱 상수 C.PAINT72_ALLOC_TEXEL_PER_PX_MIN — 아래 g3_alloc.texel_floor에 그 값이 그대로 든다(D-C4)"
+  },
+  "no_constants_snapshot": true,
+  "selfcheck_notes": {
+    "zero_counters": "§2의 bakes 0 · §3의 evicts 0은 **통과값**이다 — 같은 자가 반증(동결 끔 · 옛 퇴출)에서 0이 아닌 값을 낸다(같은 원장에 짝으로 든다)",
+    "identical_pairs": "§1-1의 «조각 == 한 번에» 해시 같음과 §1-2의 목록 같음은 게이트의 뜻 그 자체다 — 반증 스위치가 다른 값을 내는 것이 판별력이다"
+  },
+  "g1_slice": {
+    "sliced": {
+      "deferred": 3619,
+      "sliced": 324,
+      "bakes": 23,
+      "baked_strokes": 920,
+      "ms": 5249.8
+    },
+    "whole": {
+      "deferred": 0,
+      "sliced": 0,
+      "bakes": 23,
+      "baked_strokes": 920,
+      "ms": 5221.1
+    },
+    "pixels_equal": true,
+    "note": "⚠ 지시 §1은 «Worker/분할 두 경로의 해시 동일»을 요구한다. 이 라운드는 **분할만** 섰다(Worker + OffscreenCanvas는 이월 — DEFERRED web2-72). 그래서 항등의 짝은 «분할 켬 ↔ 분할 끔(한 프레임에 전량)»이고, 그것이 「나눠 구워도 그림이 안 바뀐다」를 정확히 잰다."
+  },
+  "g1_index": {
+    "lists": 23,
+    "mismatched": [],
+    "mismatched_n": 0,
+    "per_face_strokes": 40,
+    "doc_strokes": 936,
+    "index_on": {
+      "scans": 678,
+      "scanCalls": 17,
+      "indexScans": 935,
+      "per_call": 40
+    },
+    "index_off": {
+      "scans": 16812,
+      "scanCalls": 18,
+      "indexScans": 0,
+      "per_call": 934
+    },
+    "note": "색인 켬의 per_call은 «그 면의 획 수»이고 끔은 «문서 전체»다. index_scans는 색인을 세우며 문서를 한 번 훑은 값(면마다가 아니다)."
+  },
+  "g2_freeze": {
+    "visible_paint_faces": 23,
+    "orbit_freeze_on": {
+      "bakes": 0,
+      "baked_strokes": 0,
+      "level_down": 0,
+      "level_up": 0,
+      "sig_lv": 0,
+      "frozen_frames": 17,
+      "frames": {
+        "n": 17,
+        "p50": 136.7,
+        "p95": 674.9,
+        "max": 674.9
+      },
+      "empty_frames": 0,
+      "ms": 0
+    },
+    "orbit_freeze_off": {
+      "bakes": 6,
+      "baked_strokes": 31,
+      "level_down": 3,
+      "sig_lv": 3,
+      "frames": {
+        "n": 18,
+        "p50": 134.6,
+        "p95": 547.8,
+        "max": 547.8
+      },
+      "ms": 289.5
+    },
+    "after_stop": {
+      "bakes": 0
+    },
+    "boundary_10": {
+      "bakes": 1,
+      "level_up": 1,
+      "level_down": 0
+    }
+  },
+  "g4_open": {
+    "fixture": {
+      "source": "synthetic",
+      "faces": 23,
+      "docStrokes": 936,
+      "paintStrokes": 920,
+      "texEntries": 23,
+      "clampedFaces": 0,
+      "levels": {
+        "256": 23
+      }
+    },
+    "save_roundtrip": {
+      "n": 5,
+      "all_same": true,
+      "bytes": 235452
+    },
+    "key_order_top": [
+      "format",
+      "version",
+      "frame",
+      "strokes",
+      "faces",
+      "unit",
+      "scaleRef",
+      "nextId",
+      "sheets",
+      "drawView"
+    ],
+    "note": "열 때의 ms 값은 계측(perf72)이 든다 — 여기서는 저장 형식이 안 움직였음과 픽스처가 섰음을 지킨다(⛔ 저장 형식 무변)."
+  },
+  "g3_alloc": {
+    "visible_before": 23,
+    "visible_after": 23,
+    "bytes_before": 10752000,
+    "budget_forced": 5376000,
+    "bytes_after": 9009152,
+    "alloc_downs": 125,
+    "alloc_bytes": 9009152,
+    "evicts": 0,
+    "texel_per_px": [
+      {
+        "key": "17:1",
+        "level": 256,
+        "screenPx": 257,
+        "t": 0.9961089494163424
+      },
+      {
+        "key": "18:1",
+        "level": 256,
+        "screenPx": 257,
+        "t": 0.9961089494163424
+      },
+      {
+        "key": "19:1",
+        "level": 256,
+        "screenPx": 257,
+        "t": 0.9961089494163424
+      },
+      {
+        "key": "20:1",
+        "level": 256,
+        "screenPx": 257,
+        "t": 0.9961089494163424
+      },
+      {
+        "key": "21:1",
+        "level": 256,
+        "screenPx": 290,
+        "t": 0.8827586206896552
+      },
+      {
+        "key": "22:1",
+        "level": 256,
+        "screenPx": 259,
+        "t": 0.9884169884169884
+      },
+      {
+        "key": "23:1",
+        "level": 256,
+        "screenPx": 259,
+        "t": 0.9884169884169884
+      },
+      {
+        "key": "24:1",
+        "level": 256,
+        "screenPx": 259,
+        "t": 0.9884169884169884
+      },
+      {
+        "key": "25:1",
+        "level": 256,
+        "screenPx": 259,
+        "t": 0.9884169884169884
+      },
+      {
+        "key": "26:1",
+        "level": 256,
+        "screenPx": 259,
+        "t": 0.9884169884169884
+      },
+      {
+        "key": "27:1",
+        "level": 128,
+        "screenPx": 245,
+        "t": 0.5224489795918368
+      },
+      {
+        "key": "28:1",
+        "level": 128,
+        "screenPx": 245,
+        "t": 0.5224489795918368
+      },
+      {
+        "key": "29:1",
+        "level": 128,
+        "screenPx": 245,
+        "t": 0.5224489795918368
+      },
+      {
+        "key": "30:1",
+        "level": 128,
+        "screenPx": 245,
+        "t": 0.5224489795918368
+      },
+      {
+        "key": "31:1",
+        "level": 128,
+        "screenPx": 245,
+        "t": 0.5224489795918368
+      },
+      {
+        "key": "32:1",
+        "level": 256,
+        "screenPx": 273,
+        "t": 0.9377289377289377
+      },
+      {
+        "key": "33:1",
+        "level": 256,
+        "screenPx": 273,
+        "t": 0.9377289377289377
+      },
+      {
+        "key": "34:1",
+        "level": 256,
+        "screenPx": 273,
+        "t": 0.9377289377289377
+      },
+      {
+        "key": "35:1",
+        "level": 256,
+        "screenPx": 273,
+        "t": 0.9377289377289377
+      },
+      {
+        "key": "36:1",
+        "level": 256,
+        "screenPx": 260,
+        "t": 0.9846153846153847
+      },
+      {
+        "key": "37:1",
+        "level": 256,
+        "screenPx": 260,
+        "t": 0.9846153846153847
+      },
+      {
+        "key": "38:1",
+        "level": 256,
+        "screenPx": 260,
+        "t": 0.9846153846153847
+      },
+      {
+        "key": "39:1",
+        "level": 256,
+        "screenPx": 260,
+        "t": 0.9846153846153847
+      }
+    ],
+    "worst": {
+      "key": "27:1",
+      "level": 128,
+      "screenPx": 245,
+      "t": 0.5224489795918368
+    },
+    "texel_floor": 0.5,
+    "note": "65 ⑤는 예산을 넘으면 **버렸다**(보이는 면이 예산을 넘으면 퇴출→재굽기 순환). 72 §3은 «화면에서 작은 면부터 단계를 한 칸 내려» 합을 예산 안에 넣는다 — 퇴출은 안 보이는 것에만.",
+    "over_budget": true,
+    "all_at_blur_floor": true
+  }
+}

@@ -673,12 +673,26 @@ test('⚑ 성능 — 스무 면 · 칠 40획: 프레임(#82 — 차)과 텍스�
   expect(paintN, '칠이 실제로 여러 획 얹혔다').toBeGreaterThanOrEqual(30)
   // 하향 양자화의 실측(1차 [8] — levels가 전부 같은 값이면 «작으면 낮게»를 이 장면이
   // 안 시험한 것이다): 종이 줌 아웃(휠)으로 화면 투영을 줄이고 단계가 실제로 내려가는가.
+  // ⚠⚠ **web2-72가 이 방향을 바꿨다**(대체된 시험 — CLOSING). 72 §1-2(그림 탑)에서
+  //   **내림은 굽지 않는다**: 굽힌 단계보다 화면이 작아지는 것은 GPU 내려 표집의 몫이고,
+  //   다시 굽는 때는 둘뿐이다(획이 바뀌었다 · 화면이 굽힌 단계보다 커졌다). 그래서 「단계가
+  //   화면 크기를 따라간다」의 자를 **줌 인**으로 옮긴다 — 내림의 «안 내려간다»는 값으로 남긴다
+  //   (그 자체가 72의 게이트다: gates72 §2 「단계 내림에서 bakeFaceTex 호출 0」).
+  const settled50 = async () => {
+    await page.waitForTimeout(300)
+    await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 30_000 })
+  }
   await page.mouse.move(600, 450)
   for (let i = 0; i < 6; i++) { await page.mouse.wheel(0, 240); await page.waitForTimeout(60) }
-  await page.waitForTimeout(300)
+  await settled50()
   const texesOut = await page.evaluate(() => (window as any).__b2.diag.paintTex())
   const maxOut = Math.max(...texesOut.map((t: any) => t.level))
-  expect(maxOut, '줌 아웃에서 단계가 실제로 내려간다(하향 양자화 실측)').toBeLessThan(maxLevel)
+  expect(maxOut, '줌 아웃에서 단계가 «안 내려간다»(72 §1-2 — 내림은 GPU 표집의 몫)').toBe(maxLevel)
+  for (let i = 0; i < 12; i++) { await page.mouse.wheel(0, -240); await page.waitForTimeout(60) }
+  await settled50()
+  const texesIn = await page.evaluate(() => (window as any).__b2.diag.paintTex())
+  const maxIn = Math.max(...texesIn.map((t: any) => t.level))
+  expect(maxIn, '줌 인에서 단계가 실제로 올라간다(상향 양자화 실측 — 단계가 화면을 따라간다)').toBeGreaterThan(maxOut)
   OUT.tex_budget = {
     def: '분할 두 벽(면 faceN — ⚠ 지시 목표 «20 이상»에 셋 모자란다: rep49 frame20의 그 픽스처 그대로다. note_89 참조) + 칠 40붓 — 텍스처 수·단계 분포·합계 바이트(w·h·4). 프레임은 같은 장면 전/후 «차»(#82) — 잡음 바닥(before↔before2)과 함께 읽는다',
     faces: faceN, paint_strokes: paintN,

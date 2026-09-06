@@ -21,7 +21,7 @@ import { paintSideAt } from '../core/paint'
 import { borderQuads } from '../core/border'
 import { vkey } from '../core/joint'
 import { norm3, add3, mul3, type V3 } from '../core/vec'
-import { uvBoxOf, texLevel, bakeFaceTex, drawDraftOnTex, appendMarkOnTex, draftFeedOnTex, draftFinishOnTex, draftCancelOnTex, draftSupported, rebuildStrokesOnTex, type UvBox, type RepBake } from '../core/facetex'
+import { uvBoxOf, texLevel, texDims, bakeFaceTex, drawDraftOnTex, appendMarkOnTex, draftFeedOnTex, draftFinishOnTex, draftCancelOnTex, draftSupported, rebuildStrokesOnTex, type UvBox, type RepBake } from '../core/facetex'
 import { paintLayerAlive, releasePaintLayer, type MarkBox } from '../core/paintseam'
 import { faceHatchSpacingWorld } from '../core/hatch'
 import type { Grade, Stroke, Face } from '../core/types'
@@ -489,6 +489,13 @@ interface PaintTexEntry {
   tick: number
   /** ⑤ 상한에서 버려진 상태(캔버스 0 · 층 놓음). 다시 «보이면» 그때 다시 굽는다 */
   evicted: boolean
+  /** web2-72 §0 표식 — 굽기 열쇠의 «조각»(갈린 조각을 세려면 이은 문자열로는 못 센다) */
+  sigParts?: { lv: string; fam: string; hatch: string; rep: string; texelQ: string; box: string }
+  /** web2-72 §2 — 동결 중에 쓰는 «얼린» 무늬 굵기 계단(멈춘 뒤 다시 맞춘다) */
+  frozenTexelQ?: number | null
+  /** web2-72 §1 — **이어 굽는 중인 판**. 바탕은 이미 섰고 획을 done개까지 얹었다.
+   *  null이면 이어 구울 것이 없다. 이 값이 있는 동안 캔버스는 «온전하지만 덜 채워진» 그림이다. */
+  pending: { sig: string; lv: number; strokes: Stroke[]; sigs: string[]; done: number } | null
 }
 let paintTexes = new Map<string, PaintTexEntry>()
 let paintKey = ''
@@ -511,10 +518,33 @@ export interface PaintBakeStat {
   /** syncPaintTex가 실제로 일한 횟수(열쇠가 갈린 프레임) */ syncs: number
   /** ⑤ 상한에서 «안 보이는 면»을 버린 횟수 */ evicts: number
   /** 캔버스 크기가 바뀌어 GPU 텍스처를 다시 할당시킨 횟수(아래 ⚠⚠ — 0이면 옛 그림이 늘어난다) */ texReallocs: number
+  // ── web2-72 §0 표식(D-1 — «어디서 갈리는가»를 경로에 심는다) ─────────────────────────
+  /** ④ **훑은 획 수** — paintStrokesOf/borderStrokesOf가 훑은 문서 획의 합.
+   *  가설 4의 자다: 면마다 «문서 전체»를 훑으면 면 30 × 획 3000 = 9만이 값으로 나온다. */
+  scans: number
+  /** ④ 그 훑기 호출 횟수(면·쪽마다 한 번) */ scanCalls: number
+  /** ① 굽기 열쇠가 갈린 횟수를 **원인별로** 가른다 — 가설 1의 판별자 */
+  sigChange: { lv: number; texelQ: number; fam: number; hatch: number; rep: number; box: number; doc: number }
+  /** ① 단계가 올라간/내려간 횟수(«돌리다 작아지는 것»이 재굽기인가 — §1-2 그림 탑의 자) */
+  levelUp: number
+  levelDown: number
+  // ── web2-72 §1·§2·§3의 자 ────────────────────────────────────────────────────
+  /** §2 — 단계를 얼린 프레임 수(도는 동안·손이 닿아 있는 동안) */ frozenFrames: number
+  /** §3 — 예산 배분이 단계를 «한 칸 내린» 횟수(퇴출이 아니다) */ allocDowns: number
+  /** §3 — 배분 뒤 보이는 (면,쪽)의 요구 바이트 합 */ allocBytes: number
+  /** §1 — 프레임 예산이 끝나 «다음 프레임으로 미룬» 항목 수 */ deferred: number
+  /** §1 — 한 굽기를 프레임에 걸쳐 나눈 횟수(이어 굽는 중으로 남긴 프레임) */ sliced: number
+  /** §1-2 — 면별 칠 색인을 다시 세운 횟수(문서가 갈릴 때마다 한 번) */ indexRebuilds: number
+  /** §1-2 — 그 색인을 세우며 훑은 획 수(문서 전체 한 번 — 면마다가 아니다) */ indexScans: number
 }
 const zeroBakeStat = (): PaintBakeStat => ({
   bakes: 0, bakedStrokes: 0, appends: 0, appendStrokes: 0, handoverStrokes: 0,
   uploads: 0, uploadBytes: 0, ms: 0, drops: 0, rebuilds: 0, syncs: 0, evicts: 0, texReallocs: 0,
+  scans: 0, scanCalls: 0,
+  sigChange: { lv: 0, texelQ: 0, fam: 0, hatch: 0, rep: 0, box: 0, doc: 0 },
+  levelUp: 0, levelDown: 0,
+  frozenFrames: 0, allocDowns: 0, allocBytes: 0, deferred: 0, sliced: 0,
+  indexRebuilds: 0, indexScans: 0,
 })
 let bakeStat: PaintBakeStat = zeroBakeStat()
 export function paintBakeStats(): PaintBakeStat & { entries: number; bytes: number; budget: number; accum: boolean; partial: boolean } {
@@ -530,7 +560,7 @@ export function resetPaintBakeStats(): void { bakeStat = zeroBakeStat() }
 let paintAccumOff = false
 export function setPaintAccumOffForTest(v: boolean): void {
   paintAccumOff = v
-  for (const e of paintTexes.values()) { e.bakeSig = ''; e.level = 0; if (v) e.bg = null; draftCancelOnTex(e.canvas) }
+  for (const e of paintTexes.values()) { e.bakeSig = ''; e.level = 0; e.pending = null; if (v) e.bg = null; draftCancelOnTex(e.canvas) }
   draftRecs.clear()                              // web2-66 — bg 없이는 세션도 없다(옛 전량 판으로)
 }
 export const paintAccumOffForTest = (): boolean => paintAccumOff
@@ -669,12 +699,125 @@ function putPaintTex(
   r.paintGroup.add(mesh)
   paintTexes.set(key, {
     canvas, tex, mesh, box, faceId, side, level: 0, base: null, famBits: -1,
-    sigs: [], bakeSig: '', docKey: '', bg: null, tick: 0, evicted: false,
+    sigs: [], bakeSig: '', docKey: '', bg: null, tick: 0, evicted: false, pending: null,
   })
+}
+
+// ══ web2-72 §1-2 — **면마다 칠의 색인**(사람의 제안 「면마다 따로 트리」) ══════════════════
+//
+// 수리 «전»의 형태(§0 가설 4 실증 · perf72_pre_web2_dpr2.json): `paintStrokesOf`가 (면,쪽)마다
+// **문서의 획 전부**를 훑었다 — 편집 한 번에 21,505회 비교(획 936 × 자리 23)였다.
+// 바꾼 것: 문서가 갈릴 때 **한 번** 훑어 `Map<(면,쪽), 획[]>`을 세우고, 굽기는 그 목록만 읽는다.
+//   · 색인은 **파생**이다(저장 형식 무변 · KEY_ORDER 무변 — 열 때 한 번 세운다)
+//   · 열쇠는 문서의 판 번호(paintKey)다 — 문서가 안 바뀌면 색인도 안 바뀐다
+//   · 차례는 문서 차례 그대로다(그린 차례 = 쌓인 차례 — 누적 얹기의 전제)
+// ⚠ 반증(D-3): `paintIndexOff`를 켜면 옛 훑기로 돌아간다 — 그러면 `scans`가 문서 전체로
+//   되돌아가고 **결과 목록은 한 획도 안 달라야 한다**(게이트가 두 길을 대조한다).
+let paintIndexOff = false
+export function setPaintIndexOffForTest(v: boolean): void { paintIndexOff = v; paintIndexKey = null }
+export const paintIndexOffForTest = (): boolean => paintIndexOff
+let paintIndexKey: string | null = null
+let paintIndex = new Map<string, Stroke[]>()
+const texKeyOf = (p: NonNullable<Stroke['paint']>): string | null =>
+  p.uv === undefined || p.uv.length < 4 ? null
+    : p.e === 1 ? `${p.f}:e`
+      : p.s === 1 || p.s === -1 ? `${p.f}:${p.s}` : null
+function paintIndexOf(app: App): Map<string, Stroke[]> {
+  if (paintIndexKey === paintKey) return paintIndex
+  const m = new Map<string, Stroke[]>()
+  for (const s of app.doc.strokes) {
+    if (s.paint === undefined) continue
+    const k = texKeyOf(s.paint)
+    if (k === null) continue
+    const list = m.get(k)
+    if (list) list.push(s); else m.set(k, [s])
+  }
+  paintIndex = m
+  paintIndexKey = paintKey
+  bakeStat.indexRebuilds++
+  bakeStat.indexScans += app.doc.strokes.length      // 문서 전체 «한 번»(면마다가 아니다)
+  return m
+}
+/** 이 (면,쪽)의 굽기 입력 — 색인을 읽기만 한다(옛 훑기는 반증 스위치 뒤에 산다). */
+function strokesForTex(app: App, e: PaintTexEntry): Stroke[] {
+  if (paintIndexOff) {
+    return e.side === 'e' ? borderStrokesOf(app, e.faceId)
+      : e.side === 0 ? [] : paintStrokesOf(app, e.faceId, e.side)
+  }
+  if (e.side === 0) return []
+  const list = paintIndexOf(app).get(e.side === 'e' ? `${e.faceId}:e` : `${e.faceId}:${e.side}`) ?? []
+  bakeStat.scanCalls++
+  bakeStat.scans += list.length                      // «그 면의 획 수»(전체 아님) — 게이트의 그 값
+  return list
+}
+
+// ══ web2-72 §2 — 단계의 히스테리시스와 동결 ═══════════════════════════════════════════
+/** 포즈·배율의 서명 — 이것이 갈리면 «카메라가 움직였다»다(main의 협조가 필요 없다).
+ *  ⚠ CamPose는 **중첩 객체**다(p: V3 · q: Quat · proj) — 얕게 훑으면 늘 같은 값이 나와
+ *  「안 움직인다」로 읽힌다(첫 판이 그랬다: frozenFrames 0). 자리마다 값을 든다. */
+function poseSigOf(app: App): string {
+  const c = app.pose
+  const v = app.view
+  const n = (x: number): number => Math.round(x * 1e6)
+  const pr = c.proj
+  return `${n(c.p.x)},${n(c.p.y)},${n(c.p.z)},${n(c.q.x)},${n(c.q.y)},${n(c.q.z)},${n(c.q.w)},`
+    + `${pr ? `${n(pr.w)},${n(pr.D)}` : '-'},${n(v.s)},${n(v.ox)},${n(v.oy)},${n(app.viewF ?? 0)}`
+}
+let lastPoseSig = ''
+let lastPoseMoveAt = -1e9
+/** 손이 캔버스에 닿아 있는가(main이 알려 준다 — 그리는 동안·끄는 동안 단계를 얼린다) */
+let paintPointerDown = false
+export function setPaintPointerDown(v: boolean): void {
+  paintPointerDown = v
+  if (!v) lastPoseMoveAt = performance.now()          // 떼는 순간부터 «멈춘 뒤 150ms»를 센다
+}
+/** 반증(D-3) — 동결·히스테리시스를 끈다: 궤도 중 재굽기가 돌아온다(pre의 그 값) */
+let paintLevelFreezeOff = false
+export function setPaintLevelFreezeOffForTest(v: boolean): void { paintLevelFreezeOff = v }
+export const paintLevelFreezeOffForTest = (): boolean => paintLevelFreezeOff
+/** 반증(D-3) — 시간 분할을 끈다: 한 프레임에 전부 굽는다(pre의 그 차단 시간이 돌아온다) */
+let paintBakeSliceOff = false
+export function setPaintBakeSliceOffForTest(v: boolean): void { paintBakeSliceOff = v }
+export const paintBakeSliceOffForTest = (): boolean => paintBakeSliceOff
+/** 이번 프레임에 미룬 굽기가 있는가 — main의 frame()이 이것을 보고 한 프레임 더 부른다.
+ *  «상태»(이어 구울 판이 남았는가)와 «이번 프레임의 미룸» 둘 다를 본다: 프레임 하나가
+ *  통째로 미뤄졌을 때도(예산 소진) 다음 프레임이 반드시 온다. */
+let bakePending = false
+export function paintBakePending(): boolean {
+  if (bakePending) return true
+  for (const e of paintTexes.values()) if (e.pending !== null) return true
+  return false
+}
+
+/** §1-2 반증(D-3)의 자 — 지금 서 있는 (면,쪽)마다 «색인이 낸 목록»과 «옛 훑기가 낸 목록»의
+ *  획 id를 나란히 낸다. 두 길이 한 획이라도 다르면 색인이 틀린 것이다(게이트가 대조한다). */
+export function paintStrokeListsForTest(app: App): { key: string; index: number[]; scan: number[] }[] {
+  const out: { key: string; index: number[]; scan: number[] }[] = []
+  const was = paintIndexOff
+  for (const [k, e] of paintTexes) {
+    paintIndexOff = false
+    const idx = strokesForTex(app, e).map(s => s.id)
+    paintIndexOff = true
+    const scan = strokesForTex(app, e).map(s => s.id)
+    out.push({ key: k, index: idx, scan })
+  }
+  paintIndexOff = was
+  return out.sort((a, b) => a.key < b.key ? -1 : 1)
+}
+
+/** 요구 단계 — **히스테리시스**. 올릴 때와 내릴 때의 문턱을 벌려 경계에서 널뛰지 않게 한다.
+ *  (지금 단계가 없으면 종전대로 곧바로 양자화한다 — 처음 서는 자리다.) */
+function levelWithHysteresis(screenPx: number, cur: number): number {
+  if (paintLevelFreezeOff || cur <= 0) return texLevel(screenPx)
+  if (screenPx > cur * C.PAINT72_LEVEL_UP) return texLevel(screenPx)
+  if (screenPx < cur * C.PAINT72_LEVEL_DOWN) return texLevel(screenPx)
+  return cur
 }
 
 /** 이 (면, 쪽)의 칠 획들 — 굽기 입력. 차례는 문서 차례(그린 차례 = 쌓인 차례)다. */
 function paintStrokesOf(app: App, faceId: number, side: 1 | -1): Stroke[] {
+  bakeStat.scanCalls++
+  bakeStat.scans += app.doc.strokes.length          // web2-72 §0 표식 — 훑은 획 수(가설 4의 자)
   return app.doc.strokes.filter(s =>
     s.paint !== undefined && s.paint.f === faceId && s.paint.s === side &&
     s.paint.uv !== undefined && s.paint.uv.length >= 4)
@@ -682,6 +825,8 @@ function paintStrokesOf(app: App, faceId: number, side: 1 | -1): Stroke[] {
 
 /** 테두리 슬롯(web2-55)의 칠 획들 — e=1 · uv=(s,u) 세계 단위. */
 function borderStrokesOf(app: App, faceId: number): Stroke[] {
+  bakeStat.scanCalls++
+  bakeStat.scans += app.doc.strokes.length          // web2-72 §0 표식 — 훑은 획 수(가설 4의 자)
   return app.doc.strokes.filter(s =>
     s.paint !== undefined && s.paint.f === faceId && s.paint.e === 1 &&
     s.paint.uv !== undefined && s.paint.uv.length >= 4)
@@ -819,13 +964,45 @@ function syncPaintTex(r: R3D, app: App) {
   }
 }
 
-/** 시점의 몫 — 매 프레임: ① 쪽(48-5) ② 해상도 단계(투영 크기 → 2^n · 바뀌면 재굽기).
- *  판정 내역을 userData.gate에 남긴다(rep의 규약 — 같은 계산의 기록 · #54). */
+/** 시점의 몫 — 매 프레임. web2-72가 이 함수를 **두 걸음**으로 갈랐다:
+ *
+ *   1차(판정)  쪽(48-5) · 화면 크기 · **요구 단계**. 여기서는 아무것도 안 굽는다.
+ *   배분(§3)   보이는 (면,쪽)의 요구가 예산을 넘으면 «화면에서 작은 면부터» 단계를 한 칸
+ *              내려 합을 예산 안에 넣는다. **퇴출은 안 보이는 것에만**(evictPaintTex).
+ *   2차(굽기)  큰 면부터 · **프레임 예산(PAINT72_BAKE_MS_PER_FRAME) 안에서만**. 남은 것은
+ *              다음 프레임에 이어 굽는다(옛 그림은 그대로 화면에 있다 — 빈 프레임 0).
+ *
+ * 왜 갈랐나(§0 실측 · perf72_pre_web2_dpr2.json): 궤도 4초에 단계 내림이 아홉 번 나고 그때마다
+ * 그 면의 획 마흔을 **동기로** 전량 재굽기해서 프레임이 7.5초까지 갔다(가설 1 실증). 열 때는
+ * 보이는 면 전부를 첫 프레임에 구워 메인이 6.7초 막혔다(가설 3 실증 — 사람이 「무한 로딩」이라
+ * 부른 그것). 판정과 굽기가 한 고리에 있으면 «언제 굽나»를 못 고른다.
+ *
+ * 판정 내역을 userData.gate에 남긴다(rep의 규약 — 같은 계산의 기록 · #54). */
 function gatePaintTex(r: R3D, app: App) {
   if (paintTexes.size === 0) return
   const vs = viewScale(app)
   const dpr = r.renderer.getPixelRatio()
   const hatchFaceMode = getHatchMode() === 'face'
+  const nowT = performance.now()
+  // ── §2 동결 — 상호작용 중에는 단계가 안 바뀐다 ────────────────────────────────────
+  // 카메라가 움직였는가는 **포즈와 배율의 서명**으로 본다(main의 협조가 필요 없다 —
+  // 돌리기·이동·줌이 전부 여기로 들어온다). 멈추고 PAINT72_SETTLE_MS 뒤에 한 번 재평가한다.
+  const sig = poseSigOf(app)
+  if (sig !== lastPoseSig) { lastPoseSig = sig; lastPoseMoveAt = nowT }
+  const frozen = !paintLevelFreezeOff && (nowT - lastPoseMoveAt < C.PAINT72_SETTLE_MS || paintPointerDown)
+  if (frozen) bakeStat.frozenFrames++
+
+  interface Plan {
+    e: PaintTexEntry; rf: ResolvedFace; face: Face | undefined
+    sideOk: boolean; screenPx: number; lv: number
+    rep: RepBake | null; famBits: number
+    hatch: { face: Face; spacingWorld: number } | null
+    hs: ReturnType<typeof hatchSpecOf> | null
+    texelQ: number | null
+  }
+  const plans: Plan[] = []
+
+  // ══ 1차 — 판정만 ══════════════════════════════════════════════════════════════
   for (const e of paintTexes.values()) {
     const rf = app.faces.find(x => x.id === e.faceId)
     const face = app.doc.faces.find(f => f.id === e.faceId)
@@ -847,7 +1024,10 @@ function gatePaintTex(r: R3D, app: App) {
       if (q.y > y1) y1 = q.y
     }
     const screenPx = n >= 2 ? Math.max(x1 - x0, y1 - y0) * vs * dpr : C.FACETEX_MIN_PX
-    const lv = texLevel(screenPx)
+    // ── 단계: ① 히스테리시스 ② 그림 탑(내려가는 것은 안 굽는다) ③ 동결 ────────────────
+    let lv = levelWithHysteresis(screenPx, e.level)
+    if (!paintLevelFreezeOff && e.level > 0 && lv < e.level) lv = e.level   // §1-2 그림 탑 — 내림은 GPU 표집의 몫(반증 스위치가 이것도 끈다)
+    if (frozen && e.level > 0) lv = e.level              // §2 동결 — 도는 동안은 열쇠가 안 움직인다
     // web2-52 — 이 (면, 쪽)의 재료 몫: 쪽이 rep.s와 같을 때만 굽는다(49의 쪽 규약).
     // px/mm은 49 gateRep의 그 자(면 중심에서 0.01 세계단위의 투영)를 그대로 쓴다(#54).
     let rep: RepBake | null = null
@@ -873,28 +1053,107 @@ function gatePaintTex(r: R3D, app: App) {
     // web2-55 — 테두리('e')는 띠의 몸만 굽는다: 해칭·무늬는 면의 것이라 띠에 없다.
     const hatch = e.side !== 'e' && hatchFaceMode && face?.fill === 1 && face
       ? { face, spacingWorld: faceHatchSpacingWorld(app.lift.an, rf, hatchSpecOf(face).spacingPx) } : null
-    // ── web2-65 ① — 굽기 **조건**의 서명. 이 (면, 쪽)이 «실제로 의존하는 것»만 든다
-    // (#110 — 문서 전체의 판 번호가 아니다). 여기 안 든 것이 굽기를 바꾸면 낡은 그림이
-    // 남으므로, 새 입력을 굽기에 더하는 라운드는 **이 줄도 같이 고친다**(게이트 ⑤가 지킨다).
-    // ⚠ rep의 texelPerPx·pxPerMm은 «줌의 연속값»이라 안 넣는다 — 넣으면 매 프레임 재굽기다.
-    //   그 둘의 실제 효과(계열 보임)는 famBits가 들고, 굵기 몫은 종전대로 단계에 붙는다(49 규약).
     const hs = hatch && face ? hatchSpecOf(face) : null
     // web2-67 §2 — 무늬 선 굵기의 «계단»(위 repTexelSigOff 주석이 정본): 무늬 있는 재료만.
+    // ⚠ web2-72 §2 — 이것도 **같은 동결 아래** 둔다(무늬 굵기는 멈춘 뒤 맞으면 된다).
     const texelQ = !repTexelSigOff && rep && isRepId(rep.m)
-      ? Math.round(Math.log2(Math.max(1e-9, rep.texelPerPx)) * C.REP67_TEXEL_STEPS_PER_OCT) : null
-    const bakeSig = `${lv}|${famBits}|`
-      + (hatch && hs && face ? `${hs.angleDeg}:${hs.cross ? 1 : 0}:${hatchHexOf(face)}:${hatch.spacingWorld.toFixed(9)}` : '')
-      + '|' + (e.side !== 'e' && rep ? `${rep.m}:${rep.seed}:${rep.mm}` : '')
-      + (texelQ !== null ? `|tq${texelQ}` : '')
-      + '|' + boxSig(e.box)
-    if (bakeSig !== e.bakeSig || e.docKey !== paintKey) {
-      const strokes = e.side === 'e' ? borderStrokesOf(app, e.faceId)
-        : e.side === 0 ? [] : paintStrokesOf(app, e.faceId, e.side)
+      ? (frozen && e.sigParts && e.frozenTexelQ !== undefined && e.frozenTexelQ !== null ? e.frozenTexelQ : Math.round(Math.log2(Math.max(1e-9, rep.texelPerPx)) * C.REP67_TEXEL_STEPS_PER_OCT))
+      : null
+    plans.push({ e, rf, face, sideOk, screenPx, lv, rep, famBits, hatch, hs, texelQ })
+  }
+
+  // ══ §3 배분 — 퇴출이 아니라 «나눠 가진다» ═══════════════════════════════════════
+  // 65 ⑤는 예산을 넘으면 버렸다(보이는 면이 예산을 넘으면 매 프레임 퇴출→재굽기 순환).
+  // 바꾼다: 보이는 (면,쪽)의 요구 합이 예산을 넘으면 **화면에서 작은 면부터 한 칸씩 내려**
+  // 합을 예산 안에 넣는다. 흐림의 상한은 게이트가 «내려간 단계의 텍셀/px ≥ 0.5»로 잰다.
+  {
+    const vis = plans.filter(p => p.sideOk)
+    const bytesOf = (p: Plan): number => {
+      const d = texDims(p.e.box, p.lv)
+      return d.w * d.h * 4 * (paintAccumOff ? 1 : 2)      // 표시 캔버스 + 바탕 사본
+    }
+    /** 이 자리를 «한 칸 더» 내릴 수 있는가 — 흐림의 바닥을 지킨다(텍셀/px ≥ 값).
+     *  바닥이 없으면 배분이 작은 면 하나를 최소 단계까지 밀어 그림을 못 알아보게 만든다
+     *  (첫 판 실측: 셋 중 하나가 64로 가라앉았다). 지시 §3의 「내려간 면의 텍셀/px ≥ 0.5」가
+     *  게이트이자 여기 규칙이다 — 게이트와 코드가 같은 자를 쓴다(#54). */
+    const canLower = (p: Plan): boolean =>
+      p.lv > C.FACETEX_MIN_PX && (p.lv / 2) >= p.screenPx * C.PAINT72_ALLOC_TEXEL_PER_PX_MIN
+    let sum = 0
+    for (const p of vis) sum += bytesOf(p)
+    let guard = 0
+    while (sum > texBudget && guard++ < 500) {
+      // **덜 손해 보는 쪽부터**: 텍셀/px가 가장 큰 자리(= 화면에 견줘 가장 크게 구운 자리).
+      // 단계가 같으면 그것은 «화면에서 가장 작은 면»이다(지시 §3의 문면과 같은 것).
+      let t: Plan | null = null
+      for (const p of vis) {
+        if (!canLower(p)) continue
+        if (!t || p.lv / Math.max(1, p.screenPx) > t.lv / Math.max(1, t.screenPx)) t = p
+      }
+      if (!t) break                                       // 더 못 내린다 — 예산 초과를 값으로 남긴다
+      const before = bytesOf(t)
+      t.lv = Math.max(C.FACETEX_MIN_PX, t.lv / 2)
+      sum -= before - bytesOf(t)
+      bakeStat.allocDowns++
+    }
+    bakeStat.allocBytes = sum
+  }
+
+  // ══ 2차 — 굽기(큰 면부터 · 프레임 예산 안에서) ═══════════════════════════════════
+  // ⚠⚠ 동결 중에는 **프레임을 계속 부른다**. 안 그러면 「멈추고 150ms 뒤에 한 번 재평가」가
+  //   영영 안 온다 — 카메라가 멈추면 invalidate가 끊기고, 끊기면 재평가할 프레임이 없다.
+  //   (실측이 잡았다: paint65 ④-d가 줌인 뒤 단계 512에 굳었다.) 동결 창은 150ms라 유한하다.
+  bakePending = frozen
+  // 예산은 «지금 사람이 만지고 있는가»로 갈린다: 만지는 중이면 4ms(지연이 곧 감각이다),
+  // 쉬는 중이면 12ms(칠이 빨리 채워진다 — §4의 「칠은 뒤따라 온다」).
+  const budgetMs = paintBakeSliceOff ? Infinity
+    : (frozen ? C.PAINT72_BAKE_MS_PER_FRAME : C.PAINT72_BAKE_MS_IDLE)
+  const t0Frame = performance.now()
+  const order = [...plans].sort((a, b) => (b.sideOk ? b.screenPx : -1) - (a.sideOk ? a.screenPx : -1))
+  for (const pl of order) {
+    const { e, rf, face, sideOk, screenPx, rep, famBits, hatch, hs, texelQ } = pl
+    const lv = pl.lv
+    // web2-72 §0 표식 — 열쇠를 «조각»으로 들고 갈린 조각을 센다(가설 1의 판별자).
+    const parts = {
+      lv: String(lv),
+      fam: String(famBits),
+      hatch: hatch && hs && face ? `${hs.angleDeg}:${hs.cross ? 1 : 0}:${hatchHexOf(face)}:${hatch.spacingWorld.toFixed(9)}` : '',
+      rep: e.side !== 'e' && rep ? `${rep.m}:${rep.seed}:${rep.mm}` : '',
+      texelQ: texelQ !== null ? `|tq${texelQ}` : '',
+      box: boxSig(e.box),
+    }
+    const bakeSig = `${parts.lv}|${parts.fam}|${parts.hatch}|${parts.rep}${parts.texelQ}|${parts.box}`
+    const wantWork = bakeSig !== e.bakeSig || e.docKey !== paintKey || e.pending !== null
+    if (wantWork) {
+      // 프레임 예산이 끝났으면 **이 프레임은 여기까지** — 옛 그림이 화면에 그대로 남는다.
+      // ⚠⚠ **아직 한 번도 안 구운 자리도 미룬다.** 첫 판은 `e.level > 0`을 달아 «처음 서는
+      //   자리»를 예산 밖으로 뒀는데, 열 때는 모든 자리가 그 경우라 **첫 프레임이 스물셋을
+      //   통째로** 구웠다(실측: 메인 최장 차단 1.7초 · perf72). §4의 문면이 「첫 프레임은
+      //   칠 없이」이므로 미루는 것이 맞다 — 안 구워진 자리는 그동안 «칠 없이» 그려진다.
+      if (performance.now() - t0Frame > budgetMs) {
+        bakePending = true
+        bakeStat.deferred++
+        e.mesh.visible = sideOk && e.level > 0
+        e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
+        continue
+      }
+      if (e.bakeSig !== '' && e.sigParts) {
+        const q = e.sigParts
+        if (q.lv !== parts.lv) { bakeStat.sigChange.lv++; if (lv > Number(q.lv)) bakeStat.levelUp++; else bakeStat.levelDown++ }
+        if (q.texelQ !== parts.texelQ) bakeStat.sigChange.texelQ++
+        if (q.fam !== parts.fam) bakeStat.sigChange.fam++
+        if (q.hatch !== parts.hatch) bakeStat.sigChange.hatch++
+        if (q.rep !== parts.rep) bakeStat.sigChange.rep++
+        if (q.box !== parts.box) bakeStat.sigChange.box++
+        if (bakeSig === e.bakeSig) bakeStat.sigChange.doc++
+      }
+      const strokes = strokesForTex(app, e)
       const sigs = strokes.map(sigOfPaintStroke)
       e.docKey = paintKey
+      e.sigParts = parts
+      if (texelQ !== null) e.frozenTexelQ = texelQ
       // ③ 누적 — 굽기 조건이 그대로이고, 획 목록이 «앞자리 그대로 + 뒤에 더»이고,
       // 바탕 사본과 엔진의 층이 살아 있을 때만. 하나라도 어긋나면 전량 재굽기다.
-      const canAppend = !paintAccumOff && bakeSig === e.bakeSig && e.bg !== null
+      const canAppend = e.pending === null && !paintAccumOff && bakeSig === e.bakeSig && e.bg !== null
         && e.side !== 0 && sigs.length > e.sigs.length && sigsArePrefix(e.sigs, sigs)
         && paintLayerAlive(e.canvas)
       let done = false
@@ -954,36 +1213,70 @@ function gatePaintTex(r: R3D, app: App) {
         }
         // ok가 false면 층이 도중에 죽었거나 초안 장부가 어긋난 것이다 — 아래 전량 재굽기가 받는다(조용한 갈림 ⛔)
       }
-      if (!done && (bakeSig !== e.bakeSig || !sigsArePrefix(sigs, e.sigs) || sigs.length !== e.sigs.length)) {
-        // web2-66 — 전량 재굽기는 층을 새로 세운다: 초안 세션·장부도 여기서 접는다
-        draftCancelOnTex(e.canvas)
-        draftRecs.delete(e.canvas)
-        if (!e.bg && !paintAccumOff) e.bg = document.createElement('canvas')
-        if (paintAccumOff) e.bg = null
+      if (!done && (e.pending !== null || bakeSig !== e.bakeSig || !sigsArePrefix(sigs, e.sigs) || sigs.length !== e.sigs.length)) {
+        // ── §1 **시간 분할 재굽기**: 바탕을 한 번 세우고, 획은 프레임 예산 안에서 «몇 개씩» ──
+        // 이어 굽는 도중에도 캔버스는 늘 온전한 그림이다(바탕 + 지금까지의 획) — 빈 프레임이 없다.
         const t0 = performance.now()
-        const w0 = e.canvas.width, h0 = e.canvas.height
-        bakeFaceTex(e.canvas, rf, e.box, lv, strokes, e.side === 0 ? 1 : e.side, hatch, e.side === 'e' ? null : rep, e.bg)
+        let pend = e.pending
+        const fresh = pend === null || pend.sig !== bakeSig
+        if (fresh) {
+          // web2-66 — 층을 새로 세운다: 초안 세션·장부도 여기서 접는다
+          draftCancelOnTex(e.canvas)
+          draftRecs.delete(e.canvas)
+          if (!e.bg && !paintAccumOff) e.bg = document.createElement('canvas')
+          if (paintAccumOff) e.bg = null
+          const w0 = e.canvas.width, h0 = e.canvas.height
+          // ⚠⚠ **GPU 저장은 «첫 크기»로 굳는다**(65의 그 실측 — 아래 주석). 크기가 바뀌면 놓는다.
+          bakeFaceTex(e.canvas, rf, e.box, lv, [], e.side === 0 ? 1 : e.side, hatch, e.side === 'e' ? null : rep, e.bg)
+          if (e.canvas.width !== w0 || e.canvas.height !== h0) { e.tex.dispose(); bakeStat.texReallocs++ }
+          pend = { sig: bakeSig, lv, strokes, sigs, done: 0 }
+          bakeStat.bakes++
+        } else {
+          pend!.strokes = strokes; pend!.sigs = sigs      // 같은 열쇠 · 목록만 자랐다(그리는 중)
+        }
+        const P = pend!
+        // 누적 얹기와 **같은 함수**로 이어 굽는다(#54 — 두 길이 갈릴 자리가 없다)
+        while (P.done < P.strokes.length) {
+          if (!paintBakeSliceOff && P.done > 0 && performance.now() - t0Frame > budgetMs) break
+          const b = e.bg ? appendMarkOnTex(e.canvas, e.bg, rf, e.box, lv, P.strokes[P.done]!, e.side === 0 ? 1 : e.side) : null
+          if (!b) { P.done = -1; break }                  // 못 얹는다 — 아래에서 전량으로 받는다
+          P.done++
+          bakeStat.bakedStrokes++
+        }
+        if (P.done < 0) {
+          // 폴백 — 누적이 안 서는 판(반증 스위치·층 죽음): 옛 전량 통로 그대로(조용한 갈림 ⛔)
+          bakeFaceTex(e.canvas, rf, e.box, lv, strokes, e.side === 0 ? 1 : e.side, hatch, e.side === 'e' ? null : rep, e.bg)
+          bakeStat.bakedStrokes += strokes.length
+          P.done = strokes.length
+        }
         bakeStat.ms += performance.now() - t0
-        // ⚠⚠ **GPU 저장은 «첫 크기»로 굳는다** — three r185는 WebGL2에서 `texStorage2D`로 한 번
-        // 할당하고 그 뒤는 `texSubImage2D`로만 올린다(불변 저장). 65가 항목을 살려 쓰면서(②)
-        // 텍스처도 살아남았고, **캔버스가 커져도 GPU는 옛 크기 그대로**여서 화면에는 «옛 그림이
-        // 늘어난» 것이 나왔다 — CPU 캔버스는 정확했으므로 굽힌 캔버스 해시로는 안 잡힌다.
-        // 잡은 것은 무회귀 팔 `thick55 ④`(테두리 띠 t 200→500 · 질량이 t에 비례 · 500/400 1.255)다.
-        // 크기가 바뀌면 텍스처를 «놓아» 다시 할당시킨다(dispose → properties 비움 → texStorage2D 재실행).
-        if (e.canvas.width !== w0 || e.canvas.height !== h0) { e.tex.dispose(); bakeStat.texReallocs++ }
-        bakeStat.bakes++
-        bakeStat.bakedStrokes += strokes.length
         bakeStat.uploads++
         bakeStat.uploadBytes += e.canvas.width * e.canvas.height * 4
         e.tex.needsUpdate = true
-        e.sigs = sigs
         e.base = null                                // 기준 상태가 새로 섰다(59 — 미리보기 사본 폐기)
+        if (P.done >= P.strokes.length) {
+          e.pending = null
+          e.sigs = sigs
+          e.bakeSig = bakeSig
+        } else {
+          e.pending = P                              // 다음 프레임에 이어서
+          e.sigs = []
+          e.bakeSig = ''                             // 아직 «그 열쇠의 그림»이 아니다
+          bakePending = true
+          bakeStat.sliced++
+        }
+        e.level = lv
+        e.famBits = famBits
+        e.mesh.visible = sideOk && e.level > 0
+        e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
+        continue
       }
       e.bakeSig = bakeSig
       e.level = lv
       e.famBits = famBits
     }
-    e.mesh.visible = sideOk
+    // §4 — 아직 한 번도 안 구운 (면,쪽)은 «칠 없이» 그린다(첫 프레임은 선·면만 · 칠은 뒤따라 온다)
+    e.mesh.visible = sideOk && e.level > 0
     // screenPx(양자화 «전» 값)와 포화 여부를 기록한다(2차 [8] — 상한 포화와 «비슷한
     // 크기»를 팔이 가르는 재료. 같은 계산의 기록이지 두 벌 계산이 아니다 #54).
     e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
@@ -1070,6 +1363,7 @@ function evictPaintTex(r: R3D): void {
     e.bakeSig = ''
     e.docKey = ''
     e.sigs = []
+    e.pending = null                             // web2-72 §1 — 이어 굽던 판도 층과 운명을 같이한다
     e.tex.dispose()
     e.evicted = true
     e.mesh.visible = false
@@ -1104,8 +1398,7 @@ export function paintDraftFrameStats(): PaintDraftStat {
 export function resetPaintDraftFrameStats(): void { draftStat = zeroDraftStat() }
 /** 이 (면,쪽)의 확정 칠 획들(굽기 입력과 같은 함수 — 아래 인계·재구축이 쓴다) */
 function committedStrokesOf(app: App, e: PaintTexEntry): Stroke[] {
-  return e.side === 'e' ? borderStrokesOf(app, e.faceId)
-    : e.side === 0 ? [] : paintStrokesOf(app, e.faceId, e.side)
+  return strokesForTex(app, e)          // web2-72 §1-2 — 굽기와 **같은 입력**(색인 하나 · #54)
 }
 
 /** 옛 전량 되그리기 판(59~65) — **폴백·반증 전용**(paintFreezeOff · 누적 끔 · 세션 불가).
@@ -1360,7 +1653,7 @@ export function corruptPaintTexForTest(): number {
 export function rebakePaintTexForTest(): void {
   // web2-65 — 단계뿐 아니라 **굽기 서명**도 지운다. 65부터 재굽기의 판정자가 서명이라
   // level만 0으로 두면 조건이 같다고 읽혀 «안 굽는다»(게이트 ⑤의 그 결함).
-  for (const e of paintTexes.values()) { e.level = 0; e.bakeSig = ''; e.docKey = '' }
+  for (const e of paintTexes.values()) { e.level = 0; e.bakeSig = ''; e.docKey = ''; e.pending = null }
 }
 
 

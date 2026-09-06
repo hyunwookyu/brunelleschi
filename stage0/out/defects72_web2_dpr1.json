@@ -1,0 +1,534 @@
+{
+  "conditions": {
+    "project": "dpr1",
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/defects72.spec.ts (#99)"
+  },
+  "what": "web2-72 §A — 결함 넷(대는 동안 안 보임 · 필통 중복 · 누름 하이라이트 번짐 · 휠이 접힘)의 재현과 게이트",
+  "note_pitfalls": "#42(착수 표) · #99(워커 1) · #101(web2 안) · #103(장면 확인 — 면이 섰는가) · #107(자는 되돌리기 «전»에 뜬다 — A-1은 펜을 «든 채» 잰다) · #111(미리보기의 자는 시간과 이동량 둘 — A-1은 «첫 프레임에 잉크가 있는가»의 시간 축)",
+  "pitfall_citations": [
+    42,
+    99,
+    101,
+    103,
+    107,
+    108,
+    111
+  ],
+  "selfcheck_notes": {
+    "zero_counters": "a1.release_diff_ink 0은 «미리보기 == 확정본»(59)의 통과값이다 — 같은 자가 반증(freeze off)에서 0이 아닌 값을 낸다",
+    "identical_pairs": "a4의 open_after_* 참 나열은 규약 그 자체다(패널 안 조작은 안 닫는다) — 짝인 close_after_canvas_tap이 거짓/참을 가른다"
+  },
+  "a1": {
+    "presets": 207,
+    "blind_whole_stroke": [],
+    "blind_whole_stroke_n": 0,
+    "slow_first_dab": [
+      {
+        "name": "Dieterle/Splash",
+        "first_ink_travel_px": 28.6
+      },
+      {
+        "name": "Dieterle/Tail_Feathers2",
+        "first_ink_travel_px": 28.6
+      },
+      {
+        "name": "classic/modelling2",
+        "first_ink_travel_px": 57.3
+      },
+      {
+        "name": "classic/slow_ink",
+        "first_ink_travel_px": 28.6
+      },
+      {
+        "name": "deevad/spray",
+        "first_ink_travel_px": 28.6
+      },
+      {
+        "name": "ramon/Round_Bl",
+        "first_ink_travel_px": 28.6
+      },
+      {
+        "name": "experimental/DNA_brush",
+        "first_ink_travel_px": 43
+      },
+      {
+        "name": "experimental/pick_and_drag",
+        "first_ink_travel_px": 28.6
+      },
+      {
+        "name": "experimental/spaced-blot",
+        "first_ink_travel_px": 28.6
+      },
+      {
+        "name": "tanda/splatter-04",
+        "first_ink_travel_px": 43
+      }
+    ],
+    "slow_first_dab_n": 10,
+    "first_ink_travel_px": {
+      "min": 14.3,
+      "median": 14.3,
+      "max": 57.3
+    },
+    "no_mark_on_blank": [
+      "Dieterle/Blender",
+      "Dieterle/Dissolver",
+      "Dieterle/Eraser",
+      "Dieterle/Posterizer",
+      "classic/blending_knife",
+      "classic/blur",
+      "classic/imp_blending",
+      "classic/ink_eraser",
+      "classic/smudge",
+      "classic/wet_knife",
+      "deevad/blending",
+      "deevad/grainy_blending",
+      "deevad/kneaded_eraser",
+      "deevad/kneaded_eraser_large",
+      "deevad/large_hard_eraser",
+      "deevad/only_water_fringe",
+      "deevad/sponge_smudging",
+      "deevad/thin_hard_eraser",
+      "ramon/Blur_Fast",
+      "ramon/Dirty_Noise",
+      "ramon/Grain",
+      "ramon/Hard_Eraser",
+      "ramon/Knife",
+      "ramon/Smear",
+      "ramon/Soft_Eraser",
+      "tanda/acrylic-03-only-water",
+      "tanda/acrylic-04-only-water",
+      "tanda/acrylic-05-only-water",
+      "tanda/charcoal-blur1",
+      "tanda/oil-01-clean",
+      "tanda/oil-03-clean",
+      "tanda/oil-06-clean",
+      "tanda/oil-mop",
+      "tanda/splatter-02",
+      "tanda/water-01",
+      "tanda/water-02",
+      "tanda/water-05",
+      "tanda/water-06",
+      "tanda/watercolor-02-water",
+      "kaerhon_v1/airsmudge_a",
+      "kaerhon_v1/paint_sm",
+      "kaerhon_v1/Smear_sm"
+    ],
+    "no_mark_on_blank_n": 42,
+    "release_ink_ratio_nonzero": [
+      {
+        "name": "classic/textured_ink",
+        "ratio": 0.0003
+      },
+      {
+        "name": "ramon/Glow_Airbrush",
+        "ratio": 0.0548
+      },
+      {
+        "name": "tanda/marker-01",
+        "ratio": 0.0087
+      }
+    ],
+    "release_ink_ratio_nonzero_n": 3,
+    "release_ink_ratio_max": 0.0548,
+    "sample_rows": [
+      {
+        "name": "brunelleschi/colored_pencil",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 3814,
+        "upInk": 3814,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/marker",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 2713,
+        "upInk": 2713,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/pencil_HB",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 3157,
+        "upInk": 3157,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/pencil_B",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 3838,
+        "upInk": 3838,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/pencil_2B",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 4658,
+        "upInk": 4658,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/pencil_4B",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 5606,
+        "upInk": 5606,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/pencil_6B",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 5583,
+        "upInk": 5583,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/pencil_8B",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 7227,
+        "upInk": 7227,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/charcoal_H",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 2507,
+        "upInk": 2507,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/charcoal_M",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 2820,
+        "upInk": 2820,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "brunelleschi/charcoal_S",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 3535,
+        "upInk": 3535,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      },
+      {
+        "name": "Dieterle/8B_Pencil#1",
+        "firstInk": 1,
+        "firstInkTravelPx": 14.3,
+        "heldInk": 2616,
+        "upInk": 2616,
+        "releaseInkRatio": 0,
+        "blindWholeStroke": false,
+        "noMarkOnBlank": false
+      }
+    ],
+    "note": "자: 칠 텍스처의 잉크 픽셀 수(diag.paintTexHash — 굽기가 실제로 쓰는 캔버스). 「대는 동안」은 pointerdown 뒤 이동 여덟까지(총 114.5px) 매 프레임. ⚠ 지시의 게이트 문면(「60ms 안 첫 잉크 > 0」)은 **이동량과 뒤섞인 자**였다 — 합성 펜의 한 이동이 14.3px이라 도장 간격이 그보다 큰 브러시는 첫 프레임에 뜰 수 없다(브러시의 성질 · D-4). 결함의 자는 「획을 긋는 동안 한 번도 안 뜬다」로 좁혔다.",
+    "distinct_held_ink": 152
+  },
+  "thresholds": {
+    "PAINT72_RELEASE_INK_RATIO_MAX": 0.08
+  },
+  "a2": {
+    "base": [
+      "pencil|brunelleschi/pencil_HB",
+      "pencil|brunelleschi/pencil_4B",
+      "pencil|brunelleschi/charcoal_M",
+      "cp|brunelleschi/colored_pencil",
+      "marker|brunelleschi/marker",
+      "brush|deevad/watercolor_expressive",
+      "brush|deevad/liner"
+    ],
+    "base_dup": [],
+    "migrated": [
+      "pencil|classic/pencil",
+      "brush|deevad/liner",
+      "marker|brunelleschi/marker",
+      "cp|brunelleschi/colored_pencil",
+      "pencil|classic/charcoal",
+      "brush|deevad/watercolor_expressive",
+      "pencil|brunelleschi/pencil_4B"
+    ],
+    "migrated_dup": [],
+    "migrated_flag": 1,
+    "migrated_looks": [
+      "pencil|HB",
+      "pen|",
+      "marker|",
+      "cp|",
+      "charcoal|중",
+      "brush|",
+      "pencil|4B"
+    ],
+    "migrated_looks_dup": [],
+    "roundtrip": [
+      "pencil|classic/pencil",
+      "brush|deevad/liner",
+      "marker|brunelleschi/marker",
+      "cp|brunelleschi/colored_pencil",
+      "pencil|classic/charcoal",
+      "brush|deevad/watercolor_expressive",
+      "pencil|brunelleschi/pencil_4B"
+    ],
+    "roundtrip_dup": [],
+    "roundtrip_looks": [
+      "pencil|HB",
+      "pen|",
+      "marker|",
+      "cp|",
+      "charcoal|중",
+      "brush|",
+      "pencil|4B"
+    ],
+    "roundtrip_looks_dup": [],
+    "look": {
+      "head_has_sample_canvas": true,
+      "head_has_svg": false,
+      "head_text": "제도 라이너잉크펜 · deevad · lin",
+      "cell_has_svg": true,
+      "cell_has_sample_canvas": false
+    },
+    "note": "옛 판(64)의 2번 칸이 {brush, deevad/liner}였고 새 기본의 7번 칸도 같다 — 이주가 앞 여섯을 그대로 옮기면 두 칸이 「제도 라이너」가 된다(사람이 본 그것)."
+  },
+  "a3": {
+    "look_before": [
+      {
+        "id": "paint-fav-1",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-2",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-3",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-4",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-5",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-6",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-7",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-erase",
+        "tip": null,
+        "nums": "10px"
+      }
+    ],
+    "look_after_color": [
+      {
+        "id": "paint-fav-1",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-2",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-3",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-4",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-5",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-6",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-7",
+        "tip": "#2040ff",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-erase",
+        "tip": null,
+        "nums": "10px"
+      }
+    ],
+    "look_after_color_and_size": [
+      {
+        "id": "paint-fav-1",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-2",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-3",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-4",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-5",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-6",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-7",
+        "tip": "#ff2020",
+        "nums": "44px · 100%"
+      },
+      {
+        "id": "paint-erase",
+        "tip": null,
+        "nums": "10px"
+      }
+    ],
+    "look_after_tool_switch": [
+      {
+        "id": "paint-fav-1",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-2",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-3",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-4",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-5",
+        "tip": "#ff2020",
+        "nums": "44px · 100%"
+      },
+      {
+        "id": "paint-fav-6",
+        "tip": "#5a5a5a",
+        "nums": "10px · 100%"
+      },
+      {
+        "id": "paint-fav-7",
+        "tip": "#ff2020",
+        "nums": "44px · 100%"
+      },
+      {
+        "id": "paint-erase",
+        "tip": null,
+        "nums": "10px"
+      }
+    ],
+    "changed_by_color": [
+      "paint-fav-7"
+    ],
+    "changed_by_color_n": 1,
+    "changed_by_color_and_size": [
+      "paint-fav-7"
+    ],
+    "changed_by_color_and_size_n": 1,
+    "on_before": {
+      "case": 1,
+      "toolbar": 1,
+      "grade": 0,
+      "recent": 0
+    },
+    "on_during": {
+      "case": 1,
+      "toolbar": 1,
+      "grade": 0,
+      "recent": 1
+    },
+    "on_switched": {
+      "case": 1,
+      "toolbar": 1,
+      "grade": 0,
+      "recent": 1
+    },
+    "note": "⚠ 지시 §A-3의 가설(상태 클래스 on이 묶음 요소에 붙거나 선택 갱신이 전부에 on을 켠다)은 **반증됐다** — 수리 전에도 묶음마다 on은 정확히 하나였다(D-4: 사람이 준 근거는 확인 대상이다). 측정이 가리킨 것은 필통 칸의 «폴백»이다: 제 색·크기를 안 든 칸이 `f.hex ?? ps.hex`로 **지금 선택**을 그렸다 — 색 하나 바꾸면 일곱 칸의 촉이 동시에 물든다(수리 전 실측: 7/7). 수리는 폴백을 «처음 값»(CASE_FALLBACK)으로 바꾼 것이고, 따라 바뀌는 칸은 adopt가 사양을 실제로 기억한 그 칸 하나뿐이다."
+  },
+  "a4": {
+    "open_after_button": true,
+    "open_after_size_drag": true,
+    "open_after_opacity_drag": true,
+    "open_after_tick_tap": true,
+    "open_after_case_tap": true,
+    "open_after_canvas_stroke": true,
+    "closed_after_canvas_tap": true,
+    "open_after_reopen": true,
+    "closed_after_button_again": true,
+    "closed_by_other_box_r7": true,
+    "hex_after_case_tap": "#8a4a3a"
+  }
+}

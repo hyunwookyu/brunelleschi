@@ -1,0 +1,240 @@
+{
+  "conditions": {
+    "project": "dpr2",
+    "workers": 1,
+    "canonical": "LEDGER=1 PRE72=1 node tools/e2e.mjs ledger e2e/perf72.spec.ts (워커 1 — #99)",
+    "viewport": "playwright 기본(1200×800) · dpr는 project가 정한다 — 지시의 「ipad 꼴」은 dpr2가 그 자리다",
+    "human_fixture": null
+  },
+  "what": "web2-72 §0 — 부하 계측(A 돌릴 때 · B 열 때 · C 메모리)과 가설 넷의 실증/반증",
+  "tree": "수리 전(pre — 동결)",
+  "note_pitfalls": "#12·#14(동작점 하나·ms로 주장하지 않는다 — 정본은 «호출 수·훑은 획 수»이고 ms는 곁값) · #47(수치는 원장이 정본) · #99(워커 1) · #101(web2 안) · #103(장면 확인 — 면·칠 획 수) · #110(열쇠를 그 파생의 입력으로 좁힌다 — 가설 1이 그 형태의 잔여) · #111(미리보기의 자는 시간과 이동량 둘)",
+  "pitfall_citations": [
+    12,
+    14,
+    42,
+    47,
+    99,
+    101,
+    103,
+    110,
+    111
+  ],
+  "no_constants_snapshot": true,
+  "constants_used": {
+    "note": "web2 라인은 constantsSnapshot 기계가 없다(lens31·paint50의 no_constants_snapshot이 정본)"
+  },
+  "selfcheck_notes": {
+    "zero_counters": "수리 «후»의 orbit.bakes 0 · evicts 0은 §1·§2·§3의 통과값이다 — 같은 자가 수리 «전»(perf72_pre)에서 큰 값을 낸다(짝이 원장 둘로 남는다)"
+  },
+  "fixture": {
+    "source": "synthetic",
+    "faces": 23,
+    "docStrokes": 936,
+    "paintStrokes": 920,
+    "texEntries": 23,
+    "clampedFaces": 0,
+    "levels": {
+      "256": 23
+    }
+  },
+  "A_orbit": {
+    "frames": {
+      "n": 46,
+      "p50": 46.5,
+      "p95": 317.4,
+      "max": 322.5
+    },
+    "cost": {
+      "n": 46,
+      "r3": 1.100000023841858,
+      "bs": 0.19999998807907104,
+      "d2": 0.19999998807907104,
+      "total": 1.699999988079071,
+      "p95": 130.39999997615814,
+      "totalMax": 133.0999999642372
+    },
+    "bake": {
+      "bakes": 0,
+      "bakedStrokes": 0,
+      "appends": 0,
+      "appendStrokes": 0,
+      "handoverStrokes": 0,
+      "uploads": 0,
+      "uploadBytes": 0,
+      "ms": 0,
+      "drops": 0,
+      "rebuilds": 0,
+      "syncs": 0,
+      "evicts": 0,
+      "texReallocs": 0,
+      "scans": 0,
+      "scanCalls": 0,
+      "sigChange": {
+        "lv": 0,
+        "texelQ": 0,
+        "fam": 0,
+        "hatch": 0,
+        "rep": 0,
+        "box": 0,
+        "doc": 0
+      },
+      "levelUp": 0,
+      "levelDown": 0,
+      "entries": 23,
+      "bytes": 10752000,
+      "budget": 268435456,
+      "accum": true,
+      "partial": true
+    },
+    "emptyFrames": 0,
+    "durationMs": 4030,
+    "orbitDeg": 181
+  },
+  "B_open": {
+    "firstInteractiveMs": 13249,
+    "allPaintMs": 13252,
+    "longestBlockMs": 6665,
+    "bakes": 46,
+    "bakedStrokes": 1840,
+    "restoredStrokes": 936,
+    "editScans": 21505,
+    "editScanCalls": 23
+  },
+  "C_memory": {
+    "bytes": 10752000,
+    "budget": 268435456,
+    "entries": 23,
+    "visible": 23,
+    "levels": {
+      "256": 23
+    },
+    "clamped": 0
+  },
+  "hypotheses": {
+    "h1_level_in_bake_key": {
+      "verdict": "실증",
+      "sig_change_small": {
+        "lv": 0,
+        "texelQ": 0,
+        "fam": 0,
+        "hatch": 0,
+        "rep": 0,
+        "box": 0,
+        "doc": 0
+      },
+      "sig_change_zoomed": {
+        "lv": 9,
+        "texelQ": 0,
+        "fam": 0,
+        "hatch": 0,
+        "rep": 0,
+        "box": 0,
+        "doc": 0
+      },
+      "level_up": 0,
+      "level_down": 9,
+      "bakes_during_orbit_small": 0,
+      "bakes_during_orbit_zoomed": 9,
+      "baked_strokes_during_orbit_zoomed": 360,
+      "note": "궤도 중 열쇠가 갈린 원인을 조각별로 센다 — lv(단계)·tq(무늬 굵기 반옥타브)가 0이 아니면 「화면 크기가 굽기 열쇠에 들어 있다」가 실증된다."
+    },
+    "h2_lru_thrash": {
+      "verdict": "반증",
+      "evicts_during_orbit_small": 0,
+      "evicts_during_orbit_zoomed": 0,
+      "bytes": 10752000,
+      "bytes_zoomed": 47632384,
+      "budget": 268435456,
+      "visible_paint_faces": 23,
+      "levels_zoomed": {
+        "512": 22,
+        "1024": 1
+      },
+      "over_budget": false,
+      "note": "퇴출이 궤도 중에 돌면 「보이는 면이 예산을 넘어 매 프레임 퇴출→재굽기」다."
+    },
+    "h3_sync_bake_on_open": {
+      "verdict": "실증",
+      "longest_block_ms": 6665,
+      "first_interactive_ms": 13249,
+      "all_paint_ms": 13252,
+      "bakes_on_open": 46,
+      "note": "열 때 보이는 면을 첫 프레임에 «동기»로 구우면 메인 스레드가 그만큼 막힌다(50ms = 지시 §4의 상한)."
+    },
+    "h4_paint_strokes_scan": {
+      "verdict": "실증",
+      "scans_during_orbit": 0,
+      "scan_calls_during_orbit": 0,
+      "scan_per_call": 935,
+      "doc_strokes": 936,
+      "edit_scans": 21505,
+      "edit_scan_calls": 23,
+      "note": "호출 한 번에 훑는 획 수가 «문서 전체»면 실증. 수리 후에는 «그 면의 획 수»로 떨어진다(§1-2 색인)."
+    }
+  },
+  "A_orbit_zoomed": {
+    "frames": {
+      "n": 4,
+      "p50": 250.8,
+      "p95": 7538.1,
+      "max": 7538.1
+    },
+    "cost": {
+      "n": 4,
+      "r3": 0.3999999761581421,
+      "bs": 230.5,
+      "d2": 0.3999999761581421,
+      "total": 233.5,
+      "p95": 7480.599999964237,
+      "totalMax": 7480.599999964237
+    },
+    "bake": {
+      "bakes": 9,
+      "bakedStrokes": 360,
+      "appends": 0,
+      "appendStrokes": 0,
+      "handoverStrokes": 0,
+      "uploads": 9,
+      "uploadBytes": 8626176,
+      "ms": 7248.4,
+      "drops": 0,
+      "rebuilds": 0,
+      "syncs": 0,
+      "evicts": 0,
+      "texReallocs": 9,
+      "scans": 8424,
+      "scanCalls": 9,
+      "sigChange": {
+        "lv": 9,
+        "texelQ": 0,
+        "fam": 0,
+        "hatch": 0,
+        "rep": 0,
+        "box": 0,
+        "doc": 0
+      },
+      "levelUp": 0,
+      "levelDown": 9,
+      "entries": 23,
+      "bytes": 70762496,
+      "budget": 268435456,
+      "accum": true,
+      "partial": true
+    },
+    "emptyFrames": 0,
+    "durationMs": 7857,
+    "orbitDeg": 354
+  },
+  "C_memory_zoomed": {
+    "bytes": 47632384,
+    "budget": 268435456,
+    "entries": 23,
+    "visible": 23,
+    "levels": {
+      "512": 22,
+      "1024": 1
+    },
+    "clamped": 0
+  }
+}

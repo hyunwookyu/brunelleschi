@@ -20,9 +20,9 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest, paintBakePending, setPaintPointerDown, setPaintLevelFreezeOffForTest, paintLevelFreezeOffForTest, setPaintBakeSliceOffForTest, paintBakeSliceOffForTest, setPaintIndexOffForTest, paintIndexOffForTest, paintStrokeListsForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
-import { initFilePanel, type FilePanel } from './filepanel'
+import { initFilePanel, bootCost, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
@@ -57,6 +57,16 @@ const H = window.innerHeight
 const dpr = window.devicePixelRatio || 1
 
 const ink = document.getElementById('ink') as HTMLCanvasElement
+// web2-72 §2 — **손이 닿아 있는 동안 칠 텍스처의 단계를 얼린다**(그리는 중·끄는 중에 재굽기 0).
+// 여기가 «손이 캔버스에 있다»의 단일 지점이다(#54) — 굽기 쪽은 이 술어와 포즈 서명만 본다.
+// 손가락이 둘 이상일 수 있으므로(두 손가락 끌기 = 이동/확대) **셈**으로 든다.
+{
+  const down = new Set<number>()
+  ink.addEventListener('pointerdown', (e) => { down.add(e.pointerId); setPaintPointerDown(true) }, true)
+  const up = (e: PointerEvent) => { down.delete(e.pointerId); if (down.size === 0) setPaintPointerDown(false) }
+  ink.addEventListener('pointerup', up, true)
+  ink.addEventListener('pointercancel', up, true)
+}
 const gl = document.getElementById('gl') as HTMLCanvasElement
 initNotice(document.getElementById('notice')!)
 
@@ -141,8 +151,36 @@ const diagPanel = initDiagPanel(
       })()],
       ['③ 프레임 합 ms', (() => {
         const q = frameCostQ()
-        return q ? `중앙 ${q.total.toFixed(2)} · 최악 ${q.totalMax.toFixed(2)}`
+        return q ? `중앙 ${q.total.toFixed(2)} · p95 ${q.p95.toFixed(2)} · 최악 ${q.totalMax.toFixed(2)}`
           + ` (3D ${q.r3.toFixed(2)} · 흑연 ${q.bs.toFixed(2)} · 2D ${q.d2.toFixed(2)}) · 표본 ${q.n}` : '—'
+      })()],
+      // ── web2-72 §5 — **다음에 사람이 「버벅인다」고 하면 읽는 숫자 셋**(A 돌릴 때 · B 열 때 ·
+      //   C 메모리). 지금까지는 그 물음이 오면 세션이 계측 하네스를 새로 짰다 — 그 자리를 여기
+      //   상시 숫자로 둔다. 전부 **그 자리에서 읽는 현재값**이고 패널이 측정을 일으키지 않는다.
+      ['Ⓐ 칠 굽기', (() => {
+        const b = paintBakeStats()
+        return `굽기 ${b.bakes}(획 ${b.bakedStrokes}) · 얹기 ${b.appends}(획 ${b.appendStrokes})`
+          + ` · 미룸 ${b.deferred} · 조각 ${b.sliced} · 얼린 프레임 ${b.frozenFrames} · ${b.ms.toFixed(1)}ms`
+      })()],
+      ['Ⓐ 단계·훑기', (() => {
+        const b = paintBakeStats()
+        return `올림 ${b.levelUp} · 내림 ${b.levelDown}(굽기 0이어야 한다) · 열쇠갈림 lv ${b.sigChange.lv}/tq ${b.sigChange.texelQ}`
+          + ` · 훑은 획 ${b.scans}/${b.scanCalls}회 · 색인 ${b.indexRebuilds}회(${b.indexScans})`
+      })()],
+      ['Ⓑ 열 때', (() => {
+        const c = bootCost
+        return c.strokes === 0 ? '— (이 판은 복원 없이 열렸다)'
+          : `파싱 ${c.parseMs.toFixed(1)}ms · 앉히기 ${c.applyMs.toFixed(1)}ms · ${(c.bytes / 1024).toFixed(0)}KB · 획 ${c.strokes}`
+      })()],
+      ['Ⓒ 칠 메모리', (() => {
+        const b = paintBakeStats()
+        const t = paintTexStats()
+        const vis = t.filter(e => e.visible)
+        const lv: Record<string, number> = {}
+        for (const e of vis) lv[String(e.level)] = (lv[String(e.level)] ?? 0) + 1
+        return `${(b.bytes / 1048576).toFixed(1)} / ${(b.budget / 1048576).toFixed(0)} MB`
+          + ` · 자리 ${b.entries}(보임 ${vis.length}) · 배분내림 ${b.allocDowns} · 퇴출 ${b.evicts}`
+          + ` · 단계 ${Object.entries(lv).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
       })()],
       // ── 어떤 오스냅이 이 획을 정했나(web2-18 2-c) — 사람이 「정확히 어떤 오스냅
       // 때문인지는 모르겠지만」이라고 했다. 그것을 앱이 말한다. 값은 앱이 실제로 쓴
@@ -2330,6 +2368,10 @@ const FAV_DEFAULT: Fav[] = [
   { i: 'cp', br: DEFAULT_BRUSH.cp }, { i: 'marker', br: DEFAULT_BRUSH.marker }, { i: 'brush', br: 'deevad/watercolor_expressive' }, { i: 'brush', br: DEFAULT_BRUSH.brush },
 ]
 const isInstr = (v: unknown): v is Instr => v === 'brush' || v === 'marker' || v === 'cp' || v === 'pencil'
+/** web2-72 §A-3 — **제 사양을 안 든 칸이 보일 값**. 지금 선택이 아니라 «처음 값»이다
+ *  (state.ts의 `paintSel` 초기값과 같은 출처 — #54). 칸이 지금 선택을 따라 움직이면
+ *  도구 하나를 누를 때 여덟 칸이 한꺼번에 물들어 「전부 하이라이트」로 보인다. */
+const CASE_FALLBACK = { hex: MAT.HB.color, w: C.MARKER_W_PX, o: 1 } as const
 /** 저장물 → 칸 일곱(모양이 틀린 칸은 기본으로 — 조용히 죽지 않는다) */
 const parseFavs = (arr: unknown): Fav[] =>
   FAV_DEFAULT.map((d, k) => {
@@ -2349,7 +2391,8 @@ const readFavs = (): Fav[] => {
     if (raw !== null) return parseFavs(JSON.parse(raw) as unknown)
     // 새 판이 없다 — 옛 판(64)이 있으면 앞 여섯으로 이주하고 «한 번» 새 판을 쓴다(#109 — 그 뒤로는 새 판만)
     const old = localStorage.getItem(FAV_KEY_64)
-    const fs = parseFavs(old !== null ? JSON.parse(old) as unknown : null)
+    // web2-72 §A-2 — 이주·기본 채움에서만 겹침을 민다(위 dedupFavs 머리주석).
+    const fs = dedupFavs(parseFavs(old !== null ? JSON.parse(old) as unknown : null))
     if (old !== null) { favMigrated++; writeFavs(fs) }
     return fs
   } catch { return FAV_DEFAULT.map(f => ({ ...f })) }
@@ -2384,6 +2427,34 @@ const caseTipAttr = (hex: string): string => {
 const casePicture = (kind: CaseKind, hex: string): string => CASE_SVG[kind](caseTipAttr(hex))
 const CASE_KIND_NAME: Record<CaseKind, string> = { pencil: '연필', charcoal: '목탄', cp: '색연필', marker: '마커', brush: '붓', pen: '잉크펜', eraser: '지우개' }
 
+/** web2-72 §A-2 — **칸이 겹치지 않게 한다**(사람이 본 「제도 라이너 단추가 둘」).
+ *  원인(실측): 옛 판(64)의 2번 칸이 `{brush, deevad/liner}`였고 새 기본(68)의 7번 칸도 같다 —
+ *  이주가 앞 여섯을 그대로 옮기면 두 칸이 같은 도구가 된다.
+ *  ⚠ 겹침의 자는 **둘**이다: ① 정확한 {슬롯, br} ② **화면에서 읽히는 것**(도구 그림 + 경도 글자).
+ *  ②가 없으면 `classic/pencil`과 `brunelleschi/pencil_HB`가 둘 다 「연필 HB」로 나란히 앉는다 —
+ *  사람에게는 그것도 «같은 단추 둘»이다(첫 판이 실제로 그렇게 나왔다).
+ *  겹친 칸은 **아직 안 쓰인 기본**으로 민다(기본 일곱은 두 자 모두 서로 다르므로 늘 하나 남는다).
+ *  사람이 길게 눌러 «일부러» 같은 것을 두 칸에 둔 경우는 여기 안 온다 — 이 손질은
+ *  **기본 채움과 이주에만** 걸린다(새 판을 그대로 읽는 길은 손대지 않는다). */
+function dedupFavs(fs: Fav[]): Fav[] {
+  const exact = (f: { i: Instr; br: string }) => `${f.i}|${f.br}`
+  const look = (f: { i: Instr; br: string }) => `${caseKindOf(f.i, f.br)}|${gradeOfPreset(f.br)?.grade ?? ''}`
+  const seenE = new Set<string>(), seenL = new Set<string>()
+  const out = fs.map(f => ({ ...f }))
+  const taken = (f: { i: Instr; br: string }) => seenE.has(exact(f)) || seenL.has(look(f))
+  const claim = (f: { i: Instr; br: string }) => { seenE.add(exact(f)); seenL.add(look(f)) }
+  for (let k = 0; k < out.length; k++) {
+    const f = out[k]!
+    if (!taken(f)) { claim(f); continue }
+    const free = FAV_DEFAULT.find(d => !taken(d) && !out.some((o, j) => j > k && exact(o) === exact(d)))
+    if (!free) { claim(f); continue }         // 밀 자리가 없다 — 그대로 둔다(조용히 지우지 않는다)
+    out[k] = { ...free }
+    claim(free)
+  }
+  return out
+}
+
+
 /** 크기 슬라이더 줄의 동기화(58-1) — 도구가 바뀌면 max·값이 따라온다(아래 블록이 채운다) */
 let syncPaintSizeRow: () => void = () => {}
 let syncPaintPanel: () => void = () => {}
@@ -2407,7 +2478,13 @@ let clampDotEl: HTMLElement | null = null
   brushName.id = 'paint-brush-name'
   brushName.style.cssText = 'display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden;text-overflow:ellipsis'
   brushBtn.append(sampleCv, brushName)
-  brushBtn.addEventListener('click', () => { brushPicker.setOpen(!brushPicker.isOpen()) })
+  brushBtn.addEventListener('click', () => {
+    const next = !brushPicker.isOpen()
+    brushPicker.setOpen(next)
+    // R7 — 여는 쪽이 부른다(boxes.ts 규약). 72 이전에는 바깥 누름(onDown)이 대신 닫아 줬는데,
+    // §A-4가 휠을 pinned로 바꾸면서 그 길이 막혔다 — 규약대로 여기서 못 박는다.
+    if (next) closeOtherBoxes('#brushpick')
+  })
   painttrayEl.append(brushBtn)
 
   // ── ② 크기 **슬라이더**(web2-58 58-1) — 값이 숫자로 같이 보인다 ────────────────────
@@ -2582,7 +2659,40 @@ let clampDotEl: HTMLElement | null = null
   }
   closePaintWheel = () => setWheelOpen(false)
   colorBtn.addEventListener('click', () => setWheelOpen(!wheelOpen))
-  registerBox({ id: '#paint-wheelbox', isOpen: () => wheelOpen, close: () => setWheelOpen(false), zone: () => [wheelBox, colorBtn] })
+  // ⚠⚠ web2-72 §A-4 — **휠은 바깥 누름으로 안 접힌다.** 사람 판정(2026-09-06) 「컬러피커를
+  //   펼치고 크기·불투명을 조절하면 컬러피커가 접힌다」의 정체가 이 등록의 `zone`이었다(실측):
+  //   zone이 «휠과 색 원»뿐이라 **같은 패널 안**의 크기 슬라이더·불투명·눈금·필통 칸이 전부
+  //   «바깥»으로 읽혔다. 규약(지시 §A-4): 휠은 «캔버스 탭»과 «휠 단추 재누름»으로만 닫힌다 —
+  //   색을 바꿔 가며 칠하는 동안 열려 있는 것이 설계다(Feather 2.x 채록 §A-3).
+  //   `pinned`이 그 뜻의 자리다(바깥 누름을 안 듣는다). **R7은 그대로 산다** — 다른 통이 열리면
+  //   `closeOtherBoxes`가 pinned를 안 거치고 닫는다(「한 번에 통 하나」 무회귀 · 34-0 R7).
+  registerBox({
+    id: '#paint-wheelbox', isOpen: () => wheelOpen, close: () => setWheelOpen(false),
+    zone: () => [painttrayEl, colorBtn], pinned: () => true,
+  })
+  // 캔버스 «탭»(움직임 없는 손가락) 하나만 닫는다 — 문턱은 71의 두드림 판정 그것이다(#54).
+  // ⚠ 펜은 안 닫는다: 펜이 캔버스에 닿는 것은 «칠하는 것»이고(짧은 점 하나여도) 그때 휠이
+  //   접히면 색을 바꿔 가며 칠하는 길이 도로 막힌다(지시 문면 「칠하는 동안도 닫지 않는다」).
+  {
+    let tapId: number | null = null
+    let tx = 0, ty = 0, tt = 0, moved = 0
+    const move = (e: PointerEvent) => {
+      if (e.pointerId !== tapId) return
+      moved = Math.max(moved, Math.hypot(e.clientX - tx, e.clientY - ty))
+    }
+    ink.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'touch') { tapId = null; return }
+      tapId = e.pointerId; tx = e.clientX; ty = e.clientY; tt = Date.now(); moved = 0
+    }, true)
+    ink.addEventListener('pointermove', move, true)
+    ink.addEventListener('pointerup', (e) => {
+      if (e.pointerId !== tapId) return
+      move(e)
+      tapId = null
+      if (moved <= C.GESTURE71_TAP_MOVE_PX && Date.now() - tt <= C.GESTURE71_TAP_MS && wheelOpen) setWheelOpen(false)
+    }, true)
+    ink.addEventListener('pointercancel', (e) => { if (e.pointerId === tapId) tapId = null }, true)
+  }
   // web2-67 0-2 반증(D-3) — 잠금 끔: 이동마다 partAt을 다시 계산한다(옛 거동 — 사각 코너에서
   // 링으로 넘어가면 색상이 튄다). 제품 경로는 항상 잠금이다.
   const wheelPick = (e: PointerEvent) => {
@@ -2831,14 +2941,19 @@ let clampDotEl: HTMLElement | null = null
     favBtns.forEach((b, k) => {
       const f = fs[k]!
       // web2-68 §1 — 도구 그림(촉 = 그 칸의 색) · 경도 글자 · 숫자 둘. 값의 출처는 칸(기기 저장) 하나다(#54).
+      // ⚠⚠ web2-72 §A-2/§A-3 — **칸이 안 든 값은 «지금 값»이 아니라 «처음 값»으로 채운다.**
+      //   사람 판정(2026-09-06) 「칠 도구를 누르는 순간 모든 단추가 동시에 하이라이트된다」의 정체가
+      //   이 폴백이었다(실측: 지금 색을 #2040ff로 바꾸면 일곱 칸의 촉이 **한꺼번에** 그 색이 된다 —
+      //   그 파랑이 강조색과 가까워 「하이라이트」로 읽힌다). 칸은 «제 사양»을 보여야 한다:
+      //   아직 제 색을 안 든 칸은 **처음 값**(paintSel 초기값과 같은 출처 — state.ts)을 든다.
       const kind = caseKindOf(f.i, f.br)
-      const hex = f.hex ?? ps.hex
+      const hex = f.hex ?? CASE_FALLBACK.hex
       const key = `${kind}|${hex}`
       if (favKey[k] !== key) { favKey[k] = key; favPic[k]!.innerHTML = casePicture(kind, hex) }
       const g = gradeOfPreset(f.br)
       favGrade[k]!.textContent = g ? g.grade : ''
       favGrade[k]!.hidden = !g
-      const w = f.w ?? ps.w, o = f.o ?? ps.o
+      const w = f.w ?? CASE_FALLBACK.w, o = f.o ?? CASE_FALLBACK.o
       favNums[k]!.textContent = `${Math.round(w * 10) / 10}px · ${Math.round(o * 100)}%`
       b.dataset.kind = kind
       b.dataset.br = f.br
@@ -3217,12 +3332,14 @@ let frameCosts: FrameCost[] = []
 /** 표본의 중앙·최악 — **진단 패널과 e2e 원장이 같은 함수를 읽는다**(원칙 a). */
 function frameCostQ() {
   if (frameCosts.length === 0) return null
-  const q = (k: keyof FrameCost) => {
+  const q = (k: keyof FrameCost, p = 0.5) => {
     const v = frameCosts.map(c => c[k]).sort((a, b) => a - b)
-    return v[Math.floor(v.length / 2)]!
+    return v[Math.min(v.length - 1, Math.floor(v.length * p))]!
   }
   const totals = frameCosts.map(c => c.total)
-  return { n: frameCosts.length, r3: q('r3'), bs: q('bs'), d2: q('d2'), total: q('total'), totalMax: Math.max(...totals) }
+  // web2-72 §5 — p95를 같이 낸다: 「버벅인다」는 중앙값이 아니라 꼬리의 말이다(60Hz = 16.7ms).
+  return { n: frameCosts.length, r3: q('r3'), bs: q('bs'), d2: q('d2'), total: q('total'),
+    p95: q('total', 0.95), totalMax: Math.max(...totals) }
 }
 
 let paintDraftPerturb = false
@@ -3257,6 +3374,9 @@ function frame() {
           w: widthOfMat({ grade: g, w: app.tool === 'pen' && app.nib !== C.NIB_PX ? app.nib : undefined }) }
       : null)
     render3d(r3d, app)
+    // web2-72 §1 — 프레임 예산에 걸려 «다음 프레임으로 미룬» 굽기가 있으면 한 프레임 더 부른다
+    // (정착 전이·겹 동작과 같은 꼴 — 미룬 것이 없으면 평소의 «바뀔 때만»으로 돌아간다).
+    if (paintBakePending()) invalidate()
     // 상한 포화 «표식»(web2-67 0-1 — 59-1의 토스트를 갈았다: 사람 판정 「이거 걸리면 자꾸
     // 멈추는데」 — 뜻(조용히 뭉개지 마라 · 43-1)은 그대로, «형태»가 토스트 → 패널 구석의
     // 작은 점이다. 걸려 있는 동안 켜지고 안 걸리면 꺼진다 · 한 줄 설명은 호버(title)에.
@@ -3407,6 +3527,10 @@ const diag = {
     PAINT68_WIDTH_HONEST_TOL: C.PAINT68_WIDTH_HONEST_TOL, PAINT68_TICK_BASE: C.PAINT68_TICK_BASE, PAINT68_TICK_RATIO: C.PAINT68_TICK_RATIO,
     PAINT68_RECENT_N: C.PAINT68_RECENT_N, PAINT68_TIP_BRIGHT_V: C.PAINT68_TIP_BRIGHT_V, WRITE_HOLD_MS: C.WRITE_HOLD_MS,
     PAINT58_MIN_W: C.PAINT58_MIN_W, PAINT58_MAX_W: C.PAINT58_MAX_W,
+    // web2-72 — 게이트가 **앱의 값 그대로** 잰다(D-C4 · 임계를 두 곳에 두지 않는다)
+    PAINT72_SETTLE_MS: C.PAINT72_SETTLE_MS, PAINT72_LEVEL_UP: C.PAINT72_LEVEL_UP,
+    PAINT72_LEVEL_DOWN: C.PAINT72_LEVEL_DOWN, PAINT72_BAKE_MS_PER_FRAME: C.PAINT72_BAKE_MS_PER_FRAME,
+    PAINT72_BAKE_MS_IDLE: C.PAINT72_BAKE_MS_IDLE, PAINT72_ALLOC_TEXEL_PER_PX_MIN: C.PAINT72_ALLOC_TEXEL_PER_PX_MIN,
   }),
   /** 지금 열려 있는 통(화면 규칙 R7 — web2-34 4번). 「동시에 둘이 안 열린다」를
    *  화면 형태(클래스·hidden·details.open)가 아니라 **등록부**에서 읽는 통로다. */
@@ -3428,6 +3552,21 @@ const diag = {
   /** web2-66 게이트 ①의 반증(D-3) — 얼리기 끔: 옛 전량 되그리기 판(pre의 이동량이 돌아온다) */
   setPaintFreezeOffForTest: (v: boolean) => { setPaintFreezeOffForTest(v); invalidate() },
   paintFreezeOffForTest: () => paintFreezeOffForTest(),
+  // ── web2-72 반증 손잡이 셋(D-3 · e2e 전용 — 제품 경로는 안 부른다) ────────────────────
+  /** §2 — 동결·히스테리시스를 끈다: 궤도 중 단계가 다시 널뛰고 재굽기가 돌아온다(pre의 값) */
+  setPaintLevelFreezeOffForTest: (v: boolean) => { setPaintLevelFreezeOffForTest(v); rebakePaintTexForTest(); invalidate() },
+  paintLevelFreezeOffForTest: () => paintLevelFreezeOffForTest(),
+  /** §1 — 시간 분할을 끈다: 한 프레임에 전부 굽는다(pre의 차단 시간이 돌아온다) */
+  setPaintBakeSliceOffForTest: (v: boolean) => { setPaintBakeSliceOffForTest(v); invalidate() },
+  paintBakeSliceOffForTest: () => paintBakeSliceOffForTest(),
+  /** §1 — **아직 이어 구울 것이 남았는가.** 팔의 대기 조건이 이것이다(고정 ms 대기 ⛔ #81):
+   *  72부터 굽기가 프레임에 나뉘므로 「300ms 기다리면 다 구워졌다」가 참이 아니다. */
+  paintBakePendingForTest: () => paintBakePending(),
+  /** §1-2 — 면별 색인을 끈다: 옛 훑기(문서 전체 × 면)로 돌아간다. **목록은 같아야 한다** */
+  setPaintIndexOffForTest: (v: boolean) => { setPaintIndexOffForTest(v); rebakePaintTexForTest(); invalidate() },
+  paintIndexOffForTest: () => paintIndexOffForTest(),
+  /** §1-2 반증의 자 — 두 길(색인 · 옛 훑기)이 낸 (면,쪽)별 획 id 목록 */
+  paintStrokeListsForTest: () => paintStrokeListsForTest(app),
   /** web2-66 반증 둘째 — 옛 굵기 표집(첫→끝 중점 — 이동의 실제 원인)을 되살린다 */
   setPaintWLegacyForTest: (v: boolean) => { setPaintWLegacyForTest(v); invalidate() },
   /** web2-66 §2 — 자국 단면 프로브(방향별 폭·평평한 몫) */
@@ -3697,6 +3836,8 @@ const diag = {
   syncCostReset: () => resetSyncCost(),
   /** ③ 프레임 3몫 합 — 국면별로 리셋해서 읽는다(누산은 국면이 섞인다) */
   frameCost: () => frameCostQ(),
+  /** web2-72 §0·§5 — 「열 때」의 몫(파싱·앉히기·바이트·획 수) + 굽기의 몫(paintBake().ms) */
+  bootCost: () => ({ ...bootCost, parseMs: Math.round(bootCost.parseMs * 10) / 10, applyMs: Math.round(bootCost.applyMs * 10) / 10 }),
   frameCostReset: () => { frameCosts = [] },
   /** ⑩ 표식 — filmLayer.draw의 두 몫(막·위 획) ms. D-1: 어느 몫이 비싼지 경로에서 낸다 */
   filmCost: () => filmLayer.cost(),
