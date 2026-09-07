@@ -60,6 +60,7 @@ export function initR3D(canvas: HTMLCanvasElement, W: number, H: number, dpr: nu
   })
   renderer.setPixelRatio(dpr)
   renderer.setSize(W, H)
+  probeGlUploads(renderer.getContext())   // web2-73 §1 — 업로드 프로브(계측 · 거동 무변)
   const scene = new THREE.Scene()
   const camera = new THREE.PerspectiveCamera()
   camera.matrixAutoUpdate = false
@@ -153,6 +154,81 @@ export function resize3d(r: R3D, W: number, H: number, dpr: number) {
  *  `lastMs`는 마지막 한 번 · `totalMs`/`calls`는 누산 — 진단 패널과 원장이 같이 읽는다. */
 export const syncCost = { calls: 0, lastMs: 0, totalMs: 0 }
 export function resetSyncCost(): void { syncCost.calls = 0; syncCost.lastMs = 0; syncCost.totalMs = 0 }
+
+// ── web2-73 §1 — **프레임 걸음마다의 ms**(여덟 걸음 따로). 72까지는 `render3d` 전체가 `syncCost`·
+//   frameCost의 r3 «하나»였다 — 그러면 「남은 느림이 바탕 렌더러의 어느 걸음인가」를 못 가른다
+//   (D-1: 경로 전체에 표식을 심고 어디서 갈리는지 낸다). 표본은 마지막 STEP_N 프레임(고리) +
+//   리셋 이후 누산(sum · frames) 둘 다 — 궤도 팔은 분위수를, 열기 분해는 누산을 읽는다.
+//   ⚠ 계측일 뿐이다 — 걸음의 순서·내용은 한 자도 안 바뀐다(§3 전에는 성능 코드를 안 고친다).
+export const STEP_NAMES = ['syncCamera', 'syncHatch', 'syncPaintTex', 'gatePaintTex', 'applyPaintDraft', 'revealFaces', 'sortFaces', 'render'] as const
+export type StepName = typeof STEP_NAMES[number]
+export type StepFrame = Record<StepName, number> & { total: number }
+const STEP_N = 240
+const zeroStep = (): StepFrame => ({ syncCamera: 0, syncHatch: 0, syncPaintTex: 0, gatePaintTex: 0, applyPaintDraft: 0, revealFaces: 0, sortFaces: 0, render: 0, total: 0 })
+let stepFrames: StepFrame[] = []
+let stepSum: StepFrame = zeroStep()
+let stepFramesTotal = 0
+/** 마지막 `renderer.render`의 그리기 호출 수·삼각형·선 — three의 info.render(프레임마다 자동 리셋) */
+let lastRenderInfo = { calls: 0, triangles: 0, lines: 0, points: 0 }
+export interface StepQ { p50: number; p95: number; max: number; sum: number }
+export function frameStepStats(): { frames: number; sample: number; steps: Record<StepName | 'total', StepQ>; gl: { calls: number; triangles: number; lines: number; points: number } } {
+  const q = (k: StepName | 'total'): StepQ => {
+    const v = stepFrames.map(f => f[k]).sort((a, b) => a - b)
+    const at = (p: number) => v.length ? v[Math.min(v.length - 1, Math.floor(v.length * p))]! : 0
+    const r = (x: number) => Math.round(x * 1000) / 1000
+    return { p50: r(at(0.5)), p95: r(at(0.95)), max: r(v.length ? v[v.length - 1]! : 0), sum: r(stepSum[k]) }
+  }
+  const steps = {} as Record<StepName | 'total', StepQ>
+  for (const k of STEP_NAMES) steps[k] = q(k)
+  steps.total = q('total')
+  return { frames: stepFramesTotal, sample: stepFrames.length, steps, gl: { ...lastRenderInfo } }
+}
+export function resetFrameStepStats(): void { stepFrames = []; stepSum = zeroStep(); stepFramesTotal = 0 }
+
+/** web2-73 리뷰어 [L2] — **계측 끔**: 걸음 시각·GL 프로브 타이밍·고리 장부를 안 찍는다(관찰자의 몫을 재는 팔).
+ *  ⚠ 남는 것: 감싼 GL 함수의 «호출» 자체(빈 통과)와 이 분기 하나 — 그 둘은 못 뺀다(값에 그렇게 적는다). */
+let metricsOff = false
+export function setMetrics73OffForTest(v: boolean): void { metricsOff = v }
+export const metrics73OffForTest = (): boolean => metricsOff
+
+/** GL 업로드 프로브 — `texImage2D`·`texSubImage2D`·`texStorage2D`의 **호출 시간**(CPU 쪽 — 캔버스에서
+ *  드라이버로 옮기는 몫). GPU 쪽 완료는 이 자로 안 보인다(그 몫은 render 걸음에 섞인다 — 원장에 그렇게 적는다).
+ *  three는 이 셋을 컨텍스트 객체의 메서드로 부르므로 인스턴스에 덮어 씌우면 전부 지난다. */
+export const glUpload = { calls: 0, ms: 0, maxMs: 0, byName: {} as Record<string, number> }
+export function resetGlUploadStats(): void { glUpload.calls = 0; glUpload.ms = 0; glUpload.maxMs = 0; glUpload.byName = {} }
+function probeGlUploads(gl: WebGLRenderingContext | WebGL2RenderingContext): void {
+  const g = gl as unknown as Record<string, unknown>
+  for (const name of ['texImage2D', 'texSubImage2D', 'texStorage2D', 'copyTexSubImage2D']) {
+    const orig = g[name]
+    if (typeof orig !== 'function') continue
+    g[name] = function (this: unknown, ...args: unknown[]) {
+      if (metricsOff) return (orig as (...a: unknown[]) => unknown).apply(gl, args)   // [L2] 빈 통과(호출 자체는 남는다)
+      const t0 = performance.now()
+      const out = (orig as (...a: unknown[]) => unknown).apply(gl, args)
+      const dt = performance.now() - t0
+      glUpload.calls++
+      glUpload.ms += dt
+      if (dt > glUpload.maxMs) glUpload.maxMs = dt
+      glUpload.byName[name] = (glUpload.byName[name] ?? 0) + dt
+      return out
+    }
+  }
+}
+
+/** §1-2 — **GPU 이름**(UNMASKED_RENDERER_WEBGL). SwiftShader/llvmpipe 같은 이름이면 «기계»가 임자다
+ *  — 그러면 자동 시험의 fps는 게이트가 못 된다(CLOSING의 그 줄). */
+export function glInfo(r: R3D): { renderer: string; vendor: string; version: string; webgl2: boolean; software: boolean; dpr: number; css: [number, number]; drawingBuffer: [number, number] } {
+  const gl = r.renderer.getContext()
+  const ext = gl.getExtension('WEBGL_debug_renderer_info') as { UNMASKED_RENDERER_WEBGL: number; UNMASKED_VENDOR_WEBGL: number } | null
+  const renderer = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER))
+  const vendor = String(ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR))
+  return {
+    renderer, vendor, version: String(gl.getParameter(gl.VERSION)),
+    webgl2: typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext,
+    software: /swiftshader|llvmpipe|softpipe|software|mesa offscreen|basic render/i.test(renderer),
+    dpr: r.renderer.getPixelRatio(), css: [r.W, r.H], drawingBuffer: [gl.drawingBufferWidth, gl.drawingBufferHeight],
+  }
+}
 
 /** 승격 기하 갱신 — 문서가 바뀔 때마다 전부 다시 만든다(부분 유지 없음).
  *  재료가 재질을 정한다 — 필압은 흑연 투명도에 얹는다. */
@@ -776,6 +852,11 @@ export function setPaintPointerDown(v: boolean): void {
 let paintLevelFreezeOff = false
 export function setPaintLevelFreezeOffForTest(v: boolean): void { paintLevelFreezeOff = v }
 export const paintLevelFreezeOffForTest = (): boolean => paintLevelFreezeOff
+/** web2-73 §2 — «쉬는 중 예산»의 시험 손잡이. null이면 `C.PAINT72_BAKE_MS_IDLE` 그대로다.
+ *  §2의 분해가 「예산을 늘리면 얼마나 주는가」를 값으로 내는 데 쓴다(값을 바꾸는 것은 §3의 일). */
+let bakeIdleMsOverride: number | null = null
+export function setPaintBakeIdleMsForTest(v: number | null): void { bakeIdleMsOverride = v }
+export const paintBakeIdleMsForTest = (): number => bakeIdleMsOverride ?? C.PAINT72_BAKE_MS_IDLE
 /** 반증(D-3) — 시간 분할을 끈다: 한 프레임에 전부 굽는다(pre의 그 차단 시간이 돌아온다) */
 let paintBakeSliceOff = false
 export function setPaintBakeSliceOffForTest(v: boolean): void { paintBakeSliceOff = v }
@@ -1126,7 +1207,7 @@ function gatePaintTex(r: R3D, app: App) {
   // 예산은 «지금 사람이 만지고 있는가»로 갈린다: 만지는 중이면 4ms(지연이 곧 감각이다),
   // 쉬는 중이면 12ms(칠이 빨리 채워진다 — §4의 「칠은 뒤따라 온다」).
   const budgetMs = paintBakeSliceOff ? Infinity
-    : (frozen ? C.PAINT72_BAKE_MS_PER_FRAME : C.PAINT72_BAKE_MS_IDLE)
+    : (frozen ? C.PAINT72_BAKE_MS_PER_FRAME : (bakeIdleMsOverride ?? C.PAINT72_BAKE_MS_IDLE))
   const t0Frame = performance.now()
   const order = [...plans].sort((a, b) => (b.sideOk ? b.screenPx : -1) - (a.sideOk ? a.screenPx : -1))
   for (const pl of order) {
@@ -1778,12 +1859,37 @@ function revealFaces(r: R3D, app: App) {
 }
 
 export function render3d(r: R3D, app: App) {
+  // [L2] 계측 끔 — 걸음 시각을 한 번도 안 찍는다(걸음의 순서·내용은 아래와 한 자도 같다)
+  if (metricsOff) {
+    syncCamera(r, app); syncHatch(r, app); syncPaintTex(r, app); gatePaintTex(r, app)
+    applyPaintDraft(r, app); revealFaces(r, app); sortFaces(r, app)
+    r.renderer.render(r.scene, r.camera)
+    return
+  }
+  // web2-73 §1 — 걸음마다 시각을 찍는다(순서·내용 무변 · 계측만)
+  const t0 = performance.now()
   syncCamera(r, app)
+  const t1 = performance.now()
   syncHatch(r, app)
+  const t2 = performance.now()
   syncPaintTex(r, app) // 면 텍스처(50) — 문서가 바뀌었을 때만 메시를 다시 세운다
+  const t3 = performance.now()
   gatePaintTex(r, app) // 시점의 몫 — 쪽 · 해상도 단계(단계가 바뀔 때만 굽는다)
+  const t4 = performance.now()
   applyPaintDraft(r, app) // 미리보기 획(59-1) — 굽힌 판 위에 같은 함수로 덧그린다
+  const t5 = performance.now()
   revealFaces(r, app)
+  const t6 = performance.now()
   sortFaces(r, app)
+  const t7 = performance.now()
   r.renderer.render(r.scene, r.camera)
+  const t8 = performance.now()
+  const f: StepFrame = { syncCamera: t1 - t0, syncHatch: t2 - t1, syncPaintTex: t3 - t2, gatePaintTex: t4 - t3, applyPaintDraft: t5 - t4, revealFaces: t6 - t5, sortFaces: t7 - t6, render: t8 - t7, total: t8 - t0 }
+  if (stepFrames.length >= STEP_N) stepFrames.shift()
+  stepFrames.push(f)
+  for (const k of STEP_NAMES) stepSum[k] += f[k]
+  stepSum.total += f.total
+  stepFramesTotal++
+  const ri = r.renderer.info.render
+  lastRenderInfo = { calls: ri.calls, triangles: ri.triangles, lines: ri.lines, points: ri.points }
 }

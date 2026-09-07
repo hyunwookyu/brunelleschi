@@ -20,7 +20,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest, paintBakePending, paintPendingRowsForTest, setPaintPointerDown, setPaintLevelFreezeOffForTest, paintLevelFreezeOffForTest, setPaintBakeSliceOffForTest, paintBakeSliceOffForTest, setPaintIndexOffForTest, paintIndexOffForTest, paintStrokeListsForTest } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, frameStepStats, resetFrameStepStats, glInfo, glUpload, resetGlUploadStats, setMetrics73OffForTest, metrics73OffForTest, setPaintBakeIdleMsForTest, paintBakeIdleMsForTest, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest, paintBakePending, paintPendingRowsForTest, setPaintPointerDown, setPaintLevelFreezeOffForTest, paintLevelFreezeOffForTest, setPaintBakeSliceOffForTest, paintBakeSliceOffForTest, setPaintIndexOffForTest, paintIndexOffForTest, paintStrokeListsForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, bootCost, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -66,6 +66,12 @@ try {
     setPaintIndexOffForTest(true)
   }
 } catch { /* 세션 저장소가 없는 환경 — 평상시 경로 그대로 */ }
+// web2-73 §2 — «쉬는 중 예산»의 시험 손잡이도 새로고침을 넘는다(열기 분해가 예산마다 다시 연다).
+// 값이 없으면 C 그대로 — 사람의 저장물(localStorage)에는 한 자도 안 남는다.
+try {
+  const v = sessionStorage.getItem('b2.idleMs73')
+  if (v !== null && Number.isFinite(Number(v))) setPaintBakeIdleMsForTest(Number(v))
+} catch { /* 위와 같다 */ }
 
 const ink = document.getElementById('ink') as HTMLCanvasElement
 // web2-72 §2 — **손이 닿아 있는 동안 칠 텍스처의 단계를 얼린다**(그리는 중·끄는 중에 재굽기 0).
@@ -3349,12 +3355,66 @@ function frameCostQ() {
   }
   const totals = frameCosts.map(c => c.total)
   // web2-72 §5 — p95를 같이 낸다: 「버벅인다」는 중앙값이 아니라 꼬리의 말이다(60Hz = 16.7ms).
+  // web2-73 §1 — **최악 프레임의 분해**(r3 · 흑연 겹 · 2D 중 어느 몫이 그 프레임을 만들었나) — 궤도 시작의
+  //   200ms대 차단이 어디서 오는지 값으로 낸다(D-1 — 짐작으로 고르지 않는다).
+  let worst = frameCosts[0]!
+  for (const c of frameCosts) if (c.total > worst.total) worst = c
   return { n: frameCosts.length, r3: q('r3'), bs: q('bs'), d2: q('d2'), total: q('total'),
-    p95: q('total', 0.95), totalMax: Math.max(...totals) }
+    p95: q('total', 0.95), totalMax: Math.max(...totals), worst: { ...worst } }
+}
+
+// ── web2-73 §2 — **프레임 고리의 장부**: 일한 시간(work)·프레임 사이에 논 시간(gap)·그린 프레임·
+//   칠만 이어 구운 프레임. 「칠 전부 채워지기」를 네 몫(굽기 CPU·업로드·분할 대기·그 밖)으로 가르는
+//   자다. 계측만이다 — 고리의 순서는 한 자도 안 바뀐다.
+const loopStat = { frames: 0, drawFrames: 0, bakeFrames: 0, workMs: 0, gapMs: 0, maxGapMs: 0, firstFrameAt: -1, firstFrameEndAt: -1, lastEndAt: -1 }
+const resetLoopStat = () => { loopStat.frames = 0; loopStat.drawFrames = 0; loopStat.bakeFrames = 0; loopStat.workMs = 0; loopStat.gapMs = 0; loopStat.maxGapMs = 0; loopStat.lastEndAt = -1 }
+// ── web2-73 §1-3 — **실기기 모드**(`?perf=1`): 사람이 아이패드 Safari에서 배포본을 열어 읽는 숫자 셋 —
+//   fps(최근 1초의 rAF 수 · 간격 p95) · 메인 최장 차단(longtask 최대 — 없는 브라우저(Safari)는 rAF
+//   최장 간격) · 열기(첫 프레임이 끝난 ms). 개발 메뉴(?dev=1) 밖의 URL 손잡이이고 **눌리는 것이 아니라
+//   표시**다(pointer-events:none — 69의 전수 표에 +0으로 선다 · docs/reference/INVENTORY.md).
+const PERF_HUD = new URLSearchParams(location.search).has('perf')
+const perfHud = { fps: 0, p95: 0, longestBlockMs: 0, longtaskSupported: false, openMs: 0, ticks: [] as number[] }
+let perfHudEl: HTMLElement | null = null
+if (PERF_HUD) {
+  perfHudEl = document.createElement('div')
+  perfHudEl.id = 'perfhud'
+  perfHudEl.setAttribute('aria-hidden', 'true')
+  // ⚠ 색은 **토큰만** 쓴다(70의 「토큰 하나」 — tokens.css 밖 16진수 0). 첫 판은 `var(--ink, <16진수>)`로
+  //   폴백 색 리터럴을 넣었다가 밤 전량의 tokens70 §1이 잡았다(offenders src/app/main.ts 1). 어두운 판도 따라온다.
+  perfHudEl.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;'
+    + 'font:700 26px/1.3 system-ui,sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line);'
+    + 'padding:10px 20px;border-radius:12px;white-space:pre;letter-spacing:.01em'
+  perfHudEl.textContent = 'perf —'
+  document.body.appendChild(perfHudEl)
+  try {
+    new PerformanceObserver((l) => { for (const e of l.getEntries()) perfHud.longestBlockMs = Math.max(perfHud.longestBlockMs, e.duration) })
+      .observe({ entryTypes: ['longtask'] })
+    perfHud.longtaskSupported = true
+  } catch { /* longtask 미지원 — rAF 최장 간격이 그 자리를 든다(아래) */ }
+  setInterval(() => {
+    const now = performance.now()
+    const win = perfHud.ticks.filter(t => now - t <= 1000)
+    const gaps: number[] = []
+    for (let i = 1; i < win.length; i++) gaps.push(win[i]! - win[i - 1]!)
+    gaps.sort((a, b) => a - b)
+    perfHud.fps = win.length
+    perfHud.p95 = gaps.length ? Math.round(gaps[Math.min(gaps.length - 1, Math.floor(gaps.length * 0.95))]! * 10) / 10 : 0
+    const block = perfHud.longtaskSupported ? perfHud.longestBlockMs : loopStat.maxGapMs
+    perfHudEl!.textContent = `fps ${perfHud.fps} · p95 ${perfHud.p95}ms\n최장 차단 ${Math.round(block)}ms${perfHud.longtaskSupported ? '' : '(rAF 간격)'}\n열기 ${Math.round(perfHud.openMs)}ms`
+  }, 500)
 }
 
 let paintDraftPerturb = false
 function frame() {
+  const metricsOn = !metrics73OffForTest()   // [L2] 계측 끔 팔에서는 고리 장부도 안 쓴다
+  const lt0 = metricsOn ? performance.now() : 0
+  if (metricsOn && loopStat.lastEndAt >= 0) {
+    const g = lt0 - loopStat.lastEndAt
+    loopStat.gapMs += g
+    if (g > loopStat.maxGapMs) loopStat.maxGapMs = g
+  }
+  if (metricsOn && loopStat.firstFrameAt < 0) loopStat.firstFrameAt = lt0
+  if (PERF_HUD) { perfHud.ticks.push(metricsOn ? lt0 : performance.now()); if (perfHud.ticks.length > 400) perfHud.ticks.shift() }
   syncUndoRedoMuted()   // web2-70 [H2]
   orthoMark.hidden = !isParallel(app.pose)   // web2-71 §3 — 정사에서만(Feather §A-1 「—×—」)
   autolevel.tick()   // 접힐 때가 됐으면 여기서 포즈가 움직인다(setPose가 다시 그리게 한다)
@@ -3376,6 +3436,7 @@ function frame() {
   }
   if (dirty) {
     dirty = false
+    loopStat.drawFrames++
     const fc0 = performance.now()
     // draft 몸체(web2-12 2번) — 확정과 같은 Line2가 그린다(질감은 아래 brushLayer.sync).
     // 눌리는 술어는 draftBrushed 하나다(#54 — state.ts 머리주석이 정본).
@@ -3406,8 +3467,16 @@ function frame() {
     //   다시 그릴 이유가 없다 — invalidate로 전량을 부르면 그 몫이 프레임을 먹어 «칠이 다
     //   채워지기까지»가 길어진다(실측: 전량 판 21.6초 · 이 판은 그보다 짧다).
     //   ⚠ frameCosts에 안 담는다 — 이 프레임은 «사람이 보는 그림»의 비용이 아니다(#89).
+    loopStat.bakeFrames++
     render3d(r3d, app)
     if (clampDotEl) clampDotEl.hidden = !(painttrayOpen && paintClampedVisible())
+  }
+  if (metricsOn) {
+    const lt1 = performance.now()   // web2-73 — 고리 장부(계측)
+    loopStat.frames++
+    loopStat.workMs += lt1 - lt0
+    loopStat.lastEndAt = lt1
+    if (loopStat.firstFrameEndAt < 0) { loopStat.firstFrameEndAt = lt1; perfHud.openMs = lt1 }
   }
   requestAnimationFrame(frame)
 }
@@ -4273,6 +4342,32 @@ const diag = {
   paintTexHash: () => paintTexHashForTest(),
   /** web2-65 — 굽기 계수기(D-1 표식 · 게이트 ②③④의 자): 재굽기 수·재굽힌 획 수·업로드 바이트·ms */
   paintBake: () => paintBakeStats(),
+  // ── web2-73 §1·§2 — 걸음별 ms · GL 업로드 · GPU 이름 · 프레임 고리 장부 · 실기기 모드 · 쉬는 중 예산 ──
+  frameSteps: () => frameStepStats(),
+  /** [L2] 계측 끔 — 관찰자(걸음 시각 · GL 프로브 · 고리 장부)의 몫을 재는 팔 */
+  setMetrics73OffForTest: (v: boolean) => { setMetrics73OffForTest(v); invalidate() },
+  metrics73OffForTest: () => metrics73OffForTest(),
+  frameStepsReset: () => resetFrameStepStats(),
+  glInfo: () => glInfo(r3d),
+  glUpload: () => ({ ...glUpload, byName: { ...glUpload.byName } }),
+  glUploadReset: () => resetGlUploadStats(),
+  frameLoop: () => ({ ...loopStat, now: performance.now() }),
+  frameLoopReset: () => resetLoopStat(),
+  perfHudForTest: () => ({ on: PERF_HUD, fps: perfHud.fps, p95: perfHud.p95, longestBlockMs: perfHud.longestBlockMs, longtaskSupported: perfHud.longtaskSupported, openMs: perfHud.openMs, maxGapMs: loopStat.maxGapMs, text: perfHudEl?.textContent ?? null }),
+  /** §2 «쉬는 중 예산» 손잡이 — sessionStorage로 새로고침을 넘는다(null이면 C 그대로) */
+  setPaintBakeIdleMsForTest: (v: number | null) => {
+    try { if (v === null) sessionStorage.removeItem('b2.idleMs73'); else sessionStorage.setItem('b2.idleMs73', String(v)) } catch { /* 이 세션만 */ }
+    setPaintBakeIdleMsForTest(v)
+  },
+  paintBakeIdleMsForTest: () => paintBakeIdleMsForTest(),
+  /** 네 팔(§1) — 문서를 단계별로 걷는 손잡이: 면을 걷고(recompute) · 전부 비운다(화면의 「새로 시작」과 같은 함수) */
+  bumpDocForTest: () => { bumpDoc(app); invalidate() },
+  clearAllForTest: () => {
+    clearAll(app, window.innerWidth, window.innerHeight)
+    unitSel.value = app.doc.unit
+    draft = null; hover = null; eraserPos = null; facePrev = null
+    paperbar.sync(); layerbar.sync(); invalidate()
+  },
   paintBakeReset: () => { resetPaintBakeStats() },
   /** web2-65 ⑥ 반증 — 누적을 끈다(pre의 O(N)이 돌아온다) · 부분 업로드를 끈다(픽셀은 같아야 한다) */
   setPaintAccumOffForTest: (v: boolean) => { setPaintAccumOffForTest(v); invalidate() },

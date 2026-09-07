@@ -1,0 +1,182 @@
+{
+  "conditions": {
+    "project": "dpr2",
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/gates73.spec.ts (#99)"
+  },
+  "what": "web2-73 게이트 — g0 프로브 움직임(빨강: 72의 되접히는 프로브) · g3 첫 상호작용 무회귀(빨강: legacy72). g1은 자기점검 «기록»(항등 — 빨강 불가 · [H5]) · g2는 존재 대조(깃발 없는 판 0 — «수리 전 판»이 아니라 음성 대조). ㉠의 빨강 짝을 실제로 가진 게이트는 **둘**(g0·g3)이다",
+  "note_pitfalls": "#12·#14 · #42 · #81(대기에 상한) · #89 · #99 · #101 · #103 · #105 · #108(단언 판과 반증 판이 같은 값이면 자를 의심 — 빨강 짝이 그 검사다) · #112",
+  "pitfall_citations": [
+    12,
+    14,
+    42,
+    81,
+    89,
+    99,
+    101,
+    103,
+    105,
+    108,
+    112
+  ],
+  "thresholds": {
+    "PAINT73_PROBE_MIN_DEG": 20,
+    "PAINT73_SUM_TOL": 0.05
+  },
+  "no_constants_snapshot": true,
+  "selfcheck_notes": {
+    "zero_counters": "g2의 hud_without_flag 0은 «미생성»의 뜻이고 짝(hud_with_flag 1)이 같은 원장에 있다 · g1의 red_frames_after_reset 0은 빨강 팔의 정의(리셋 직후)다",
+    "identical_pairs": "g1의 걸음 합 == 전체는 게이트의 뜻 그 자체(같은 시계로 찍은 여덟 구간의 합) — 판정력은 «프레임마다 돈다»(frames > 0)와 빨강 짝에 있다",
+    "zero_error_metric": "g1_walk.per_frame_gap_ms 0은 **설계 보장**이다(§5.1 유형 3 — 아홉 시각을 같은 시계로 찍고 여덟 구간의 합과 t8−t0을 견주므로 부동소수 반올림 밖에서는 정확히 0이다). 임계를 안 건다 — 이 자리의 게이트는 «프레임마다 돈다»(frames > 30)와 빨강(리셋 직후 0)이다"
+  },
+  "g0_probe": {
+    "human": {
+      "totalDeg": 154.9,
+      "pxDragged": 720,
+      "frames": 119,
+      "fps": 25.61,
+      "p95": 46.1
+    },
+    "red_orbitByForTest": {
+      "totalDeg": 0,
+      "calls": 120,
+      "degRequested": 360
+    },
+    "min_deg": 20,
+    "note": "빨강 팔은 요청한 각(360°)과 실제 돈 각의 차가 곧 «되접힘»이다 — 그 값이 문(PAINT73_PROBE_MIN_DEG) 아래면 이 게이트가 그 프로브를 실제로 잡는다"
+  },
+  "g1_walk": {
+    "kind": "record(항등 — 게이트 아님 · [H5])",
+    "frames": 119,
+    "sample": 119,
+    "step_sum_ms": 66.9,
+    "total_sum_ms": 66.9,
+    "per_frame_gap_ms": 0,
+    "red_frames_after_reset": 0
+  },
+  "g2_hud": {
+    "hud_without_flag": 0,
+    "hud_with_flag": 1,
+    "hud": {
+      "on": true,
+      "fps": 53,
+      "p95": 18.2,
+      "longestBlockMs": 184,
+      "longtaskSupported": true,
+      "openMs": 156.89999997615814,
+      "maxGapMs": 175.9000000357628,
+      "text": "fps 53 · p95 18.2ms\n최장 차단 184ms\n열기 157ms",
+      "pressable": false,
+      "under": "ink",
+      "rect": {
+        "w": 293,
+        "h": 123
+      },
+      "fontPx": 26
+    },
+    "orbit_deg": 104.1,
+    "note": "눌리지 않는다(pointer-events:none)라 69의 전수 표에는 +0 — docs/reference/INVENTORY.md 「개발(?perf=1)」 행"
+  },
+  "g3_open": {
+    "now": {
+      "firstInteractiveMs": 2003,
+      "allPaintMs": 5409,
+      "longestBlockMs": 879,
+      "parts": {
+        "bake_ms": 2244.4,
+        "upload_ms": 20,
+        "wait_ms": 2890.1,
+        "other_ms": 254.9,
+        "wall_ms": 5409.4,
+        "sum_ms": 5409.4,
+        "other_boot_ms": 97.5,
+        "other_frame_ms": 157.3,
+        "pct": {
+          "bake": 41.5,
+          "upload": 0.4,
+          "wait": 53.4,
+          "other": 4.7
+        }
+      },
+      "check": {
+        "accounted_ms": 5409.3,
+        "accounted_over_wall": 1,
+        "steps_total_ms": 2353.7,
+        "steps_over_work": 0.972,
+        "raf_ticks": 79,
+        "raf_gap_sum_ms": 5392.2,
+        "raf_over_wall": 0.997,
+        "bake_plus_upload_over_work": 0.935
+      },
+      "loop": {
+        "frames": 74,
+        "drawFrames": 3,
+        "bakeFrames": 69,
+        "workMs": 2421.7,
+        "gapMs": 2890.1,
+        "maxGapMs": 335.2,
+        "firstFrameAt": 162.70000004768372,
+        "firstFrameEndAt": 187.9000000357628,
+        "lastEndAt": 5474.5,
+        "now": 5515.100000023842
+      }
+    },
+    "red_legacy72": {
+      "firstInteractiveMs": 5137,
+      "allPaintMs": 5139,
+      "longestBlockMs": 2595,
+      "parts": {
+        "bake_ms": 4244.1,
+        "upload_ms": 18.3,
+        "wait_ms": 705.7,
+        "other_ms": 171,
+        "wall_ms": 5139.1,
+        "sum_ms": 5139.1,
+        "other_boot_ms": 89,
+        "other_frame_ms": 84.2,
+        "pct": {
+          "bake": 82.6,
+          "upload": 0.4,
+          "wait": 13.7,
+          "other": 3.3
+        }
+      },
+      "check": {
+        "accounted_ms": 5141.3,
+        "accounted_over_wall": 1,
+        "steps_total_ms": 4287.3,
+        "steps_over_work": 0.986,
+        "raf_ticks": 13,
+        "raf_gap_sum_ms": 5133.4,
+        "raf_over_wall": 0.999,
+        "bake_plus_upload_over_work": 0.981
+      },
+      "loop": {
+        "frames": 9,
+        "drawFrames": 3,
+        "bakeFrames": 0,
+        "workMs": 4346.6,
+        "gapMs": 705.7,
+        "maxGapMs": 387.9,
+        "firstFrameAt": 147,
+        "firstFrameEndAt": 172.10000002384186,
+        "lastEndAt": 5199.300000011921,
+        "now": 5199.800000011921
+      }
+    },
+    "tol": 0.05
+  },
+  "g3_fixture": {
+    "source": "synthetic",
+    "faces": 23,
+    "docStrokes": 200,
+    "paintStrokes": 184,
+    "texEntries": 23,
+    "clampedFaces": 0,
+    "levels": {
+      "256": 23
+    },
+    "per_face": 8,
+    "note": "계측(perf73)의 픽스처는 면마다 40 · 여기는 8 — 첫 상호작용의 절대값은 픽스처가 달라 perf73과 나란히 못 놓는다(리뷰어 [M5]) · 이 원장의 자는 같은 픽스처 안의 짝 비교다"
+  }
+}
