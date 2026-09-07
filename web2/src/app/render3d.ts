@@ -21,6 +21,7 @@ import { paintSideAt } from '../core/paint'
 import { borderQuads } from '../core/border'
 import { vkey } from '../core/joint'
 import { norm3, add3, mul3, type V3 } from '../core/vec'
+import { markStart, markEnd } from '../core/perfmark'
 import { uvBoxOf, texLevel, texDims, bakeFaceTex, drawDraftOnTex, appendMarkOnTex, draftFeedOnTex, draftFinishOnTex, draftCancelOnTex, draftSupported, rebuildStrokesOnTex, type UvBox, type RepBake } from '../core/facetex'
 import { paintLayerAlive, releasePaintLayer, type MarkBox } from '../core/paintseam'
 import { faceHatchSpacingWorld } from '../core/hatch'
@@ -203,9 +204,13 @@ function probeGlUploads(gl: WebGLRenderingContext | WebGL2RenderingContext): voi
     if (typeof orig !== 'function') continue
     g[name] = function (this: unknown, ...args: unknown[]) {
       if (metricsOff) return (orig as (...a: unknown[]) => unknown).apply(gl, args)   // [L2] 빈 통과(호출 자체는 남는다)
+      // web2-74 §1 표식 `tex.upload` — 캔버스에서 드라이버로 옮기는 동기 몫. 73의 glUpload 자와
+      //   **같은 자리**를 두른다(두 벌 계산 ⛔ #54): 저 장부는 «합 ms»를, 이 표식은 «멈춤의 이름»을 든다.
+      markStart('tex.upload')
       const t0 = performance.now()
       const out = (orig as (...a: unknown[]) => unknown).apply(gl, args)
       const dt = performance.now() - t0
+      markEnd('tex.upload')
       glUpload.calls++
       glUpload.ms += dt
       if (dt > glUpload.maxMs) glUpload.maxMs = dt
@@ -1317,6 +1322,10 @@ function gatePaintTex(r: R3D, app: App) {
       if (!done && (e.pending !== null || bakeSig !== e.bakeSig || !sigsArePrefix(sigs, e.sigs) || sigs.length !== e.sigs.length)) {
         // ── §1 **시간 분할 재굽기**: 바탕을 한 번 세우고, 획은 프레임 예산 안에서 «몇 개씩» ──
         // 이어 굽는 도중에도 캔버스는 늘 온전한 그림이다(바탕 + 지금까지의 획) — 빈 프레임이 없다.
+        // web2-74 §1 표식 `bake.commit` — 획 확정 뒤의 굽기(전량 bakeFaceTex + 이어 얹기).
+        //   72의 시간 분할이 이 구간을 프레임당 예산으로 자르므로 보통은 짧다 — 길어지는 판이
+        //   있으면 멈춤 목록이 그 이름을 든다.
+        markStart('bake.commit')
         const t0 = performance.now()
         let pend = e.pending
         let fresh = pend === null || pend.sig !== bakeSig
@@ -1359,6 +1368,7 @@ function gatePaintTex(r: R3D, app: App) {
           P.done = strokes.length
         }
         bakeStat.ms += performance.now() - t0
+        markEnd('bake.commit')
         bakeStat.uploads++
         bakeStat.uploadBytes += e.canvas.width * e.canvas.height * 4
         e.tex.needsUpdate = true

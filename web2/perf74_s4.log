@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 [dpr2] › e2e\perf74.spec.ts:321:1 › §4 열기 — 세 몫(파싱 · 세우기 · 굽기)을 값으로 (1.3m)
+
+  1 passed (1.4m)

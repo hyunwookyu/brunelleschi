@@ -87,7 +87,7 @@ test('g0·g1 — 프로브가 움직였다(빨강: orbitByForTest 3°×120) · �
   expect(redFrames, '빨강 — 리셋 직후에는 프레임 0(자가 «돌았다»를 스스로 말한다)').toBe(0)
 })
 
-test('g2 — ?perf=1 실기기 모드: 깃발 없이는 없다(0) · 있으면 하나 · 눌리지 않는다 · fps·최장 차단·열기가 값을 낸다', async ({ page }) => {
+test('g2 — ?perf=1 실기기 모드: 깃발 없이는 없다(0) · 있으면 하나 · 눌리지 않는다 · fps·최장 간격·열기·멈춤 목록이 값을 낸다', async ({ page }) => {
   test.setTimeout(300_000)
   await bootReset(page)
   const without = await page.evaluate(() => document.querySelectorAll('#perfhud').length)
@@ -120,7 +120,10 @@ test('g2 — ?perf=1 실기기 모드: 깃발 없이는 없다(0) · 있으면 �
   expect(hud.openMs, '열기 ms > 0').toBeGreaterThan(0)
   expect(hud.fps, '움직이는 동안 fps > 0').toBeGreaterThan(0)
   expect(hud.fontPx, '큰 글씨(≥ 24px)').toBeGreaterThanOrEqual(24)
-  expect(String(hud.text), 'HUD 문면에 셋이 다 있다').toMatch(/fps .*\n최장 차단 .*\n열기 /)
+  // ⚠ **문면이 web2-74 §0에서 갈렸다**: 「p95」와 「최장 차단」은 실기기에서 제일 나쁠 때 각각 0과
+  //   평생 최댓값을 냈다(PITFALLS #114) — 「최장 간격」과 「최근 다섯 멈춤 목록」이 그 자리를 들었다.
+  //   이 줄이 지키는 것은 종전 그대로 «셋이 다 있다»이고, 새 문면의 정본은 gates74 g0이다.
+  expect(String(hud.text), 'HUD 문면에 셋이 다 있다(74 판: fps·최장 간격 / 열기 / 멈춤 목록)').toMatch(/fps .*최장 간격 [\s\S]*열기 [\s\S]*멈춤 /)
 })
 
 test('g3 — 열기 분해의 장부 == 벽시계(±5%) · 굽기+업로드 ≤ 일한 시간 · 첫 상호작용: 빨강(수리 전 거동) > 지금', async ({ page }) => {

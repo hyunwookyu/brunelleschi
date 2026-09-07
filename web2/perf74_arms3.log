@@ -1,0 +1,9 @@
+
+Running 2 tests using 1 worker
+
+  ok 1 [dpr2] › e2e\perf74.spec.ts:219:1 › §2 세 팔 — 그냥 / ?nothumb=1 / ?nosave=1 (세 번씩) (6.1m)
+  ok 2 [dpr2] › e2e\perf74.spec.ts:378:1 › §4 열기 — 세 몫(파싱 · 세우기 · 굽기)을 값으로 (1.3m)
+
+  Slow test file: [dpr2] › e2e\perf74.spec.ts (7.4m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  2 passed (7.5m)

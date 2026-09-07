@@ -18,14 +18,22 @@
 // **감시받는 가설**이다.
 
 /** 판별 조건 — 스펙 원문에 이 패턴이 있으면 픽셀을 값으로 읽는 스펙이다.
- *  `test/dpr2list54.test.ts`가 같은 정규식을 e2e 전 스펙에 돌려 아래 목록과 대조한다. */
-export const DPR2_NEED_RE = /screenshot\(|getImageData|readPixels|toDataURL/
+ *  `test/dpr2list54.test.ts`가 같은 정규식을 e2e 전 스펙에 돌려 아래 목록과 대조한다.
+ *  ⚠ **여는 괄호까지가 조건이다**(2026-09-07 · web2-74): 종전 조건은 `toDataURL`·`getImageData`를
+ *  **말만 해도** 걸어서, 그 이름을 주석·막대 이름표에 적은 스펙(gates74·perf74 — 픽셀을 한 번도
+ *  안 읽는다)이 목록을 요구했다. 이 파일의 규약 그대로 «목록이 아니라 조건»을 고친다.
+ *  기존 목록은 한 칸도 안 움직인다 — `toDataURL`을 말한 옛 스펙 일곱은 전부 **부르기도 한다**. */
+export const DPR2_NEED_RE = /screenshot\(|getImageData\(|readPixels\(|toDataURL\(/
 
 /** 계측 스펙 넷(§1㉠) — 회귀 시험이 아니라 **추세 측정**이고 워커 수가 그 수를 바꾼다
  *  (#99와 같은 뿌리). 초록 실행에서 빠지고 밤(e2e:night)·원장(e2e:ledger)에만 돈다. */
-export const MEASURE_SPECS = ['cost18', 'cost20', 'cost22', 'brushperf', 'perf65', 'perf66', 'perf72', 'perf73'] as const
+export const MEASURE_SPECS = ['cost18', 'cost20', 'cost22', 'brushperf', 'perf65', 'perf66', 'perf72', 'perf73', 'perf74'] as const
 
-/** 조건이 낸 목록(2026-09-07 · web2-73: **shots73**이 늘었다(사진 screenshot — 네 팔·열기 분해·?perf=1 화면) · perf73은 계측(MEASURE_SPECS) · gates73은 픽셀 API를 안 부른다(수치만) ·
+/** 조건이 낸 목록(2026-09-07 · **web2-74**: 조건에 «여는 괄호»가 붙으면서 **panel65가 빠졌다** — 그 스펙의
+ *  `getImageData`는 머리주석의 «말»뿐이고(web2-68이 견본 캔버스를 SVG 도구 그림으로 갈면서 픽셀 자가 없어졌다)
+ *  실제로는 픽셀을 안 읽는다. 목록이 아니라 조건을 고친 결과이고, 밤 실행은 여전히 전량 dpr2라 덮인다.
+ *  **shots74**가 늘었다(사진 screenshot) · perf74는 계측(MEASURE_SPECS) · gates74는 픽셀 API를 안 부른다(수치·이름·존재만) ·
+ *  2026-09-07 · web2-73: **shots73**이 늘었다(사진 screenshot — 네 팔·열기 분해·?perf=1 화면) · perf73은 계측(MEASURE_SPECS) · gates73은 픽셀 API를 안 부른다(수치만) ·
  *  2026-09-05 · web2-69: **shots69**가 늘었다(사진 screenshot — 인벤토리 전/후/칠) — 65 → 66 · inventory69는 픽셀 API를 안 부른다(DOM 셈) ·
  *  web2-68: **case68·shots68**이 늘었다(필통 칸의 촉 색·눈금·목록 견본의 픽셀 해시 — getImageData · 사진 screenshot) — 63 → 65 · paint68은 픽셀 API를 안 부른다(__m61 지도만 — paint63 선례) ·
  *  web2-67: paint67·shots67·**gesture67**이 늘었다(화면 #gl
@@ -40,7 +48,7 @@ export const DPR2_SPECS = [
   'entry17', 'extacq', 'eyelayer27', 'face', 'files43', 'flow', 'gesture', 'gesture67',
   'grain26', 'grain30', 'grain40', 'graphite', 'icons', 'inklayer', 'input',
   'join56', 'level', 'materials', 'mats46', 'mats52', 'nums47', 'own3d', 'paint45',
-  'paint48', 'paint50', 'paint54', 'paint59', 'paint62', 'paint64', 'paint65', 'paint66', 'paint67', 'panel65', 'paper', 'papericon31', 'press26', 'rep49', 'rollpose',
-  'roundsave', 'shots62', 'shots63', 'shots64', 'shots65', 'shots66', 'shots67', 'shots68', 'shots69', 'shots70', 'shots71', 'shots72', 'shots73', 'slide40', 'snapghost', 'span57', 'thick55', 'turn31', 'ui34r7', 'underlay', 'view42',
+  'paint48', 'paint50', 'paint54', 'paint59', 'paint62', 'paint64', 'paint65', 'paint66', 'paint67', 'paper', 'papericon31', 'press26', 'rep49', 'rollpose',
+  'roundsave', 'shots62', 'shots63', 'shots64', 'shots65', 'shots66', 'shots67', 'shots68', 'shots69', 'shots70', 'shots71', 'shots72', 'shots73', 'shots74', 'slide40', 'snapghost', 'span57', 'thick55', 'turn31', 'ui34r7', 'underlay', 'view42',
   'waitfade', 'waitink37', 'yellow', 'yellowfree', 'zones',
 ] as const

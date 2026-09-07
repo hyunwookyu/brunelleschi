@@ -22,8 +22,8 @@ import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil,
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
 import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, frameStepStats, resetFrameStepStats, glInfo, glUpload, resetGlUploadStats, setMetrics73OffForTest, metrics73OffForTest, setPaintBakeIdleMsForTest, paintBakeIdleMsForTest, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest, paintBakePending, paintPendingRowsForTest, setPaintPointerDown, setPaintLevelFreezeOffForTest, paintLevelFreezeOffForTest, setPaintBakeSliceOffForTest, paintBakeSliceOffForTest, setPaintIndexOffForTest, paintIndexOffForTest, paintStrokeListsForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
-import { initFilePanel, bootCost, type FilePanel } from './filepanel'
-import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
+import { initFilePanel, bootCost, saveFlagsForTest, type FilePanel } from './filepanel'
+import { setStoreFailForTest, listDocs, getDoc, putDoc, deleteDoc, newDocId, migrateFromLocal } from '../core/store'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
 import { recognizeStrokes } from '../core/handwriting'
@@ -45,6 +45,8 @@ import { add3, mul3, quatRotate, v3 } from '../core/vec'
 import { borderQuads } from '../core/border'
 import { DEFAULT_CLS } from '../core/clsdef'
 import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS, WRITE_HOLD_MS_MIN, WRITE_HOLD_MS_MAX, TURN_ANIM_MS } from '../core/constants'
+// web2-74 §0·§1 — 멈춤 탐지와 구간 표식(계측만 · core/perfmark.ts 머리주석이 정본)
+import { noteGap, stallStats, stallLine, markCounts, resetPerfMarks, setStallMs, stallThresholdMs, markStart, markEnd, gapLadder, MARK_NAMES } from '../core/perfmark'
 import { WAIT_INK, setWaitInkMode, waitInkMode, type WaitInkMode } from '../core/waitfade'
 import {
   lensAllowed, lensStops, lensF, lensK, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX,
@@ -1818,11 +1820,16 @@ document.getElementById('btn-save')!.addEventListener('click', () => {
 const fileOpen = document.getElementById('file-open') as HTMLInputElement
 document.getElementById('btn-open')!.addEventListener('click', () => fileOpen.click())
 function applyOpen(data: NonNullable<ReturnType<typeof parseBrnl>>) {
-  loadDoc(app, data)
-  fitViewToFrame()
-  paperbar.sync()
-  layerbar.sync()
-  unitSel.value = app.doc.unit                 // 문서의 단위가 패널에 보인다(4-6)
+  // web2-74 §1 표식 `doc.build` — **문서 세우기**(loadDoc → recompute: 리프팅·면 풀기·접합·색인).
+  //   두르는 것뿐이고 순서는 한 자도 안 바뀐다. 열 때의 15초가 어디로 가는지는 이 이름이 든다.
+  markStart('doc.build')
+  try {
+    loadDoc(app, data)
+    fitViewToFrame()
+    paperbar.sync()
+    layerbar.sync()
+    unitSel.value = app.doc.unit                 // 문서의 단위가 패널에 보인다(4-6)
+  } finally { markEnd('doc.build') }
 }
 fileOpen.addEventListener('change', async () => {
   const f = fileOpen.files?.[0]
@@ -1919,7 +1926,11 @@ document.getElementById('sidebar-toggle')!.addEventListener('click', () => {
 
 /** 지금 화면의 썸네일 — 겹 순서대로(gl → brushc → ink) 종이색 위에 합성해 줄인다.
  *  저장 시점에 굽는다(㉮ — addSheet 머리주석). JPEG: 사진형 합성이라 PNG보다 훨씬 작다. */
+/** web2-74 §3-3 게이트의 자 — `toDataURL` 호출 «수». 「저장 한 번에 0」이 그 문면이다.
+ *  ⚠ 종이 썸네일(addSheet)도 같은 함수를 쓰므로 **전역 계수기**다 — 게이트는 저장 구간의 차를 본다. */
+const thumbCalls = { n: 0 }
 function captureThumb(): string {
+  thumbCalls.n++
   const t = document.createElement('canvas')
   // ⚠ **비가 유한하지 않을 수 있다**(web2-43에서 실측): 화면이 아직(또는 전혀) 안 그려진
   // 창에서는 `W`가 0이라 `H/W`가 NaN이 되고, `Math.max(1, NaN)`은 **NaN**이라 캔버스
@@ -3367,14 +3378,40 @@ function frameCostQ() {
 //   칠만 이어 구운 프레임. 「칠 전부 채워지기」를 네 몫(굽기 CPU·업로드·분할 대기·그 밖)으로 가르는
 //   자다. 계측만이다 — 고리의 순서는 한 자도 안 바뀐다.
 const loopStat = { frames: 0, drawFrames: 0, bakeFrames: 0, workMs: 0, gapMs: 0, maxGapMs: 0, firstFrameAt: -1, firstFrameEndAt: -1, lastEndAt: -1 }
+/** web2-74 §0 — 멈춤 탐지 전용 시계(계측 끔·PERF_HUD 어느 것에도 안 매인다) · **프레임 시작**의 시각 */
+let stallLastStart = -1
 const resetLoopStat = () => { loopStat.frames = 0; loopStat.drawFrames = 0; loopStat.bakeFrames = 0; loopStat.workMs = 0; loopStat.gapMs = 0; loopStat.maxGapMs = 0; loopStat.lastEndAt = -1 }
-// ── web2-73 §1-3 — **실기기 모드**(`?perf=1`): 사람이 아이패드 Safari에서 배포본을 열어 읽는 숫자 셋 —
-//   fps(최근 1초의 rAF 수 · 간격 p95) · 메인 최장 차단(longtask 최대 — 없는 브라우저(Safari)는 rAF
-//   최장 간격) · 열기(첫 프레임이 끝난 ms). 개발 메뉴(?dev=1) 밖의 URL 손잡이이고 **눌리는 것이 아니라
-//   표시**다(pointer-events:none — 69의 전수 표에 +0으로 선다 · docs/reference/INVENTORY.md).
+// ── web2-73 §1-3 → **web2-74 §0** — **실기기 모드**(`?perf=1`).
+//
+//   73판이 읽던 셋(fps · p95 · 최장 차단)에서 **둘이 실기기에서 못 쓰는 자였다**(74 §0 실측):
+//     ① fps 1일 때 p95가 **0ms**로 나왔다 — 1초 창에 눈금이 하나뿐이라 «간격»이 없었다.
+//        제일 나쁠 때 자가 0을 가리키는 꼴이다.
+//     ② 「최장 차단」이 **평생 최댓값**이라 15,028ms에 묶여 그 뒤의 멈춤을 하나도 안 보여줬다
+//        (완전 정지 둘이 저 숫자 뒤에 숨었다).
+//   그래서 자를 둘 고친다:
+//     ① p95 → **최장 간격** — 1초 창 «안»의 최장 rAF 간격이고, **아직 안 끝난 간격**(마지막
+//        눈금부터 지금까지)도 센다. 눈금이 하나뿐이어도 0이 아니다.
+//     ② 최장 차단 → **최근 다섯 멈춤 목록** — `t=12.4s · 1,850ms · save.serialize` 꼴.
+//        이름은 §1의 구간 표식이 붙인다(core/perfmark.ts).
+//   longtask의 평생 최댓값은 **자료구조와 진단에만** 남는다(화면에서 내렸다 · 73의 값은 안 잃는다).
+//
+// 개발 메뉴(?dev=1) 밖의 URL 손잡이이고 **눌리는 것이 아니라 표시**다(pointer-events:none —
+// 69의 전수 표에 +0으로 선다 · docs/reference/INVENTORY.md).
+setStallMs(C.PERF_STALL_MS)   // web2-74 §0 — 멈춤 문턱의 정본은 상수다(팔만 낮춘다)
 const PERF_HUD = new URLSearchParams(location.search).has('perf')
-const perfHud = { fps: 0, p95: 0, longestBlockMs: 0, longtaskSupported: false, openMs: 0, ticks: [] as number[] }
+const perfHud = { fps: 0, gapMs: 0, longestBlockMs: 0, longtaskSupported: false, openMs: 0, ticks: [] as number[] }
 let perfHudEl: HTMLElement | null = null
+/** 1초 창의 **최장 rAF 간격** — 창 안의 눈금 짝 + «마지막 눈금부터 지금까지»(안 끝난 간격).
+ *  옛 자(p95)는 창 안 눈금이 하나면 짝이 없어 **0**을 냈다 — 그것이 §0 ①의 결함이다. */
+export function maxGapInWindow(ticks: number[], now: number, windowMs = 1000): number {
+  let mx = 0
+  for (let i = 1; i < ticks.length; i++) {
+    if (ticks[i]! > now - windowMs) { const g = ticks[i]! - ticks[i - 1]!; if (g > mx) mx = g }
+  }
+  const last = ticks[ticks.length - 1]
+  if (last !== undefined && now - last > mx) mx = now - last   // 지금 이 순간 막혀 있는 몫
+  return mx
+}
 if (PERF_HUD) {
   perfHudEl = document.createElement('div')
   perfHudEl.id = 'perfhud'
@@ -3382,26 +3419,29 @@ if (PERF_HUD) {
   // ⚠ 색은 **토큰만** 쓴다(70의 「토큰 하나」 — tokens.css 밖 16진수 0). 첫 판은 `var(--ink, <16진수>)`로
   //   폴백 색 리터럴을 넣었다가 밤 전량의 tokens70 §1이 잡았다(offenders src/app/main.ts 1). 어두운 판도 따라온다.
   perfHudEl.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;'
-    + 'font:700 26px/1.3 system-ui,sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line);'
-    + 'padding:10px 20px;border-radius:12px;white-space:pre;letter-spacing:.01em'
+    // ⚠ 24px 아래로 내리지 마라 — 73이 세운 「큰 글씨」의 뜻(사람이 태블릿을 들고 읽는다)이고
+    //   gates73 g2가 그 값을 잰다. 줄이 늘었어도(멈춤 목록 다섯) 크기는 지킨다.
+    + 'font:700 24px/1.3 system-ui,sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line);'
+    + 'padding:10px 20px;border-radius:12px;white-space:pre;letter-spacing:.01em;text-align:left'
   perfHudEl.textContent = 'perf —'
   document.body.appendChild(perfHudEl)
   try {
     new PerformanceObserver((l) => { for (const e of l.getEntries()) perfHud.longestBlockMs = Math.max(perfHud.longestBlockMs, e.duration) })
       .observe({ entryTypes: ['longtask'] })
     perfHud.longtaskSupported = true
-  } catch { /* longtask 미지원 — rAF 최장 간격이 그 자리를 든다(아래) */ }
-  setInterval(() => {
-    const now = performance.now()
-    const win = perfHud.ticks.filter(t => now - t <= 1000)
-    const gaps: number[] = []
-    for (let i = 1; i < win.length; i++) gaps.push(win[i]! - win[i - 1]!)
-    gaps.sort((a, b) => a - b)
-    perfHud.fps = win.length
-    perfHud.p95 = gaps.length ? Math.round(gaps[Math.min(gaps.length - 1, Math.floor(gaps.length * 0.95))]! * 10) / 10 : 0
-    const block = perfHud.longtaskSupported ? perfHud.longestBlockMs : loopStat.maxGapMs
-    perfHudEl!.textContent = `fps ${perfHud.fps} · p95 ${perfHud.p95}ms\n최장 차단 ${Math.round(block)}ms${perfHud.longtaskSupported ? '' : '(rAF 간격)'}\n열기 ${Math.round(perfHud.openMs)}ms`
-  }, 500)
+  } catch { /* longtask 미지원 — 멈춤 목록은 rAF 간격이 재므로 화면은 그대로다 */ }
+  setInterval(() => { if (perfHudEl) perfHudEl.textContent = perfHudText() }, 500)
+}
+/** 화면의 문면 — **팔과 화면이 같은 함수**를 읽는다(#54). 사진(74-hud.png)이 이 문자열이다. */
+function perfHudText(): string {
+  const now = performance.now()
+  const win = perfHud.ticks.filter(t => now - t <= 1000)
+  perfHud.fps = win.length
+  perfHud.gapMs = Math.round(maxGapInWindow(perfHud.ticks, now) * 10) / 10
+  const st = stallStats()
+  const rows = st.recent.slice(-5).map(s => '  ' + stallLine(s))
+  return `fps ${perfHud.fps} · 최장 간격 ${perfHud.gapMs}ms\n열기 ${Math.round(perfHud.openMs)}ms\n`
+    + `멈춤 ${st.n}회(≥${st.thresholdMs}ms)` + (rows.length ? '\n' + rows.join('\n') : '')
 }
 
 let paintDraftPerturb = false
@@ -3414,7 +3454,17 @@ function frame() {
     if (g > loopStat.maxGapMs) loopStat.maxGapMs = g
   }
   if (metricsOn && loopStat.firstFrameAt < 0) loopStat.firstFrameAt = lt0
-  if (PERF_HUD) { perfHud.ticks.push(metricsOn ? lt0 : performance.now()); if (perfHud.ticks.length > 400) perfHud.ticks.shift() }
+  // web2-74 §0 — **멈춤 탐지는 계측 끔과 무관하다**(자기 시계를 쓴다).
+  //   ⚠⚠ **프레임 «시작»끼리 잰다**(첫 판은 «직전 프레임 끝 → 이번 시작»이었고 그것이 틀렸다):
+  //   긴 일이 rAF 콜백 «안»에서 돌면(굽기가 그렇다 — 실측 한 프레임 864.9ms) 끝→시작 간격은
+  //   짧게 나와서 **가장 큰 멈춤을 자가 통째로 놓쳤다**. 사람이 보는 것은 «다음 그림이 언제
+  //   나왔나»이므로 자도 시작→시작이어야 하고, 그래야 1초 창의 「최장 간격」(같은 눈금)과 한 자다.
+  const stallNow = metricsOn ? lt0 : performance.now()
+  if (stallLastStart >= 0) noteGap(stallNow, stallNow - stallLastStart)
+  stallLastStart = stallNow
+  // ⚠ 눈금은 **깃발과 무관하게** 쌓는다 — §0의 «옛 자 ↔ 새 자» 반증이 같은 눈금 위에서 돌아야
+  //   하고(자를 둘 만들면 그것부터 갈린다) 값은 400칸 고리 하나다.
+  perfHud.ticks.push(stallNow); if (perfHud.ticks.length > 400) perfHud.ticks.shift()
   syncUndoRedoMuted()   // web2-70 [H2]
   orthoMark.hidden = !isParallel(app.pose)   // web2-71 §3 — 정사에서만(Feather §A-1 「—×—」)
   autolevel.tick()   // 접힐 때가 됐으면 여기서 포즈가 움직인다(setPose가 다시 그리게 한다)
@@ -4102,6 +4152,20 @@ const diag = {
   // ── web2-43 — **저장소를 그 런타임에서 본다**(#94: 문면이 아니라 행위를 잰다) ──
   /** 저장소에 실제로 든 것 — 지금 문서의 열쇠·목록·저장물·썸네일 */
   storeDump: () => filePanelRef?.dump() ?? Promise.resolve(null),
+  /** 문서를 **화면의 열기와 같은 함수**로 앉힌다(#54 — 팔이 제 경로를 따로 만들지 않게).
+   *  ⚠ heavy72가 `diag.applyDoc`을 불러 왔는데 **그 이름이 diag에 없었다**(사람 픽스처 갈래라
+   *  한 번도 안 돌았다 — 74가 그 갈래를 실제로 쓰면서 드러났다). 이름을 여기 세운다. */
+  applyDoc: (data: NonNullable<ReturnType<typeof parseBrnl>>) => applyOpen(data),
+  /** §2의 두 손잡이가 실제로 먹혔나(값) — `?nosave=1` · `?nothumb=1` */
+  saveFlagsForTest: () => saveFlagsForTest(),
+  // ── web2-74 §3-3 — 썸네일을 저장마다 굽지 않는다 ────────────────────────────
+  /** `toDataURL` 호출 «수»(게이트의 자 — 「저장 한 번에 0」) */
+  thumbCallsForTest: () => thumbCalls.n,
+  /** 반증 스위치 — 켜면 저장마다 동기로 굽는다(수리 전 거동 · 같은 실행 안의 빨강 짝) */
+  setLegacyThumbForTest: (v: boolean) => filePanelRef?.setLegacyThumbForTest(v),
+  /** 예약을 기다리지 않고 지금 굽는다(팔) */
+  bakeThumbForTest: () => filePanelRef?.bakeThumbForTest() ?? Promise.resolve(),
+  thumbStateForTest: () => filePanelRef?.thumbStateForTest() ?? null,
   /** 예약된 저장을 앞당긴다 — 팔이 「저장됐다」를 기다리는 자리(상한 있는 대기 #95) */
   storeFlush: () => filePanelRef?.flush() ?? Promise.resolve(),
   /** 지금 문서의 정체(이름·열쇠·시각) */
@@ -4116,6 +4180,14 @@ const diag = {
     put: (rec: Parameters<typeof putDoc>[0]) => putDoc(rec),
     newId: (now: number) => newDocId(now),
     migrate: (now: number) => migrateFromLocal(now),
+    /** 저장소를 **비운다**(팔 전용 · 74 §2) — `?reset`은 캐시만 버리고 «그림은 안 건드린다»(위
+     *  탈출구 주석이 정본). 팔의 세 팔이 서로 독립하려면 문서 저장소를 실제로 비워야 한다. */
+    clearForTest: async (): Promise<number> => {
+      const ds = await listDocs()
+      for (const d of ds) await deleteDoc(d.id)
+      filePanelRef?.sync()
+      return ds.length
+    },
   },
   /** 최근 목록을 다시 그린다 — 팔이 저장소를 직접 만졌을 때 화면을 맞춘다 */
   recentSync: () => filePanelRef?.sync(),
@@ -4353,7 +4425,47 @@ const diag = {
   glUploadReset: () => resetGlUploadStats(),
   frameLoop: () => ({ ...loopStat, now: performance.now() }),
   frameLoopReset: () => resetLoopStat(),
-  perfHudForTest: () => ({ on: PERF_HUD, fps: perfHud.fps, p95: perfHud.p95, longestBlockMs: perfHud.longestBlockMs, longtaskSupported: perfHud.longtaskSupported, openMs: perfHud.openMs, maxGapMs: loopStat.maxGapMs, text: perfHudEl?.textContent ?? null }),
+  perfHudForTest: () => ({ on: PERF_HUD, fps: perfHud.fps, gapMs: perfHud.gapMs, longestBlockMs: perfHud.longestBlockMs, longtaskSupported: perfHud.longtaskSupported, openMs: perfHud.openMs, maxGapMs: loopStat.maxGapMs, text: perfHudEl?.textContent ?? null,
+    /** ⚠ 화면이 **안 떠 있어도**(?perf 없이) 이 문면을 낸다 — 팔이 「깃발 없는 판은 DOM에 없다」와
+     *  「자가 무엇을 가리키나」를 갈라서 본다(gates73 g2가 앞의 것을 계속 잰다). */
+    textNow: perfHudText() }),
+  /** §0의 **반증 짝** — 같은 눈금 위에서 «옛 자»(73의 p95)와 «새 자»(최장 간격)를 나란히 낸다.
+   *  `at`을 주면 그 시점을 «지금»으로 놓고 1초 창을 자른다 — 멈춤 직후처럼 창 안 눈금이 하나뿐인
+   *  자리를 값으로 집을 수 있다(옛 자는 거기서 0을 낸다: §0 ①의 결함). */
+  perfRulersForTest: (at?: number) => {
+    const now = at ?? performance.now()
+    const upto = perfHud.ticks.filter(t => t <= now)
+    const win = upto.filter(t => now - t <= 1000)
+    const gaps: number[] = []
+    for (let i = 1; i < win.length; i++) gaps.push(win[i]! - win[i - 1]!)
+    gaps.sort((a, b) => a - b)
+    const oldP95 = gaps.length ? Math.round(gaps[Math.min(gaps.length - 1, Math.floor(gaps.length * 0.95))]! * 10) / 10 : 0
+    return { at: now, fps: win.length, ticksInWindow: win.length,
+      // 첫 눈금 앞에는 «간격»이 아예 없다 — 자의 결함이 아니라 자료의 끝이다(팔이 이 칸으로 거른다)
+      hasPrev: upto.length >= 2, ticksBefore: upto.length,
+      old_p95: oldP95, new_maxGapMs: Math.round(maxGapInWindow(upto, now) * 10) / 10 }
+  },
+  /** 눈금 원본(팔이 «fps 1» 자리를 스스로 고른다) */
+  perfTicksForTest: () => perfHud.ticks.slice(),
+  // ── web2-74 §0·§1 — 멈춤 목록과 구간 표식(계측만) ──────────────────────────────
+  /** 멈춤 «횟수 · 최장 · 합»과 최근 목록 — §2의 세 팔 표가 읽는 자리 */
+  perfStalls: () => stallStats(),
+  /** 프레임 간격의 **문턱 사다리**(#12) — 잡음 바닥과 팔 사이의 차를 한 동작점으로 안 주장한다 */
+  perfGaps: () => gapLadder(),
+  /** 표식별 «횟수 · 합 ms · 최장» — 일곱이 다 돌았는지 팔이 센다 */
+  perfMarks: () => ({ names: [...MARK_NAMES], counts: markCounts() }),
+  /** 문턱을 낮춰 잡는다(팔 전용) — 기본은 C.PERF_STALL_MS */
+  setPerfStallMsForTest: (ms: number) => setStallMs(ms),
+  perfStallMsForTest: () => stallThresholdMs(),
+  resetPerfMarksForTest: () => resetPerfMarks(),
+  /** 표식 밖의 멈춤이 `?`로 적히는지 보는 반증 팔 — 아무 표식도 안 두른 채 메인을 막는다 */
+  blockMainForTest: (ms: number) => { const t = performance.now(); while (performance.now() - t < ms) { /* 동기 루프 */ } },
+  /** 표식 «안»에서 막는다 — 같은 막음이 이름을 얻는지(반증의 짝) */
+  blockInMarkForTest: (name: string, ms: number) => {
+    markStart(name)
+    const t = performance.now(); while (performance.now() - t < ms) { /* 동기 루프 */ }
+    markEnd(name)
+  },
   /** §2 «쉬는 중 예산» 손잡이 — sessionStorage로 새로고침을 넘는다(null이면 C 그대로) */
   setPaintBakeIdleMsForTest: (v: number | null) => {
     try { if (v === null) sessionStorage.removeItem('b2.idleMs73'); else sessionStorage.setItem('b2.idleMs73', String(v)) } catch { /* 이 세션만 */ }

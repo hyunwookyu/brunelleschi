@@ -1,0 +1,12 @@
+
+Running 5 tests using 1 worker
+
+  ok 1 [dpr2] › e2e\perf74.spec.ts:63:1 › §0 계측 판 — 옛 자(p95)와 새 자(최장 간격)를 같은 눈금 위에서 (9.5s)
+  ok 2 [dpr2] › e2e\perf74.spec.ts:131:1 › §1 표식 — 일곱이 이름을 붙인다 · 표식 밖은 ? (1.4m)
+  ok 3 [dpr2] › e2e\perf74.spec.ts:199:1 › §2 세 팔 — 그냥 / ?nothumb=1 / ?nosave=1 (세 번씩) (6.1m)
+  ok 4 [dpr2] › e2e\perf74.spec.ts:287:1 › §3-3 전/후 — 같은 실행·같은 몸짓으로 수리 전 거동 ↔ 지금 (3.2m)
+  ok 5 [dpr2] › e2e\perf74.spec.ts:335:1 › §4 열기 — 세 몫(파싱 · 세우기 · 굽기)을 값으로 (1.3m)
+
+  Slow test file: [dpr2] › e2e\perf74.spec.ts (12.1m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  5 passed (12.2m)
