@@ -26,15 +26,16 @@
   "no_constants_snapshot": true,
   "selfcheck_notes": {
     "zero_counters": "g2의 hud_without_flag 0은 «미생성»의 뜻이고 짝(hud_with_flag 1)이 같은 원장에 있다 · g1의 red_frames_after_reset 0은 빨강 팔의 정의(리셋 직후)다",
-    "identical_pairs": "g1의 걸음 합 == 전체는 게이트의 뜻 그 자체(같은 시계로 찍은 여덟 구간의 합) — 판정력은 «프레임마다 돈다»(frames > 0)와 빨강 짝에 있다"
+    "identical_pairs": "g1의 걸음 합 == 전체는 게이트의 뜻 그 자체(같은 시계로 찍은 여덟 구간의 합) — 판정력은 «프레임마다 돈다»(frames > 0)와 빨강 짝에 있다",
+    "zero_error_metric": "g1_walk.per_frame_gap_ms 0은 **설계 보장**이다(§5.1 유형 3 — 아홉 시각을 같은 시계로 찍고 여덟 구간의 합과 t8−t0을 견주므로 부동소수 반올림 밖에서는 정확히 0이다). 임계를 안 건다 — 이 자리의 게이트는 «프레임마다 돈다»(frames > 30)와 빨강(리셋 직후 0)이다"
   },
   "g0_probe": {
     "human": {
       "totalDeg": 154.9,
       "pxDragged": 720,
       "frames": 119,
-      "fps": 24.21,
-      "p95": 50.7
+      "fps": 24.87,
+      "p95": 45.6
     },
     "red_orbitByForTest": {
       "totalDeg": 0,
@@ -47,8 +48,8 @@
   "g1_walk": {
     "frames": 119,
     "sample": 119,
-    "step_sum_ms": 69.9,
-    "total_sum_ms": 69.9,
+    "step_sum_ms": 67.7,
+    "total_sum_ms": 67.7,
     "per_frame_gap_ms": 0,
     "red_frames_after_reset": 0
   },
@@ -57,17 +58,17 @@
     "hud_with_flag": 1,
     "hud": {
       "on": true,
-      "fps": 44,
-      "p95": 35.4,
-      "longestBlockMs": 192,
+      "fps": 42,
+      "p95": 36,
+      "longestBlockMs": 194,
       "longtaskSupported": true,
-      "openMs": 155.89999997615814,
-      "maxGapMs": 184.5999999642372,
-      "text": "fps 44 · p95 35.4ms\n최장 차단 192ms\n열기 156ms",
+      "openMs": 152.89999997615814,
+      "maxGapMs": 185.19999998807907,
+      "text": "fps 42 · p95 36ms\n최장 차단 194ms\n열기 153ms",
       "pressable": false,
       "under": "ink",
       "rect": {
-        "w": 291,
+        "w": 269,
         "h": 121
       },
       "fontPx": 26
@@ -77,89 +78,89 @@
   },
   "g3_open": {
     "now": {
-      "firstInteractiveMs": 3008,
-      "allPaintMs": 6507,
-      "longestBlockMs": 898,
+      "firstInteractiveMs": 3056,
+      "allPaintMs": 6602,
+      "longestBlockMs": 896,
       "parts": {
-        "bake_ms": 3155.9,
-        "upload_ms": 20.4,
-        "wait_ms": 3069.4,
-        "other_ms": 261.2,
-        "wall_ms": 6506.9,
-        "sum_ms": 6506.9,
-        "other_boot_ms": 98.9,
-        "other_frame_ms": 162.2,
+        "bake_ms": 3158.1,
+        "upload_ms": 21.4,
+        "wait_ms": 3160.9,
+        "other_ms": 261.4,
+        "wall_ms": 6601.8,
+        "sum_ms": 6601.8,
+        "other_boot_ms": 95,
+        "other_frame_ms": 166.3,
         "pct": {
-          "bake": 48.5,
+          "bake": 47.8,
           "upload": 0.3,
-          "wait": 47.2,
+          "wait": 47.9,
           "other": 4
         }
       },
       "check": {
-        "accounted_ms": 6506.8,
+        "accounted_ms": 6601.7,
         "accounted_over_wall": 1,
-        "steps_total_ms": 3266.2,
-        "steps_over_work": 0.978,
-        "raf_ticks": 82,
-        "raf_gap_sum_ms": 6489.5,
+        "steps_total_ms": 3274.9,
+        "steps_over_work": 0.979,
+        "raf_ticks": 84,
+        "raf_gap_sum_ms": 6584.8,
         "raf_over_wall": 0.997,
-        "bake_plus_upload_over_work": 0.951
+        "bake_plus_upload_over_work": 0.95
       },
       "loop": {
-        "frames": 77,
+        "frames": 80,
         "drawFrames": 3,
-        "bakeFrames": 72,
-        "workMs": 3338.5,
-        "gapMs": 3069.4,
-        "maxGapMs": 353.9,
-        "firstFrameAt": 169.30000001192093,
-        "firstFrameEndAt": 194.5,
-        "lastEndAt": 6577.199999988079,
-        "now": 6617.599999964237
+        "bakeFrames": 75,
+        "workMs": 3345.8,
+        "gapMs": 3160.9,
+        "maxGapMs": 330.3,
+        "firstFrameAt": 157.30000001192093,
+        "firstFrameEndAt": 182.5,
+        "lastEndAt": 6664,
+        "now": 6706.5
       }
     },
     "red_legacy72": {
-      "firstInteractiveMs": 5237,
-      "allPaintMs": 5238,
-      "longestBlockMs": 2638,
+      "firstInteractiveMs": 5239,
+      "allPaintMs": 5241,
+      "longestBlockMs": 2656,
       "parts": {
-        "bake_ms": 4318.1,
-        "upload_ms": 20.2,
-        "wait_ms": 721,
-        "other_ms": 179.1,
-        "wall_ms": 5238.4,
-        "sum_ms": 5238.4,
-        "other_boot_ms": 100.8,
-        "other_frame_ms": 76.5,
+        "bake_ms": 4324.2,
+        "upload_ms": 22.1,
+        "wait_ms": 710.3,
+        "other_ms": 184.6,
+        "wall_ms": 5241.2,
+        "sum_ms": 5241.2,
+        "other_boot_ms": 96.7,
+        "other_frame_ms": 85.9,
         "pct": {
-          "bake": 82.4,
+          "bake": 82.5,
           "upload": 0.4,
-          "wait": 13.8,
-          "other": 3.4
+          "wait": 13.6,
+          "other": 3.5
         }
       },
       "check": {
-        "accounted_ms": 5236.6,
+        "accounted_ms": 5239.2,
         "accounted_over_wall": 1,
-        "steps_total_ms": 4363.2,
-        "steps_over_work": 0.988,
+        "steps_total_ms": 4373,
+        "steps_over_work": 0.987,
         "raf_ticks": 13,
-        "raf_gap_sum_ms": 5232.6,
+        "raf_gap_sum_ms": 5234.8,
         "raf_over_wall": 0.999,
-        "bake_plus_upload_over_work": 0.983
+        "bake_plus_upload_over_work": 0.981
       },
       "loop": {
-        "frames": 8,
+        "frames": 9,
         "drawFrames": 3,
         "bakeFrames": 0,
-        "workMs": 4414.8,
-        "gapMs": 721,
-        "maxGapMs": 399.8,
-        "firstFrameAt": 160.19999998807907,
-        "firstFrameEndAt": 184.4000000357628,
-        "lastEndAt": 5296,
-        "now": 5300
+        "workMs": 4432.2,
+        "gapMs": 710.3,
+        "maxGapMs": 403,
+        "firstFrameAt": 156,
+        "firstFrameEndAt": 181.30000001192093,
+        "lastEndAt": 5298.5,
+        "now": 5303
       }
     },
     "tol": 0.05

@@ -33,6 +33,7 @@ const OUT: Record<string, unknown> = {
   selfcheck_notes: {
     zero_counters: 'g2의 hud_without_flag 0은 «미생성»의 뜻이고 짝(hud_with_flag 1)이 같은 원장에 있다 · g1의 red_frames_after_reset 0은 빨강 팔의 정의(리셋 직후)다',
     identical_pairs: 'g1의 걸음 합 == 전체는 게이트의 뜻 그 자체(같은 시계로 찍은 여덟 구간의 합) — 판정력은 «프레임마다 돈다»(frames > 0)와 빨강 짝에 있다',
+    zero_error_metric: 'g1_walk.per_frame_gap_ms 0은 **설계 보장**이다(§5.1 유형 3 — 아홉 시각을 같은 시계로 찍고 여덟 구간의 합과 t8−t0을 견주므로 부동소수 반올림 밖에서는 정확히 0이다). 임계를 안 건다 — 이 자리의 게이트는 «프레임마다 돈다»(frames > 30)와 빨강(리셋 직후 0)이다',
   },
 }
 const LEDGER_OF = (p: string) => resolve(HERE, `../../stage0/out/gates73_web2_dpr${p === 'dpr2' ? 2 : 1}.json`)

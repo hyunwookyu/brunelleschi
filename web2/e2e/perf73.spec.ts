@@ -35,7 +35,7 @@ const OUT: Record<string, unknown> = {
   selfcheck_notes: {
     zero_counters: '① 빈 팔의 삼각형 0·선 0·굽기 0은 픽스처의 정의(획 0)다 — 같은 실행의 ②③④가 0이 아닌 값을 낸다. 궤도 중 bake 0은 72 §2의 통과값이고 반증 짝은 gates72 orbit_freeze_off에 있다',
     identical_pairs: 'parts.sum_ms == parts.wall_ms는 **구성상 항등**이다(other가 뺄셈이다 — §5.1 유형 3). 판정력은 check.accounted_over_wall(장부 vs 벽시계 · 독립된 시계 둘)과 check.steps_over_work · raf_over_wall에 있고 그것이 ±5% 문이다',
-    single_category: 'B_open의 levels가 한 값인 것은 픽스처의 구성(72와 같다) — 단계의 변별은 §1의 zoom(512까지 확대)이 든다',
+    single_category: 'fixture.levels가 한 값(dpr2 256×23 · dpr1 128×23)인 것은 픽스처의 구성이다(72와 같은 격자 벽 — 칸이 화면에서 비슷한 크기) — 단계의 변별은 §1의 zoom(512까지 확대 · zoom.maxLevel)이 든다. 이 원장의 자는 단계가 아니라 팔 사이의 «차»다',
   },
 }
 // 원장 꼬리표 — 머리 있는 판은 `_headed`, 그 밖의 대조군(예: Edge 헤드리스 — 이진과 GPU를 가르는 «라» 팔)은 PW_LEDGER_TAG로 준다
