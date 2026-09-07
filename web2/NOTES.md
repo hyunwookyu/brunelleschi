@@ -30363,7 +30363,7 @@ bake.commit      6,426.1ms · 357회 · 최대 한 번 861.8ms      ← 문턱�
 | 5 재실행한 원장 / 안 한 것 | **재실행**: `perf74_web2_dpr2.json`(§0~§4 전부 · `LEDGER=1 node tools/e2e.mjs ledger e2e/perf74.spec.ts --project=dpr2` · 워커 1 · **리뷰어 대응 뒤 다시**). **안 함**: 73·72의 원장 전부 — 그 경로의 코드를 안 고쳤다(성능 코드 변경은 §3-3의 썸네일 갈래 하나) |
 | 6 selfcheck | 돌렸다. 74 원장의 플래그 셋은 **원장이 스스로 설명한다**(`selfcheck_notes`): ① `gap_n[·][4..6] = 0`(문턱 400·800·1600ms) — **이 절의 결론**이고 같은 사다리의 [0..3]이 0이 아니다 ② `*_fixture.levels` 단일 범주 — 픽스처의 구성 ③ `save_chain_ms_per_gesture_mean.nosave = 0` — 그 팔의 정의. `constantsSnapshot` 없음은 web2 라인의 선례(`no_constants_snapshot`) |
 | 7 리뷰어 | **한 왕복 · 13건 전건 대응**(위 표). 그중 넷이 «높음»이고 **[1][2]가 결론을 바꿨다** — 지목이 «저장»에서 «굽기»로 |
-| 8 병합 · 푸시 · 판정 | 아래 |
+| 8 병합 · 푸시 · 판정 | `web2-74` → `main` **`4e43a58`**(--no-ff) 푸시 · `node tools/deploy-check.mjs`: 원격 main == 내 커밋 ✓ · Pages 실행 **34150705706 completed/success**(attempt 1) · **화면 빌드 식별자 `4e43a58` == 배포 커밋** ✓ — 결과 **배포됨** |
 | 9 NOTES · HANDOFF | 이 블록 · HANDOFF §1·§2(같은 커밋) |
 
 **게이트 수치 한자리**
