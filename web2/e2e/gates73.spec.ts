@@ -3,8 +3,8 @@
 //
 //   g0 프로브 움직임   사람의 끌기(720px)는 ≥ PAINT73_PROBE_MIN_DEG · **빨강**: 72의 «아무것도 안 잰» 프로브
 //                    (orbitByForTest 3°×120 — 자동 수평이 되접는다)는 그 문 아래다
-//   g1 걸음별 자      여덟 걸음의 합 == render3d 전체(±1ms/프레임) · 걸음 계측이 프레임마다 돈다 ·
-//                    **빨강**: 표식을 리셋한 직후에는 프레임 0(자가 «돌았다»를 스스로 말한다)
+//   g1 걸음별 자      **기록이지 게이트가 아니다**(리뷰어 [H5] — 여덟 구간의 합 == t8−t0은 같은 시계의 항등이라 빨강이
+//                    날 수 없다). 남는 단언은 «걸음 계측이 프레임마다 돈다»(frames > 30)뿐이고 그것도 자기점검이다
 //   g2 ?perf=1        깃발 없이는 DOM에 없다(0) · 있으면 하나 · 눌리지 않는다(elementFromPoint ≠ 자기) ·
 //                    숫자 셋이 값을 낸다(fps > 0 · 열기 > 0) — **빨강**: 깃발 없는 판의 0
 //   g3 열기 분해      장부(부팅 전 + 일한 + 논) == 벽시계(±5%) · 굽기+업로드 ≤ 일한 시간 ·
@@ -25,7 +25,7 @@ const PER_FACE = 8   // 게이트는 규칙을 재므로 획 수의 절대값에
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const OUT: Record<string, unknown> = {
-  what: 'web2-73 게이트 — g0 프로브 움직임 · g1 걸음별 자 · g2 ?perf=1 실기기 모드 · g3 열기 분해의 장부. 전부 같은 실행 안에 «빨강» 짝이 있다(CLOSING 「게이트의 조건」)',
+  what: 'web2-73 게이트 — g0 프로브 움직임(빨강: 72의 되접히는 프로브) · g3 첫 상호작용 무회귀(빨강: legacy72). g1은 자기점검 «기록»(항등 — 빨강 불가 · [H5]) · g2는 존재 대조(깃발 없는 판 0 — «수리 전 판»이 아니라 음성 대조). ㉠의 빨강 짝을 실제로 가진 게이트는 **둘**(g0·g3)이다',
   note_pitfalls: '#12·#14 · #42 · #81(대기에 상한) · #89 · #99 · #101 · #103 · #105 · #108(단언 판과 반증 판이 같은 값이면 자를 의심 — 빨강 짝이 그 검사다) · #112',
   pitfall_citations: [12, 14, 42, 81, 89, 99, 101, 103, 105, 108, 112],
   thresholds: { PAINT73_PROBE_MIN_DEG, PAINT73_SUM_TOL },
@@ -78,7 +78,7 @@ test('g0·g1 — 프로브가 움직였다(빨강: orbitByForTest 3°×120) · �
     min_deg: PAINT73_PROBE_MIN_DEG,
     note: '빨강 팔은 요청한 각(360°)과 실제 돈 각의 차가 곧 «되접힘»이다 — 그 값이 문(PAINT73_PROBE_MIN_DEG) 아래면 이 게이트가 그 프로브를 실제로 잡는다',
   }
-  OUT.g1_walk = { frames: walk.frames, sample: walk.sample, step_sum_ms: Math.round(stepSum * 1000) / 1000, total_sum_ms: walk.steps.total!.sum, per_frame_gap_ms: Math.round(Math.abs(stepSum - walk.steps.total!.sum) / Math.max(1, walk.frames) * 1e6) / 1e6, red_frames_after_reset: redFrames }
+  OUT.g1_walk = { kind: 'record(항등 — 게이트 아님 · [H5])', frames: walk.frames, sample: walk.sample, step_sum_ms: Math.round(stepSum * 1000) / 1000, total_sum_ms: walk.steps.total!.sum, per_frame_gap_ms: Math.round(Math.abs(stepSum - walk.steps.total!.sum) / Math.max(1, walk.frames) * 1e6) / 1e6, red_frames_after_reset: redFrames }
   expect(human.totalDeg, `사람의 끌기가 움직였다(≥ ${PAINT73_PROBE_MIN_DEG}°)`).toBeGreaterThanOrEqual(PAINT73_PROBE_MIN_DEG)
   expect(human.frames.n, '프레임이 있다').toBeGreaterThan(30)
   expect(red.totalDeg, '빨강 — 72의 그 프로브는 문 아래다(자동 수평이 되접는다)').toBeLessThan(PAINT73_PROBE_MIN_DEG)
@@ -127,6 +127,7 @@ test('g3 — 열기 분해의 장부 == 벽시계(±5%) · 굽기+업로드 ≤ 
   test.setTimeout(900_000)
   const built = await buildHeavy(page, PER_FACE)
   expect(built.paintStrokes, '칠 획이 섰다(#103)').toBeGreaterThanOrEqual(100)
+  OUT.g3_fixture = { ...built, per_face: PER_FACE, note: '계측(perf73)의 픽스처는 면마다 40 · 여기는 8 — 첫 상호작용의 절대값은 픽스처가 달라 perf73과 나란히 못 놓는다(리뷰어 [M5]) · 이 원장의 자는 같은 픽스처 안의 짝 비교다' }
   await installOpenProbe73(page)
   const now = await openProbe73(page, null, 'g3/now')
   // 빨강 — 수리 전 거동(동결·분할·색인 끔 = 72 legacy · 새로고침을 넘는다): 첫 프레임이 전부 굽는다
@@ -139,8 +140,8 @@ test('g3 — 열기 분해의 장부 == 벽시계(±5%) · 굽기+업로드 ≤ 
     tol: PAINT73_SUM_TOL,
   }
   expect(now.loop.frames, '프레임이 있다(움직였다)').toBeGreaterThan(0)
-  expect(Math.abs(now.check.accounted_over_wall - 1), '장부(부팅 전 + 일한 + 논) == 벽시계(±5%)').toBeLessThanOrEqual(PAINT73_SUM_TOL)
+  expect(Math.abs(now.check.accounted_over_wall - 1), '장부(부팅 전 + 일한 + 논) == 벽시계(±5%) — ⚠ 항등이다(기록 · [H4])').toBeLessThanOrEqual(PAINT73_SUM_TOL)
+  expect(now.check.steps_over_work, '독립 자 ① render3d 걸음 합 ÷ 고리 일한 시간 ≥ 0.9(두 시계)').toBeGreaterThanOrEqual(0.9)
   expect(now.check.bake_plus_upload_over_work, '굽기 + 업로드 ≤ 일한 시간(자가 겹치지 않는다)').toBeLessThanOrEqual(1.0)
-  expect(Math.abs(red.check.accounted_over_wall - 1), '빨강 팔에서도 장부는 선다').toBeLessThanOrEqual(PAINT73_SUM_TOL)
   expect(red.firstInteractiveMs, '빨강 — 수리 전 거동은 첫 상호작용이 늦다').toBeGreaterThan(now.firstInteractiveMs)
 })

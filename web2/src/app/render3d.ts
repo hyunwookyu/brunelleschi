@@ -185,6 +185,12 @@ export function frameStepStats(): { frames: number; sample: number; steps: Recor
 }
 export function resetFrameStepStats(): void { stepFrames = []; stepSum = zeroStep(); stepFramesTotal = 0 }
 
+/** web2-73 리뷰어 [L2] — **계측 끔**: 걸음 시각·GL 프로브 타이밍·고리 장부를 안 찍는다(관찰자의 몫을 재는 팔).
+ *  ⚠ 남는 것: 감싼 GL 함수의 «호출» 자체(빈 통과)와 이 분기 하나 — 그 둘은 못 뺀다(값에 그렇게 적는다). */
+let metricsOff = false
+export function setMetrics73OffForTest(v: boolean): void { metricsOff = v }
+export const metrics73OffForTest = (): boolean => metricsOff
+
 /** GL 업로드 프로브 — `texImage2D`·`texSubImage2D`·`texStorage2D`의 **호출 시간**(CPU 쪽 — 캔버스에서
  *  드라이버로 옮기는 몫). GPU 쪽 완료는 이 자로 안 보인다(그 몫은 render 걸음에 섞인다 — 원장에 그렇게 적는다).
  *  three는 이 셋을 컨텍스트 객체의 메서드로 부르므로 인스턴스에 덮어 씌우면 전부 지난다. */
@@ -196,6 +202,7 @@ function probeGlUploads(gl: WebGLRenderingContext | WebGL2RenderingContext): voi
     const orig = g[name]
     if (typeof orig !== 'function') continue
     g[name] = function (this: unknown, ...args: unknown[]) {
+      if (metricsOff) return (orig as (...a: unknown[]) => unknown).apply(gl, args)   // [L2] 빈 통과(호출 자체는 남는다)
       const t0 = performance.now()
       const out = (orig as (...a: unknown[]) => unknown).apply(gl, args)
       const dt = performance.now() - t0
@@ -1852,6 +1859,13 @@ function revealFaces(r: R3D, app: App) {
 }
 
 export function render3d(r: R3D, app: App) {
+  // [L2] 계측 끔 — 걸음 시각을 한 번도 안 찍는다(걸음의 순서·내용은 아래와 한 자도 같다)
+  if (metricsOff) {
+    syncCamera(r, app); syncHatch(r, app); syncPaintTex(r, app); gatePaintTex(r, app)
+    applyPaintDraft(r, app); revealFaces(r, app); sortFaces(r, app)
+    r.renderer.render(r.scene, r.camera)
+    return
+  }
   // web2-73 §1 — 걸음마다 시각을 찍는다(순서·내용 무변 · 계측만)
   const t0 = performance.now()
   syncCamera(r, app)

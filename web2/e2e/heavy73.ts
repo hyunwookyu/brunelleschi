@@ -40,9 +40,27 @@ export async function removeFaces(page: Page): Promise<void> {
   await settleBake(page, 300, 'removeFaces')
 }
 
-/** 전부 비운다 — 화면의 「새로 시작」과 같은 함수(clearAll). */
-export async function emptyDoc(page: Page): Promise<void> {
-  await page.evaluate(() => { (window as any).__b2.diag.clearAllForTest() })
+/** 전부 비운다 — 화면의 「새로 시작」과 같은 함수(clearAll).
+ *  ⚠ 리뷰어 [M2]: 빈 문서는 카메라가 없어 끌기가 포즈를 못 돌린다(orbitBy가 `lift.lifted.size === 0`에서 돌아간다).
+ *  그래서 **카메라(lift)는 남기고 획만 없앤다** — lifted에는 퇴화 선분 하나(궤도의 guard) · lift.strokes는 빈 Map ·
+ *  doc.strokes/faces는 0. 그러면 ① 팔도 ②③④와 **같은 끌기**를 한다.
+ *  keepCamera=false는 첫 판의 «invalidate로 몰기»(그 팔의 포즈는 안 돈다 — 그 사실이 값이다). */
+export async function emptyDoc(page: Page, keepCamera = true): Promise<void> {
+  await page.evaluate((keep) => {
+    const b2 = (window as any).__b2
+    const lift = b2.app.lift
+    b2.diag.clearAllForTest()
+    if (keep) {
+      // orbitBy는 lifted가 비면 돌아가고(«돌 것이 없다» — 앱의 규칙), syncStrokes는 lifted의 선분을 획이 없어도 HB로
+      // 그린다. 그래서 선분 **하나를 퇴화**(a3 == b3 · 길이 0)시켜 남긴다 — 궤도는 돌고 화면에는 아무것도 안 보인다
+      // (r3d.lines 1은 그 퇴화 선분이다 — 원장에 값으로 든다).
+      const first = [...lift.lifted.entries()][0]
+      const lifted = new Map()
+      if (first) lifted.set(first[0], { ...first[1], b3: { ...first[1].a3 } })
+      b2.app.lift = { ...lift, strokes: new Map(), lifted }
+      b2.diag.invalidate()
+    }
+  }, keepCamera)
   await settleBake(page, 300, 'emptyDoc')
 }
 
@@ -65,9 +83,9 @@ export async function fourArms(page: Page, perFace = 40): Promise<FourArms> {
   const arm = async (name: ArmName): Promise<ArmOut> => {
     await restoreCamera(page, cam)
     const c = await countDoc(page)
-    // ① 빈 팔은 카메라가 없어 끌기가 포즈를 못 돌린다(첫 실행 실측: 0° · render3d 프레임 0 — 아무것도 안 잰 팔).
-    // 같은 몸짓을 하되 프레임마다 invalidate로 빈 장면을 실제로 그린다 — 움직임의 증명은 이 팔에서만 «프레임 수»다.
-    const orbit = await orbitProbe(page, 120, 6, 240_000, { invalidateEachFrame: name === '①빈' })
+    // ① 빈 팔: 카메라(lift)를 남기고 획만 없앴으므로 **같은 끌기**가 포즈를 돌린다(리뷰어 [M2] — 첫 판은 invalidate로
+    // 몰아 포즈가 0°였고 그 팔이 모든 몫의 바닥이 됐다). 증명은 ②③④와 같은 «각»이다.
+    const orbit = await orbitProbe(page)
     return { arm: name, ...c, orbit }
   }
   const a4 = await arm('④칠까지')
@@ -78,6 +96,30 @@ export async function fourArms(page: Page, perFace = 40): Promise<FourArms> {
   await emptyDoc(page)                                  // ① 빈 문서(획 0)
   const a1 = await arm('①빈')
   return { built, zoom, strippedPaint, gl, arms: { '①빈': a1, '②선만': a2, '③면까지': a3, '④칠까지': a4 } }
+}
+
+/** [L2] 관찰자의 몫 — **④ 팔을 계측 끔으로 한 번 더**. 자는 궤도 프로브 자신의 rAF 간격(내 계측과 다른 시계)이라
+ *  «계측이 프레임을 얼마나 먹는가»가 그 차로 나온다. ⚠ 못 빼는 것 둘: 감싼 GL 함수의 호출 자체(빈 통과)와 분기 하나. */
+export async function armMetricsOff(page: Page, F: FourArms): Promise<unknown> {
+  // ④ 상태로 되돌린다 — 픽스처를 다시 세우고(걷어 낸 순서를 되짚을 수 없다) 같은 카메라로 간다
+  const built = await buildHeavy(page)
+  await zoomToLevel(page, 512)
+  const cam = await snapshotCamera(page)
+  const on = await orbitProbe(page)
+  await restoreCamera(page, cam)
+  await page.evaluate(() => { (window as any).__b2.diag.setMetrics73OffForTest(true) })
+  const off = await orbitProbe(page)
+  await page.evaluate(() => { (window as any).__b2.diag.setMetrics73OffForTest(false) })
+  const r2 = (v: number) => Math.round(v * 100) / 100
+  return {
+    note: '④ 팔(면 23 · 칠 920)을 같은 카메라·같은 몸짓으로 계측 켬/끔 두 번. 자는 프로브의 rAF 간격이다(내 계측이 아니다). 못 빼는 것: 감싼 GL 함수의 호출 자체 · 분기 하나',
+    fixture: { faces: built.faces, paintStrokes: built.paintStrokes },
+    on: { fps: on.fps, p50: on.frames.p50, p95: on.frames.p95, max: on.frames.max, durationMs: on.durationMs, totalDeg: on.totalDeg },
+    off: { fps: off.fps, p50: off.frames.p50, p95: off.frames.p95, max: off.frames.max, durationMs: off.durationMs, totalDeg: off.totalDeg },
+    delta_ms: { p50: r2(on.frames.p50 - off.frames.p50), p95: r2(on.frames.p95 - off.frames.p95) },
+    overhead_pct_of_p95: r2(100 * (on.frames.p95 - off.frames.p95) / Math.max(1e-9, on.frames.p95)),
+    ref_arm4_p95: F.arms['④칠까지'].orbit.frames.p95,
+  }
 }
 
 // ── §2 열기 분해 ──────────────────────────────────────────────────────────────────

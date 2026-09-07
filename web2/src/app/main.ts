@@ -20,7 +20,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, frameStepStats, resetFrameStepStats, glInfo, glUpload, resetGlUploadStats, setPaintBakeIdleMsForTest, paintBakeIdleMsForTest, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest, paintBakePending, paintPendingRowsForTest, setPaintPointerDown, setPaintLevelFreezeOffForTest, paintLevelFreezeOffForTest, setPaintBakeSliceOffForTest, paintBakeSliceOffForTest, setPaintIndexOffForTest, paintIndexOffForTest, paintStrokeListsForTest } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, frameStepStats, resetFrameStepStats, glInfo, glUpload, resetGlUploadStats, setMetrics73OffForTest, metrics73OffForTest, setPaintBakeIdleMsForTest, paintBakeIdleMsForTest, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest, paintBakePending, paintPendingRowsForTest, setPaintPointerDown, setPaintLevelFreezeOffForTest, paintLevelFreezeOffForTest, setPaintBakeSliceOffForTest, paintBakeSliceOffForTest, setPaintIndexOffForTest, paintIndexOffForTest, paintStrokeListsForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, bootCost, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -3379,9 +3379,11 @@ if (PERF_HUD) {
   perfHudEl = document.createElement('div')
   perfHudEl.id = 'perfhud'
   perfHudEl.setAttribute('aria-hidden', 'true')
+  // ⚠ 색은 **토큰만** 쓴다(70의 「토큰 하나」 — tokens.css 밖 16진수 0). 첫 판은 `var(--ink, <16진수>)`로
+  //   폴백 색 리터럴을 넣었다가 밤 전량의 tokens70 §1이 잡았다(offenders src/app/main.ts 1). 어두운 판도 따라온다.
   perfHudEl.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;'
-    + 'font:700 26px/1.3 system-ui,sans-serif;color:var(--ink,#2b2823);background:rgba(251,250,247,.92);'
-    + 'padding:10px 20px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.18);white-space:pre;letter-spacing:.01em'
+    + 'font:700 26px/1.3 system-ui,sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line);'
+    + 'padding:10px 20px;border-radius:12px;white-space:pre;letter-spacing:.01em'
   perfHudEl.textContent = 'perf —'
   document.body.appendChild(perfHudEl)
   try {
@@ -3404,14 +3406,15 @@ if (PERF_HUD) {
 
 let paintDraftPerturb = false
 function frame() {
-  const lt0 = performance.now()   // web2-73 — 고리 장부(계측)
-  if (loopStat.lastEndAt >= 0) {
+  const metricsOn = !metrics73OffForTest()   // [L2] 계측 끔 팔에서는 고리 장부도 안 쓴다
+  const lt0 = metricsOn ? performance.now() : 0
+  if (metricsOn && loopStat.lastEndAt >= 0) {
     const g = lt0 - loopStat.lastEndAt
     loopStat.gapMs += g
     if (g > loopStat.maxGapMs) loopStat.maxGapMs = g
   }
-  if (loopStat.firstFrameAt < 0) loopStat.firstFrameAt = lt0
-  if (PERF_HUD) { perfHud.ticks.push(lt0); if (perfHud.ticks.length > 400) perfHud.ticks.shift() }
+  if (metricsOn && loopStat.firstFrameAt < 0) loopStat.firstFrameAt = lt0
+  if (PERF_HUD) { perfHud.ticks.push(metricsOn ? lt0 : performance.now()); if (perfHud.ticks.length > 400) perfHud.ticks.shift() }
   syncUndoRedoMuted()   // web2-70 [H2]
   orthoMark.hidden = !isParallel(app.pose)   // web2-71 §3 — 정사에서만(Feather §A-1 「—×—」)
   autolevel.tick()   // 접힐 때가 됐으면 여기서 포즈가 움직인다(setPose가 다시 그리게 한다)
@@ -3468,11 +3471,13 @@ function frame() {
     render3d(r3d, app)
     if (clampDotEl) clampDotEl.hidden = !(painttrayOpen && paintClampedVisible())
   }
-  const lt1 = performance.now()   // web2-73 — 고리 장부(계측)
-  loopStat.frames++
-  loopStat.workMs += lt1 - lt0
-  loopStat.lastEndAt = lt1
-  if (loopStat.firstFrameEndAt < 0) { loopStat.firstFrameEndAt = lt1; perfHud.openMs = lt1 }
+  if (metricsOn) {
+    const lt1 = performance.now()   // web2-73 — 고리 장부(계측)
+    loopStat.frames++
+    loopStat.workMs += lt1 - lt0
+    loopStat.lastEndAt = lt1
+    if (loopStat.firstFrameEndAt < 0) { loopStat.firstFrameEndAt = lt1; perfHud.openMs = lt1 }
+  }
   requestAnimationFrame(frame)
 }
 requestAnimationFrame(frame)
@@ -4339,6 +4344,9 @@ const diag = {
   paintBake: () => paintBakeStats(),
   // ── web2-73 §1·§2 — 걸음별 ms · GL 업로드 · GPU 이름 · 프레임 고리 장부 · 실기기 모드 · 쉬는 중 예산 ──
   frameSteps: () => frameStepStats(),
+  /** [L2] 계측 끔 — 관찰자(걸음 시각 · GL 프로브 · 고리 장부)의 몫을 재는 팔 */
+  setMetrics73OffForTest: (v: boolean) => { setMetrics73OffForTest(v); invalidate() },
+  metrics73OffForTest: () => metrics73OffForTest(),
   frameStepsReset: () => resetFrameStepStats(),
   glInfo: () => glInfo(r3d),
   glUpload: () => ({ ...glUpload, byName: { ...glUpload.byName } }),

@@ -20,11 +20,13 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { buildHeavy, settleStat } from './heavy72'
-import { fourArms, installOpenProbe73, openProbe73, type ArmName, type Open73 } from './heavy73'
+import { fourArms, armMetricsOff, installOpenProbe73, openProbe73, type ArmName, type Open73 } from './heavy73'
 import { PAINT73_PROBE_MIN_DEG, PAINT73_SUM_TOL, PAINT73_FIRST_INTERACTIVE_MAX_MS } from './thresholds'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const HEADED = process.env.PW_HEADED === '1'
+const NOVSYNC = process.env.PW_NOVSYNC === '1'
+const VSYNC_MS = 1000 / 60
 const OUT: Record<string, unknown> = {
   what: 'web2-73 §1·§2 — 벽 가르기(네 팔 × 여덟 걸음 · GPU 이름)와 「칠 전부 채워지기」의 네 몫 분해 + 쉬는 중 예산 훑기. 재는 라운드다 — 이 원장은 임자를 지목하고, 고치는 것은 §3이다.',
   note_pitfalls: '#12·#14(동작점 하나·ms로 주장하지 않는다 — 정본은 호출 수·삼각형 수·걸음별 «몫» · 두 dpr + 머리 있는 판) · #16(분모 — 궤도는 같은 걸음·같은 각) · #47(수치는 원장이 정본) · #89(초록의 범위 — 굽기가 끝난 뒤에 잰다) · #99(워커 1) · #101 · #103 · #105(«보이는 것»으로 자를 잡지 않는다) · #108(단언 판과 반증 판이 같은 값이면 자를 의심 — 프로브 움직임을 먼저 증명) · #112',
@@ -39,7 +41,7 @@ const OUT: Record<string, unknown> = {
   },
 }
 // 원장 꼬리표 — 머리 있는 판은 `_headed`, 그 밖의 대조군(예: Edge 헤드리스 — 이진과 GPU를 가르는 «라» 팔)은 PW_LEDGER_TAG로 준다
-const TAG = process.env.PW_LEDGER_TAG ?? (HEADED ? '_headed' : '')
+const TAG = process.env.PW_LEDGER_TAG ?? (HEADED ? '_headed' : '')   // 캡 없는 팔(PW_NOVSYNC=1)은 PW_LEDGER_TAG로 가른다
 const LEDGER_OF = (p: string) => resolve(HERE, `../../stage0/out/perf73_web2_dpr${p === 'dpr2' ? 2 : 1}${TAG}.json`)
 test.afterEach(async ({}, info) => {
   const f = LEDGER_OF(info.project.name)
@@ -48,7 +50,7 @@ test.afterEach(async ({}, info) => {
   try { prev = JSON.parse(readFileSync(f, 'utf8')) as Record<string, unknown> } catch { /* 첫 쓰기 */ }
   writeFileSync(f, JSON.stringify({
     ...prev,
-    conditions: { project: info.project.name, headed: HEADED, ledger_tag: TAG, chromium_exe: process.env.PW_CHROMIUM_EXE ?? null, workers: 1,
+    conditions: { project: info.project.name, headed: HEADED, novsync: NOVSYNC, ledger_tag: TAG, chromium_exe: process.env.PW_CHROMIUM_EXE ?? null, workers: 1,
       canonical: `${HEADED ? 'PW_HEADED=1 ' : ''}LEDGER=1 node tools/e2e.mjs ledger e2e/perf73.spec.ts --project=${info.project.name} (워커 1 — #99)`,
       viewport: 'playwright 기본(1200×800) · dpr는 project가 정한다(지시의 1194×834는 아이패드 꼴 — 이 판은 72와 같은 1200×800이라 72의 값과 나란히 선다)',
       machine_note: 'GPU 이름은 gl.renderer(UNMASKED_RENDERER_WEBGL)이 정본이고 software 플래그는 그 이름의 정규식(swiftshader|llvmpipe|software…)이다 — 절대 ms는 그 기계의 값이고 팔 사이의 «몫»만 옮겨 읽는다(#12·#14)',
@@ -74,14 +76,12 @@ test('§1 네 팔 — 같은 카메라·같은 몸짓으로 ①빈 ②선만 ③
     const A = F.arms[a]
     const o = A.orbit
     const walk = o.walk as { frames: number; sample: number; steps: Record<string, { p50: number; p95: number; max: number; sum: number }>; gl: { calls: number; triangles: number; lines: number } }
-    // 움직임의 증명 — 궤도 팔은 «각», ① 빈 팔은 «프레임 수»(카메라가 없어 각은 정의상 0 — 첫 실행이 그것을 잡았다:
-    // 0° · render3d 프레임 0 · fps 59.8은 vsync 공회전이었다. 그 판의 숫자는 버렸다 — CLOSING 「게이트의 조건」)
-    const proof = a === '①빈' ? 'frames' : 'deg'
-    const moved = proof === 'deg'
-      ? o.totalDeg >= PAINT73_PROBE_MIN_DEG && o.frames.n > 30 && walk.frames > 0
-      : walk.frames > 30 && o.frames.n > 30
+    // 움직임의 증명 — 네 팔 전부 «각»이다(① 빈 팔은 카메라를 남기고 획만 없앴다 — heavy73.emptyDoc · 리뷰어 [M2]).
+    // 첫 실행의 ① 팔은 카메라가 없어 0°였고(render3d 프레임 0 · fps 59.8 = vsync 공회전) 그 판의 숫자는 버렸다.
+    const proof = 'deg'
+    const moved = o.totalDeg >= PAINT73_PROBE_MIN_DEG && o.frames.n > 30 && walk.frames > 0
     table[a] = {
-      moved, discarded: !moved, probe_proof: proof, driven: a === '①빈' ? 'invalidate-each-frame(카메라 없음 — 끌기는 포즈를 못 돌린다)' : 'middle-drag 720px',
+      moved, discarded: !moved, probe_proof: proof, driven: 'middle-drag 720px',
       totalDeg: o.totalDeg, pxDragged: o.pxDragged, steps: o.steps, frames: o.frames.n, render3d_frames: walk.frames,
       docStrokes: A.docStrokes, paintStrokes: A.paintStrokes, faces: A.faces, texEntries: A.texEntries, r3d: A.r3d,
       fps: o.fps, p50: o.frames.p50, p95: o.frames.p95, max: o.frames.max, longestBlockMs: o.longestBlockMs, durationMs: o.durationMs,
@@ -94,6 +94,9 @@ test('§1 네 팔 — 같은 카메라·같은 몸짓으로 ①빈 ②선만 ③
     }
   }
   OUT.A_arms = table
+  // ── [L2] 관찰자의 몫 — ④ 팔을 «계측 끔»으로 한 번 더(자는 프로브 자신의 rAF 간격이라 내 계측과 무관하다) ──
+  const armOff = await armMetricsOff(page, F)
+  OUT.A_metrics_overhead = armOff
   // ── 걸음 «몫»(④ 팔 · p50의 비) — 임자 지목의 자 ─────────────────────────────────────
   const share = (a: ArmName) => {
     const w = (F.arms[a].orbit.walk as any).steps as Record<string, { p50: number; p95: number; sum: number }>
@@ -103,18 +106,27 @@ test('§1 네 팔 — 같은 카메라·같은 몸짓으로 ①빈 ②선만 ③
     return out
   }
   OUT.A_step_share_pct = { '④칠까지': share('④칠까지'), '③면까지': share('③면까지'), '②선만': share('②선만'), '①빈': share('①빈') }
-  // ── 임자 가르기(㉮ 기계 · ㉯ 바탕 렌더러 · ㉰ 장면 규모) — 팔 사이의 «차»로 ────────────────
+  // ── 임자 가르기(㉮ 기계 · ㉯ 바탕 렌더러 · ㉰ 장면 규모) — 팔 사이의 «차»와 «60Hz 상한»으로 ─────────────
+  //   ⚠ 리뷰어 [H1][H2]: 네 팔이 전부 vsync(16.7ms)에 붙은 실행에서는 팔 사이의 몫이 정의되지 않는다(칠 몫이 음수로
+  //   나온 것이 그 표식이다). 그래서 «상한에 붙었는가»를 먼저 값으로 내고, 몫은 ④의 p95 중 **상한을 넘는 몫**(기계가
+  //   더한 것)과 **JS 걸음의 몫**(바탕 렌더러)으로 가른다. 장면의 몫은 «캡 없는 팔»(PW_NOVSYNC=1)에서만 뜻이 있다.
   const p95 = (a: ArmName) => F.arms[a].orbit.frames.p95
   const gl = F.gl as { renderer: string; software: boolean }
+  const js = (a: ArmName) => ((F.arms[a].orbit.walk as any).steps.total as { p95: number }).p95
+  const capped = ARMS.every(a => p95(a) <= VSYNC_MS * 1.05)
+  const paint = p95('④칠까지')
   OUT.A_owner = {
-    note: '팔 사이의 차가 몫이다: ①(빈)의 p95 = 이 기계에서 «아무것도 없는» 프레임의 값(㉮ + 고리 고정비) · ②−① = 선의 몫 · ③−② = 면의 몫 · ④−③ = 칠의 몫(㉰). ①의 걸음 표에서 render가 거의 전부면 ㉮/㉯ 중 render이고, 그때 GPU 이름이 소프트웨어면 ㉮다',
-    gpu: gl.renderer, software_gpu: gl.software,
-    p95_empty: p95('①빈'), p95_lines: p95('②선만'), p95_faces: p95('③면까지'), p95_paint: p95('④칠까지'),
-    share_pct_of_p95_paint: {
-      empty_machine_floor: r2(100 * p95('①빈') / Math.max(1e-9, p95('④칠까지'))),
-      lines: r2(100 * (p95('②선만') - p95('①빈')) / Math.max(1e-9, p95('④칠까지'))),
-      faces: r2(100 * (p95('③면까지') - p95('②선만')) / Math.max(1e-9, p95('④칠까지'))),
-      paint: r2(100 * (p95('④칠까지') - p95('③면까지')) / Math.max(1e-9, p95('④칠까지'))),
+    note: '팔 사이의 차가 그 층의 몫이다 — 단 **네 팔이 vsync에 붙어 있으면(capped) 차는 정의되지 않는다**(둘 다 16.7ms 안에 들었다는 뜻일 뿐). 기계의 몫 = ④ p95에서 60Hz 한 프레임(16.7)을 넘는 부분 · 바탕 렌더러(JS 걸음)의 몫 = render3d 여덟 걸음 합의 p95 · 장면의 몫은 캡 없는 팔(novsync)에서 ①→④의 차로 읽는다',
+    gpu: gl.renderer, software_gpu: gl.software, novsync: NOVSYNC, vsync_ms: r2(VSYNC_MS),
+    vsync_capped_all_arms: capped,
+    p95: { empty: p95('①빈'), lines: p95('②선만'), faces: p95('③면까지'), paint },
+    deltas_ms: { lines: r2(p95('②선만') - p95('①빈')), faces: r2(p95('③면까지') - p95('②선만')), paint: r2(paint - p95('③면까지')) },
+    js_steps_p95_ms: { empty: js('①빈'), lines: js('②선만'), faces: js('③면까지'), paint: js('④칠까지') },
+    share_pct_of_paint_p95: {
+      over_vsync_machine: r2(100 * Math.max(0, paint - VSYNC_MS) / Math.max(1e-9, paint)),
+      js_steps_renderer: r2(100 * js('④칠까지') / Math.max(1e-9, paint)),
+      vsync_floor: r2(100 * Math.min(paint, VSYNC_MS) / Math.max(1e-9, paint)),
+      note: capped ? '네 팔이 전부 상한에 붙었다 — 팔 사이의 차는 «몫»이 아니다(장면의 몫은 novsync 팔에서)' : '상한 밖 — ①→④의 차(deltas_ms)가 이 GPU에서의 층별 몫이다',
     },
   }
   for (const a of ARMS) expect((table[a] as any).moved, `${a} 팔의 프로브가 움직였다(궤도: totalDeg ≥ ${PAINT73_PROBE_MIN_DEG} · 프레임 > 30 · render3d 프레임 > 0 / ①빈: render3d 프레임 > 30)`).toBe(true)
@@ -158,8 +170,12 @@ test('§2 열기 분해 — 「칠 전부 채워지기」의 네 몫 · 쉬는 �
     accounted_over_wall: v.check.accounted_over_wall,
   }]))
   OUT.B_gate_lines = {
-    '§2 네 몫의 합 == 칠 전부(±5%) — 독립된 자로': { accounted_over_wall: now.check.accounted_over_wall, raf_over_wall: now.check.raf_over_wall, pass: Math.abs(now.check.accounted_over_wall - 1) <= PAINT73_SUM_TOL },
-    '§2 첫 상호작용 ≤ 1,155ms(72의 값 · 기록)': { now_median: (OUT.B_repeats as any).now_median.firstInteractiveMs, max: PAINT73_FIRST_INTERACTIVE_MAX_MS, pass: (OUT.B_repeats as any).now_median.firstInteractiveMs <= PAINT73_FIRST_INTERACTIVE_MAX_MS, note: '⚠ 72의 1,155는 한 표본이었고 이 라운드의 같은 코드가 1,151~1,428을 냈다(흔들림 ±300) — 절대 상한은 «기록»이고 무회귀의 판정은 아래 짝 비교가 한다. dpr1은 72에서도 2,569였다' },
+    '§2 네 몫의 합 == 칠 전부(±5%)': { accounted_over_wall: now.check.accounted_over_wall, raf_over_wall: now.check.raf_over_wall, pass: Math.abs(now.check.accounted_over_wall - 1) <= PAINT73_SUM_TOL,
+      note: '⚠ **항등이다**(리뷰어 [H4]) — wait = 마지막 프레임 끝 − 첫 프레임 시작 − 일한 시간(뺄셈)이라 장부의 합은 정의상 벽시계다. 이 줄은 지시 문면의 «기록»이고 문이 아니다. 문은 아래 두 줄(독립된 시계 둘)이다' },
+    '§2 독립 자 ① render3d 걸음 합 ÷ 고리 일한 시간 ∈ [0.9, 1.0]': { steps_over_work: now.check.steps_over_work, pass: now.check.steps_over_work >= 0.9 && now.check.steps_over_work <= 1.0, note: '두 시계(render3d 안의 아홉 시각 · main.frame의 둘)가 서로 다른 자리에서 찍힌다 — 프레임 안에 render3d 밖의 일(흑연 겹·2D)이 커지면 0.9 아래로 떨어진다' },
+    '§2 독립 자 ② 굽기 + 업로드 ≤ 일한 시간': { bake_plus_upload_over_work: now.check.bake_plus_upload_over_work, pass: now.check.bake_plus_upload_over_work <= 1.0, note: '굽기(bakeStat.ms)·업로드(GL 프로브)·일한 시간(고리)은 셋 다 다른 시계다 — 겹치면 1을 넘는다' },
+    '§2 첫 상호작용 ≤ 1,155ms(72의 측정값 · 기록)': { now_all: (OUT.B_repeats as any).now.map((x: any) => x.firstInteractiveMs), now_median: (OUT.B_repeats as any).now_median.firstInteractiveMs, ref_72: PAINT73_FIRST_INTERACTIVE_MAX_MS, pass: (OUT.B_repeats as any).now_median.firstInteractiveMs <= PAINT73_FIRST_INTERACTIVE_MAX_MS, note: '⚠ 1,155는 72의 **한 표본 측정값**이고(72의 게이트 문면은 ≤ 1,000이었고 그때도 미달) 문턱이 아니다 — 같은 코드의 세 실행 값이 now_all에 그대로 있다(리뷰어 [H3]). 무회귀의 판정은 아래 짝 비교가 한다' },
+    '§4(72) 첫 상호작용 ≤ 1,000ms(72의 게이트 문면 · 기록)': { now_median: (OUT.B_repeats as any).now_median.firstInteractiveMs, pass: (OUT.B_repeats as any).now_median.firstInteractiveMs <= 1000 },
     '§2 첫 상호작용 무회귀 — 후보(24ms) vs 지금(중앙값 셋 · ≤ 1.15배)': { now_median: (OUT.B_repeats as any).now_median.firstInteractiveMs, idle24_median: (OUT.B_repeats as any).idle24_median.firstInteractiveMs, ratio: r2((OUT.B_repeats as any).idle24_median.firstInteractiveMs / Math.max(1, (OUT.B_repeats as any).now_median.firstInteractiveMs)), pass: (OUT.B_repeats as any).idle24_median.firstInteractiveMs <= (OUT.B_repeats as any).now_median.firstInteractiveMs * 1.15 },
     '§4(72) 칠 전부 ≤ 5000ms(캐시 없음)': { now: now.allPaintMs, pass: now.allPaintMs <= 5000, sweep_min: Math.min(...Object.values(sweep).map(v => v.allPaintMs)) },
   }

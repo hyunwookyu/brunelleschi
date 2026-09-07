@@ -57,7 +57,8 @@ test('73-open.png — 「칠 전부 채워지기」의 네 몫 · 쉬는 중 예
   test.skip(!L || !L.B_parts, '원장이 없다 — 먼저 perf73를 돌린다')
   const P = L!.B_parts as Record<string, any>
   const S = L!.B_idle_sweep as Record<string, any>
-  const keys = Object.keys(S)
+  // 예산 순으로 세운다(객체 키 순서면 12ms가 1000ms 뒤에 온다 — 사람이 읽는 그림이다)
+  const keys = Object.keys(S).sort((a, b) => (S[a].idleMs - S[b].idleMs) || a.localeCompare(b))
   const groups: BarGroup[] = [
     { label: '네 몫(지금 · 12ms)', unit: 'ms', bars: [
       { name: '굽기 CPU', v: P.bake_ms, color: '#c25b4a' },
@@ -70,7 +71,7 @@ test('73-open.png — 「칠 전부 채워지기」의 네 몫 · 쉬는 중 예
     { label: '예산별 메인 최장 차단', unit: 'ms', bars: keys.map((k, i) => ({ name: `idle ${S[k].idleMs}ms`, v: S[k].longestBlockMs, color: i === 0 ? '#3f7d5a' : '#c25b4a' })) },
   ]
   const buf = await barChart(page, 'web2-73 §2 — 「칠 전부 채워지기」의 네 몫과 쉬는 중 예산(dpr2 · 면 23 · 칠 920)',
-    '원장 perf73_web2_dpr2.json@B_parts·B_idle_sweep — 네 몫의 합은 구성상 벽시계다(other = 뺄셈). 판정은 장부 vs 벽시계(±5%). 예산은 §3이 값을 고른다.', groups)
+    '원장 perf73_web2_dpr2.json@B_parts·B_idle_sweep — ⚠ 네 몫의 합 == 벽시계는 **항등**이다(other도 대기도 뺄셈). 판정은 서로 다른 자리에서 찍는 두 자: 걸음합÷일한시간 · (굽기+업로드)÷일한시간. 예산은 안 바꿨다(§3).', groups)
   saveBuf('73-open.png', buf)
 })
 

@@ -137,6 +137,8 @@ export const PAINT72_BOUNDARY_REBAKE_MAX = 2
 export const PAINT73_PROBE_MIN_DEG = 20
 /** 열기 분해(§2) — 장부가 셈한 것(부팅 전 + 일한 시간 + 논 시간)과 벽시계의 비의 허용 폭(±) */
 export const PAINT73_SUM_TOL = 0.05
-/** 첫 상호작용 프레임의 무회귀 상한(ms · dpr2 · 계측 픽스처 면 23·칠 920) — 72의 값 1,155 그대로
- *  (perf72_web2_dpr2.json@B_open.firstInteractiveMs). «먼저 그림이 늦어지면 안 된다»의 자. */
+/** 첫 상호작용 프레임의 **기준 기록**(ms · dpr2 · 계측 픽스처 면 23·칠 920) — 72의 한 표본 측정값 1,155
+ *  (perf72_web2_dpr2.json@B_open.firstInteractiveMs · 72의 게이트 문면은 ≤ 1,000이었고 그때도 미달).
+ *  ⚠ 문턱이 아니라 기록이다(리뷰어 [H3]) — 같은 코드의 세 실행이 1,288~1,381을 냈다. 무회귀의 판정은 같은 실행 안의
+ *  짝 비교(후보 ÷ 지금 ≤ 1.15 · legacy72 > 지금)가 한다. */
 export const PAINT73_FIRST_INTERACTIVE_MAX_MS = 1155

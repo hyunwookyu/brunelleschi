@@ -4,7 +4,7 @@
     "workers": 1,
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/gates73.spec.ts (#99)"
   },
-  "what": "web2-73 게이트 — g0 프로브 움직임 · g1 걸음별 자 · g2 ?perf=1 실기기 모드 · g3 열기 분해의 장부. 전부 같은 실행 안에 «빨강» 짝이 있다(CLOSING 「게이트의 조건」)",
+  "what": "web2-73 게이트 — g0 프로브 움직임(빨강: 72의 되접히는 프로브) · g3 첫 상호작용 무회귀(빨강: legacy72). g1은 자기점검 «기록»(항등 — 빨강 불가 · [H5]) · g2는 존재 대조(깃발 없는 판 0 — «수리 전 판»이 아니라 음성 대조). ㉠의 빨강 짝을 실제로 가진 게이트는 **둘**(g0·g3)이다",
   "note_pitfalls": "#12·#14 · #42 · #81(대기에 상한) · #89 · #99 · #101 · #103 · #105 · #108(단언 판과 반증 판이 같은 값이면 자를 의심 — 빨강 짝이 그 검사다) · #112",
   "pitfall_citations": [
     12,
@@ -34,7 +34,7 @@
       "totalDeg": 154.9,
       "pxDragged": 720,
       "frames": 119,
-      "fps": 58.6,
+      "fps": 58.84,
       "p95": 18
     },
     "red_orbitByForTest": {
@@ -46,10 +46,11 @@
     "note": "빨강 팔은 요청한 각(360°)과 실제 돈 각의 차가 곧 «되접힘»이다 — 그 값이 문(PAINT73_PROBE_MIN_DEG) 아래면 이 게이트가 그 프로브를 실제로 잡는다"
   },
   "g1_walk": {
+    "kind": "record(항등 — 게이트 아님 · [H5])",
     "frames": 119,
     "sample": 119,
-    "step_sum_ms": 70.1,
-    "total_sum_ms": 70.1,
+    "step_sum_ms": 68.1,
+    "total_sum_ms": 68.1,
     "per_frame_gap_ms": 0,
     "red_frames_after_reset": 0
   },
@@ -58,18 +59,18 @@
     "hud_with_flag": 1,
     "hud": {
       "on": true,
-      "fps": 57,
+      "fps": 59,
       "p95": 18,
-      "longestBlockMs": 178,
+      "longestBlockMs": 167,
       "longtaskSupported": true,
-      "openMs": 118,
-      "maxGapMs": 154.80000001192093,
-      "text": "fps 57 · p95 18ms\n최장 차단 178ms\n열기 118ms",
+      "openMs": 117.80000001192093,
+      "maxGapMs": 144.89999997615814,
+      "text": "fps 59 · p95 18ms\n최장 차단 167ms\n열기 118ms",
       "pressable": false,
       "under": "ink",
       "rect": {
-        "w": 269,
-        "h": 121
+        "w": 271,
+        "h": 123
       },
       "fontPx": 26
     },
@@ -78,91 +79,104 @@
   },
   "g3_open": {
     "now": {
-      "firstInteractiveMs": 2727,
-      "allPaintMs": 3213,
-      "longestBlockMs": 866,
+      "firstInteractiveMs": 2676,
+      "allPaintMs": 3156,
+      "longestBlockMs": 862,
       "parts": {
-        "bake_ms": 2403.3,
-        "upload_ms": 6.6,
-        "wait_ms": 601.7,
-        "other_ms": 201.1,
-        "wall_ms": 3212.7,
-        "sum_ms": 3212.7,
-        "other_boot_ms": 96.3,
-        "other_frame_ms": 104.7,
+        "bake_ms": 2374.7,
+        "upload_ms": 6.3,
+        "wait_ms": 579.4,
+        "other_ms": 195.2,
+        "wall_ms": 3155.6,
+        "sum_ms": 3155.6,
+        "other_boot_ms": 92.4,
+        "other_frame_ms": 102.8,
         "pct": {
-          "bake": 74.8,
+          "bake": 75.3,
           "upload": 0.2,
-          "wait": 18.7,
-          "other": 6.3
+          "wait": 18.4,
+          "other": 6.2
         }
       },
       "check": {
-        "accounted_ms": 3212.6,
+        "accounted_ms": 3155.6,
         "accounted_over_wall": 1,
-        "steps_total_ms": 2467.5,
+        "steps_total_ms": 2436.6,
         "steps_over_work": 0.981,
-        "raf_ticks": 40,
-        "raf_gap_sum_ms": 3202.5,
+        "raf_ticks": 39,
+        "raf_gap_sum_ms": 3145.3,
         "raf_over_wall": 0.997,
-        "bake_plus_upload_over_work": 0.958
+        "bake_plus_upload_over_work": 0.959
       },
       "loop": {
         "frames": 35,
         "drawFrames": 3,
         "bakeFrames": 30,
-        "workMs": 2514.6,
-        "gapMs": 601.7,
-        "maxGapMs": 224.7,
-        "firstFrameAt": 134.19999998807907,
-        "firstFrameEndAt": 143.69999998807907,
-        "lastEndAt": 3250.5,
-        "now": 3262.199999988079
+        "workMs": 2483.8,
+        "gapMs": 579.4,
+        "maxGapMs": 220.2,
+        "firstFrameAt": 129.89999997615814,
+        "firstFrameEndAt": 139.39999997615814,
+        "lastEndAt": 3193.099999964237,
+        "now": 3205.099999964237
       }
     },
     "red_legacy72": {
-      "firstInteractiveMs": 3194,
-      "allPaintMs": 3196,
-      "longestBlockMs": 1644,
+      "firstInteractiveMs": 3146,
+      "allPaintMs": 3148,
+      "longestBlockMs": 1612,
       "parts": {
-        "bake_ms": 2679.8,
-        "upload_ms": 11.6,
-        "wait_ms": 351.4,
-        "other_ms": 152.8,
-        "wall_ms": 3195.6,
-        "sum_ms": 3195.6,
-        "other_boot_ms": 78.3,
-        "other_frame_ms": 72.6,
+        "bake_ms": 2646.5,
+        "upload_ms": 11.5,
+        "wait_ms": 344.7,
+        "other_ms": 145.5,
+        "wall_ms": 3148.2,
+        "sum_ms": 3148.2,
+        "other_boot_ms": 74.6,
+        "other_frame_ms": 69,
         "pct": {
-          "bake": 83.9,
+          "bake": 84.1,
           "upload": 0.4,
-          "wait": 11,
-          "other": 4.8
+          "wait": 10.9,
+          "other": 4.6
         }
       },
       "check": {
-        "accounted_ms": 3193.7,
+        "accounted_ms": 3146.3,
         "accounted_over_wall": 0.999,
-        "steps_total_ms": 2717.3,
-        "steps_over_work": 0.983,
+        "steps_total_ms": 2682.5,
+        "steps_over_work": 0.984,
         "raf_ticks": 11,
-        "raf_gap_sum_ms": 3187.1,
+        "raf_gap_sum_ms": 3140.2,
         "raf_over_wall": 0.997,
-        "bake_plus_upload_over_work": 0.974
+        "bake_plus_upload_over_work": 0.975
       },
       "loop": {
         "frames": 8,
         "drawFrames": 3,
         "bakeFrames": 0,
-        "workMs": 2764,
-        "gapMs": 351.4,
-        "maxGapMs": 221.5,
-        "firstFrameAt": 111.5,
-        "firstFrameEndAt": 120,
-        "lastEndAt": 3226.899999976158,
-        "now": 3231.199999988079
+        "workMs": 2727,
+        "gapMs": 344.7,
+        "maxGapMs": 212.7,
+        "firstFrameAt": 107,
+        "firstFrameEndAt": 115.19999998807907,
+        "lastEndAt": 3178.699999988079,
+        "now": 3182.800000011921
       }
     },
     "tol": 0.05
+  },
+  "g3_fixture": {
+    "source": "synthetic",
+    "faces": 23,
+    "docStrokes": 200,
+    "paintStrokes": 184,
+    "texEntries": 23,
+    "clampedFaces": 0,
+    "levels": {
+      "128": 23
+    },
+    "per_face": 8,
+    "note": "계측(perf73)의 픽스처는 면마다 40 · 여기는 8 — 첫 상호작용의 절대값은 픽스처가 달라 perf73과 나란히 못 놓는다(리뷰어 [M5]) · 이 원장의 자는 같은 픽스처 안의 짝 비교다"
   }
 }

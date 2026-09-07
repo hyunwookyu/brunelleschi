@@ -1,12 +1,12 @@
 {
   "conditions": {
     "project": "dpr2",
-    "headed": true,
-    "novsync": false,
-    "ledger_tag": "_headed",
+    "headed": false,
+    "novsync": true,
+    "ledger_tag": "_edge_novsync",
     "chromium_exe": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
     "workers": 1,
-    "canonical": "PW_HEADED=1 LEDGER=1 node tools/e2e.mjs ledger e2e/perf73.spec.ts --project=dpr2 (워커 1 — #99)",
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/perf73.spec.ts --project=dpr2 (워커 1 — #99)",
     "viewport": "playwright 기본(1200×800) · dpr는 project가 정한다(지시의 1194×834는 아이패드 꼴 — 이 판은 72와 같은 1200×800이라 72의 값과 나란히 선다)",
     "machine_note": "GPU 이름은 gl.renderer(UNMASKED_RENDERER_WEBGL)이 정본이고 software 플래그는 그 이름의 정규식(swiftshader|llvmpipe|software…)이다 — 절대 ms는 그 기계의 값이고 팔 사이의 «몫»만 옮겨 읽는다(#12·#14)",
     "settle_timeouts": 0,
@@ -60,7 +60,7 @@
     "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
     "webgl2": true,
     "software": false,
-    "dpr": 2.0000000596046448,
+    "dpr": 2,
     "css": [
       1200,
       800
@@ -71,7 +71,7 @@
     ]
   },
   "zoom": {
-    "steps": 4,
+    "steps": 5,
     "maxLevel": 512
   },
   "A_arms": {
@@ -94,12 +94,12 @@
         "paintMeshes": 0,
         "lines": 0
       },
-      "fps": 59.92,
-      "p50": 16.7,
-      "p95": 16.8,
-      "max": 17.3,
+      "fps": 1098.9,
+      "p50": 0.7,
+      "p95": 1.1,
+      "max": 2.2,
       "longestBlockMs": 0,
-      "durationMs": 2003,
+      "durationMs": 109,
       "triangles": 0,
       "drawCalls": 0,
       "lineDraws": 0,
@@ -108,55 +108,55 @@
           "p50": 0,
           "p95": 0.1,
           "max": 0.1,
-          "sum": 1.3
+          "sum": 1
         },
         "syncHatch": {
           "p50": 0,
           "p95": 0.1,
           "max": 0.1,
-          "sum": 1
+          "sum": 0.8
         },
         "syncPaintTex": {
           "p50": 0,
           "p95": 0,
           "max": 0.1,
-          "sum": 0.1
+          "sum": 0.2
         },
         "gatePaintTex": {
+          "p50": 0,
+          "p95": 0,
+          "max": 0.1,
+          "sum": 0.1
+        },
+        "applyPaintDraft": {
           "p50": 0,
           "p95": 0,
           "max": 0,
           "sum": 0
         },
-        "applyPaintDraft": {
-          "p50": 0,
-          "p95": 0,
-          "max": 0.1,
-          "sum": 0.4
-        },
         "revealFaces": {
           "p50": 0,
           "p95": 0,
-          "max": 0.1,
-          "sum": 0.2
+          "max": 0,
+          "sum": 0
         },
         "sortFaces": {
           "p50": 0,
           "p95": 0,
-          "max": 0.1,
-          "sum": 0.1
+          "max": 0,
+          "sum": 0
         },
         "render": {
           "p50": 0,
           "p95": 0.1,
           "max": 0.2,
-          "sum": 4
+          "sum": 3.1
         },
         "total": {
-          "p50": 0.1,
-          "p95": 0.2,
+          "p50": 0,
+          "p95": 0.1,
           "max": 0.2,
-          "sum": 7.1
+          "sum": 5.2
         }
       },
       "upload": {
@@ -172,16 +172,16 @@
       },
       "frameCost": {
         "n": 119,
-        "r3": 0.09999996423721313,
+        "r3": 0,
         "bs": 0,
         "d2": 0.10000002384185791,
-        "total": 0.20000004768371582,
+        "total": 0.19999998807907104,
         "p95": 0.30000001192092896,
         "totalMax": 0.3999999761581421,
         "worst": {
-          "r3": 0.10000002384185791,
-          "bs": 0.09999996423721313,
-          "d2": 0.19999998807907104,
+          "r3": 0.09999996423721313,
+          "bs": 0,
+          "d2": 0.30000001192092896,
           "total": 0.3999999761581421
         }
       },
@@ -218,21 +218,21 @@
         "paintMeshes": 0,
         "lines": 16
       },
-      "fps": 59.59,
-      "p50": 16.7,
-      "p95": 16.9,
-      "max": 42.2,
+      "fps": 941.18,
+      "p50": 0.6,
+      "p95": 1.1,
+      "max": 24.2,
       "longestBlockMs": 0,
-      "durationMs": 2014,
+      "durationMs": 128,
       "triangles": 90,
       "drawCalls": 15,
       "lineDraws": 0,
       "steps_ms": {
         "syncCamera": {
           "p50": 0,
-          "p95": 0.1,
+          "p95": 0,
           "max": 0.1,
-          "sum": 1.5
+          "sum": 0.3
         },
         "syncHatch": {
           "p50": 0,
@@ -243,8 +243,8 @@
         "syncPaintTex": {
           "p50": 0,
           "p95": 0,
-          "max": 0,
-          "sum": 0
+          "max": 0.1,
+          "sum": 0.2
         },
         "gatePaintTex": {
           "p50": 0,
@@ -255,14 +255,14 @@
         "applyPaintDraft": {
           "p50": 0,
           "p95": 0,
-          "max": 0.1,
-          "sum": 0.1
+          "max": 0,
+          "sum": 0
         },
         "revealFaces": {
           "p50": 0,
           "p95": 0,
-          "max": 0.1,
-          "sum": 0.1
+          "max": 0,
+          "sum": 0
         },
         "sortFaces": {
           "p50": 0,
@@ -273,14 +273,14 @@
         "render": {
           "p50": 0.1,
           "p95": 0.2,
-          "max": 0.3,
-          "sum": 15.3
+          "max": 0.2,
+          "sum": 10.4
         },
         "total": {
-          "p50": 0.2,
+          "p50": 0.1,
           "p95": 0.2,
-          "max": 0.3,
-          "sum": 18.2
+          "max": 0.2,
+          "sum": 12.1
         }
       },
       "upload": {
@@ -296,28 +296,28 @@
       },
       "frameCost": {
         "n": 119,
-        "r3": 0.19999998807907104,
-        "bs": 0.10000002384185791,
-        "d2": 0.19999998807907104,
-        "total": 0.5,
-        "p95": 0.6000000238418579,
-        "totalMax": 25.5,
+        "r3": 0.10000002384185791,
+        "bs": 0.09999996423721313,
+        "d2": 0.10000002384185791,
+        "total": 0.30000001192092896,
+        "p95": 0.5,
+        "totalMax": 23.100000023841858,
         "worst": {
           "r3": 0.19999998807907104,
-          "bs": 25.100000023841858,
-          "d2": 0.19999998807907104,
-          "total": 25.5
+          "bs": 22.80000001192093,
+          "d2": 0.10000002384185791,
+          "total": 23.100000023841858
         }
       },
       "tiles": {
         "active": true,
         "tiles": 16,
         "frames": 119,
-        "bakeMs": 24.9,
+        "bakeMs": 22.4,
         "bakePasses": 1,
         "bakeClamped": 1,
         "frameMsMedian": 0.1,
-        "frameMsMax": 0.2,
+        "frameMsMax": 0.3,
         "paintFrames": 0,
         "paintMsMedian": 0,
         "paintMsMax": 0
@@ -342,12 +342,12 @@
         "paintMeshes": 0,
         "lines": 16
       },
-      "fps": 59.9,
-      "p50": 16.7,
-      "p95": 17,
-      "max": 43.9,
+      "fps": 511.95,
+      "p50": 1.5,
+      "p95": 2.2,
+      "max": 27.4,
       "longestBlockMs": 0,
-      "durationMs": 2003,
+      "durationMs": 234,
       "triangles": 182,
       "drawCalls": 61,
       "lineDraws": 0,
@@ -356,19 +356,19 @@
           "p50": 0,
           "p95": 0.1,
           "max": 0.1,
-          "sum": 1.8
+          "sum": 1.9
         },
         "syncHatch": {
           "p50": 0,
           "p95": 0.1,
           "max": 0.1,
-          "sum": 1.5
+          "sum": 1.3
         },
         "syncPaintTex": {
           "p50": 0,
           "p95": 0,
           "max": 0.1,
-          "sum": 0.3
+          "sum": 0.2
         },
         "gatePaintTex": {
           "p50": 0,
@@ -380,31 +380,31 @@
           "p50": 0,
           "p95": 0,
           "max": 0.1,
-          "sum": 0.1
+          "sum": 0.2
         },
         "revealFaces": {
           "p50": 0,
           "p95": 0.1,
           "max": 0.1,
-          "sum": 0.9
+          "sum": 1.2
         },
         "sortFaces": {
           "p50": 0,
           "p95": 0.1,
           "max": 0.1,
-          "sum": 2.5
+          "sum": 2.3
         },
         "render": {
-          "p50": 0.9,
+          "p50": 0.7,
           "p95": 1,
-          "max": 1.2,
-          "sum": 104.4
+          "max": 1.4,
+          "sum": 85.4
         },
         "total": {
-          "p50": 0.9,
-          "p95": 1.1,
-          "max": 1.2,
-          "sum": 111.5
+          "p50": 0.8,
+          "p95": 1,
+          "max": 1.5,
+          "sum": 92.5
         }
       },
       "upload": {
@@ -420,28 +420,28 @@
       },
       "frameCost": {
         "n": 119,
-        "r3": 0.9000000357627869,
+        "r3": 0.7999999523162842,
         "bs": 0.10000002384185791,
         "d2": 0.19999998807907104,
-        "total": 1.300000011920929,
-        "p95": 1.600000023841858,
-        "totalMax": 27.100000023841858,
+        "total": 1,
+        "p95": 1.4000000357627869,
+        "totalMax": 25.099999964237213,
         "worst": {
-          "r3": 1.100000023841858,
-          "bs": 25.899999976158142,
-          "d2": 0.10000002384185791,
-          "total": 27.100000023841858
+          "r3": 1.5,
+          "bs": 23.399999976158142,
+          "d2": 0.19999998807907104,
+          "total": 25.099999964237213
         }
       },
       "tiles": {
         "active": true,
         "tiles": 16,
         "frames": 119,
-        "bakeMs": 25.6,
+        "bakeMs": 23.2,
         "bakePasses": 1,
         "bakeClamped": 1,
         "frameMsMedian": 0.1,
-        "frameMsMax": 0.5,
+        "frameMsMax": 0.2,
         "paintFrames": 0,
         "paintMsMedian": 0,
         "paintMsMax": 0
@@ -466,12 +466,12 @@
         "paintMeshes": 23,
         "lines": 16
       },
-      "fps": 59.56,
-      "p50": 16.6,
-      "p95": 17,
-      "max": 45.2,
+      "fps": 610.07,
+      "p50": 1,
+      "p95": 2.2,
+      "max": 28.3,
       "longestBlockMs": 0,
-      "durationMs": 2015,
+      "durationMs": 197,
       "triangles": 136,
       "drawCalls": 38,
       "lineDraws": 0,
@@ -480,55 +480,55 @@
           "p50": 0,
           "p95": 0.1,
           "max": 0.1,
-          "sum": 2.4
+          "sum": 1.6
         },
         "syncHatch": {
           "p50": 0,
           "p95": 0.1,
           "max": 0.1,
-          "sum": 1.7
+          "sum": 1
         },
         "syncPaintTex": {
           "p50": 0,
           "p95": 0,
-          "max": 0,
-          "sum": 0
+          "max": 0.1,
+          "sum": 0.2
         },
         "gatePaintTex": {
           "p50": 0.1,
           "p95": 0.2,
-          "max": 0.2,
-          "sum": 13.4
+          "max": 0.5,
+          "sum": 11.3
         },
         "applyPaintDraft": {
-          "p50": 0,
-          "p95": 0.1,
-          "max": 0.1,
-          "sum": 0.7
-        },
-        "revealFaces": {
           "p50": 0,
           "p95": 0,
           "max": 0.1,
           "sum": 0.5
         },
+        "revealFaces": {
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.1,
+          "sum": 0.8
+        },
         "sortFaces": {
           "p50": 0,
           "p95": 0.1,
-          "max": 0.2,
-          "sum": 1.5
+          "max": 0.1,
+          "sum": 2.3
         },
         "render": {
           "p50": 0.2,
-          "p95": 1.2,
-          "max": 1.5,
-          "sum": 48.2
+          "p95": 0.9,
+          "max": 1.1,
+          "sum": 37.9
         },
         "total": {
-          "p50": 0.4,
-          "p95": 1.3,
-          "max": 1.6,
-          "sum": 68.4
+          "p50": 0.3,
+          "p95": 1.2,
+          "max": 1.4,
+          "sum": 55.6
         }
       },
       "upload": {
@@ -544,659 +544,32 @@
       },
       "frameCost": {
         "n": 119,
-        "r3": 0.40000003576278687,
-        "bs": 0.19999998807907104,
-        "d2": 0.2999999523162842,
-        "total": 0.8999999761581421,
-        "p95": 1.800000011920929,
-        "totalMax": 28.200000047683716,
+        "r3": 0.30000001192092896,
+        "bs": 0.10000002384185791,
+        "d2": 0.19999998807907104,
+        "total": 0.6000000238418579,
+        "p95": 1.600000023841858,
+        "totalMax": 26,
         "worst": {
-          "r3": 1.300000011920929,
-          "bs": 26.600000023841858,
-          "d2": 0.30000001192092896,
-          "total": 28.200000047683716
+          "r3": 1.399999976158142,
+          "bs": 24.19999998807907,
+          "d2": 0.40000003576278687,
+          "total": 26
         }
       },
       "tiles": {
         "active": true,
         "tiles": 16,
         "frames": 119,
-        "bakeMs": 26,
+        "bakeMs": 23.5,
         "bakePasses": 1,
         "bakeClamped": 1,
         "frameMsMedian": 0.1,
-        "frameMsMax": 0.4,
+        "frameMsMax": 0.3,
         "paintFrames": 0,
         "paintMsMedian": 0,
         "paintMsMax": 0
       }
-    }
-  },
-  "A_step_share_pct": {
-    "④칠까지": {
-      "syncCamera": 3.5,
-      "syncHatch": 2.5,
-      "syncPaintTex": 0,
-      "gatePaintTex": 19.6,
-      "applyPaintDraft": 1,
-      "revealFaces": 0.7,
-      "sortFaces": 2.2,
-      "render": 70.5
-    },
-    "③면까지": {
-      "syncCamera": 1.6,
-      "syncHatch": 1.3,
-      "syncPaintTex": 0.3,
-      "gatePaintTex": 0,
-      "applyPaintDraft": 0.1,
-      "revealFaces": 0.8,
-      "sortFaces": 2.2,
-      "render": 93.6
-    },
-    "②선만": {
-      "syncCamera": 8.2,
-      "syncHatch": 6.6,
-      "syncPaintTex": 0,
-      "gatePaintTex": 0,
-      "applyPaintDraft": 0.5,
-      "revealFaces": 0.5,
-      "sortFaces": 0,
-      "render": 84.1
-    },
-    "①빈": {
-      "syncCamera": 18.3,
-      "syncHatch": 14.1,
-      "syncPaintTex": 1.4,
-      "gatePaintTex": 0,
-      "applyPaintDraft": 5.6,
-      "revealFaces": 2.8,
-      "sortFaces": 1.4,
-      "render": 56.3
-    }
-  },
-  "A_owner": {
-    "note": "팔 사이의 차가 그 층의 몫이다 — 단 **네 팔이 vsync에 붙어 있으면(capped) 차는 정의되지 않는다**(둘 다 16.7ms 안에 들었다는 뜻일 뿐). 기계의 몫 = ④ p95에서 60Hz 한 프레임(16.7)을 넘는 부분 · 바탕 렌더러(JS 걸음)의 몫 = render3d 여덟 걸음 합의 p95 · 장면의 몫은 캡 없는 팔(novsync)에서 ①→④의 차로 읽는다",
-    "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)",
-    "software_gpu": false,
-    "novsync": false,
-    "vsync_ms": 16.67,
-    "vsync_capped_all_arms": true,
-    "p95": {
-      "empty": 16.8,
-      "lines": 16.9,
-      "faces": 17,
-      "paint": 17
-    },
-    "deltas_ms": {
-      "lines": 0.1,
-      "faces": 0.1,
-      "paint": 0
-    },
-    "js_steps_p95_ms": {
-      "empty": 0.2,
-      "lines": 0.2,
-      "faces": 1.1,
-      "paint": 1.3
-    },
-    "share_pct_of_paint_p95": {
-      "over_vsync_machine": 1.96,
-      "js_steps_renderer": 7.65,
-      "vsync_floor": 98.04,
-      "note": "네 팔이 전부 상한에 붙었다 — 팔 사이의 차는 «몫»이 아니다(장면의 몫은 novsync 팔에서)"
-    }
-  },
-  "B_repeats": {
-    "note": "같은 조건 셋의 흔들림(#14) — 유효 자릿수는 두 자리다. 표제는 «칠 전부»의 중앙값 실행이다",
-    "now": [
-      {
-        "allPaintMs": 7435,
-        "firstInteractiveMs": 660,
-        "longestBlockMs": 875
-      },
-      {
-        "allPaintMs": 7275,
-        "firstInteractiveMs": 594,
-        "longestBlockMs": 865
-      },
-      {
-        "allPaintMs": 7321,
-        "firstInteractiveMs": 606,
-        "longestBlockMs": 866
-      }
-    ],
-    "idle24": [
-      {
-        "allPaintMs": 7946,
-        "firstInteractiveMs": 1639,
-        "longestBlockMs": 868
-      },
-      {
-        "allPaintMs": 7033,
-        "firstInteractiveMs": 690,
-        "longestBlockMs": 857
-      },
-      {
-        "allPaintMs": 7998,
-        "firstInteractiveMs": 1644,
-        "longestBlockMs": 871
-      }
-    ],
-    "now_median": {
-      "allPaintMs": 7321,
-      "firstInteractiveMs": 606,
-      "longestBlockMs": 866
-    },
-    "idle24_median": {
-      "allPaintMs": 7946,
-      "firstInteractiveMs": 1639,
-      "longestBlockMs": 868
-    }
-  },
-  "B_open": {
-    "idleMs": 12,
-    "firstInteractiveMs": 606,
-    "allPaintMs": 7321,
-    "longestBlockMs": 866,
-    "longtaskSupported": true,
-    "loop": {
-      "frames": 341,
-      "drawFrames": 3,
-      "bakeFrames": 336,
-      "workMs": 6904.3,
-      "gapMs": 280.9,
-      "maxGapMs": 15.6,
-      "firstFrameAt": 167.69999998807907,
-      "firstFrameEndAt": 174.19999998807907,
-      "lastEndAt": 7352.899999976158,
-      "now": 7354.899999976158
-    },
-    "parts": {
-      "bake_ms": 6557.2,
-      "upload_ms": 11.7,
-      "wait_ms": 280.9,
-      "other_ms": 471.3,
-      "wall_ms": 7321.1,
-      "sum_ms": 7321.1,
-      "other_boot_ms": 135.9,
-      "other_frame_ms": 335.4,
-      "pct": {
-        "bake": 89.6,
-        "upload": 0.2,
-        "wait": 3.8,
-        "other": 6.4
-      }
-    },
-    "check": {
-      "accounted_ms": 7321.1,
-      "accounted_over_wall": 1,
-      "steps_total_ms": 6855.8,
-      "steps_over_work": 0.993,
-      "raf_ticks": 347,
-      "raf_gap_sum_ms": 7308.8,
-      "raf_over_wall": 0.998,
-      "bake_plus_upload_over_work": 0.951
-    },
-    "steps": {
-      "frames": 339,
-      "sample": 240,
-      "steps": {
-        "syncCamera": {
-          "p50": 0,
-          "p95": 0.1,
-          "max": 0.1,
-          "sum": 4.7
-        },
-        "syncHatch": {
-          "p50": 0,
-          "p95": 0.1,
-          "max": 0.1,
-          "sum": 2.2
-        },
-        "syncPaintTex": {
-          "p50": 0,
-          "p95": 0,
-          "max": 0.1,
-          "sum": 1.6
-        },
-        "gatePaintTex": {
-          "p50": 15.3,
-          "p95": 23.9,
-          "max": 30.5,
-          "sum": 6593.9
-        },
-        "applyPaintDraft": {
-          "p50": 0,
-          "p95": 0.1,
-          "max": 0.1,
-          "sum": 2.3
-        },
-        "revealFaces": {
-          "p50": 0,
-          "p95": 0.1,
-          "max": 0.2,
-          "sum": 2.8
-        },
-        "sortFaces": {
-          "p50": 0,
-          "p95": 0.1,
-          "max": 0.1,
-          "sum": 6.7
-        },
-        "render": {
-          "p50": 0.7,
-          "p95": 1,
-          "max": 1.2,
-          "sum": 241.6
-        },
-        "total": {
-          "p50": 16.1,
-          "p95": 24.6,
-          "max": 31.3,
-          "sum": 6855.8
-        }
-      },
-      "gl": {
-        "calls": 85,
-        "triangles": 234,
-        "lines": 0,
-        "points": 0
-      }
-    },
-    "upload": {
-      "calls": 382,
-      "ms": 11.699999690055847,
-      "maxMs": 0.20000004768371582,
-      "byName": {
-        "texStorage2D": 0,
-        "texSubImage2D": 11.699999690055847
-      }
-    },
-    "bake": {
-      "bakes": 24,
-      "bakedStrokes": 939,
-      "sliced": 336,
-      "deferred": 3840,
-      "uploads": 359,
-      "uploadBytes": 84246528,
-      "ms": 6557.2
-    },
-    "boot": {
-      "bootAt": 163.89999997615814,
-      "parseMs": 2.8,
-      "applyMs": 5.6,
-      "bytes": 235452,
-      "strokes": 936
-    },
-    "restoredStrokes": 936,
-    "bake_frame_avg_ms": 20.2,
-    "stage": "idle=now_3"
-  },
-  "B_candidate_24": {
-    "idleMs": 24,
-    "firstInteractiveMs": 1639,
-    "allPaintMs": 7946,
-    "longestBlockMs": 868,
-    "longtaskSupported": true,
-    "loop": {
-      "frames": 196,
-      "drawFrames": 3,
-      "bakeFrames": 191,
-      "workMs": 7677.8,
-      "gapMs": 145.6,
-      "maxGapMs": 24.4,
-      "firstFrameAt": 153,
-      "firstFrameEndAt": 159.5,
-      "lastEndAt": 7976.400000035763,
-      "now": 7979.300000011921
-    },
-    "parts": {
-      "bake_ms": 7459.7,
-      "upload_ms": 6.2,
-      "wait_ms": 145.6,
-      "other_ms": 334.4,
-      "wall_ms": 7945.9,
-      "sum_ms": 7945.9,
-      "other_boot_ms": 122.8,
-      "other_frame_ms": 211.9,
-      "pct": {
-        "bake": 93.9,
-        "upload": 0.1,
-        "wait": 1.8,
-        "other": 4.2
-      }
-    },
-    "check": {
-      "accounted_ms": 7946.2,
-      "accounted_over_wall": 1,
-      "steps_total_ms": 7635.3,
-      "steps_over_work": 0.994,
-      "raf_ticks": 201,
-      "raf_gap_sum_ms": 7941.7,
-      "raf_over_wall": 0.999,
-      "bake_plus_upload_over_work": 0.972
-    },
-    "steps": {
-      "frames": 194,
-      "sample": 194,
-      "steps": {
-        "syncCamera": {
-          "p50": 0,
-          "p95": 0.1,
-          "max": 0.2,
-          "sum": 1.1
-        },
-        "syncHatch": {
-          "p50": 0,
-          "p95": 0,
-          "max": 0.1,
-          "sum": 0.9
-        },
-        "syncPaintTex": {
-          "p50": 0,
-          "p95": 0,
-          "max": 1.3,
-          "sum": 1.6
-        },
-        "gatePaintTex": {
-          "p50": 29,
-          "p95": 38.1,
-          "max": 867.3,
-          "sum": 7485.6
-        },
-        "applyPaintDraft": {
-          "p50": 0,
-          "p95": 0,
-          "max": 0.1,
-          "sum": 0.8
-        },
-        "revealFaces": {
-          "p50": 0,
-          "p95": 0.1,
-          "max": 0.1,
-          "sum": 1
-        },
-        "sortFaces": {
-          "p50": 0,
-          "p95": 0.1,
-          "max": 0.2,
-          "sum": 4.2
-        },
-        "render": {
-          "p50": 0.6,
-          "p95": 1,
-          "max": 16.3,
-          "sum": 140.1
-        },
-        "total": {
-          "p50": 29.7,
-          "p95": 38.9,
-          "max": 868,
-          "sum": 7635.3
-        }
-      },
-      "gl": {
-        "calls": 85,
-        "triangles": 234,
-        "lines": 0,
-        "points": 0
-      }
-    },
-    "upload": {
-      "calls": 239,
-      "ms": 6.1999998688697815,
-      "maxMs": 0.20000004768371582,
-      "byName": {
-        "texStorage2D": 0,
-        "texSubImage2D": 6.1999998688697815
-      }
-    },
-    "bake": {
-      "bakes": 25,
-      "bakedStrokes": 961,
-      "sliced": 192,
-      "deferred": 2278,
-      "uploads": 216,
-      "uploadBytes": 50409472,
-      "ms": 7459.7
-    },
-    "boot": {
-      "bootAt": 149,
-      "parseMs": 2.9,
-      "applyMs": 5.7,
-      "bytes": 235452,
-      "strokes": 936
-    },
-    "restoredStrokes": 936,
-    "bake_frame_avg_ms": 39.2,
-    "stage": "idle=24_1"
-  },
-  "B_parts": {
-    "note": "네 몫(ms · %) — bake = bakeFaceTex/appendMarkOnTex 안의 CPU · upload = GL texImage2D/texSubImage2D 호출 시간(CPU 쪽 · GPU 완료는 render 걸음에 섞인다) · wait = 프레임 사이에 논 시간(rAF 간격의 빈 몫) · other = 나머지(부팅 + 프레임 안의 그리기 등). ⚠ other는 뺄셈이라 sum == wall은 구성상 항등 — 판정은 check(장부 vs 벽시계)가 한다",
-    "bake_ms": 6557.2,
-    "upload_ms": 11.7,
-    "wait_ms": 280.9,
-    "other_ms": 471.3,
-    "wall_ms": 7321.1,
-    "sum_ms": 7321.1,
-    "other_boot_ms": 135.9,
-    "other_frame_ms": 335.4,
-    "pct": {
-      "bake": 89.6,
-      "upload": 0.2,
-      "wait": 3.8,
-      "other": 6.4
-    },
-    "check": {
-      "accounted_ms": 7321.1,
-      "accounted_over_wall": 1,
-      "steps_total_ms": 6855.8,
-      "steps_over_work": 0.993,
-      "raf_ticks": 347,
-      "raf_gap_sum_ms": 7308.8,
-      "raf_over_wall": 0.998,
-      "bake_plus_upload_over_work": 0.951
-    },
-    "frames": {
-      "frames": 341,
-      "drawFrames": 3,
-      "bakeFrames": 336,
-      "workMs": 6904.3,
-      "gapMs": 280.9,
-      "maxGapMs": 15.6,
-      "firstFrameAt": 167.69999998807907,
-      "firstFrameEndAt": 174.19999998807907,
-      "lastEndAt": 7352.899999976158,
-      "now": 7354.899999976158
-    },
-    "bake_frame_avg_ms": 20.2
-  },
-  "B_idle_sweep": {
-    "4": {
-      "idleMs": 4,
-      "allPaintMs": 10706,
-      "firstInteractiveMs": 477,
-      "longestBlockMs": 861,
-      "frames": 572,
-      "bakeFrames": 567,
-      "bake_ms": 6523.2,
-      "upload_ms": 21.8,
-      "wait_ms": 3534,
-      "other_ms": 626.5,
-      "accounted_over_wall": 1
-    },
-    "32": {
-      "idleMs": 32,
-      "allPaintMs": 7024,
-      "firstInteractiveMs": 1619,
-      "longestBlockMs": 884,
-      "frames": 156,
-      "bakeFrames": 149,
-      "bake_ms": 6585.7,
-      "upload_ms": 4.6,
-      "wait_ms": 128.2,
-      "other_ms": 305.3,
-      "accounted_over_wall": 1
-    },
-    "50": {
-      "idleMs": 50,
-      "allPaintMs": 8020,
-      "firstInteractiveMs": 2743,
-      "longestBlockMs": 869,
-      "frames": 111,
-      "bakeFrames": 106,
-      "bake_ms": 7612.1,
-      "upload_ms": 2.8,
-      "wait_ms": 124.1,
-      "other_ms": 281.2,
-      "accounted_over_wall": 1
-    },
-    "100": {
-      "idleMs": 100,
-      "allPaintMs": 8206,
-      "firstInteractiveMs": 3250,
-      "longestBlockMs": 929,
-      "frames": 64,
-      "bakeFrames": 58,
-      "bake_ms": 7849.2,
-      "upload_ms": 1.6,
-      "wait_ms": 110.9,
-      "other_ms": 244.7,
-      "accounted_over_wall": 1
-    },
-    "1000": {
-      "idleMs": 1000,
-      "allPaintMs": 12751,
-      "firstInteractiveMs": 12589,
-      "longestBlockMs": 1105,
-      "frames": 20,
-      "bakeFrames": 13,
-      "bake_ms": 12441,
-      "upload_ms": 1.4,
-      "wait_ms": 112.1,
-      "other_ms": 196,
-      "accounted_over_wall": 1
-    },
-    "now_1": {
-      "idleMs": 12,
-      "allPaintMs": 7435,
-      "firstInteractiveMs": 660,
-      "longestBlockMs": 875,
-      "frames": 347,
-      "bakeFrames": 343,
-      "bake_ms": 6628.3,
-      "upload_ms": 12.8,
-      "wait_ms": 324.6,
-      "other_ms": 469.1,
-      "accounted_over_wall": 1
-    },
-    "now_2": {
-      "idleMs": 12,
-      "allPaintMs": 7275,
-      "firstInteractiveMs": 594,
-      "longestBlockMs": 865,
-      "frames": 338,
-      "bakeFrames": 333,
-      "bake_ms": 6519,
-      "upload_ms": 12,
-      "wait_ms": 277,
-      "other_ms": 467.2,
-      "accounted_over_wall": 1
-    },
-    "now_3": {
-      "idleMs": 12,
-      "allPaintMs": 7321,
-      "firstInteractiveMs": 606,
-      "longestBlockMs": 866,
-      "frames": 341,
-      "bakeFrames": 336,
-      "bake_ms": 6557.2,
-      "upload_ms": 11.7,
-      "wait_ms": 280.9,
-      "other_ms": 471.3,
-      "accounted_over_wall": 1
-    },
-    "24_1": {
-      "idleMs": 24,
-      "allPaintMs": 7946,
-      "firstInteractiveMs": 1639,
-      "longestBlockMs": 868,
-      "frames": 196,
-      "bakeFrames": 191,
-      "bake_ms": 7459.7,
-      "upload_ms": 6.2,
-      "wait_ms": 145.6,
-      "other_ms": 334.4,
-      "accounted_over_wall": 1
-    },
-    "24_2": {
-      "idleMs": 24,
-      "allPaintMs": 7033,
-      "firstInteractiveMs": 690,
-      "longestBlockMs": 857,
-      "frames": 193,
-      "bakeFrames": 187,
-      "bake_ms": 6543.5,
-      "upload_ms": 5.2,
-      "wait_ms": 147.8,
-      "other_ms": 336.3,
-      "accounted_over_wall": 1
-    },
-    "24_3": {
-      "idleMs": 24,
-      "allPaintMs": 7998,
-      "firstInteractiveMs": 1644,
-      "longestBlockMs": 871,
-      "frames": 196,
-      "bakeFrames": 191,
-      "bake_ms": 7512.8,
-      "upload_ms": 6,
-      "wait_ms": 140.2,
-      "other_ms": 338.9,
-      "accounted_over_wall": 1
-    }
-  },
-  "B_gate_lines": {
-    "§2 네 몫의 합 == 칠 전부(±5%)": {
-      "accounted_over_wall": 1,
-      "raf_over_wall": 0.998,
-      "pass": true,
-      "note": "⚠ **항등이다**(리뷰어 [H4]) — wait = 마지막 프레임 끝 − 첫 프레임 시작 − 일한 시간(뺄셈)이라 장부의 합은 정의상 벽시계다. 이 줄은 지시 문면의 «기록»이고 문이 아니다. 문은 아래 두 줄(독립된 시계 둘)이다"
-    },
-    "§2 독립 자 ① render3d 걸음 합 ÷ 고리 일한 시간 ∈ [0.9, 1.0]": {
-      "steps_over_work": 0.993,
-      "pass": true,
-      "note": "두 시계(render3d 안의 아홉 시각 · main.frame의 둘)가 서로 다른 자리에서 찍힌다 — 프레임 안에 render3d 밖의 일(흑연 겹·2D)이 커지면 0.9 아래로 떨어진다"
-    },
-    "§2 독립 자 ② 굽기 + 업로드 ≤ 일한 시간": {
-      "bake_plus_upload_over_work": 0.951,
-      "pass": true,
-      "note": "굽기(bakeStat.ms)·업로드(GL 프로브)·일한 시간(고리)은 셋 다 다른 시계다 — 겹치면 1을 넘는다"
-    },
-    "§2 첫 상호작용 ≤ 1,155ms(72의 측정값 · 기록)": {
-      "now_all": [
-        660,
-        594,
-        606
-      ],
-      "now_median": 606,
-      "ref_72": 1155,
-      "pass": true,
-      "note": "⚠ 1,155는 72의 **한 표본 측정값**이고(72의 게이트 문면은 ≤ 1,000이었고 그때도 미달) 문턱이 아니다 — 같은 코드의 세 실행 값이 now_all에 그대로 있다(리뷰어 [H3]). 무회귀의 판정은 아래 짝 비교가 한다"
-    },
-    "§4(72) 첫 상호작용 ≤ 1,000ms(72의 게이트 문면 · 기록)": {
-      "now_median": 606,
-      "pass": true
-    },
-    "§2 첫 상호작용 무회귀 — 후보(24ms) vs 지금(중앙값 셋 · ≤ 1.15배)": {
-      "now_median": 606,
-      "idle24_median": 1639,
-      "ratio": 2.7,
-      "pass": false
-    },
-    "§4(72) 칠 전부 ≤ 5000ms(캐시 없음)": {
-      "now": 7321,
-      "pass": false,
-      "sweep_min": 7024
     }
   },
   "A_metrics_overhead": {
@@ -1206,26 +579,653 @@
       "paintStrokes": 920
     },
     "on": {
-      "fps": 59.81,
-      "p50": 16.6,
-      "p95": 17,
-      "max": 45.3,
-      "durationMs": 2006,
+      "fps": 610.38,
+      "p50": 1,
+      "p95": 2.5,
+      "max": 28.3,
+      "durationMs": 197,
       "totalDeg": 154.9
     },
     "off": {
-      "fps": 59.74,
-      "p50": 16.7,
-      "p95": 17,
-      "max": 44.2,
-      "durationMs": 2009,
+      "fps": 597.31,
+      "p50": 1,
+      "p95": 2.1,
+      "max": 27.1,
+      "durationMs": 201,
       "totalDeg": 154.9
     },
     "delta_ms": {
-      "p50": -0.1,
-      "p95": 0
+      "p50": 0,
+      "p95": 0.4
     },
-    "overhead_pct_of_p95": 0,
-    "ref_arm4_p95": 17
+    "overhead_pct_of_p95": 16,
+    "ref_arm4_p95": 2.2
+  },
+  "A_step_share_pct": {
+    "④칠까지": {
+      "syncCamera": 2.9,
+      "syncHatch": 1.8,
+      "syncPaintTex": 0.4,
+      "gatePaintTex": 20.3,
+      "applyPaintDraft": 0.9,
+      "revealFaces": 1.4,
+      "sortFaces": 4.1,
+      "render": 68.2
+    },
+    "③면까지": {
+      "syncCamera": 2.1,
+      "syncHatch": 1.4,
+      "syncPaintTex": 0.2,
+      "gatePaintTex": 0,
+      "applyPaintDraft": 0.2,
+      "revealFaces": 1.3,
+      "sortFaces": 2.5,
+      "render": 92.3
+    },
+    "②선만": {
+      "syncCamera": 2.5,
+      "syncHatch": 9.9,
+      "syncPaintTex": 1.7,
+      "gatePaintTex": 0,
+      "applyPaintDraft": 0,
+      "revealFaces": 0,
+      "sortFaces": 0,
+      "render": 86
+    },
+    "①빈": {
+      "syncCamera": 19.2,
+      "syncHatch": 15.4,
+      "syncPaintTex": 3.8,
+      "gatePaintTex": 1.9,
+      "applyPaintDraft": 0,
+      "revealFaces": 0,
+      "sortFaces": 0,
+      "render": 59.6
+    }
+  },
+  "A_owner": {
+    "note": "팔 사이의 차가 그 층의 몫이다 — 단 **네 팔이 vsync에 붙어 있으면(capped) 차는 정의되지 않는다**(둘 다 16.7ms 안에 들었다는 뜻일 뿐). 기계의 몫 = ④ p95에서 60Hz 한 프레임(16.7)을 넘는 부분 · 바탕 렌더러(JS 걸음)의 몫 = render3d 여덟 걸음 합의 p95 · 장면의 몫은 캡 없는 팔(novsync)에서 ①→④의 차로 읽는다",
+    "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "software_gpu": false,
+    "novsync": true,
+    "vsync_ms": 16.67,
+    "vsync_capped_all_arms": true,
+    "p95": {
+      "empty": 1.1,
+      "lines": 1.1,
+      "faces": 2.2,
+      "paint": 2.2
+    },
+    "deltas_ms": {
+      "lines": 0,
+      "faces": 1.1,
+      "paint": 0
+    },
+    "js_steps_p95_ms": {
+      "empty": 0.1,
+      "lines": 0.2,
+      "faces": 1,
+      "paint": 1.2
+    },
+    "share_pct_of_paint_p95": {
+      "over_vsync_machine": 0,
+      "js_steps_renderer": 54.55,
+      "vsync_floor": 100,
+      "note": "네 팔이 전부 상한에 붙었다 — 팔 사이의 차는 «몫»이 아니다(장면의 몫은 novsync 팔에서)"
+    }
+  },
+  "B_repeats": {
+    "note": "같은 조건 셋의 흔들림(#14) — 유효 자릿수는 두 자리다. 표제는 «칠 전부»의 중앙값 실행이다",
+    "now": [
+      {
+        "allPaintMs": 7203,
+        "firstInteractiveMs": 577,
+        "longestBlockMs": 872
+      },
+      {
+        "allPaintMs": 7285,
+        "firstInteractiveMs": 614,
+        "longestBlockMs": 880
+      },
+      {
+        "allPaintMs": 7258,
+        "firstInteractiveMs": 618,
+        "longestBlockMs": 870
+      }
+    ],
+    "idle24": [
+      {
+        "allPaintMs": 7116,
+        "firstInteractiveMs": 757,
+        "longestBlockMs": 867
+      },
+      {
+        "allPaintMs": 7073,
+        "firstInteractiveMs": 725,
+        "longestBlockMs": 856
+      },
+      {
+        "allPaintMs": 7104,
+        "firstInteractiveMs": 744,
+        "longestBlockMs": 862
+      }
+    ],
+    "now_median": {
+      "allPaintMs": 7258,
+      "firstInteractiveMs": 614,
+      "longestBlockMs": 872
+    },
+    "idle24_median": {
+      "allPaintMs": 7104,
+      "firstInteractiveMs": 744,
+      "longestBlockMs": 862
+    }
+  },
+  "B_open": {
+    "idleMs": 12,
+    "firstInteractiveMs": 618,
+    "allPaintMs": 7258,
+    "longestBlockMs": 870,
+    "longtaskSupported": true,
+    "loop": {
+      "frames": 353,
+      "drawFrames": 3,
+      "bakeFrames": 341,
+      "workMs": 6925.7,
+      "gapMs": 181.7,
+      "maxGapMs": 10.9,
+      "firstFrameAt": 181.4000000357628,
+      "firstFrameEndAt": 188.30000001192093,
+      "lastEndAt": 7288.800000011921,
+      "now": 7291.800000011921
+    },
+    "parts": {
+      "bake_ms": 6576.8,
+      "upload_ms": 13.5,
+      "wait_ms": 181.7,
+      "other_ms": 486.3,
+      "wall_ms": 7258.3,
+      "sum_ms": 7258.3,
+      "other_boot_ms": 151.7,
+      "other_frame_ms": 335.4,
+      "pct": {
+        "bake": 90.6,
+        "upload": 0.2,
+        "wait": 2.5,
+        "other": 6.7
+      }
+    },
+    "check": {
+      "accounted_ms": 7259.1,
+      "accounted_over_wall": 1,
+      "steps_total_ms": 6877.8,
+      "steps_over_work": 0.993,
+      "raf_ticks": 359,
+      "raf_gap_sum_ms": 7254.9,
+      "raf_over_wall": 1,
+      "bake_plus_upload_over_work": 0.952
+    },
+    "steps": {
+      "frames": 344,
+      "sample": 240,
+      "steps": {
+        "syncCamera": {
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.2,
+          "sum": 4
+        },
+        "syncHatch": {
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.1,
+          "sum": 2.9
+        },
+        "syncPaintTex": {
+          "p50": 0,
+          "p95": 0,
+          "max": 0.1,
+          "sum": 2
+        },
+        "gatePaintTex": {
+          "p50": 15.3,
+          "p95": 23.3,
+          "max": 27.9,
+          "sum": 6619.5
+        },
+        "applyPaintDraft": {
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.1,
+          "sum": 2.9
+        },
+        "revealFaces": {
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.1,
+          "sum": 3.2
+        },
+        "sortFaces": {
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.1,
+          "sum": 5.4
+        },
+        "render": {
+          "p50": 0.7,
+          "p95": 1,
+          "max": 1.5,
+          "sum": 237.9
+        },
+        "total": {
+          "p50": 16.2,
+          "p95": 24.1,
+          "max": 28.6,
+          "sum": 6877.8
+        }
+      },
+      "gl": {
+        "calls": 85,
+        "triangles": 234,
+        "lines": 0,
+        "points": 0
+      }
+    },
+    "upload": {
+      "calls": 388,
+      "ms": 13.499999940395355,
+      "maxMs": 0.19999998807907104,
+      "byName": {
+        "texStorage2D": 0,
+        "texSubImage2D": 13.499999940395355
+      }
+    },
+    "bake": {
+      "bakes": 24,
+      "bakedStrokes": 935,
+      "sliced": 342,
+      "deferred": 3906,
+      "uploads": 365,
+      "uploadBytes": 85595136,
+      "ms": 6576.8
+    },
+    "boot": {
+      "bootAt": 176.30000001192093,
+      "parseMs": 2.8,
+      "applyMs": 5.7,
+      "bytes": 235452,
+      "strokes": 936
+    },
+    "restoredStrokes": 936,
+    "bake_frame_avg_ms": 19.6,
+    "stage": "idle=now_3"
+  },
+  "B_candidate_24": {
+    "idleMs": 24,
+    "firstInteractiveMs": 744,
+    "allPaintMs": 7104,
+    "longestBlockMs": 862,
+    "longtaskSupported": true,
+    "loop": {
+      "frames": 202,
+      "drawFrames": 3,
+      "bakeFrames": 190,
+      "workMs": 6833,
+      "gapMs": 148.5,
+      "maxGapMs": 11.3,
+      "firstFrameAt": 159.5,
+      "firstFrameEndAt": 166.5,
+      "lastEndAt": 7141,
+      "now": 7141.300000011921
+    },
+    "parts": {
+      "bake_ms": 6613.2,
+      "upload_ms": 5.3,
+      "wait_ms": 148.5,
+      "other_ms": 337,
+      "wall_ms": 7104,
+      "sum_ms": 7104,
+      "other_boot_ms": 128,
+      "other_frame_ms": 214.5,
+      "pct": {
+        "bake": 93.1,
+        "upload": 0.1,
+        "wait": 2.1,
+        "other": 4.7
+      }
+    },
+    "check": {
+      "accounted_ms": 7109.5,
+      "accounted_over_wall": 1.001,
+      "steps_total_ms": 6790.9,
+      "steps_over_work": 0.994,
+      "raf_ticks": 208,
+      "raf_gap_sum_ms": 7104.4,
+      "raf_over_wall": 1,
+      "bake_plus_upload_over_work": 0.969
+    },
+    "steps": {
+      "frames": 193,
+      "sample": 193,
+      "steps": {
+        "syncCamera": {
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.1,
+          "sum": 1
+        },
+        "syncHatch": {
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.1,
+          "sum": 2.3
+        },
+        "syncPaintTex": {
+          "p50": 0,
+          "p95": 0,
+          "max": 1.6,
+          "sum": 1.9
+        },
+        "gatePaintTex": {
+          "p50": 29,
+          "p95": 37.2,
+          "max": 860.6,
+          "sum": 6638.9
+        },
+        "applyPaintDraft": {
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.1,
+          "sum": 1.3
+        },
+        "revealFaces": {
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.1,
+          "sum": 1.3
+        },
+        "sortFaces": {
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.1,
+          "sum": 2.7
+        },
+        "render": {
+          "p50": 0.7,
+          "p95": 1,
+          "max": 13.6,
+          "sum": 141.5
+        },
+        "total": {
+          "p50": 29.6,
+          "p95": 37.8,
+          "max": 861.7,
+          "sum": 6790.9
+        }
+      },
+      "gl": {
+        "calls": 85,
+        "triangles": 234,
+        "lines": 0,
+        "points": 0
+      }
+    },
+    "upload": {
+      "calls": 236,
+      "ms": 5.300000071525574,
+      "maxMs": 0.10000002384185791,
+      "byName": {
+        "texStorage2D": 0,
+        "texSubImage2D": 5.300000071525574
+      }
+    },
+    "bake": {
+      "bakes": 24,
+      "bakedStrokes": 950,
+      "sliced": 190,
+      "deferred": 2245,
+      "uploads": 213,
+      "uploadBytes": 49804288,
+      "ms": 6613.2
+    },
+    "boot": {
+      "bootAt": 155.10000002384186,
+      "parseMs": 3.2,
+      "applyMs": 6.9,
+      "bytes": 235452,
+      "strokes": 936
+    },
+    "restoredStrokes": 936,
+    "bake_frame_avg_ms": 33.8,
+    "stage": "idle=24_3"
+  },
+  "B_parts": {
+    "note": "네 몫(ms · %) — bake = bakeFaceTex/appendMarkOnTex 안의 CPU · upload = GL texImage2D/texSubImage2D 호출 시간(CPU 쪽 · GPU 완료는 render 걸음에 섞인다) · wait = 프레임 사이에 논 시간(rAF 간격의 빈 몫) · other = 나머지(부팅 + 프레임 안의 그리기 등). ⚠ other는 뺄셈이라 sum == wall은 구성상 항등 — 판정은 check(장부 vs 벽시계)가 한다",
+    "bake_ms": 6576.8,
+    "upload_ms": 13.5,
+    "wait_ms": 181.7,
+    "other_ms": 486.3,
+    "wall_ms": 7258.3,
+    "sum_ms": 7258.3,
+    "other_boot_ms": 151.7,
+    "other_frame_ms": 335.4,
+    "pct": {
+      "bake": 90.6,
+      "upload": 0.2,
+      "wait": 2.5,
+      "other": 6.7
+    },
+    "check": {
+      "accounted_ms": 7259.1,
+      "accounted_over_wall": 1,
+      "steps_total_ms": 6877.8,
+      "steps_over_work": 0.993,
+      "raf_ticks": 359,
+      "raf_gap_sum_ms": 7254.9,
+      "raf_over_wall": 1,
+      "bake_plus_upload_over_work": 0.952
+    },
+    "frames": {
+      "frames": 353,
+      "drawFrames": 3,
+      "bakeFrames": 341,
+      "workMs": 6925.7,
+      "gapMs": 181.7,
+      "maxGapMs": 10.9,
+      "firstFrameAt": 181.4000000357628,
+      "firstFrameEndAt": 188.30000001192093,
+      "lastEndAt": 7288.800000011921,
+      "now": 7291.800000011921
+    },
+    "bake_frame_avg_ms": 19.6
+  },
+  "B_idle_sweep": {
+    "4": {
+      "idleMs": 4,
+      "allPaintMs": 7476,
+      "firstInteractiveMs": 530,
+      "longestBlockMs": 864,
+      "frames": 589,
+      "bakeFrames": 576,
+      "bake_ms": 6570.5,
+      "upload_ms": 24,
+      "wait_ms": 237.9,
+      "other_ms": 643.3,
+      "accounted_over_wall": 1
+    },
+    "32": {
+      "idleMs": 32,
+      "allPaintMs": 8016,
+      "firstInteractiveMs": 1687,
+      "longestBlockMs": 905,
+      "frames": 164,
+      "bakeFrames": 153,
+      "bake_ms": 7549,
+      "upload_ms": 4.2,
+      "wait_ms": 133.6,
+      "other_ms": 329.5,
+      "accounted_over_wall": 1
+    },
+    "50": {
+      "idleMs": 50,
+      "allPaintMs": 7927,
+      "firstInteractiveMs": 2667,
+      "longestBlockMs": 886,
+      "frames": 115,
+      "bakeFrames": 103,
+      "bake_ms": 7512.9,
+      "upload_ms": 3.1,
+      "wait_ms": 124.9,
+      "other_ms": 286.4,
+      "accounted_over_wall": 1
+    },
+    "100": {
+      "idleMs": 100,
+      "allPaintMs": 8165,
+      "firstInteractiveMs": 3166,
+      "longestBlockMs": 931,
+      "frames": 68,
+      "bakeFrames": 57,
+      "bake_ms": 7809.9,
+      "upload_ms": 1.4,
+      "wait_ms": 113.2,
+      "other_ms": 240.4,
+      "accounted_over_wall": 1
+    },
+    "1000": {
+      "idleMs": 1000,
+      "allPaintMs": 11748,
+      "firstInteractiveMs": 11600,
+      "longestBlockMs": 1104,
+      "frames": 24,
+      "bakeFrames": 12,
+      "bake_ms": 11444.5,
+      "upload_ms": 0.4,
+      "wait_ms": 103.2,
+      "other_ms": 200.1,
+      "accounted_over_wall": 1
+    },
+    "now_1": {
+      "idleMs": 12,
+      "allPaintMs": 7203,
+      "firstInteractiveMs": 577,
+      "longestBlockMs": 872,
+      "frames": 350,
+      "bakeFrames": 338,
+      "bake_ms": 6545,
+      "upload_ms": 11.5,
+      "wait_ms": 183,
+      "other_ms": 463.5,
+      "accounted_over_wall": 1
+    },
+    "now_2": {
+      "idleMs": 12,
+      "allPaintMs": 7285,
+      "firstInteractiveMs": 614,
+      "longestBlockMs": 880,
+      "frames": 350,
+      "bakeFrames": 339,
+      "bake_ms": 6628.8,
+      "upload_ms": 12.8,
+      "wait_ms": 180.2,
+      "other_ms": 463.4,
+      "accounted_over_wall": 1
+    },
+    "now_3": {
+      "idleMs": 12,
+      "allPaintMs": 7258,
+      "firstInteractiveMs": 618,
+      "longestBlockMs": 870,
+      "frames": 353,
+      "bakeFrames": 341,
+      "bake_ms": 6576.8,
+      "upload_ms": 13.5,
+      "wait_ms": 181.7,
+      "other_ms": 486.3,
+      "accounted_over_wall": 1
+    },
+    "24_1": {
+      "idleMs": 24,
+      "allPaintMs": 7116,
+      "firstInteractiveMs": 757,
+      "longestBlockMs": 867,
+      "frames": 200,
+      "bakeFrames": 189,
+      "bake_ms": 6621.8,
+      "upload_ms": 6.8,
+      "wait_ms": 142,
+      "other_ms": 345.3,
+      "accounted_over_wall": 1.001
+    },
+    "24_2": {
+      "idleMs": 24,
+      "allPaintMs": 7073,
+      "firstInteractiveMs": 725,
+      "longestBlockMs": 856,
+      "frames": 201,
+      "bakeFrames": 189,
+      "bake_ms": 6581.1,
+      "upload_ms": 6.1,
+      "wait_ms": 144,
+      "other_ms": 341.9,
+      "accounted_over_wall": 1.001
+    },
+    "24_3": {
+      "idleMs": 24,
+      "allPaintMs": 7104,
+      "firstInteractiveMs": 744,
+      "longestBlockMs": 862,
+      "frames": 202,
+      "bakeFrames": 190,
+      "bake_ms": 6613.2,
+      "upload_ms": 5.3,
+      "wait_ms": 148.5,
+      "other_ms": 337,
+      "accounted_over_wall": 1.001
+    }
+  },
+  "B_gate_lines": {
+    "§2 네 몫의 합 == 칠 전부(±5%)": {
+      "accounted_over_wall": 1,
+      "raf_over_wall": 1,
+      "pass": true,
+      "note": "⚠ **항등이다**(리뷰어 [H4]) — wait = 마지막 프레임 끝 − 첫 프레임 시작 − 일한 시간(뺄셈)이라 장부의 합은 정의상 벽시계다. 이 줄은 지시 문면의 «기록»이고 문이 아니다. 문은 아래 두 줄(독립된 시계 둘)이다"
+    },
+    "§2 독립 자 ① render3d 걸음 합 ÷ 고리 일한 시간 ∈ [0.9, 1.0]": {
+      "steps_over_work": 0.993,
+      "pass": true,
+      "note": "두 시계(render3d 안의 아홉 시각 · main.frame의 둘)가 서로 다른 자리에서 찍힌다 — 프레임 안에 render3d 밖의 일(흑연 겹·2D)이 커지면 0.9 아래로 떨어진다"
+    },
+    "§2 독립 자 ② 굽기 + 업로드 ≤ 일한 시간": {
+      "bake_plus_upload_over_work": 0.952,
+      "pass": true,
+      "note": "굽기(bakeStat.ms)·업로드(GL 프로브)·일한 시간(고리)은 셋 다 다른 시계다 — 겹치면 1을 넘는다"
+    },
+    "§2 첫 상호작용 ≤ 1,155ms(72의 측정값 · 기록)": {
+      "now_all": [
+        577,
+        614,
+        618
+      ],
+      "now_median": 614,
+      "ref_72": 1155,
+      "pass": true,
+      "note": "⚠ 1,155는 72의 **한 표본 측정값**이고(72의 게이트 문면은 ≤ 1,000이었고 그때도 미달) 문턱이 아니다 — 같은 코드의 세 실행 값이 now_all에 그대로 있다(리뷰어 [H3]). 무회귀의 판정은 아래 짝 비교가 한다"
+    },
+    "§4(72) 첫 상호작용 ≤ 1,000ms(72의 게이트 문면 · 기록)": {
+      "now_median": 614,
+      "pass": true
+    },
+    "§2 첫 상호작용 무회귀 — 후보(24ms) vs 지금(중앙값 셋 · ≤ 1.15배)": {
+      "now_median": 614,
+      "idle24_median": 744,
+      "ratio": 1.21,
+      "pass": false
+    },
+    "§4(72) 칠 전부 ≤ 5000ms(캐시 없음)": {
+      "now": 7258,
+      "pass": false,
+      "sweep_min": 7073
+    }
   }
 }

@@ -37,6 +37,8 @@ const port = Number(process.env.PW_PORT ?? 5301)
 // PW_HEADED — web2-73 §1-2 «다» 팔: **머리 있는** 크로뮴으로 같은 스펙을 돌린다(GPU 이름이 갈리는지).
 // 안 주면 종전 그대로(헤드리스). 원장 이름도 스펙 쪽에서 `_headed`를 붙여 가른다.
 const headed = process.env.PW_HEADED === '1'
+// PW_NOVSYNC — web2-73 리뷰어 [H2]: 실제 GPU에서는 네 팔이 전부 60Hz 상한에 붙어 «장면의 몫»이 안 보인다. 프레임 상한을 풀고 잰다.
+const novsync = process.env.PW_NOVSYNC === '1'
 
 export default defineConfig({
   testDir: 'e2e',
@@ -53,7 +55,7 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${port}`,
     viewport: { width: 1200, height: 800 },
-    ...(exe ? { launchOptions: { executablePath: exe } } : {}),
+    ...(exe || novsync ? { launchOptions: { ...(exe ? { executablePath: exe } : {}), ...(novsync ? { args: ['--disable-frame-rate-limit', '--disable-gpu-vsync'] } : {}) } } : {}),
     ...(headed ? { headless: false } : {}),
   },
   projects: [
