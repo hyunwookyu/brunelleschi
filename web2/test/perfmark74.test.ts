@@ -13,7 +13,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import {
   MARK_NAMES, GAP_BUCKETS, markStart, markEnd, mark, attribute, noteGap,
   recentStalls, stallStats, markCounts, openMarks, resetPerfMarks, setStallMs, stallThresholdMs,
-  gapLadder, stallLine, lastEndedBefore,
+  gapLadder, stallLine, lastEndedBefore, markAwait, attributeFull,
 } from '../src/core/perfmark'
 
 /** performance.now()를 쓰는 모듈이라 «시간이 흐르게» 조금 태운다(고정 대기 ⛔ — 바쁜 루프) */
@@ -134,6 +134,29 @@ describe('web2-74 perfmark — 표식과 멈춤', () => {
     expect(openMarks()).toEqual(['doc.build'])
     markEnd('doc.build')
     expect(openMarks()).toEqual([])
+  })
+
+  it('⛳ 동기 구간이 비동기 구간을 이긴다 — 기다린 시간이 막은 시간의 이름을 훔치지 않는다', async () => {
+    // `markAwait`는 **기다리는 동안 남이 일한 시간까지** 덮는다. 겹침만으로 고르면 그것이 이긴다 —
+    // 74가 실제로 그렇게 틀린 이름을 냈다(열 때의 501ms를 list.read로 적었는데 굽기가 막고 있었다).
+    const p = markAwait('list.read', () => new Promise<void>(res => setTimeout(res, 60)))
+    burn(10)
+    mark('bake.commit', () => burn(12))    // 그 «안»에서 실제로 메인을 막은 것
+    await p
+    const now = performance.now()
+    const full = attributeFull(now - 1000, now)
+    expect(full.name, '막은 쪽(동기)이 이름을 가진다').toBe('bake.commit')
+    expect(full.sync).toBe(true)
+    expect(full.asyncOnly).toBe(false)
+  })
+
+  it('반증 짝 — 동기 구간이 하나도 안 겹치면 그때만 비동기 이름이 나오고 `~`가 붙는다', async () => {
+    setStallMs(1)
+    await markAwait('save.put', () => new Promise<void>(res => setTimeout(res, 40)))
+    const s = noteGap(performance.now(), 30)!
+    expect(s.mark).toBe('save.put')
+    expect(s.asyncOnly, '그 ms는 «막힌 시간»이 아니라 «기다린 시간»이다').toBe(true)
+    expect(stallLine(s)).toContain('~save.put')
   })
 
   it('reset은 표식·목록·사다리를 한꺼번에 비운다(팔이 «몸짓»만 재는 경계 #89)', () => {

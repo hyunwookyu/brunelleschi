@@ -100,7 +100,7 @@ test('74-arms.png — 세 팔의 막대(원장 인용)', async ({ page }) => {
   const idx200 = (A[names[0]!].gap_thresholds as number[]).indexOf(200)
   const idx400 = (A[names[0]!].gap_thresholds as number[]).indexOf(400)
   const groups: BarGroup[] = [
-    { label: '멈춤 ≥ 200ms · 세 실행의 합 (⚠ 팔을 못 가른다)', unit: '회',
+    { label: '멈춤 ≥ 200ms · 세 실행의 합 (⚠ 팔을 못 가른다 — 이 자로는 「가설 반증」이다)', unit: '회',
       bars: names.map((n, i) => ({ name: n, v: sum(A[n].stall_n as number[]), color: C[i]! })) },
     { label: '같은 자료 · 문턱 ≥ 400ms (아홉 실행 전부 0 = 잡음 바닥이 200~244ms)', unit: '회',
       bars: names.map((n, i) => ({ name: n, v: sum((A[n].gap_n as number[][]).map(r => r[idx400]!)), color: C[i]! })) },
@@ -119,9 +119,18 @@ test('74-arms.png — 세 팔의 막대(원장 인용)', async ({ page }) => {
       { name: '수리 전', v: B.save_chain_ms_mean.pre, color: '#c25b4a' },
       { name: '지금', v: B.save_chain_ms_mean.post, color: '#3f7d5a' }] })
   }
+  // ⛳ **경쟁자를 같은 그림에 올린다**(리뷰어 [2]) — 세 팔의 창에는 굽기가 아예 안 든다(bake.commit 0회).
+  const N = L!.S1_natural as any
+  if (N?.bake_vs_save) {
+    groups.push({ label: '⚠ 같은 몸짓을 «굽기가 도는 창»에서 재면 (§1 자연 판 — 세 팔의 창에는 굽기가 0회다)', unit: 'ms', bars: [
+      { name: 'bake.commit', v: N.bake_vs_save.bake_commit_ms, color: '#5b7fa5' },
+      { name: '저장 갈래 전부', v: N.bake_vs_save.save_chain_ms, color: '#c25b4a' },
+      { name: '저장의 최대 단일 호출', v: N.bake_vs_save.save_max_single_call_ms, color: '#8a8378' },
+      { name: '멈춤 문턱', v: 200, color: '#3f7d5a' }] })
+  }
   const buf = await barChart(page,
-    'web2-74 §2 — 세 팔(그냥 / ?nothumb=1 / ?nosave=1 · 같은 문서 · 같은 몸짓 · 세 번씩 · dpr2 · 면 23 · 칠 920)',
-    `원장 perf74_web2_dpr2.json@S2_arms·S2_verdict·S3_before_after — ⚠ 「멈춤 ≥ 문턱」은 이 기계에서 팔을 못 가른다(팔 안 변동 ${V.within_arm_spread_max} ↔ 팔 사이 ${V.between_arm_spread} · ≥400ms는 전부 0). 지목은 표식의 호출 수와 ms가 했다: 썸네일이 저장 갈래의 71.1%.`,
+    'web2-74 §2 — 세 팔(그냥(수리 전 거동) / ?nothumb=1 / ?nosave=1 · 같은 문서 · 같은 몸짓 · 세 번씩 · dpr2 · 면 23 · 칠 920)',
+    `원장 perf74_web2_dpr2.json@S2_arms·S2_verdict·S1_natural·S3_before_after — ⚠ 「멈춤 ≥ 문턱」은 이 기계에서 팔을 못 가른다(팔 안 변동 ${V.within_arm_spread_max} ↔ 팔 사이 ${V.between_arm_spread} · ≥400ms는 전부 0) → 지시 규칙의 갈래는 **가설 반증**이다. 저장 갈래 안쪽만 갈렸다(썸네일 70.4%). 목록이 가리키는 다음 표식은 bake.commit이다.`,
     groups)
   saveBuf('74-arms.png', buf)
 })

@@ -16,11 +16,13 @@
 // ⚠ 탭이 숨으면 rAF가 안 돈다 — 그 구간은 «멈춤»이 아니고 여기에도 안 잡힌다(값의 범위).
 // ⚠ 표식은 **계측만**이다. 두르는 것이 하는 일을 한 자도 안 바꾼다.
 
-export interface Span { name: string; t0: number; t1: number; depth: number }
+export interface Span { name: string; t0: number; t1: number; depth: number; sync: boolean }
 export interface Stall {
   /** 앱이 뜬 뒤 몇 ms에 났나(performance.now 기준 · 목록에는 초로 적는다) */ t: number
   /** 몇 ms 동안 화면이 안 그려졌나 */ ms: number
-  /** 그 동안 열려 있던 표식(겹치면 가장 안쪽 · 없으면 `?`) */ mark: string
+  /** 그 동안 열려 있던 표식(동기 구간 우선 · 겹치면 가장 안쪽 · 없으면 `?`) */ mark: string
+  /** 이름이 **비동기 구간**에서만 나왔나 — 그 ms는 «메인이 막힌 시간»이 아니라 «기다린 시간»이다 */
+  asyncOnly?: boolean
   /** 겹친 것이 없을 때(`?`) — **직전에 끝난 표식**과 그 뒤로 흐른 ms.
    *  지시문의 문면이 「직전에 무엇이 돌았나」다: 멈춤이 JS 밖(합성·GPU 되읽기·저장소 커밋)에
    *  있으면 어떤 표식도 «열려» 있지 않다. 그때 자가 `?`만 내면 아무 데도 못 가리킨다 —
@@ -43,7 +45,7 @@ export type MarkName = (typeof MARK_NAMES)[number]
 const SPAN_RING = 128
 const STALL_RING = 32
 
-const open: { name: string; t0: number }[] = []
+const open: { name: string; t0: number; sync: boolean }[] = []
 const done: Span[] = []
 const stalls: Stall[] = []
 const counts: Record<string, { n: number; ms: number; maxMs: number }> = {}
@@ -65,7 +67,8 @@ let stallMs = 200   // 기본은 C.PERF_STALL_MS가 넣는다(installPerfMark) �
 export function setStallMs(ms: number): void { stallMs = ms }
 export function stallThresholdMs(): number { return stallMs }
 
-export function markStart(name: string): void { open.push({ name, t0: performance.now() }) }
+/** `sync=false`면 **기다리는 시간이 섞인 구간**이다(await를 덮는다) — 귀속에서 뒤로 밀린다(아래) */
+export function markStart(name: string, sync = true): void { open.push({ name, t0: performance.now(), sync }) }
 
 export function markEnd(name: string): void {
   // 가장 안쪽의 **같은 이름**을 닫는다(짝이 안 맞아도 스택이 새지 않게 — 계측이 앱을 망치면 안 된다)
@@ -74,7 +77,7 @@ export function markEnd(name: string): void {
     const s = open[i]!
     open.splice(i, 1)
     const t1 = performance.now()
-    done.push({ name, t0: s.t0, t1, depth: i })
+    done.push({ name, t0: s.t0, t1, depth: i, sync: s.sync })
     if (done.length > SPAN_RING) done.shift()
     const c = counts[name] ?? (counts[name] = { n: 0, ms: 0, maxMs: 0 })
     const d = t1 - s.t0
@@ -92,25 +95,47 @@ export function mark<T>(name: string, fn: () => T): T {
 /** 비동기 구간(IndexedDB 쓰기 등) — «도는 동안»을 덮는다. 그 안에 논 시간이 섞이므로
  *  귀속에서는 겹침이 더 큰 동기 구간이 있으면 그쪽이 이긴다(아래 attribute). */
 export async function markAwait<T>(name: string, fn: () => Promise<T>): Promise<T> {
-  markStart(name)
+  markStart(name, false)
   try { return await fn() } finally { markEnd(name) }
 }
 
-/** [t0, t1] 구간에 걸친 표식 중 **겹침이 가장 큰 것**, 같으면 **가장 안쪽 것**. 없으면 `?`. */
+/** [t0, t1] 구간에 걸친 표식 중 이름을 고른다.
+ *
+ *  ⚠⚠ **동기 구간이 비동기 구간을 이긴다**(2026-09-07 리뷰어 [4]가 잡은 자리). 비동기 구간
+ *  (`markAwait` — IndexedDB 왕복 등)은 **기다리는 동안 남이 일한 시간까지 덮는다.** 그래서
+ *  겹침만으로 고르면 «0.5초 기다린 저장소 읽기»가 «그 동안 실제로 메인을 막은 굽기»의 이름을
+ *  훔친다 — 74가 실제로 그렇게 한 번 틀린 이름을 냈다(열 때의 501ms를 `list.read`로 적었는데
+ *  같은 자리를 `bake.commit`이 막고 있었다). 멈춤은 «메인이 막힌 것»이므로 **동기 구간이 정본**이다.
+ *
+ *  차례: ① 겹치는 **동기** 구간 중 겹침이 가장 큰 것 → 같으면 가장 안쪽 것
+ *        ② 동기 구간이 하나도 안 겹치면 그때만 비동기 구간(그 사실을 `asyncOnly`가 든다)
+ *        ③ 아무것도 없으면 `?` */
 export function attribute(t0: number, t1: number): string {
-  let bestName = '?'
-  let bestOv = 0
-  let bestDepth = -1
-  const consider = (name: string, a: number, b: number, depth: number): void => {
-    const ov = Math.min(b, t1) - Math.max(a, t0)
-    if (ov <= 0) return
-    if (ov > bestOv + 1e-9 || (Math.abs(ov - bestOv) <= 1e-9 && depth > bestDepth)) {
-      bestName = name; bestOv = ov; bestDepth = depth
+  return attributeFull(t0, t1).name
+}
+
+export function attributeFull(t0: number, t1: number): { name: string; sync: boolean; asyncOnly: boolean } {
+  const pick = (wantSync: boolean): { name: string; ov: number } | null => {
+    let bestName = ''
+    let bestOv = 0
+    let bestDepth = -1
+    const consider = (name: string, a: number, b: number, depth: number, sync: boolean): void => {
+      if (sync !== wantSync) return
+      const ov = Math.min(b, t1) - Math.max(a, t0)
+      if (ov <= 0) return
+      if (ov > bestOv + 1e-9 || (Math.abs(ov - bestOv) <= 1e-9 && depth > bestDepth)) {
+        bestName = name; bestOv = ov; bestDepth = depth
+      }
     }
+    for (const s of done) consider(s.name, s.t0, s.t1, s.depth, s.sync)
+    for (let i = 0; i < open.length; i++) consider(open[i]!.name, open[i]!.t0, t1, i, open[i]!.sync)
+    return bestName ? { name: bestName, ov: bestOv } : null
   }
-  for (const s of done) consider(s.name, s.t0, s.t1, s.depth)
-  for (let i = 0; i < open.length; i++) consider(open[i]!.name, open[i]!.t0, t1, i)
-  return bestName
+  const s = pick(true)
+  if (s) return { name: s.name, sync: true, asyncOnly: false }
+  const a = pick(false)
+  if (a) return { name: a.name, sync: false, asyncOnly: true }
+  return { name: '?', sync: false, asyncOnly: false }
 }
 
 /** 프레임 하나가 시작할 때 부른다 — 직전 프레임이 끝난 뒤 `gapMs`가 흘렀다.
@@ -129,7 +154,9 @@ export function noteGap(nowMs: number, gapMs: number): Stall | null {
   for (let i = 0; i < GAP_BUCKETS.length; i++) if (gapMs >= GAP_BUCKETS[i]!) { buckets.n[i]!++; buckets.sum[i]! += gapMs }
   if (!(gapMs >= stallMs)) return null
   const t0 = nowMs - gapMs
-  const s: Stall = { t: nowMs, ms: gapMs, mark: attribute(t0, nowMs) }
+  const a = attributeFull(t0, nowMs)
+  const s: Stall = { t: nowMs, ms: gapMs, mark: a.name }
+  if (a.asyncOnly) s.asyncOnly = true
   if (s.mark === '?') {
     const p = lastEndedBefore(t0)
     if (p) { s.prev = p.name; s.prevAgoMs = Math.round(p.agoMs * 10) / 10 }
@@ -161,4 +188,4 @@ export function resetPerfMarks(): void {
 /** 목록 한 줄의 문면 — 화면과 원장이 **같은 함수**를 쓴다(#54). `t=12.4s · 1,850ms · save.serialize` */
 export const stallLine = (s: Stall): string =>
   `t=${(s.t / 1000).toFixed(1)}s · ${Math.round(s.ms).toLocaleString('en-US')}ms · `
-  + (s.mark === '?' && s.prev ? `?→${s.prev}` : s.mark)
+  + (s.mark === '?' && s.prev ? `?→${s.prev}` : s.asyncOnly ? `~${s.mark}` : s.mark)

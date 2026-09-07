@@ -68,21 +68,26 @@ test('§0 계측 판 — 옛 자(p95)와 새 자(최장 간격)를 같은 눈금
   //   「fps 1」 자리가 안 만들어진다 — 그러면 옛 자의 결함(§0 ①)을 재현 못 한다. 실기기의
   //   그 구간도 초 단위였다(멈춤 ① fps 1 · 4연속 ≥ 2초).
   await page.evaluate(() => (window as any).__b2.diag.resetPerfMarksForTest())
-  await page.evaluate(() => (window as any).__b2.diag.blockMainForTest(1500))
-  await page.waitForTimeout(900)
+  // ⚠ **동작점 셋이다**(#12 — 초판은 1,500 하나였고 그때 fps 1 자리가 한 점뿐이었다 · 리뷰어 [5]).
+  //   1초 창보다 «짧은» 1,200과 «긴» 1,500·2,200을 넣어 fps 1 자리를 여럿 만든다.
+  for (const ms of [1200, 1500, 2200]) {
+    await page.evaluate((m) => (window as any).__b2.diag.blockMainForTest(m), ms)
+    await page.waitForTimeout(900)
+  }
   const after = await page.evaluate(() => ({
     stalls: (window as any).__b2.diag.perfStalls(),
     text: (window as any).__b2.diag.perfHudForTest().text as string | null,
     ticks: (window as any).__b2.diag.perfTicksForTest() as number[],
   }))
   expect(after.stalls.n, '인위로 넣은 800ms 멈춤이 목록에 뜬다').toBeGreaterThanOrEqual(1)
-  const injected = after.stalls.recent.find((s: any) => s.ms >= 1200)
+  expect(after.stalls.n, '넣은 셋이 다 목록에').toBeGreaterThanOrEqual(3)
+  const injected = after.stalls.recent.find((s: any) => s.ms >= 1400 && s.ms < 1900)
   expect(injected, '1,500ms 급 줄이 있다').toBeTruthy()
   expect((injected as any).mark, '표식 밖이라 ?로 적힌다').toBe('?')
   const tAfter = (injected as any).t as number
   const rulers = await page.evaluate((t) => (window as any).__b2.diag.perfRulersForTest(t), tAfter)
   OUT.S0_rulers = {
-    injected_block_ms: 1500,
+    injected_block_ms: [1200, 1500, 2200],
     at: rulers.at, fps_in_window: rulers.fps, ticks_in_window: rulers.ticksInWindow,
     old_p95_ms: rulers.old_p95, new_maxGap_ms: rulers.new_maxGapMs,
     stall_line: injected, hud_text: after.text, ticks_total: after.ticks.length,
@@ -100,7 +105,8 @@ test('§0 계측 판 — 옛 자(p95)와 새 자(최장 간격)를 같은 눈금
     return { n_points: rows.length, rows: rows.slice(0, 12) }
   })
   OUT.S0_sweep_fps1 = { ...sweep, verdict: '옛 자는 이 자리에서 0을 낸다(§0 ①의 결함) · 새 자는 0이 아니다' }
-  expect(sweep.n_points, '창 안 눈금이 하나뿐인 자리가 실제로 있다(fps 1 구간)').toBeGreaterThanOrEqual(1)
+  // 동작점 «둘 이상»이어야 한 점 주장이 아니다(#12 · 리뷰어 [5])
+  expect(sweep.n_points, 'fps 1 자리가 둘 이상이다 — 한 점으로 주장하지 않는다').toBeGreaterThanOrEqual(2)
   for (const r of sweep.rows) {
     expect(r.old_p95, '옛 자는 거기서 0이다(반증)').toBe(0)
     expect(r.new_maxGap, '새 자는 0이 아니다').toBeGreaterThan(0)
@@ -191,6 +197,20 @@ test('§1 표식 — 일곱이 이름을 붙인다 · 표식 밖은 ?', async ({
     ran_n: [...ran].filter(n => (MARKS as readonly string[]).includes(n)).length,
     ran_n_all: [...ran].filter(n => (MARKS_ALL as readonly string[]).includes(n)).length,
     named_in_list: [...new Set([...natural.stalls.recent, ...onOpen.stalls.recent].map((s: any) => s.mark))].sort(),
+    // ⛳ **같은 자(ms 합)를 같은 몸짓에 대면 무엇이 큰가** — 리뷰어 [2]의 물음에 값으로 답한다
+    bake_vs_save: (() => {
+      const g = natural.marks as Record<string, { n: number; ms: number; maxMs: number }>
+      const chain = ['save.serialize', 'save.put', 'save.thumb', 'list.read', 'list.render']
+        .reduce((t, k) => t + (g[k]?.ms ?? 0), 0)
+      const bake = g['bake.commit']?.ms ?? 0
+      return {
+        bake_commit_ms: Math.round(bake * 10) / 10, bake_commit_n: g['bake.commit']?.n ?? 0, bake_commit_maxMs: Math.round((g['bake.commit']?.maxMs ?? 0) * 10) / 10,
+        save_chain_ms: Math.round(chain * 10) / 10,
+        save_max_single_call_ms: Math.round(Math.max(g['save.serialize']?.maxMs ?? 0, g['save.put']?.maxMs ?? 0, g['save.thumb']?.maxMs ?? 0) * 10) / 10,
+        ratio_bake_over_save: Math.round(bake / Math.max(1e-9, chain) * 100) / 100,
+        note: '굽기가 도는 창에서는 bake.commit이 저장 갈래를 자릿수로 넘고, 저장의 최대 «단일 호출»은 멈춤 문턱을 못 넘는다 — 「몇 초씩 멎는다」의 크기가 아니다',
+      }
+    })(),
     note: '「목록에 이름으로 나타난 것」은 그 표식이 문턱을 넘은 판에서만 난다 — tex.upload는 bake.commit 안에 겹쳐 있어 자연 판에서 겹침이 더 큰 바깥 이름이 이긴다. 그래서 §1의 게이트는 «구동 판 7/7 + 표식 밖 ?»이고, 자연 판은 값이다(NOTES 자백)',
   }
   expect([...ran].filter(n => (MARKS as readonly string[]).includes(n)).length, '일곱 중 실제로 돈 표식 수(값)').toBeGreaterThanOrEqual(5)
@@ -246,6 +266,14 @@ test('§2 세 팔 — 그냥 / ?nothumb=1 / ?nosave=1 (세 번씩)', async ({ pa
     }
   }
   OUT.S2_arms = table
+  // ⚠⚠ **경쟁자를 표에 올린다**(리뷰어 [2]). 이 팔들의 창은 «굽기가 다 끝난 뒤»부터라(#89) 새 칠 획이
+  //   초안 인계로 확정돼 `bake.commit`이 **한 번도 안 돈다** — 즉 세 팔은 «저장 대 굽기»를 애초에 못 견준다.
+  //   그 사실과, 같은 몸짓을 «굽기가 도는 창»에서 잰 값(§1 자연 판)을 나란히 둔다.
+  OUT.S2_arms_bake_note = {
+    bake_commit_in_arms: Object.fromEntries(ARMS.map((a, i) => [a[0], reps.map(r => r[i]!.marks['bake.commit']?.n ?? 0)])),
+    why: '팔의 창이 settleBake 뒤부터라 새 획은 초안 인계로 확정된다(재굽기 없음). 세 팔은 «저장 갈래»의 안쪽만 가른다',
+    compare_with: '@S1_natural.gesture_marks — 같은 몸짓을 굽기가 도는 창에서 재면 bake.commit이 저장 갈래를 자릿수로 넘는다',
+  }
   for (const row of reps) for (const a of row) expect(a.strokesAdded, a.arm + ' 프로브가 움직였다(#103)').toBeGreaterThan(0)
   const col = (a: number) => reps.map(r => r[a]!)
   const plain = col(0), nothumb = col(1), nosave = col(2)
@@ -270,6 +298,16 @@ test('§2 세 팔 — 그냥 / ?nothumb=1 / ?nosave=1 (세 번씩)', async ({ pa
   const noiseFloor = Math.max(spread(plain), spread(nothumb), spread(nosave))
   const sep = Math.max(sN(plain), sN(nothumb), sN(nosave)) - Math.min(sN(plain), sN(nothumb), sN(nosave))
   const separable = sep > noiseFloor * REPS
+  const allQ = [...plain, ...nothumb, ...nosave]
+  const namedInArms = [...new Set(allQ.flatMap(x => x.stalls.recent.map(s => s.mark)))]
+  OUT.S2_stall_names = {
+    names: namedInArms,
+    all_question: namedInArms.every(n => n === '?'),
+    prev_neighbours: [...new Set(allQ.flatMap(x => x.stalls.recent.map(s => (s as { prev?: string }).prev ?? '-')))],
+    max_save_mark_ms: Math.max(...allQ.map(x => Math.max(x.marks['save.serialize']?.maxMs ?? 0, x.marks['save.put']?.maxMs ?? 0, x.marks['save.thumb']?.maxMs ?? 0))),
+    stall_threshold_ms: plain[0]!.stalls.thresholdMs,
+    note: '⚠ 표식 둘을 더한 «뒤»에도 세 팔의 멈춤은 이름을 못 얻었다 — 저장 갈래의 어느 한 호출도 문턱을 안 넘는다(max_save_mark_ms). 「몇 초씩 멎는다」의 크기가 아니다',
+  }
   OUT.S2_verdict = {
     stall_n_by_arm: { plain: plain.map(x => x.stalls.n), nothumb: nothumb.map(x => x.stalls.n), nosave: nosave.map(x => x.stalls.n) },
     stall_n_sum: { plain: sN(plain), nothumb: sN(nothumb), nosave: sN(nosave) },
@@ -278,9 +316,14 @@ test('§2 세 팔 — 그냥 / ?nothumb=1 / ?nosave=1 (세 번씩)', async ({ pa
     thumb_ms_per_gesture_mean: { plain: thumbMs(plain), nothumb: thumbMs(nothumb), nosave: thumbMs(nosave) },
     save_calls: { plain: plain[0]!.marks['save.serialize']?.n ?? 0, nothumb: nothumb[0]!.marks['save.serialize']?.n ?? 0, nosave: 0 },
     rule: '멈춤이 nosave에서 사라진다 → 저장이 임자 / 썸네일만 꺼도 대부분 사라진다 → toDataURL이 임자 / 셋 다 비슷하다 → 가설 반증',
-    verdict: separable
+    // ⛳ **지시문 규칙의 갈래를 «멈춤»으로 먼저 판정한다**(리뷰어 [1] — 규칙의 대상이 멈춤이다).
+    verdict_by_instruction_rule: separable
       ? (sN(nosave) < sN(plain) ? (sN(nothumb) <= sN(nosave) + noiseFloor ? '썸네일(toDataURL)이 임자' : '저장이 임자') : '가설 반증')
-      : '이 기계에서는 「멈춤 ≥ 문턱」이 팔을 못 가른다 — 팔 안의 실행 사이 변동이 팔 사이의 차보다 크다. 지목은 기계에 안 흔들리는 자(표식의 호출 수와 ms 합)가 한다(CLOSING)',
+      : '**가설 반증** — 셋이 비슷하다(멈춤으로는 못 가른다). 지시 §2의 셋째 갈래: 「목록이 가리키는 다음 표식으로 옮긴다」',
+    // 그 «다음 표식»이 무엇인지는 목록이 값으로 말한다 — §1 자연 판과 §4 열기의 이름
+    next_mark_from_list: 'bake.commit(§1 자연 판·§4 열기의 멈춤 이름) — 저장 갈래의 어느 호출도 문턱을 안 넘는다',
+    // 그와 «별개로» 저장 갈래 안쪽은 갈렸다(같은 실행의 짝 · 기계에 안 흔들리는 자)
+    verdict_inside_save_branch: '저장 갈래 안에서는 썸네일(toDataURL)이 ' + Math.round(thumbMs(plain) / Math.max(1e-9, saveMs(plain)) * 1000) / 10 + '%다 — 그 갈래를 줄이는 자리는 §3-3이다. ⚠ 이것은 «멎음의 임자»가 아니라 «저장 한 번의 값»이다',
   }
 })
 
