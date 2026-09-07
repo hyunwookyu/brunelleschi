@@ -17,6 +17,8 @@ import { ICON_X } from '../ui/icons'
 import type { App } from './state'
 import type { BrnlData } from '../core/file'
 import { C } from '../core/constants'
+// web2-74 §1 — 구간 표식(계측만 · core/perfmark.ts 머리주석이 정본)
+import { mark as perfMark, markAwait } from '../core/perfmark'
 import {
   listDocs, getDoc, putDoc, putThumb, allThumbs, deleteDoc, renameDoc,
   migrateFromLocal, newDocId, defaultDocName, type DocMeta,
@@ -57,6 +59,11 @@ export interface FilePanel {
   adoptOpened: (name: string) => void
   /** 한 문서 눈금 손잡이(e2e) */
   limitForTest: (n: number | null) => void
+  /** §3-3 반증 스위치 — 켜면 «저장마다 썸네일»(수리 전 거동) */
+  setLegacyThumbForTest: (v: boolean) => void
+  /** §3-3 — 예약을 기다리지 않고 지금 굽는다(팔) */
+  bakeThumbForTest: () => Promise<void>
+  thumbStateForTest: () => { dirty: boolean; lastAt: number; pending: boolean; legacy: boolean; gapMs: number }
 }
 
 /** 마지막 수정을 짧게 — R4(이름이거나 짧은 동사구). 오늘 것은 시각만, 옛것은 날짜. */
@@ -76,6 +83,18 @@ export function whenText(now: number, t: number): string {
  *  「새로 시작」을 누르고 새로고침했을 때 **방금 떠난 그림이 도로 열리고**(팔이 그것을
  *  잡았다 — 획 9개가 돌아왔다), 옛 문서를 열어 두고 새로고침해도 최신 것이 열린다.
  *  값은 열쇠 하나(수십 바이트)라 §0의 상한 논거와 무관하다. */
+/** ── web2-74 §2 — **반증 손잡이 둘**(개발용 URL 매개 · `?dev=1` 밖 · 69 전수 표에 두 행).
+ *
+ *  가설: 획이 끝날 때마다 400ms 뒤 `saveNow()`가 ① 문서 전량을 `JSON.stringify` ② IndexedDB에 쓰고
+ *  ③ `toDataURL`로 썸네일을 굽고 ④ 또 쓴다 — 넷 다 메인 스레드 동기다. 그래서 「긋는 동안은
+ *  100fps, 손을 뗀 뒤 멎는다」. **끄고 같은 짓을 해서 멈춤이 사라지는지 본다.**
+ *
+ *  ⚠ `?nosave=1`은 **문서를 메모리에만** 둔다 — 실수로 그림을 잃지 않게 화면 구석에 「저장 꺼짐」을
+ *    띄운다(표시다 · 눌리지 않는다). 두 손잡이 다 **기본은 꺼져 있고** 깃발이 없으면 DOM에도 없다. */
+const NOSAVE = new URLSearchParams(location.search).has('nosave')
+const NOTHUMB = new URLSearchParams(location.search).has('nothumb')
+export const saveFlagsForTest = (): { nosave: boolean; nothumb: boolean } => ({ nosave: NOSAVE, nothumb: NOTHUMB })
+
 const PTR_KEY = 'b2-doc'
 const readPtr = (): string | null => { try { return localStorage.getItem(PTR_KEY) } catch { return null } }
 const writePtr = (id: string): void => { try { localStorage.setItem(PTR_KEY, id) } catch { /* 세션 한정 */ } }
@@ -92,6 +111,19 @@ export function initFilePanel(deps: FileDeps): FilePanel {
 
   // ⚠ **표를 먼저 읽는다** — 아래에서 새 문서를 만들며 표를 덮으면 `boot`이 «방금 만든
   //   빈 문서»를 가리키는 표를 읽게 되고, 저장돼 있던 그림이 영영 안 열린다(팔이 잡았다).
+  // §2 — 「저장 꺼짐」 표식. **실수로 남지 않게** 화면 구석에 늘 떠 있다(pointer-events:none ·
+  //   깃발이 없으면 DOM에 없다 — 69 전수 표의 그 규약 그대로).
+  if (NOSAVE) {
+    const off = document.createElement('div')
+    off.id = 'nosave-flag'
+    off.setAttribute('aria-hidden', 'true')
+    off.textContent = '저장 꺼짐'
+    off.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:9999;pointer-events:none;'
+      + 'font:700 16px/1.2 system-ui,sans-serif;color:var(--ink);background:var(--panel);'
+      + 'border:1px solid var(--line);padding:6px 10px;border-radius:8px'
+    document.body.appendChild(off)
+  }
+
   const bootPtr = readPtr()
   let cur: DocMeta = { id: newDocId(now()), name: defaultDocName(now()), created: now(), updated: now(), bytes: 0 }
   let timer: number | undefined
@@ -103,6 +135,53 @@ export function initFilePanel(deps: FileDeps): FilePanel {
   const limit = () => limitOverride ?? C.AUTOSAVE_LIMIT_BYTES
   /** 지금 도는 저장 — `flush`가 이것을 기다린다(#95: 기다리는 쪽과 일하는 쪽을 잇는다) */
   let inflight: Promise<void> = Promise.resolve()
+  // ── web2-74 §3-3 — 썸네일의 «때» ────────────────────────────────────────────
+  let thumbDirty = false          // 저장은 됐는데 그림이 그 뒤로 안 구워졌다
+  // 마지막으로 구운 시각. ⚠ **0으로 두면 안 된다**: `now()`가 Date.now()라 `now() - 0`이 늘
+  //   간격을 넘어서 «첫 저장에서 바로 굽는» 꼴이 된다(첫 판이 그랬다 — 몸짓 열 붓에 호출 2).
+  //   앱이 뜬 때를 시작으로 놓으면 규칙이 한 가지다: **굽고 나서 이 간격이 지나야 다시 굽는다.**
+  let lastThumbAt = now()
+  let thumbTimer: number | undefined
+  let thumbIdle: number | undefined
+  /** 반증 스위치(D-3) — 켜면 **수리 전 거동**(저장마다 동기로 굽는다). 게이트가 같은 실행 안에서
+   *  «수리 전 빨강»을 낸다(CLOSING 「게이트의 조건」): 저장 한 번에 toDataURL 호출 1 ↔ 0. */
+  let legacyThumb = false
+
+  const idleCall = (fn: () => void): number => {
+    const w = window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }
+    return w.requestIdleCallback ? w.requestIdleCallback(fn, { timeout: 2000 }) : window.setTimeout(fn, 0)
+  }
+
+  /** 지금 굽는다 — 세 자리(닫을 때 · 열기 전 · 쉴 때)가 이 하나를 부른다(#54) */
+  async function bakeThumbNow(): Promise<void> {
+    if (!thumbDirty || NOTHUMB) return
+    if (app.doc.strokes.length === 0) { thumbDirty = false; return }
+    thumbDirty = false
+    lastThumbAt = now()
+    const id = cur.id
+    try {
+      await markAwait('save.thumb', async () => {
+        const th = thumb()
+        // ⚠ **그림이 아닌 것은 안 넣는다** — 안 그려진 창의 `toDataURL`은 `"data:,"`를 낸다
+        //   (web2-43 실측). 넣으면 목록에 깨진 그림이 뜨고 그것이 「저장이 안 됐다」로 읽힌다.
+        if (th.startsWith('data:image/')) await putThumb(id, th)
+      })
+      sync()
+    } catch { /* 그림만 없다 — 문서는 이미 저장됐다 */ }
+  }
+
+  /** 쉴 때 굽는 예약 — 마지막 굽기에서 `C.THUMB_IDLE_GAP_MS`가 지났을 때만, 그리고 그때도
+   *  **화면이 쉬는 프레임**에서(requestIdleCallback). 없는 브라우저는 setTimeout이 그 자리다. */
+  function scheduleThumb(): void {
+    if (NOTHUMB || !thumbDirty) return
+    if (legacyThumb) { void bakeThumbNow(); return }   // 반증 — 수리 전 거동
+    if (thumbTimer !== undefined) return
+    const due = Math.max(0, C.THUMB_IDLE_GAP_MS - (now() - lastThumbAt))
+    thumbTimer = window.setTimeout(() => {
+      thumbTimer = undefined
+      thumbIdle = idleCall(() => { thumbIdle = undefined; void bakeThumbNow() })
+    }, due)
+  }
 
   const setName = (n: string) => { cur = { ...cur, name: n }; nameInput.value = n }
 
@@ -118,7 +197,9 @@ export function initFilePanel(deps: FileDeps): FilePanel {
       sync()
       return
     }
-    const data = serialize()
+    // web2-74 §1 표식 `save.serialize` — **문서 전량을 `JSON.stringify`** 하는 자리다.
+    //   칠이 많은 문서는 수 MB이고 그 동안 메인 스레드가 통째로 막힌다(§2의 첫 후보).
+    const data = perfMark('save.serialize', serialize)
     last = { bytes: data.length, pct: data.length / limit() }
     if (last.pct >= C.AUTOSAVE_WARN_RATIO && !warned) {
       warned = true
@@ -128,14 +209,18 @@ export function initFilePanel(deps: FileDeps): FilePanel {
     }
     const rec = { ...cur, updated: now(), bytes: data.length, data }
     try {
-      await putDoc(rec)
+      await markAwait('save.put', () => putDoc(rec))   // web2-74 §1 표식 `save.put` — IndexedDB 쓰기
       // 썸네일은 **따로** 산다(지시 4번) — 실패해도 문서는 이미 저장됐다.
       // ⚠ **그림이 아닌 것은 안 넣는다** — 안 그려진 창의 `toDataURL`은 `"data:,"`를 낸다
       // (web2-43 실측). 넣으면 목록에 깨진 그림이 뜨고 그것이 「저장이 안 됐다」로 읽힌다.
-      try {
-        const th = thumb()
-        if (th.startsWith('data:image/')) await putThumb(cur.id, th)
-      } catch { /* 그림만 없다 */ }
+      // ── web2-74 §3-3 — **썸네일을 저장마다 굽지 않는다** ─────────────────────────
+      //   `toDataURL('image/jpeg')`는 동기 인코딩이고 §2가 그것을 임자로 지목했다: 저장 갈래
+      //   691.8ms 중 **492.1ms(71.1%)**(perf74_web2_dpr2@S2_verdict · 부하 픽스처 · 획 10붓).
+      //   여기서는 «굽어야 한다»는 표시만 남기고, 실제로 굽는 자리는 셋이다 —
+      //   문서를 닫을 때(detach) · 다른 문서를 열기 전(flush) · 화면이 쉴 때(아래 scheduleThumb).
+      //   그림이 아직 없으면 목록은 **종전대로 «그림 없음»**이다(43의 그 자리 — 새 문서와 같다).
+      thumbDirty = true
+      scheduleThumb()
       cur = { id: rec.id, name: rec.name, created: rec.created, updated: rec.updated, bytes: rec.bytes }
       writePtr(cur.id)      // 저장된 순간부터 «보던 문서»다(첫 회 문서의 표가 여기서 선다)
       savedVersion = version
@@ -148,14 +233,20 @@ export function initFilePanel(deps: FileDeps): FilePanel {
   }
 
   function schedule(): void {
+    if (NOSAVE) return                    // §2 — 자동 저장을 끈 팔(문서는 메모리에만)
     clearTimeout(timer)
     timer = window.setTimeout(() => { inflight = inflight.then(saveNow) }, C.AUTOSAVE_DEBOUNCE_MS)
   }
 
   async function flush(): Promise<void> {
+    if (NOSAVE) return
     clearTimeout(timer)
     inflight = inflight.then(saveNow)
     await inflight
+    // §3-3 — **여기서는 기다린다**: 다른 문서를 열기 전·문서를 닫을 때가 그림이 서야 하는 자리다
+    //   (목록은 그 뒤에 그려진다). 쉴 때 예약이 걸려 있으면 앞당긴다.
+    clearTimeout(thumbTimer); thumbTimer = undefined
+    await bakeThumbNow()
   }
 
   // ── 최근 목록 ───────────────────────────────────────────────────────────────
@@ -163,8 +254,11 @@ export function initFilePanel(deps: FileDeps): FilePanel {
   function sync(): void {
     if (syncing) return
     syncing = true
-    void Promise.all([listDocs(), allThumbs()]).then(([docs, thumbs]) => {
-      render(docs, thumbs)
+    // web2-74 §2 표식 `list.read`·`list.render` — **저장이 끝난 뒤에** 도는 갈래다.
+    //   `listDocs()`는 `getAll()`이라 문서 «본문»까지 읽어 오고(구조화 복제), `allThumbs()`는
+    //   썸네일 전부를, `render()`는 그것을 data: URL로 `<img>`에 붙인다. 저장마다 돈다.
+    void markAwait('list.read', () => Promise.all([listDocs(), allThumbs()])).then(([docs, thumbs]) => {
+      perfMark('list.render', () => render(docs, thumbs))
     }).catch(() => { /* 저장소가 죽었으면 목록이 안 뜬다 — 알림은 저장 쪽이 한다 */ })
       .then(() => { syncing = false })
   }
@@ -266,6 +360,8 @@ export function initFilePanel(deps: FileDeps): FilePanel {
    *  스냅샷은 **지금 이 순간의 바이트**이므로 뒤에 쓰든 화면과 어긋나지 않는다. */
   function detach(): void {
     clearTimeout(timer)
+    clearTimeout(thumbTimer); thumbTimer = undefined
+    thumbDirty = false          // §3-3 — 아래에서 **그 자리의 그림**을 굽는다(예약은 필요 없다)
     if (app.doc.strokes.length > 0) {
       const data = serialize()
       let th = ''
@@ -346,8 +442,9 @@ export function initFilePanel(deps: FileDeps): FilePanel {
     const { readBrnl, reportNotice } = await import('../core/file')
     // web2-72 §0·§5 표식(D-1) — 「열 때」의 시간이 **어디로 가는가**를 경로에 심는다:
     // 읽기(파싱) · 앉히기(loadDoc → recompute: 리프팅·면). 칠 굽기는 그 뒤 프레임의 몫이다.
+    // web2-74 §1 표식 `doc.parse` — 72의 `parseMs` 자와 **같은 자리**를 두른다(#54)
     const tParse0 = performance.now()
-    const { data, report } = readBrnl(rec.data)
+    const { data, report } = perfMark('doc.parse', () => readBrnl(rec!.data))
     bootCost.parseMs = performance.now() - tParse0
     bootCost.bytes = rec.data.length
     if (data && data.doc.strokes.length > 0) {
@@ -371,6 +468,11 @@ export function initFilePanel(deps: FileDeps): FilePanel {
 
   return {
     schedule, flush, boot, sync, detach, adoptOpened,
+    /** §3-3 반증 스위치(D-3) — 켜면 저장마다 동기로 굽는다(수리 전 거동) */
+    setLegacyThumbForTest: (v: boolean) => { legacyThumb = v },
+    /** §3-3 — 지금 굽는다(팔이 «쉴 때»를 기다리지 않고 그 자리를 확인하는 통로) */
+    bakeThumbForTest: () => bakeThumbNow(),
+    thumbStateForTest: () => ({ dirty: thumbDirty, lastAt: lastThumbAt, pending: thumbTimer !== undefined || thumbIdle !== undefined, legacy: legacyThumb, gapMs: C.THUMB_IDLE_GAP_MS }),
     current: () => cur,
     last: () => last,
     limitForTest: (n) => { limitOverride = n },

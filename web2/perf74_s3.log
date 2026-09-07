@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 [dpr2] › e2e\perf74.spec.ts:281:1 › §3-3 전/후 — 같은 실행·같은 몸짓으로 수리 전 거동 ↔ 지금 (3.3m)
+
+  1 passed (3.3m)
