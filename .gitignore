@@ -19,3 +19,6 @@ web/test-results/
 web/playwright-report/
 stage0/out/_vitest_timing.json
 Claude outputs/
+
+# 다른 프로젝트에서 온 스크래치(역전된역전) — 이 저장소의 것이 아니다
+haer_mills.py

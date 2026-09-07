@@ -33,9 +33,9 @@ const OUT: Record<string, unknown> = {
   no_constants_snapshot: true,
   constants_used: { note: 'web2 라인은 constantsSnapshot 기계가 없다(lens31·paint50의 no_constants_snapshot이 정본). 멈춤 문턱은 앱 상수 C.PERF_STALL_MS이고 원장의 stall_thresholdMs가 그 값이다(D-C4)' },
   selfcheck_notes: {
-    zero_counters: '`?nosave=1` 팔의 save.* 표식이 0인 것은 **그 팔의 정의**다(자동 저장을 껐다) — 같은 실행의 그냥 팔이 0이 아닌 값을 낸다. `?nothumb=1` 팔의 save.thumb 0도 같다. 그 0이 곧 이 절의 판정력이다',
+    zero_counters: '셋이다. ① `?nosave=1` 팔의 save.* 표식이 0인 것은 **그 팔의 정의**다(자동 저장을 껐다) — 같은 실행의 그냥 팔이 0이 아닌 값을 낸다. `?nothumb=1` 팔의 save.thumb 0도 같다. 그 0이 곧 이 절의 판정력이다. ② **S2_arms.*.gap_n[·][4..6](문턱 400·800·1600ms)가 세 팔·세 실행 전부 0인 것이 이 절의 결론이다** — 시험 기계(SwiftShader 헤드리스)의 프레임 간격이 217~244ms를 한 번도 안 넘는다(집계는 돈다: 같은 사다리의 [0..3] = 30·50·100·200ms가 210~256·30~41·30·8~22를 낸다). **그래서 「멈춤 ≥ 200ms 몇 회」로 팔을 가를 수 없고**(separable false) 지목은 표식의 호출 수·ms가 했다. 임계를 걸지 않는다(CLOSING · #113). ③ S2_verdict.save_chain_ms_per_gesture_mean.nosave = 0도 같은 팔의 정의다',
     identical_pairs: '세 팔의 docStrokesBefore가 같은 것은 **구성상 같다**(같은 저장물 문자열 하나를 세 팔에 먹인다 — #16 분모). 다르면 그 실행은 「같은 문서」가 아니다',
-    single_category: '표식 귀속 구동 판(S1_driven)의 결과가 전부 «맞음»인 것은 설계 보장이 아니다 — 반증 짝(outside)이 같은 실행에서 `?`를 낸다',
+    single_category: '둘이다. ① 표식 귀속 구동 판(S1_driven)의 결과가 전부 «맞음»인 것은 설계 보장이 아니다 — 반증 짝(outside)이 같은 실행에서 `?`를 낸다. ② `*_fixture.levels`가 한 값(256×23)인 것은 픽스처의 구성이다(72·73과 같은 격자 벽 — 칸이 화면에서 비슷한 크기). 이 원장의 자는 단계가 아니라 팔 사이의 «차»다',
   },
 }
 const HEADED = process.env.PW_HEADED === '1'
@@ -156,7 +156,8 @@ test('§1 표식 — 일곱이 이름을 붙인다 · 표식 밖은 ?', async ({
   })
   expect((outside as any)?.mark, '표식 밖의 멈춤은 ?로 적힌다(반증)').toBe('?')
   OUT.S1_driven = { names_n: MARKS.length, added_n: MARKS_ADDED.length, all_n: MARKS_ALL.length, driven, outside }
-  expect(Object.values(driven).filter((d: any) => d.ok).length, '일곱 전부').toBe(PERF74_MARK_NAMES_N)
+  expect(Object.values(driven).filter((d: any) => d.ok).length, '아홉 전부(지시문의 일곱 + 74가 더한 둘)').toBe(MARKS_ALL.length)
+  expect(MARKS.length, '지시문의 일곱은 그대로다').toBe(PERF74_MARK_NAMES_N)
 
   // ── 자연 판: 부하 픽스처를 세우고 몸짓을 하면 일곱 중 무엇이 실제로 도는가(값) ──────
   const { built, text } = await buildFixtureText(page)
@@ -199,14 +200,19 @@ test('§2 세 팔 — 그냥 / ?nothumb=1 / ?nosave=1 (세 번씩)', async ({ pa
   test.setTimeout(3_600_000)
   const { built, text } = await buildFixtureText(page)
   OUT.S2_fixture = { ...built, saveBytes: text.length }
-  const ARMS: [string, string][] = [['①그냥', ''], ['②nothumb', 'nothumb=1'], ['③nosave', 'nosave=1']]
+  // ⚠⚠ ①은 **수리 전 거동**으로 돈다(반증 스위치 `setLegacyThumbForTest` — 저장마다 동기로 썸네일).
+  //   §2가 실제로 잰 것이 그 판이고(§3-3은 그 뒤에 왔다), 이렇게 두어야 **지금 트리에서 다시 돌려도
+  //   같은 값**이 난다(#47의 STALE 방지). 수리 «후»의 짝은 §3-3 전/후 절(`@S3_before_after`)이 든다.
+  //   실측으로 둘이 같은 값을 낸다: 수리 전 트리의 ① 691.8ms ↔ 스위치 판 690.7ms.
+  const ARMS: [string, string, boolean][] = [
+    ['①그냥(수리 전 거동)', '', true], ['②nothumb', 'nothumb=1', false], ['③nosave', 'nosave=1', false]]
   // ⚠ **세 번씩 돈다**(#12 동작점 하나 ⛔ · #14 시드 변동폭). 두 실행이 실제로 순위를 뒤집었다 —
   //   그 사실이 이 절의 결론을 바꿨으므로 반복이 값의 일부다.
   const REPS = 3
   const reps: ArmOut74[][] = []
   for (let r = 0; r < REPS; r++) {
     const row: ArmOut74[] = []
-    for (const [name, q] of ARMS) row.push(await runArm(page, name, q, text))
+    for (const [name, q, legacy] of ARMS) row.push(await runArm(page, name, q, text, legacy))
     reps.push(row)
   }
   const table: Record<string, unknown> = {}
@@ -214,7 +220,7 @@ test('§2 세 팔 — 그냥 / ?nothumb=1 / ?nosave=1 (세 번씩)', async ({ pa
     const name = ARMS[a]![0]
     const runs = reps.map(r => r[a]!)
     table[name] = {
-      query: ARMS[a]![1] || '(없음)', flags: runs[0]!.flags,
+      query: ARMS[a]![1] || '(없음)', legacyThumb: ARMS[a]![2], flags: runs[0]!.flags,
       moved: runs.every(x => x.strokesAdded > 0), probe_proof: 'strokesAdded',
       strokesAdded: runs.map(x => x.strokesAdded),
       docStrokesBefore: runs.map(x => x.docStrokesBefore),

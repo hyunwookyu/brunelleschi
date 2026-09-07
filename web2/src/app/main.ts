@@ -3419,7 +3419,9 @@ if (PERF_HUD) {
   // ⚠ 색은 **토큰만** 쓴다(70의 「토큰 하나」 — tokens.css 밖 16진수 0). 첫 판은 `var(--ink, <16진수>)`로
   //   폴백 색 리터럴을 넣었다가 밤 전량의 tokens70 §1이 잡았다(offenders src/app/main.ts 1). 어두운 판도 따라온다.
   perfHudEl.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;'
-    + 'font:700 22px/1.3 system-ui,sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line);'
+    // ⚠ 24px 아래로 내리지 마라 — 73이 세운 「큰 글씨」의 뜻(사람이 태블릿을 들고 읽는다)이고
+    //   gates73 g2가 그 값을 잰다. 줄이 늘었어도(멈춤 목록 다섯) 크기는 지킨다.
+    + 'font:700 24px/1.3 system-ui,sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line);'
     + 'padding:10px 20px;border-radius:12px;white-space:pre;letter-spacing:.01em;text-align:left'
   perfHudEl.textContent = 'perf —'
   document.body.appendChild(perfHudEl)
