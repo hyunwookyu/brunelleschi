@@ -36327,7 +36327,7 @@
     {
       "scan": "scan_round_waits",
       "unit": "대기 목록 줄·wait.mjs 기록",
-      "targets": 9,
+      "targets": 40,
       "hits": 0,
       "note": "⚠ 표에 안 적힌 맨손 대기는 안 보인다 — 적는 것이 규약이다"
     },

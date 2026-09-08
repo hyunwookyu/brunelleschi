@@ -1536,7 +1536,11 @@ function gatePaintTex(r: R3D, app: App) {
           e.bakeSig = bakeSig
           e.bakedHere = true
           e.draftTouched = false                       // 이 캔버스는 이제 «확정된 그림»이다
-          queueTexCacheWrite(e, texCacheKey(bakeSig, sigs, e.canvas.width, e.canvas.height))   // §3 — 쉴 때 담는다
+          // §3 — **담을 값어치가 있는 자리만 담는다**: 획 몇 개짜리 면은 굽는 데 몇 ms도 안 걸리는데
+          //   날 RGBA는 한 면이 256 KB(단계 256)다. 읽기는 그대로이고 이것은 «쓰기»의 문이다.
+          if (sigs.length >= C.TEXCACHE_MIN_STROKES) {
+            queueTexCacheWrite(e, texCacheKey(bakeSig, sigs, e.canvas.width, e.canvas.height))   // 쉴 때 담는다
+          }
         } else {
           e.pending = P                              // 다음 프레임에 이어서
           e.sigs = []
