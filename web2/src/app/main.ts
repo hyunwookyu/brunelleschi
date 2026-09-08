@@ -47,7 +47,7 @@ import { DEFAULT_CLS } from '../core/clsdef'
 import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS, WRITE_HOLD_MS_MIN, WRITE_HOLD_MS_MAX, TURN_ANIM_MS } from '../core/constants'
 // web2-74 §0·§1 — 멈춤 탐지와 구간 표식(계측만 · core/perfmark.ts 머리주석이 정본)
 import { noteGap, stallStats, stallLine, markCounts, resetPerfMarks, setStallMs, stallThresholdMs, markStart, markEnd, gapLadder, MARK_NAMES } from '../core/perfmark'
-import { texCacheStats, resetTexCacheStats, setTexCacheOff, texCacheOff, clearTexCache, dropTexCacheMem } from '../core/texcache'
+import { texCacheStats, resetTexCacheStats, setTexCacheOff, texCacheOff, clearTexCache, dropTexCacheMem, texCacheKey } from '../core/texcache'
 import { WAIT_INK, setWaitInkMode, waitInkMode, type WaitInkMode } from '../core/waitfade'
 import {
   lensAllowed, lensStops, lensF, lensK, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX,
@@ -3895,6 +3895,12 @@ const diag = {
   },
   /** 조정 전부(JSON · 실험실 「값 꺼내기」와 같은 함수 — web2-61: 엔진 조정) */
   brushTuneJson: () => tuneLab.tuneJson(),
+  // ── web2-75 §3 — 캐시 열쇠를 팔이 «앱과 같은 함수»로 만든다(#88) ──────────────────
+  /** 열쇠 하나를 그 자리에서 만든다 — 게이트가 「무엇이 열쇠를 가르나」를 잰다 */
+  texCacheKeyForTest: (bakeSig: string, sigs: string[], w: number, h: number) => texCacheKey(bakeSig, sigs, w, h),
+  /** 브러시 조정을 바꾼다(엔진의 그 손잡이 그대로) — 열쇠가 갈리는지 보는 반증 */
+  setBrushParamForTest: (tool: string, key: string, v: number) => paintRenderer()?.setParam?.(tool as never, key, v),
+  loadBrushTuneForTest: (json: string | null) => paintRenderer()?.loadTune?.(json),
   /** **임의의 포즈로 한 점을 사영한다**(web2-42) — 팔이 「원근 판과 얼마나 갈리는가」를
    *  재는 자리다. 사영의 출처는 `camera.project` 하나이고 여기서 식을 다시 안 적는다(#54). */
   projectWith(pose: CamPose, P: { x: number; y: number; z: number }) {

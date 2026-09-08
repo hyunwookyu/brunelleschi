@@ -1989,6 +1989,7 @@ export function paintTexHashForTest(): { key: string; level: number; hash: numbe
 export function corruptPaintTexForTest(): number {
   let n = 0
   for (const e of paintTexes.values()) {
+    e.draftTouched = true                          // §3 — 오염된 캔버스를 캐시에 담지 않는다(담기 예약이 남아 있을 수 있다)
     const g = e.canvas.getContext('2d')!
     g.fillStyle = C.BLACK_HEX
     g.fillRect(0, 0, Math.max(8, e.canvas.width >> 2), Math.max(8, e.canvas.height >> 2))

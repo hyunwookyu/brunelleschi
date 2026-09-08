@@ -18,6 +18,7 @@
 
 import { C } from './constants'
 import { StoreError } from './store'
+import { paintRenderer } from './paintseam'
 
 // ⚠⚠ **제 DB에 따로 산다**(web2-75 리뷰어 [6]). 첫 판은 문서 DB(`brunelleschi`)의 판을 1 → 2로 올려
 //   창고 둘을 더했는데, 그러면 **되돌릴 수 없다**: 배포를 되돌리거나 캐시에 묶인 옛 번들이 그 DB를
@@ -80,17 +81,30 @@ export const texCacheOff = (): boolean => off
 declare const __BUILD_ID__: string
 const buildId = (): string => { try { return __BUILD_ID__ } catch { return 'dev' } }
 
-/** 32비트 FNV — 굽기가 쓰는 그 꼴 그대로(값을 새로 짓지 않는다) */
-function fnv(str: string): number {
-  let h = 0x811c9dc5 | 0
-  for (let i = 0; i < str.length; i++) h = (Math.imul(h ^ str.charCodeAt(i), 0x01000193)) | 0
+/** 32비트 FNV — 굽기가 쓰는 그 꼴 그대로(값을 새로 짓지 않는다). 씨앗·소수를 갈면 **독립인 둘째 해시**다. */
+function fnv(str: string, seed = 0x811c9dc5, prime = 0x01000193): number {
+  let h = seed | 0
+  for (let i = 0; i < str.length; i++) h = (Math.imul(h ^ str.charCodeAt(i), prime)) | 0
   return h
 }
+const b36 = (n: number): string => (n >>> 0).toString(36)
 
-/** **열쇠** — 그 그림이 의존하는 것 전부(#110). 하나라도 다르면 캐시가 없다. */
-export function texCacheKey(bakeSig: string, sigs: readonly string[], w: number, h: number): string {
-  return `${buildId()}|${w}x${h}|${(fnv(bakeSig) >>> 0).toString(36)}|${(fnv(sigs.join('')) >>> 0).toString(36)}|${sigs.length}`
+/** 엔진의 «사람 조정»(슬롯별 크기·불투명·간격·산포·스머지·팁) — 갈리면 **같은 획도 다른 픽셀**이다.
+ *  ⚠⚠ 그런데 그것은 획 서명에도 굽기 열쇠에도 **안 들어 있다**(65의 `sigOfPaintStroke` · 72의 `bakeSig` 둘 다).
+ *  세션 «안»에서는 조정이 문서를 다시 굽게 하지만 **캐시는 세션을 넘는다** — 조정을 바꾸고 다시 열면
+ *  열쇠가 같아 옛 그림이 올라온다. 그래서 열쇠에 넣는다(#110 그대로: 그 파생이 «의존하는 것 전부»). */
+function tuneSig(): string {
+  try { return paintRenderer()?.tuneJson?.() ?? '' } catch { return '' }
 }
+
+/** **열쇠** — 그 그림이 의존하는 것 전부(#110). 하나라도 다르면 캐시가 없다.
+ *  해시를 **둘** 쓴다(다른 씨앗·다른 소수): 32비트 하나면 40억에 한 번은 다른 그림이 같은 열쇠를 받고,
+ *  그 한 번이 «조용히 틀린 그림»이다 — 값을 하나 더 붙여 그 확률을 2^64 대역으로 민다. */
+export function texCacheKey(bakeSig: string, sigs: readonly string[], w: number, h: number): string {
+  const joined = sigs.join('')
+  return `${buildId()}|${w}x${h}|${b36(fnv(bakeSig))}|${b36(fnv(joined))}|${b36(fnv(joined, 0x9e3779b1, 0x85ebca6b))}|${sigs.length}|${b36(fnv(tuneSig()))}`
+}
+
 
 function run<T>(store: string, mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest): Promise<T> {
   return openCacheDb().then(db => new Promise<T>((res, rej) => {

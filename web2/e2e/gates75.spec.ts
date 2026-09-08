@@ -153,6 +153,26 @@ test('g3-⑥ — 캐시는 «연 뒤»에만 본다: 세션 안의 편집이 오
   expect(armed2, '⛳ 세션 안에서 문서가 갈리면 내려간다 — 그 뒤의 재굽기는 캐시가 아니라 정본이 만든다').toBe(false)
 })
 
+test('g3-⑦ ⛳ 반증 — 브러시 «조정»을 바꾸면 열쇠가 갈린다(캐시가 옛 그림을 안 준다)', async ({ page }) => {
+  test.setTimeout(300_000)
+  // ⚠ 조정(슬롯별 크기·불투명·간격…)은 **획 서명에도 굽기 열쇠에도 없다** — 그런데 그림은 바뀐다.
+  //   캐시는 세션을 넘으므로 그것이 열쇠에 없으면 «조정을 바꾸고 다시 열었을 때» 옛 그림이 올라온다.
+  await bootWith(page, '')
+  const keys = await page.evaluate(() => {
+    const b2 = (window as any).__b2
+    const k0 = b2.diag.texCacheKeyForTest('sig|A', ['a', 'b'], 256, 256)
+    const before = b2.diag.brushTuneJson()
+    b2.diag.setBrushParamForTest('brush', 'opaque', 0.5)
+    const k1 = b2.diag.texCacheKeyForTest('sig|A', ['a', 'b'], 256, 256)
+    b2.diag.loadBrushTuneForTest(before)
+    const k2 = b2.diag.texCacheKeyForTest('sig|A', ['a', 'b'], 256, 256)
+    return { k0, k1, k2 }
+  })
+  expect(keys.k1, '⛳ 조정을 바꾸면 열쇠가 갈린다 — 안 갈리면 옛 그림이 올라온다').not.toBe(keys.k0)
+  expect(keys.k2, '되돌리면 열쇠도 돌아온다').toBe(keys.k0)
+  console.log('g3g', JSON.stringify(keys))
+})
+
 test('g3 — 굽힌 그림 캐시: 두 번째 열기는 캐시에서 온다 · 픽셀 동일 · 열쇠 불일치는 재굽기 · 저장 형식 무변', async ({ page }) => {
   test.setTimeout(600_000)
   // ① 캐시를 비우고 문서를 세운다 — **캐시 없음**의 열기
