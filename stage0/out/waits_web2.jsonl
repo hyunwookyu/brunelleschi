@@ -30,3 +30,4 @@
 {"t":"2026-09-08T09:26:58.779Z","mode":"cmd","what":"echo Pages 빌드 대기(상한 300초)","cap_s":300,"elapsed_s":0,"exit":0}
 {"t":"2026-09-08T09:33:45.070Z","mode":"cmd","what":"node -e setTimeout(function(){},400000)","cap_s":420,"elapsed_s":400.1,"exit":0}
 {"t":"2026-09-08T09:42:17.397Z","mode":"cmd","what":"node -e setTimeout(function(){},460000)","cap_s":480,"elapsed_s":460.1,"exit":0}
+{"t":"2026-09-08T09:51:56.546Z","mode":"cmd","what":"node -e setTimeout(function(){},460000)","cap_s":480,"elapsed_s":460.1,"exit":0}
