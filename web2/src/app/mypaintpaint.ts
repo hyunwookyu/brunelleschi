@@ -309,13 +309,29 @@ function scaledTip(t: TipAtlas, g: number): TipAtlas {
   const key = t.name + '|' + g.toFixed(2)
   const hit = scaledTips.get(key)
   if (hit) return hit
+  const tScale = performance.now()
   const data = new Float32Array(t.data.length)
   for (let i = 0; i < data.length; i++) data[i] = Math.min(1, t.data[i]! * g)
   const out: TipAtlas = { ...t, data }
   if (scaledTips.size > 24) scaledTips.delete(scaledTips.keys().next().value!)
   scaledTips.set(key, out)
+  warm.tipScaleMs += performance.now() - tScale; warm.tipScaleBuilds++
   return out
 }
+// ── web2-75 §1-0 표식(D-1) — **첫 자국의 «준비» 비용을 따로 센다.**
+// 74가 지목한 `bake.commit` 861.8ms를 프로브가 갈랐더니 그 획의 점이 **5개**였다(지시문의 전제
+// 「긴 붓 획 = 도장 수백」이 이 픽스처에서는 거짓이다). 같은 획들을 다시 구우면 획당 최대가
+// 34ms다 — 그러면 큰 값은 «획의 길이»가 아니라 «처음 한 번»에 있다. 그 처음 한 번이 무엇인지는
+// 짐작하지 않고 잰다: 보정(calib — 반최대 폭 두 점 + 농도 고정점 반복)과 팁 눈금 판 만들기.
+// ⚠ 계측만이다. 두르는 것이 하는 일을 한 자도 안 바꾼다.
+const warm = { calibMs: 0, calibCalls: 0, calibMaxMs: 0, tipScaleMs: 0, tipScaleBuilds: 0, grainMs: 0, grainBuilds: 0 }
+export const paintWarmStatsForTest = (): typeof warm & { calibKeys: number } =>
+  ({ ...warm, calibMs: Math.round(warm.calibMs * 10) / 10, calibMaxMs: Math.round(warm.calibMaxMs * 10) / 10,
+     tipScaleMs: Math.round(warm.tipScaleMs * 10) / 10, grainMs: Math.round(warm.grainMs * 10) / 10, calibKeys: calibs.size })
+export const resetPaintWarmStatsForTest = (): void => {
+  warm.calibMs = 0; warm.calibCalls = 0; warm.calibMaxMs = 0; warm.tipScaleMs = 0; warm.tipScaleBuilds = 0; warm.grainMs = 0; warm.grainBuilds = 0
+}
+
 const calibs = new Map<string, Calib>()
 const CAL_W = 512, CAL_H = 192, CAL_R1 = 6, CAL_R2 = 24
 let calSurface: StrokeSurface | null = null
@@ -404,6 +420,7 @@ function calib(name: string, tipName: string | null = null): Calib {
   const key = tip ? name + '|' + tipName : name
   const hit = calibs.get(key)
   if (hit) return hit
+  const tCal = performance.now()
   const w1 = measureHalfMaxWidth(name, CAL_R1, tip), w2 = measureHalfMaxWidth(name, CAL_R2, tip)
   const ok = w1 > 0 && w2 > 0
   // a·b는 기록(두 점의 기울기·절편 — 산포 붓의 절편이 얼마나 큰지 원장이 본다) · 되풀이는 아래 radiusFor
@@ -457,6 +474,8 @@ function calib(name: string, tipName: string | null = null): Calib {
     c.clipShare = nz > 0 ? +(clip / nz).toFixed(4) : 0
   }
   calibs.set(key, c)
+  const dCal = performance.now() - tCal
+  warm.calibMs += dCal; warm.calibCalls++; if (dCal > warm.calibMaxMs) warm.calibMaxMs = dCal
   return c
 }
 /** 굵기 wPx의 자리(0..1 — 20↔40 로그 축 · 밖은 가까운 점) */

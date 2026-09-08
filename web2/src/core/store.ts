@@ -20,9 +20,16 @@
 // 이름을 바꾸는 것은 `docs`의 한 필드를 고치는 일이고 `data`·썸네일을 안 건드린다.
 
 const DB_NAME = 'brunelleschi'
-const DB_VERSION = 1
+// web2-75 §3 — 굽힌 그림 캐시(texcache·texmeta)가 붙으면서 1 → 2.
+// ⚠ **문서·썸네일 창고는 한 자도 안 건드린다** — 아래 onupgradeneeded가 «없으면 만든다»뿐이라
+//   옛 판(v1)에서 올라온 저장소의 그림이 그대로 산다(이전이 아니다 · 저장 형식 무변).
+const DB_VERSION = 2
 const DOCS = 'docs'
 const THUMBS = 'thumbs'
+/** web2-75 §3 — 굽힌 면의 날 RGBA(캐시 · 정본 아님). 열쇠는 core/texcache.ts가 만든다 */
+const TEXCACHE = 'texcache'
+/** 그 캐시의 LRU 메타(열쇠·시각·바이트) — 버릴 것을 고르려고 바이트를 끌어오지 않기 위해 따로 산다 */
+const TEXMETA = 'texmeta'
 
 /** 목록에 뜨는 것 — **`data`가 없다**(목록을 그리려고 문서 전부를 읽지 않는다) */
 export interface DocMeta {
@@ -75,6 +82,9 @@ export function openStore(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(DOCS)) db.createObjectStore(DOCS, { keyPath: 'id' })
       // **따로 산다** — 목록이 썸네일을 읽어도 문서 본문을 안 끌어온다(지시 4번)
       if (!db.objectStoreNames.contains(THUMBS)) db.createObjectStore(THUMBS, { keyPath: 'id' })
+      // web2-75 §3 — 캐시 창고 둘. **문서와 따로 산다**(목록·저장이 캐시 바이트를 안 끌어온다)
+      if (!db.objectStoreNames.contains(TEXCACHE)) db.createObjectStore(TEXCACHE, { keyPath: 'key' })
+      if (!db.objectStoreNames.contains(TEXMETA)) db.createObjectStore(TEXMETA, { keyPath: 'key' })
     }
     req.onsuccess = () => res(req.result)
     req.onerror = () => rej(new StoreError('열기', req.error))

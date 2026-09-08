@@ -138,20 +138,28 @@ let brushIdOff = false
 export function setBrushIdOffForTest(v: boolean): void { brushIdOff = v }
 export const brushIdOffForTest = (): boolean => brushIdOff
 
-function markOfStroke(s: Stroke, box: UvBox, dims: { h: number; pxPerUnit: number }): SeamMark {
+/** @param upto web2-75 §1 — **점 구간**: 앞에서부터 이만큼의 점만 든 자국(그리는 «중»의 그 획과 같은 꼴).
+ *   압력도 같은 자리에서 자른다(점렬과 평행 — 초안 세션의 전제). 안 주면 종전과 한 자도 안 다르다. */
+function markOfStroke(s: Stroke, box: UvBox, dims: { h: number; pxPerUnit: number }, upto?: number): SeamMark {
   const p = s.paint!
   const uv = p.uv!
   const toPx = (u: number, v: number): Pt =>
     pt((u - box.u0) * dims.pxPerUnit, dims.h - (v - box.v0) * dims.pxPerUnit)
   const pts: Pt[] = []
   for (let i = 0; i + 1 < uv.length; i += 2) pts.push(toPx(uv[i]!, uv[i + 1]!))
+  let press = p.press
+  if (upto !== undefined && upto < pts.length) {
+    pts.length = Math.max(0, upto)
+    // 압력은 점렬과 평행하게 자른다 — 평행이 깨지면 초안 세션이 그 자국을 거절한다(draftFeed)
+    if (press && press.length === (uv.length >> 1)) press = press.slice(0, pts.length)
+  }
   const wWorld = p.w ?? C.PAINT_W_FALLBACK_UNITS
   const grade = s.mat?.grade ?? 'HB'
   const tool = instrOfTag(p.i)
   // 색 — 획의 hex(#54 그대로). web2-64: 잉크펜도 색을 든다 — 없는 옛 획만 등급 흑연색(옛 규약 그대로).
   const color = p.c ?? MAT[grade].color
   return {
-    pts, press: p.press, color,
+    pts, press, color,
     wPx: Math.max(0.5, wWorld * dims.pxPerUnit),
     seed: s.id, tool, grade,
     // web2-64 64-1 — 획이 든 브러시 id가 굽기를 정한다(슬롯의 «지금» 브러시가 아니다 — 원칙 a). 반증 스위치는 옛 결함.
@@ -250,12 +258,14 @@ export function appendMarkOnTex(
 export function draftFeedOnTex(
   canvas: HTMLCanvasElement, bg: HTMLCanvasElement, rf: ResolvedFace, box: UvBox,
   level: number, s: Stroke, side: 1 | -1 | 'e',
+  /** web2-75 §1 — 앞에서부터 이만큼의 점만 먹인다(굽기를 «점 구간»으로 자르는 자리) */
+  upto?: number,
 ): MarkBox | 'rebuild' | null {
   const dims = texDims(box, level)
   if (canvas.width !== dims.w || canvas.height !== dims.h) return null
   if (bg.width !== dims.w || bg.height !== dims.h) return null
   if (!inTex(s, rf.id, side)) return null
-  return draftFeedSeam(canvas.getContext('2d')!, markOfStroke(s, box, dims), bg)
+  return draftFeedSeam(canvas.getContext('2d')!, markOfStroke(s, box, dims, upto), bg)
 }
 
 /** 세션의 획을 완결한다(펜 떼기까지) — 층이 이 획을 굽기로 얹은 것과 같아진다(커밋 인계). */

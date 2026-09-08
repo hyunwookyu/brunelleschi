@@ -20,7 +20,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, frameStepStats, resetFrameStepStats, glInfo, glUpload, resetGlUploadStats, setMetrics73OffForTest, metrics73OffForTest, setPaintBakeIdleMsForTest, paintBakeIdleMsForTest, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest, paintBakePending, paintPendingRowsForTest, setPaintPointerDown, setPaintLevelFreezeOffForTest, paintLevelFreezeOffForTest, setPaintBakeSliceOffForTest, paintBakeSliceOffForTest, setPaintIndexOffForTest, paintIndexOffForTest, paintStrokeListsForTest } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, frameStepStats, resetFrameStepStats, glInfo, glUpload, resetGlUploadStats, setMetrics73OffForTest, metrics73OffForTest, setPaintBakeIdleMsForTest, paintBakeIdleMsForTest, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest, paintBakePending, paintPendingRowsForTest, setPaintPointerDown, setPaintLevelFreezeOffForTest, paintLevelFreezeOffForTest, setPaintBakeSliceOffForTest, paintBakeSliceOffForTest, setPaintSlicePtsForTest, paintSlicePtsForTest, setPaintSliceBreakForTest, paintSliceBreakForTest, setPaintIndexOffForTest, paintIndexOffForTest, paintStrokeListsForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, bootCost, saveFlagsForTest, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, deleteDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -47,6 +47,7 @@ import { DEFAULT_CLS } from '../core/clsdef'
 import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS, WRITE_HOLD_MS_MIN, WRITE_HOLD_MS_MAX, TURN_ANIM_MS } from '../core/constants'
 // web2-74 §0·§1 — 멈춤 탐지와 구간 표식(계측만 · core/perfmark.ts 머리주석이 정본)
 import { noteGap, stallStats, stallLine, markCounts, resetPerfMarks, setStallMs, stallThresholdMs, markStart, markEnd, gapLadder, MARK_NAMES } from '../core/perfmark'
+import { texCacheStats, resetTexCacheStats, setTexCacheOff, texCacheOff, clearTexCache, dropTexCacheMem } from '../core/texcache'
 import { WAIT_INK, setWaitInkMode, waitInkMode, type WaitInkMode } from '../core/waitfade'
 import {
   lensAllowed, lensStops, lensF, lensK, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX,
@@ -3433,6 +3434,12 @@ if (PERF_HUD) {
   setInterval(() => { if (perfHudEl) perfHudEl.textContent = perfHudText() }, 500)
 }
 /** 화면의 문면 — **팔과 화면이 같은 함수**를 읽는다(#54). 사진(74-hud.png)이 이 문자열이다. */
+/** §4 — 화면이 읽는 열기 세 몫(원장과 **같은 자리**에서 온다 — 두 벌 계산 ⛔ #54) */
+function bootCostForHud(): { parseMs: number; applyMs: number; bakeMs: number; bakes: number } {
+  const b = paintBakeStats()
+  return { parseMs: bootCost.parseMs, applyMs: bootCost.applyMs, bakeMs: b.ms, bakes: b.bakes }
+}
+
 function perfHudText(): string {
   const now = performance.now()
   const win = perfHud.ticks.filter(t => now - t <= 1000)
@@ -3440,7 +3447,12 @@ function perfHudText(): string {
   perfHud.gapMs = Math.round(maxGapInWindow(perfHud.ticks, now) * 10) / 10
   const st = stallStats()
   const rows = st.recent.slice(-5).map(s => '  ' + stallLine(s))
-  return `fps ${perfHud.fps} · 최장 간격 ${perfHud.gapMs}ms\n열기 ${Math.round(perfHud.openMs)}ms\n`
+  // web2-75 §4 — **열기의 세 몫을 그 화면에서 읽는다**(74 §4가 원장에만 남긴 것).
+  //   사람이 실기기에서 한 번 녹화하면 「무엇이 열기를 먹었나」가 바로 보인다: 파싱 · 세우기 · 굽기 · 캐시에서 온 면 수.
+  const bc = bootCostForHud()
+  const tc = texCacheStats()
+  return `fps ${perfHud.fps} · 최장 간격 ${perfHud.gapMs}ms\n열기 ${Math.round(perfHud.openMs)}ms(첫 프레임)`
+    + `\n파싱 ${Math.round(bc.parseMs)} · 세우기 ${Math.round(bc.applyMs)} · 굽기 ${Math.round(bc.bakeMs)}ms · 캐시 ${tc.applied}면\n`
     + `멈춤 ${st.n}회(≥${st.thresholdMs}ms)` + (rows.length ? '\n' + rows.join('\n') : '')
 }
 
@@ -3554,6 +3566,7 @@ import {
 } from '../core/paintseam'
 import {
   mypaintRenderer, mypaintProbeForTest, calibForTest as mypaintCalibForTest, presetMappingForTest,
+  paintWarmStatsForTest, resetPaintWarmStatsForTest,
   lastLayerAlphaForTest, smudgeStatsForTest, resetSmudgeStatsForTest, premulViolationsForTest, layerStatsForTest, lastStrokeCapForTest, presetBaseForTest,
   setCapOffForTest, setSmudgeSelfSampleForTest, setPremulBreakForTest, setFringeBreakForTest,
   setPaintModeOffForTest, setSmudgeOffForTest, setAlphaCaptureForTest, setEventDtimeForTest, setCalibOffForTest, PRESET_CATALOG, DEFAULT_PRESET, setPresetBaseForTest,
@@ -3732,6 +3745,9 @@ const diag = {
   paintGrainTileForTest: () => grainTileForTest(),
   /** **web2-62 — mypaint 엔진 진단·반증** */
   mypaintProbeForTest: () => mypaintProbeForTest(),
+  /** web2-75 §1-0 — 첫 자국의 «준비» 비용(보정·팁 눈금 판) · 계측만 */
+  paintWarm: () => paintWarmStatsForTest(),
+  paintWarmReset: () => resetPaintWarmStatsForTest(),
   mypaintCalibForTest: () => mypaintCalibForTest(),
   presetMappingForTest: () => presetMappingForTest(),
   presetCatalogForTest: () => PRESET_CATALOG.map(c => ({ group: c.group, names: [...c.names] })),
@@ -4481,6 +4497,23 @@ const diag = {
     paperbar.sync(); layerbar.sync(); invalidate()
   },
   paintBakeReset: () => { resetPaintBakeStats() },
+  // ── web2-75 §3 — 굽힌 그림 캐시(정본 아님) ──
+  texCache: () => texCacheStats(),
+  texCacheReset: () => resetTexCacheStats(),
+  /** ⛳ 반증·무회귀 — 끄면 «지금과 똑같이» 굽는다 */
+  setTexCacheOffForTest: (v: boolean) => { setTexCacheOff(v); invalidate() },
+  texCacheOffForTest: () => texCacheOff(),
+  /** 저장소의 캐시를 비운다(「캐시 없음」 팔) — 그림은 안 건드린다 */
+  clearTexCacheForTest: () => clearTexCache(),
+  /** 인메모리 판만 비운다 — 같은 판에서 «두 번째 열기»를 만든다 */
+  dropTexCacheMemForTest: () => { dropTexCacheMem() },
+  // ── web2-75 §1 — «점 구간»의 크기(스윕)와 그 반증 ───────────────────────────────
+  /** 구간 크기(점) — null이면 앱 상수 · Infinity면 «획 하나가 최소 단위»(수리 전 거동) */
+  setPaintSlicePtsForTest: (v: number | null) => { setPaintSlicePtsForTest(v); invalidate() },
+  paintSlicePtsForTest: () => paintSlicePtsForTest(),
+  /** ⛳ 반증 — 구간마다 세션을 끊는다(순진한 구현) → 그림이 갈려야 한다 */
+  setPaintSliceBreakForTest: (v: boolean) => { setPaintSliceBreakForTest(v); invalidate() },
+  paintSliceBreakForTest: () => paintSliceBreakForTest(),
   /** web2-65 ⑥ 반증 — 누적을 끈다(pre의 O(N)이 돌아온다) · 부분 업로드를 끈다(픽셀은 같아야 한다) */
   setPaintAccumOffForTest: (v: boolean) => { setPaintAccumOffForTest(v); invalidate() },
   setPaintPartialOffForTest: (v: boolean) => { setPaintPartialOffForTest(v); invalidate() },

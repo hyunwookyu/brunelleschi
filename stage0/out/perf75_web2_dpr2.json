@@ -1,0 +1,431 @@
+{
+  "conditions": {
+    "project": "dpr2",
+    "headed": false,
+    "ledger_tag": "",
+    "chromium_exe": null,
+    "workers": 1,
+    "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/perf75.spec.ts --project=dpr2 (워커 1 — #99)",
+    "machine_note": "시간의 절대값은 이 기계(playwright chromium_headless_shell = SwiftShader)의 기록이다 — 판정은 «점 수·호출 수·해시»와 팔 사이의 짝이 한다(CLOSING · #113)",
+    "settle_timeouts": 0,
+    "settle_last_stage": ""
+  },
+  "what": "web2-75 §1·§3 — 자르는 단위를 «획»에서 «점 구간»으로(픽셀 항등) · 굽힌 그림 캐시로 두 번째 열기. 74가 값으로 지목한 bake.commit을 실제로 자른 라운드다.",
+  "note_pitfalls": "#12·#14(동작점 하나 ⛔ — 구간 크기를 스윕한다) · #16(분모 — 같은 저장물 하나) · #42 · #47(수치는 원장이 정본) · #89(초록의 범위 — 몸짓 창은 굽기가 도는 창이다) · #99(워커 1) · #103(프로브가 움직였음 — 획 수·단계) · #105(빈 결과 폴백은 표식) · #110(캐시 열쇠는 그 파생이 의존하는 것 전부) · #113(시간 자에는 «어느 GPU에서») · #114(자가 재는 구간이 사람이 기다리는 구간인가)",
+  "pitfall_citations": [
+    12,
+    14,
+    16,
+    42,
+    47,
+    89,
+    99,
+    103,
+    105,
+    110,
+    113,
+    114
+  ],
+  "thresholds": {
+    "PAINT75_PRE_CHUNK_PTS_MIN": 10,
+    "PAINT75_CACHE_HIT_RATIO_MIN": 0.8
+  },
+  "no_constants_snapshot": true,
+  "constants_used": {
+    "note": "web2 라인은 constantsSnapshot 기계가 없다(lens31·paint50의 no_constants_snapshot이 정본). 구간 크기는 앱 상수 C.PAINT75_SLICE_PTS이고 원장의 slice_pts_app이 그 값이다(D-C4)."
+  },
+  "selfcheck_notes": {
+    "zero_counters": "셋이다. ① `S1_sweep`의 전량(획 단위) 행에서 `sliceChunks` 0은 **그 팔의 정의**다(자르기가 없다) — 같은 실행의 다른 행이 0이 아니다. ② `S3_open.cold.cache.applied` 0은 「캐시가 없다」는 그 팔의 정의이고 warm 행이 0이 아니다. ③ `S1_0.warmSecond.calibCalls` 0은 **이 절의 결론**이다(준비는 판마다 한 번뿐이다).",
+    "identical_pairs": "`S1_sweep`의 `sameTex`가 다섯 행에서 참인 것은 **설계 보장이 아니라 이 라운드의 게이트**다 — 같은 판의 반증(`sliceBreak`)이 그 자리에서 다른 값을 낸다(gates75 g1-②).",
+    "single_category": "`fixture.levels`가 한 값(256×23)인 것은 픽스처의 구성이다(72·73·74와 같은 격자 벽)."
+  },
+  "fixture": {
+    "source": "synthetic",
+    "faces": 23,
+    "docStrokes": 936,
+    "paintStrokes": 920,
+    "texEntries": 23,
+    "clampedFaces": 0,
+    "levels": {
+      "256": 23
+    }
+  },
+  "gl": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "webgl2": true,
+    "software": true,
+    "dpr": 2,
+    "css": [
+      1200,
+      800
+    ],
+    "drawingBuffer": [
+      2400,
+      1600
+    ]
+  },
+  "S1_0": {
+    "note": "지시문의 전제는 「긴 붓 획 하나는 도장이 수백 개고 그것이 한 덩어리다 — 74가 잰 861.8ms가 그것이다」였다. 표식이 갈랐다: 그 획의 점은 다섯 개이고, 861.8ms의 대부분은 «그 판에서 처음 그리는 자국»이 치르는 준비(보정 calib — 반최대 폭 두 점 + 농도 고정점 반복)다.",
+    "cold": {
+      "strokeMsMax": 853.9,
+      "strokePtsMax": 5,
+      "commitMsMax": 854.2,
+      "bgMsMax": 0.4,
+      "ms": 6576.8
+    },
+    "coldWarmup": {
+      "calibMs": 1021.7,
+      "calibCalls": 3,
+      "calibMaxMs": 850.5,
+      "tipScaleMs": 7.6,
+      "tipScaleBuilds": 7,
+      "grainMs": 0,
+      "grainBuilds": 0,
+      "calibKeys": 3
+    },
+    "warmSecond": {
+      "strokeMsMax": 10.6,
+      "commitMsMax": 21.6,
+      "ms": 5527.6,
+      "calibCalls": 0
+    },
+    "share_of_max_from_calib": 0.996,
+    "ratio_cold_over_warm": 80.6,
+    "verdict": "준비(보정)가 «단일 호출 최대»의 임자다 — 점 구간으로 잘라도 그 한 번은 못 자른다(엔진 안의 한 덩어리). 자르기가 잡는 것은 «그 뒤로 계속 도는» 획들이다."
+  },
+  "S1_sweep": {
+    "fixture_points": {
+      "n": 923,
+      "min": 5,
+      "med": 5,
+      "max": 14
+    },
+    "slice_pts_app": 2,
+    "rows": [
+      {
+        "slicePts": "inf",
+        "chunkPtsMax": 14,
+        "sliceChunks": 0,
+        "strokeMsMax": 33.3,
+        "commitMsMax": 41.2,
+        "ms": 5411.9,
+        "uploads": 348,
+        "sameTex": true,
+        "sameScr": true,
+        "ink": 1172298
+      },
+      {
+        "slicePts": 8,
+        "chunkPtsMax": 8,
+        "sliceChunks": 6,
+        "strokeMsMax": 21,
+        "commitMsMax": 29.7,
+        "ms": 5395.4,
+        "uploads": 348,
+        "sameTex": true,
+        "sameScr": true,
+        "ink": 1172298
+      },
+      {
+        "slicePts": 4,
+        "chunkPtsMax": 4,
+        "sliceChunks": 1852,
+        "strokeMsMax": 14.9,
+        "commitMsMax": 24.2,
+        "ms": 5501.4,
+        "uploads": 391,
+        "sameTex": true,
+        "sameScr": true,
+        "ink": 1172298
+      },
+      {
+        "slicePts": 2,
+        "chunkPtsMax": 2,
+        "sliceChunks": 2781,
+        "strokeMsMax": 10.3,
+        "commitMsMax": 20.7,
+        "ms": 5618.2,
+        "uploads": 425,
+        "sameTex": true,
+        "sameScr": true,
+        "ink": 1172298
+      },
+      {
+        "slicePts": 1,
+        "chunkPtsMax": 2,
+        "sliceChunks": 3719,
+        "strokeMsMax": 6.9,
+        "commitMsMax": 17.2,
+        "ms": 5657.7,
+        "uploads": 440,
+        "sameTex": true,
+        "sameScr": true,
+        "ink": 1172298
+      }
+    ],
+    "all_same_picture": true,
+    "pair_pre_post": {
+      "pre_slicePts": "inf(획 하나가 최소 단위)",
+      "post_slicePts": 2,
+      "chunkPtsMax": [
+        14,
+        2
+      ],
+      "strokeMsMax": [
+        33.3,
+        10.3
+      ],
+      "commitMsMax": [
+        41.2,
+        20.7
+      ],
+      "ms": [
+        5411.9,
+        5618.2
+      ],
+      "ratio_commitMsMax": 0.502,
+      "ratio_total_ms": 1.038
+    },
+    "note": "픽셀 해시가 다섯 행에서 같다 — 자르는 자리가 그림을 안 바꾼다. 반증(구간마다 세션 끊기)은 gates75 g1-②가 같은 판에서 «갈린다»를 낸다."
+  },
+  "S1_gesture": {
+    "note": "몸짓 창에 `bake.commit`이 실제로 들어왔는지(호출 수)를 팔마다 같이 낸다 — 74는 그것이 0회인 창에서 임자를 골랐다(자백 3 · CLOSING 「팔의 표에는 경쟁자가 있어야 한다」).",
+    "arms": [
+      {
+        "arm": "pre(획 단위)",
+        "zoomLevel": 512,
+        "strokesAdded": 8,
+        "stalls": {
+          "n": 8,
+          "maxMs": 330
+        },
+        "gaps": {
+          "thresholds": [
+            30,
+            50,
+            100,
+            200,
+            400,
+            800,
+            1600
+          ],
+          "n": [
+            218,
+            216,
+            8,
+            8,
+            0,
+            0,
+            0
+          ]
+        },
+        "chunkPtsMax": 0,
+        "sliceChunks": 0,
+        "strokeMsMax": 0,
+        "commitMsMax": 0,
+        "bakeMs": 0.7,
+        "bakes": 0,
+        "marks": {
+          "tex.upload": {
+            "n": 107,
+            "ms": 4.100000083446503,
+            "maxMs": 0.10000002384185791
+          },
+          "save.serialize": {
+            "n": 8,
+            "ms": 135.20000004768372,
+            "maxMs": 18
+          },
+          "save.put": {
+            "n": 8,
+            "ms": 9.899999976158142,
+            "maxMs": 1.5
+          },
+          "list.read": {
+            "n": 10,
+            "ms": 10.79999989271164,
+            "maxMs": 1.300000011920929
+          },
+          "list.render": {
+            "n": 10,
+            "ms": 1.3000000715255737,
+            "maxMs": 0.20000004768371582
+          },
+          "save.thumb": {
+            "n": 2,
+            "ms": 92.30000001192093,
+            "maxMs": 46.19999998807907
+          }
+        }
+      },
+      {
+        "arm": "post(점 구간)",
+        "zoomLevel": 512,
+        "strokesAdded": 8,
+        "stalls": {
+          "n": 8,
+          "maxMs": 685
+        },
+        "gaps": {
+          "thresholds": [
+            30,
+            50,
+            100,
+            200,
+            400,
+            800,
+            1600
+          ],
+          "n": [
+            312,
+            308,
+            10,
+            8,
+            3,
+            0,
+            0
+          ]
+        },
+        "chunkPtsMax": 2,
+        "sliceChunks": 412,
+        "strokeMsMax": 93.4,
+        "commitMsMax": 93.7,
+        "bakeMs": 946.4,
+        "bakes": 3,
+        "marks": {
+          "tex.upload": {
+            "n": 485,
+            "ms": 81.90000033378601,
+            "maxMs": 0.800000011920929
+          },
+          "save.serialize": {
+            "n": 8,
+            "ms": 136.19999998807907,
+            "maxMs": 17.899999976158142
+          },
+          "save.put": {
+            "n": 8,
+            "ms": 391.10000014305115,
+            "maxMs": 162.4000000357628
+          },
+          "list.read": {
+            "n": 11,
+            "ms": 889.6999998092651,
+            "maxMs": 306.39999997615814
+          },
+          "list.render": {
+            "n": 11,
+            "ms": 2.0000001788139343,
+            "maxMs": 0.30000001192092896
+          },
+          "save.thumb": {
+            "n": 3,
+            "ms": 149.6000000834465,
+            "maxMs": 55.200000047683716
+          },
+          "bake.commit": {
+            "n": 138,
+            "ms": 939.599999666214,
+            "maxMs": 93.69999998807907
+          }
+        }
+      }
+    ],
+    "stall_note": "시험 기계의 잡음 바닥이 문턱(200ms) 자리에 있다(74 실측 210~236ms) — 「멈춤 몇 회」로는 팔이 안 갈린다. 그래서 판정은 «한 호출 최대»의 짝과 «한 구간이 먹는 점 수»가 한다(#114)."
+  },
+  "S3_open": {
+    "cold": {
+      "firstInteractiveMs": 1316,
+      "allPaintMs": 21491,
+      "longestBlockMs": 887,
+      "parseMs": 2.8,
+      "applyMs": 5.1,
+      "bakeMs": 6684,
+      "bakes": 24,
+      "bakedStrokes": 925,
+      "uploads": 420,
+      "cache": {
+        "asks": 23,
+        "hits": 0,
+        "misses": 23,
+        "applied": 0,
+        "writes": 12,
+        "waitedFrames": 46,
+        "errors": 0
+      },
+      "stalls": {
+        "n": 2,
+        "maxMs": 888,
+        "sumMs": 1264
+      },
+      "strokes": 936,
+      "faces": 23
+    },
+    "warm": {
+      "firstInteractiveMs": 1282,
+      "allPaintMs": 1735,
+      "longestBlockMs": 375,
+      "parseMs": 2.7,
+      "applyMs": 4.4,
+      "bakeMs": 379,
+      "bakes": 2,
+      "bakedStrokes": 44,
+      "uploads": 40,
+      "cache": {
+        "asks": 23,
+        "hits": 23,
+        "misses": 0,
+        "applied": 22,
+        "writes": 0,
+        "waitedFrames": 46,
+        "errors": 0
+      },
+      "stalls": {
+        "n": 1,
+        "maxMs": 377,
+        "sumMs": 377
+      },
+      "strokes": 936,
+      "faces": 23
+    },
+    "wrote_after_cold": {
+      "writes": 23,
+      "writeBytes": 5376000,
+      "evicted": 0,
+      "errors": 0
+    },
+    "same_picture": true,
+    "ratio": {
+      "allPaintMs": 0.081,
+      "bakeMs": 0.057,
+      "firstInteractiveMs": 0.974
+    },
+    "hit_ratio": 0.957,
+    "note": "열기의 99.8%가 굽기였다(74 §4). 캐시가 그 굽기를 대신한다 — 그림은 같아야 하고(해시) 안 맞으면 캐시가 없다(= 굽는다)."
+  },
+  "S2_worker": {
+    "done": false,
+    "rule": "지시 §2 — 「§1이 게이트를 넘기면 이 절은 안 한다(값으로 그 사실을 적고 이월)」.",
+    "gates_from_s1": {
+      "chunkPtsMax_pre_post": [
+        14,
+        2
+      ],
+      "commitMsMax_pre_post": [
+        41.2,
+        20.7
+      ],
+      "ratio_commitMsMax": 0.502,
+      "all_same_picture": true
+    },
+    "residual": {
+      "what": "남는 것은 «첫 자국의 준비»(보정) 한 번이다 — 판마다 한 번, 엔진 안의 한 덩어리라 점 구간으로 못 자른다.",
+      "calibMaxMs": 850.5,
+      "calibCalls": 3,
+      "share_of_max_from_calib": 0.996,
+      "why_not_worker_now": "Worker + OffscreenCanvas는 엔진 전체(팁 아틀라스·종이 결·결정론 시드)를 옮기는 일이고 72가 「옮기면 그림이 갈릴 위험이 크다」로 미뤄 둔 것이다. 이 라운드가 실제로 잰 것은 «준비 한 번»이 임자라는 사실이고, 그것은 Worker 말고도 «준비를 굽기 밖에서 미리 하기»·«보정값을 저장해 두기»로 닿는다 — 어느 쪽인지는 값이 더 있어야 정한다(이월)."
+    }
+  }
+}
