@@ -7,8 +7,8 @@
     "workers": 1,
     "canonical": "LEDGER=1 node tools/e2e.mjs ledger e2e/perf75.spec.ts --project=dpr2 (워커 1 — #99)",
     "machine_note": "시간의 절대값은 이 기계(playwright chromium_headless_shell = SwiftShader)의 기록이다 — 판정은 «점 수·호출 수·해시»와 팔 사이의 짝이 한다(CLOSING · #113)",
-    "settle_timeouts": 0,
-    "settle_last_stage": ""
+    "settle_timeouts": 1,
+    "settle_last_stage": "S1c/app"
   },
   "what": "web2-75 §1·§3 — 자르는 단위를 «획»에서 «점 구간»으로(픽셀 항등) · 굽힌 그림 캐시로 두 번째 열기. 74가 값으로 지목한 bake.commit을 실제로 자른 라운드다.",
   "note_pitfalls": "#12·#14(동작점 하나 ⛔ — 구간 크기를 스윕한다) · #16(분모 — 같은 저장물 하나) · #42 · #47(수치는 원장이 정본) · #89(초록의 범위 — 몸짓 창은 굽기가 도는 창이다) · #99(워커 1) · #103(프로브가 움직였음 — 획 수·단계) · #105(빈 결과 폴백은 표식) · #110(캐시 열쇠는 그 파생이 의존하는 것 전부) · #113(시간 자에는 «어느 GPU에서») · #114(자가 재는 구간이 사람이 기다리는 구간인가)",
@@ -28,7 +28,7 @@
   ],
   "thresholds": {
     "PAINT75_PRE_CHUNK_PTS_MIN": 10,
-    "PAINT75_CACHE_HIT_RATIO_MIN": 0.8
+    "PAINT75_CACHE_HIT_RATIO_MIN": 0.9
   },
   "no_constants_snapshot": true,
   "constants_used": {
@@ -69,30 +69,30 @@
   "S1_0": {
     "note": "지시문의 전제는 「긴 붓 획 하나는 도장이 수백 개고 그것이 한 덩어리다 — 74가 잰 861.8ms가 그것이다」였다. 표식이 갈랐다: 그 획의 점은 다섯 개이고, 861.8ms의 대부분은 «그 판에서 처음 그리는 자국»이 치르는 준비(보정 calib — 반최대 폭 두 점 + 농도 고정점 반복)다.",
     "cold": {
-      "strokeMsMax": 853.9,
+      "strokeMsMax": 856,
       "strokePtsMax": 5,
-      "commitMsMax": 854.2,
+      "commitMsMax": 856.4,
       "bgMsMax": 0.4,
-      "ms": 6576.8
+      "ms": 6571.5
     },
     "coldWarmup": {
-      "calibMs": 1021.7,
+      "calibMs": 1022.7,
       "calibCalls": 3,
-      "calibMaxMs": 850.5,
-      "tipScaleMs": 7.6,
+      "calibMaxMs": 852.1,
+      "tipScaleMs": 7.1,
       "tipScaleBuilds": 7,
       "grainMs": 0,
       "grainBuilds": 0,
       "calibKeys": 3
     },
     "warmSecond": {
-      "strokeMsMax": 10.6,
-      "commitMsMax": 21.6,
-      "ms": 5527.6,
+      "strokeMsMax": 12.2,
+      "commitMsMax": 20.5,
+      "ms": 5509.6,
       "calibCalls": 0
     },
-    "share_of_max_from_calib": 0.996,
-    "ratio_cold_over_warm": 80.6,
+    "share_of_max_from_calib": 0.995,
+    "ratio_cold_over_warm": 70.2,
     "verdict": "준비(보정)가 «단일 호출 최대»의 임자다 — 점 구간으로 잘라도 그 한 번은 못 자른다(엔진 안의 한 덩어리). 자르기가 잡는 것은 «그 뒤로 계속 도는» 획들이다."
   },
   "S1_sweep": {
@@ -108,10 +108,10 @@
         "slicePts": "inf",
         "chunkPtsMax": 14,
         "sliceChunks": 0,
-        "strokeMsMax": 33.3,
-        "commitMsMax": 41.2,
-        "ms": 5411.9,
-        "uploads": 348,
+        "strokeMsMax": 33.6,
+        "commitMsMax": 41.6,
+        "ms": 5461.8,
+        "uploads": 350,
         "sameTex": true,
         "sameScr": true,
         "ink": 1172298
@@ -120,10 +120,10 @@
         "slicePts": 8,
         "chunkPtsMax": 8,
         "sliceChunks": 6,
-        "strokeMsMax": 21,
-        "commitMsMax": 29.7,
-        "ms": 5395.4,
-        "uploads": 348,
+        "strokeMsMax": 20,
+        "commitMsMax": 28.3,
+        "ms": 5435.7,
+        "uploads": 354,
         "sameTex": true,
         "sameScr": true,
         "ink": 1172298
@@ -132,10 +132,10 @@
         "slicePts": 4,
         "chunkPtsMax": 4,
         "sliceChunks": 1852,
-        "strokeMsMax": 14.9,
-        "commitMsMax": 24.2,
-        "ms": 5501.4,
-        "uploads": 391,
+        "strokeMsMax": 15.1,
+        "commitMsMax": 24.5,
+        "ms": 5596.7,
+        "uploads": 401,
         "sameTex": true,
         "sameScr": true,
         "ink": 1172298
@@ -144,10 +144,10 @@
         "slicePts": 2,
         "chunkPtsMax": 2,
         "sliceChunks": 2781,
-        "strokeMsMax": 10.3,
-        "commitMsMax": 20.7,
-        "ms": 5618.2,
-        "uploads": 425,
+        "strokeMsMax": 10.2,
+        "commitMsMax": 20.8,
+        "ms": 5628.6,
+        "uploads": 421,
         "sameTex": true,
         "sameScr": true,
         "ink": 1172298
@@ -156,10 +156,10 @@
         "slicePts": 1,
         "chunkPtsMax": 2,
         "sliceChunks": 3719,
-        "strokeMsMax": 6.9,
-        "commitMsMax": 17.2,
-        "ms": 5657.7,
-        "uploads": 440,
+        "strokeMsMax": 7.6,
+        "commitMsMax": 18.8,
+        "ms": 5700.5,
+        "uploads": 443,
         "sameTex": true,
         "sameScr": true,
         "ink": 1172298
@@ -174,19 +174,49 @@
         2
       ],
       "strokeMsMax": [
-        33.3,
-        10.3
+        33.6,
+        10.2
       ],
       "commitMsMax": [
-        41.2,
-        20.7
+        41.6,
+        20.8
       ],
       "ms": [
-        5411.9,
-        5618.2
+        5461.8,
+        5628.6
       ],
-      "ratio_commitMsMax": 0.502,
-      "ratio_total_ms": 1.038
+      "ratio_commitMsMax": 0.5,
+      "ratio_total_ms": 1.031
+    },
+    "repeats": {
+      "note": "전/후를 세 번씩 더 돌았다(#14) — 비가 변동폭 밖인가",
+      "commitMsMax_pre": [
+        42.4,
+        42.2,
+        43.4
+      ],
+      "commitMsMax_post": [
+        21.4,
+        21.6,
+        20.3
+      ],
+      "ms_pre": [
+        5465.5,
+        5472.5,
+        5474.8
+      ],
+      "ms_post": [
+        5654.7,
+        5660,
+        5723
+      ],
+      "ratios": [
+        0.505,
+        0.512,
+        0.468
+      ],
+      "ratio_min": 0.468,
+      "ratio_max": 0.512
     },
     "note": "픽셀 해시가 다섯 행에서 같다 — 자르는 자리가 그림을 안 바꾼다. 반증(구간마다 세션 끊기)은 gates75 g1-②가 같은 판에서 «갈린다»를 낸다."
   },
@@ -199,7 +229,7 @@
         "strokesAdded": 8,
         "stalls": {
           "n": 8,
-          "maxMs": 330
+          "maxMs": 363
         },
         "gaps": {
           "thresholds": [
@@ -212,9 +242,9 @@
             1600
           ],
           "n": [
-            218,
+            221,
             216,
-            8,
+            9,
             8,
             0,
             0,
@@ -225,38 +255,38 @@
         "sliceChunks": 0,
         "strokeMsMax": 0,
         "commitMsMax": 0,
-        "bakeMs": 0.7,
+        "bakeMs": 0.5,
         "bakes": 0,
         "marks": {
           "tex.upload": {
             "n": 107,
-            "ms": 4.100000083446503,
-            "maxMs": 0.10000002384185791
+            "ms": 4.399999737739563,
+            "maxMs": 0.20000004768371582
           },
           "save.serialize": {
             "n": 8,
-            "ms": 135.20000004768372,
-            "maxMs": 18
+            "ms": 141.59999990463257,
+            "maxMs": 21.5
           },
           "save.put": {
             "n": 8,
-            "ms": 9.899999976158142,
+            "ms": 10.099999964237213,
             "maxMs": 1.5
           },
           "list.read": {
             "n": 10,
-            "ms": 10.79999989271164,
-            "maxMs": 1.300000011920929
+            "ms": 11.400000035762787,
+            "maxMs": 1.699999988079071
           },
           "list.render": {
             "n": 10,
-            "ms": 1.3000000715255737,
-            "maxMs": 0.20000004768371582
+            "ms": 1.699999988079071,
+            "maxMs": 0.30000001192092896
           },
           "save.thumb": {
             "n": 2,
-            "ms": 92.30000001192093,
-            "maxMs": 46.19999998807907
+            "ms": 96.19999992847443,
+            "maxMs": 48.799999952316284
           }
         }
       },
@@ -265,8 +295,8 @@
         "zoomLevel": 512,
         "strokesAdded": 8,
         "stalls": {
-          "n": 8,
-          "maxMs": 685
+          "n": 16,
+          "maxMs": 1190
         },
         "gaps": {
           "thresholds": [
@@ -279,56 +309,56 @@
             1600
           ],
           "n": [
-            312,
+            311,
             308,
-            10,
-            8,
+            22,
+            16,
             3,
-            0,
+            1,
             0
           ]
         },
         "chunkPtsMax": 2,
         "sliceChunks": 412,
-        "strokeMsMax": 93.4,
-        "commitMsMax": 93.7,
-        "bakeMs": 946.4,
+        "strokeMsMax": 860.7,
+        "commitMsMax": 860.9,
+        "bakeMs": 1824.3,
         "bakes": 3,
         "marks": {
           "tex.upload": {
-            "n": 485,
-            "ms": 81.90000033378601,
-            "maxMs": 0.800000011920929
-          },
-          "save.serialize": {
-            "n": 8,
-            "ms": 136.19999998807907,
-            "maxMs": 17.899999976158142
-          },
-          "save.put": {
-            "n": 8,
-            "ms": 391.10000014305115,
-            "maxMs": 162.4000000357628
-          },
-          "list.read": {
-            "n": 11,
-            "ms": 889.6999998092651,
-            "maxMs": 306.39999997615814
-          },
-          "list.render": {
-            "n": 11,
-            "ms": 2.0000001788139343,
-            "maxMs": 0.30000001192092896
+            "n": 495,
+            "ms": 84.99999958276749,
+            "maxMs": 0.6000000238418579
           },
           "save.thumb": {
             "n": 3,
-            "ms": 149.6000000834465,
-            "maxMs": 55.200000047683716
+            "ms": 217.80000001192093,
+            "maxMs": 114.60000002384186
+          },
+          "list.read": {
+            "n": 11,
+            "ms": 951.1999999284744,
+            "maxMs": 326.80000001192093
+          },
+          "list.render": {
+            "n": 11,
+            "ms": 1.800000011920929,
+            "maxMs": 0.30000001192092896
+          },
+          "save.serialize": {
+            "n": 8,
+            "ms": 137.29999995231628,
+            "maxMs": 18.399999976158142
+          },
+          "save.put": {
+            "n": 8,
+            "ms": 301.8000000715256,
+            "maxMs": 156.10000002384186
           },
           "bake.commit": {
-            "n": 138,
-            "ms": 939.599999666214,
-            "maxMs": 93.69999998807907
+            "n": 141,
+            "ms": 1817.4999995827675,
+            "maxMs": 860.8999999761581
           }
         }
       }
@@ -337,15 +367,15 @@
   },
   "S3_open": {
     "cold": {
-      "firstInteractiveMs": 1316,
-      "allPaintMs": 21491,
-      "longestBlockMs": 887,
+      "firstInteractiveMs": 1254,
+      "allPaintMs": 22523,
+      "longestBlockMs": 896,
       "parseMs": 2.8,
-      "applyMs": 5.1,
-      "bakeMs": 6684,
+      "applyMs": 4.6,
+      "bakeMs": 6763,
       "bakes": 24,
-      "bakedStrokes": 925,
-      "uploads": 420,
+      "bakedStrokes": 923,
+      "uploads": 426,
       "cache": {
         "asks": 23,
         "hits": 0,
@@ -357,21 +387,21 @@
       },
       "stalls": {
         "n": 2,
-        "maxMs": 888,
-        "sumMs": 1264
+        "maxMs": 897,
+        "sumMs": 1292
       },
       "strokes": 936,
       "faces": 23
     },
     "warm": {
-      "firstInteractiveMs": 1282,
-      "allPaintMs": 1735,
-      "longestBlockMs": 375,
+      "firstInteractiveMs": 1245,
+      "allPaintMs": 1708,
+      "longestBlockMs": 367,
       "parseMs": 2.7,
-      "applyMs": 4.4,
-      "bakeMs": 379,
+      "applyMs": 4.2,
+      "bakeMs": 363,
       "bakes": 2,
-      "bakedStrokes": 44,
+      "bakedStrokes": 42,
       "uploads": 40,
       "cache": {
         "asks": 23,
@@ -384,8 +414,8 @@
       },
       "stalls": {
         "n": 1,
-        "maxMs": 377,
-        "sumMs": 377
+        "maxMs": 370,
+        "sumMs": 370
       },
       "strokes": 936,
       "faces": 23
@@ -398,9 +428,9 @@
     },
     "same_picture": true,
     "ratio": {
-      "allPaintMs": 0.081,
-      "bakeMs": 0.057,
-      "firstInteractiveMs": 0.974
+      "allPaintMs": 0.076,
+      "bakeMs": 0.054,
+      "firstInteractiveMs": 0.993
     },
     "hit_ratio": 0.957,
     "note": "열기의 99.8%가 굽기였다(74 §4). 캐시가 그 굽기를 대신한다 — 그림은 같아야 하고(해시) 안 맞으면 캐시가 없다(= 굽는다)."
@@ -414,18 +444,77 @@
         2
       ],
       "commitMsMax_pre_post": [
-        41.2,
-        20.7
+        41.6,
+        20.8
       ],
-      "ratio_commitMsMax": 0.502,
+      "ratio_commitMsMax": 0.5,
       "all_same_picture": true
     },
     "residual": {
       "what": "남는 것은 «첫 자국의 준비»(보정) 한 번이다 — 판마다 한 번, 엔진 안의 한 덩어리라 점 구간으로 못 자른다.",
-      "calibMaxMs": 850.5,
+      "calibMaxMs": 852.1,
       "calibCalls": 3,
-      "share_of_max_from_calib": 0.996,
+      "share_of_max_from_calib": 0.995,
       "why_not_worker_now": "Worker + OffscreenCanvas는 엔진 전체(팁 아틀라스·종이 결·결정론 시드)를 옮기는 일이고 72가 「옮기면 그림이 갈릴 위험이 크다」로 미뤄 둔 것이다. 이 라운드가 실제로 잰 것은 «준비 한 번»이 임자라는 사실이고, 그것은 Worker 말고도 «준비를 굽기 밖에서 미리 하기»·«보정값을 저장해 두기»로 닿는다 — 어느 쪽인지는 값이 더 있어야 정한다(이월)."
     }
+  },
+  "S1_zoom": {
+    "note": "단계 256에서 고른 구간 크기가 «단계»를 올려도 예산 아래인가 — 아니다. 자르는 단위를 더 내리려면 점 아래(도장)로 가야 한다(이월).",
+    "zoomLevel": 512,
+    "rows": [
+      {
+        "slicePts": "inf",
+        "chunkPtsMax": 14,
+        "strokeMsMax": 140.9,
+        "commitMsMax": 143.4,
+        "ms": 21558.5,
+        "settled": true,
+        "sameTex": true,
+        "levels": [
+          512
+        ]
+      },
+      {
+        "slicePts": 4,
+        "chunkPtsMax": 4,
+        "strokeMsMax": 61,
+        "commitMsMax": 61,
+        "ms": 21954.6,
+        "settled": true,
+        "sameTex": true,
+        "levels": [
+          512
+        ]
+      },
+      {
+        "slicePts": 2,
+        "chunkPtsMax": 2,
+        "strokeMsMax": 41.4,
+        "commitMsMax": 49.3,
+        "ms": 22030.1,
+        "settled": true,
+        "sameTex": true,
+        "levels": [
+          512
+        ]
+      },
+      {
+        "slicePts": 1,
+        "chunkPtsMax": 2,
+        "strokeMsMax": 27.1,
+        "commitMsMax": 31.9,
+        "ms": 22576.8,
+        "settled": true,
+        "sameTex": true,
+        "levels": [
+          512
+        ]
+      }
+    ],
+    "budget_idle_ms": 12,
+    "budget_touch_ms": 4,
+    "all_same_picture": true,
+    "settled_all": true,
+    "note_settle": "⚠ `settled: false`인 행은 «다 구워지기 전»에 잰 것이라 그림 비교의 대상이 아니다 — 그 사실을 값으로 남기고 항등 판정에서 뺀다(#105)."
   }
 }

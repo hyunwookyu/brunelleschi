@@ -17,10 +17,36 @@
 //   새 획이 오면 그 면은 전량 재굽기가 된다(퇴출 뒤와 같은 형태 · 72가 미리 적어 둔 대가). 값으로 센다.
 
 import { C } from './constants'
-import { openStore, StoreError } from './store'
+import { StoreError } from './store'
 
+// ⚠⚠ **제 DB에 따로 산다**(web2-75 리뷰어 [6]). 첫 판은 문서 DB(`brunelleschi`)의 판을 1 → 2로 올려
+//   창고 둘을 더했는데, 그러면 **되돌릴 수 없다**: 배포를 되돌리거나 캐시에 묶인 옛 번들이 그 DB를
+//   열면 낮은 판으로는 못 열고(VersionError) 사람의 그림이 「저장소를 못 열었다」가 된다.
+//   지워도 되는 것(캐시)과 지우면 안 되는 것(문서)을 같은 판에 묶지 않는다 — 이 DB는 통째로 지워도 된다.
+const DB_NAME = 'brunelleschi-texcache'
+const DB_VERSION = 1
 export const TEXCACHE = 'texcache'
 export const TEXMETA = 'texmeta'
+
+let dbp: Promise<IDBDatabase> | null = null
+function openCacheDb(): Promise<IDBDatabase> {
+  if (dbp) return dbp
+  dbp = new Promise<IDBDatabase>((res, rej) => {
+    if (typeof indexedDB === 'undefined') { rej(new StoreError('캐시 열기')); return }
+    let req: IDBOpenDBRequest
+    try { req = indexedDB.open(DB_NAME, DB_VERSION) } catch (e) { rej(new StoreError('캐시 열기', e)); return }
+    req.onupgradeneeded = () => {
+      const db = req.result
+      if (!db.objectStoreNames.contains(TEXCACHE)) db.createObjectStore(TEXCACHE, { keyPath: 'key' })
+      if (!db.objectStoreNames.contains(TEXMETA)) db.createObjectStore(TEXMETA, { keyPath: 'key' })
+    }
+    req.onsuccess = () => res(req.result)
+    req.onerror = () => rej(new StoreError('캐시 열기', req.error))
+    req.onblocked = () => rej(new StoreError('캐시 열기'))
+  })
+  dbp.catch(() => { dbp = null })
+  return dbp
+}
 
 export interface TexCacheEntry { key: string; w: number; h: number; lv: number; bytes: ArrayBuffer }
 interface TexMeta { key: string; t: number; n: number }
@@ -67,7 +93,7 @@ export function texCacheKey(bakeSig: string, sigs: readonly string[], w: number,
 }
 
 function run<T>(store: string, mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest): Promise<T> {
-  return openStore().then(db => new Promise<T>((res, rej) => {
+  return openCacheDb().then(db => new Promise<T>((res, rej) => {
     let req: IDBRequest
     try {
       const t = db.transaction(store, mode)

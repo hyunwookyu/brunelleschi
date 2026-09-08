@@ -5,7 +5,7 @@
 // (마우스 걸음 40×2 = 점 수십). 짧은 획 대역(74 픽스처)과 긴 획 대역을 **둘 다** 잰다.
 
 import { expect, type Page } from '@playwright/test'
-import { settleBake } from './heavy72'
+import { settleBake, settleStat } from './heavy72'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -52,20 +52,32 @@ export const resetStats = (page: Page) => page.evaluate(() => {
   (window as any).__b2.diag.paintBakeReset(); (window as any).__b2.diag.paintWarmReset(); (window as any).__b2.diag.resetPerfMarksForTest()
 })
 
-/** 굽기를 **전량으로** 다시 돌린다 — 자르기 설정이 바뀐 뒤의 «같은 그림»을 다시 만든다 */
-export async function rebake(page: Page, stage = ''): Promise<void> {
+/** 굽기를 **전량으로** 다시 돌린다 — 자르기 설정이 바뀐 뒤의 «같은 그림»을 다시 만든다.
+ *  ⚠⚠ **다 구워지기를 기다리는 상한이 이 자의 일부다**(75 · 실제로 한 번 걸렸다): 단계를 올리고 구간을 1점으로
+ *  잘게 썰면 한 판이 20초를 넘고, 기본 상한(90초)에 닿으면 «덜 구워진 그림»을 해시하게 된다 — 그러면 항등
+ *  게이트가 «그림이 갈렸다»는 **틀린 빨강**을 낸다(원장의 `settle_timeouts`가 그 사실을 말했다 · #105).
+ *  그래서 상한을 부르는 쪽이 정하고, **닿았으면 그 사실을 값으로** 돌려준다. */
+export async function rebake(page: Page, stage = '', capMs = 90_000): Promise<boolean> {
   await page.evaluate(() => { (window as any).__b2.diag.rebakePaintTex() })
   await page.waitForTimeout(120)
-  await settleBake(page, 400, stage || 'rebake75')
+  await page.waitForTimeout(400)
+  try {
+    await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: capMs })
+    return true
+  } catch {
+    settleStat.timeouts++
+    settleStat.lastStage = stage || 'rebake75'
+    return false
+  }
 }
 
 /** 구간 크기를 놓고 다시 굽는다(전량 = Infinity → «획 하나가 최소 단위» = 수리 전 거동) */
-export async function bakeWithSlicePts(page: Page, pts: number | 'inf' | null, stage = ''): Promise<{ bake: Bake75; tex: Awaited<ReturnType<typeof texHash>>; scr: Awaited<ReturnType<typeof screenHash>> }> {
+export async function bakeWithSlicePts(page: Page, pts: number | 'inf' | null, stage = '', capMs = 90_000): Promise<{ bake: Bake75; tex: Awaited<ReturnType<typeof texHash>>; scr: Awaited<ReturnType<typeof screenHash>>; settled: boolean }> {
   // 'inf' = «획 하나가 최소 단위»(수리 전 거동) — Infinity는 evaluate 인자로 못 넘어간다(JSON)
   await page.evaluate((v) => (window as any).__b2.diag.setPaintSlicePtsForTest(v === 'inf' ? Infinity : v), pts as number | 'inf' | null)
   await resetStats(page)
-  await rebake(page, stage)
-  return { bake: await bake75(page), tex: await texHash(page), scr: await screenHash(page) }
+  const settled = await rebake(page, stage, capMs)
+  return { bake: await bake75(page), tex: await texHash(page), scr: await screenHash(page), settled }
 }
 
 /** **긴 획**을 몇 개 긋는다(실기기 대역 — 점 수십). 칠 도구가 이미 골라져 있어야 한다. */

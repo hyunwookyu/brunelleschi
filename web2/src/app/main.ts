@@ -3400,7 +3400,15 @@ const resetLoopStat = () => { loopStat.frames = 0; loopStat.drawFrames = 0; loop
 // 69의 전수 표에 +0으로 선다 · docs/reference/INVENTORY.md).
 setStallMs(C.PERF_STALL_MS)   // web2-74 §0 — 멈춤 문턱의 정본은 상수다(팔만 낮춘다)
 const PERF_HUD = new URLSearchParams(location.search).has('perf')
-const perfHud = { fps: 0, gapMs: 0, longestBlockMs: 0, longtaskSupported: false, openMs: 0, ticks: [] as number[] }
+const perfHud = { fps: 0, gapMs: 0, longestBlockMs: 0, longtaskSupported: false, openMs: 0, allPaintMs: 0, ticks: [] as number[] }
+/** §4 — 「칠이 다 채워졌나」: 칠 자리가 하나라도 서 있고, 그 자리들이 다 구워졌고, 이어 굽기가 없다.
+ *  ⚠ «보이는 것이 다 구워졌나»로 재면 안 된다(#105) — 아직 안 구운 자리는 안 보이므로 첫 프레임부터 참이 된다. */
+function paintFilled(): boolean {
+  const es = paintTexStats()
+  if (es.length === 0) return false
+  const want = es.filter(e => e.gateSide !== false)
+  return want.length > 0 && want.every(e => e.level > 0 && e.w > 0) && !paintBakePending()
+}
 let perfHudEl: HTMLElement | null = null
 /** 1초 창의 **최장 rAF 간격** — 창 안의 눈금 짝 + «마지막 눈금부터 지금까지»(안 끝난 간격).
  *  옛 자(p95)는 창 안 눈금이 하나면 짝이 없어 **0**을 냈다 — 그것이 §0 ①의 결함이다. */
@@ -3452,7 +3460,8 @@ function perfHudText(): string {
   const bc = bootCostForHud()
   const tc = texCacheStats()
   return `fps ${perfHud.fps} · 최장 간격 ${perfHud.gapMs}ms\n열기 ${Math.round(perfHud.openMs)}ms(첫 프레임)`
-    + `\n파싱 ${Math.round(bc.parseMs)} · 세우기 ${Math.round(bc.applyMs)} · 굽기 ${Math.round(bc.bakeMs)}ms · 캐시 ${tc.applied}면\n`
+    + ` · 칠 다 채움 ${perfHud.allPaintMs > 0 ? Math.round(perfHud.allPaintMs) + 'ms' : '…'}`
+    + `\n파싱 ${Math.round(bc.parseMs)} · 세우기 ${Math.round(bc.applyMs)} · 굽기 ${Math.round(bc.bakeMs)}ms · 캐시에서 ${tc.applied}면\n`
     + `멈춤 ${st.n}회(≥${st.thresholdMs}ms)` + (rows.length ? '\n' + rows.join('\n') : '')
 }
 
@@ -3539,6 +3548,10 @@ function frame() {
     loopStat.workMs += lt1 - lt0
     loopStat.lastEndAt = lt1
     if (loopStat.firstFrameEndAt < 0) { loopStat.firstFrameEndAt = lt1; perfHud.openMs = lt1 }
+    // web2-75 §4(리뷰어 [13]) — **사람이 실제로 기다리는 것**은 「칠이 다 채워지기까지」다.
+    //   72·73·75의 원장이 그 값(allPaintMs)으로 판정하는데 화면에는 «첫 프레임»만 있었다.
+    //   한 번만 잰다: 칠 자리가 서고(굽기가 한 번이라도 돌았고) 이어 굽기가 없어진 그 순간.
+    if (perfHud.allPaintMs === 0 && paintFilled()) perfHud.allPaintMs = lt1
   }
   requestAnimationFrame(frame)
 }
@@ -4441,7 +4454,7 @@ const diag = {
   glUploadReset: () => resetGlUploadStats(),
   frameLoop: () => ({ ...loopStat, now: performance.now() }),
   frameLoopReset: () => resetLoopStat(),
-  perfHudForTest: () => ({ on: PERF_HUD, fps: perfHud.fps, gapMs: perfHud.gapMs, longestBlockMs: perfHud.longestBlockMs, longtaskSupported: perfHud.longtaskSupported, openMs: perfHud.openMs, maxGapMs: loopStat.maxGapMs, text: perfHudEl?.textContent ?? null,
+  perfHudForTest: () => ({ on: PERF_HUD, fps: perfHud.fps, gapMs: perfHud.gapMs, allPaintMs: perfHud.allPaintMs, longestBlockMs: perfHud.longestBlockMs, longtaskSupported: perfHud.longtaskSupported, openMs: perfHud.openMs, maxGapMs: loopStat.maxGapMs, text: perfHudEl?.textContent ?? null,
     /** ⚠ 화면이 **안 떠 있어도**(?perf 없이) 이 문면을 낸다 — 팔이 「깃발 없는 판은 DOM에 없다」와
      *  「자가 무엇을 가리키나」를 갈라서 본다(gates73 g2가 앞의 것을 계속 잰다). */
     textNow: perfHudText() }),

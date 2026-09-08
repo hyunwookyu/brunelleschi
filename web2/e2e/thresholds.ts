@@ -161,4 +161,6 @@ export const PERF74_MARK_NAMES_N = 7
 export const PAINT75_PRE_CHUNK_PTS_MIN = 10
 /** §3 — 캐시가 실제로 걸렸다고 말하려면 그 문서의 (면,쪽) 중 이만큼은 캐시에서 와야 한다(몫).
  *  1.0으로 두면 «한 자리라도 못 맞추면 빨강»이라 굽기 열쇠의 사소한 흔들림(단계·동결)에 게이트가 끌려간다. */
-export const PAINT75_CACHE_HIT_RATIO_MIN = 0.8
+/** ⚠ 0.8에서 **0.9로 올렸다**(리뷰어 [5]): 실측이 0.957(22/23)인데 0.8이면 23면 중 4.6면까지 조용히
+ *  재굽기로 떨어져도 초록이다 — 그 여유가 덮는 것이 바로 지금 남아 있는 미끄러짐(hit 23 ↔ 올린 면 22)이다. */
+export const PAINT75_CACHE_HIT_RATIO_MIN = 0.9

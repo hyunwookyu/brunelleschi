@@ -93,6 +93,9 @@ test('§1-0 — `bake.commit`의 최대는 «획의 길이»인가 «첫 자국�
 test('§1 — 구간 크기 스윕(1·2·4·8·전량): 한 구간 최대 · 한 호출 최대 · 총 ms · 픽셀 해시', async ({ page }) => {
   test.setTimeout(900_000)
   await bootWith(page, '')
+  // 이 시험 하나만 돌릴 때도 «전체를 돌 때와 같은 길»로 선다(#88): 세우고 → **다시 열고** → 앉힌다.
+  //   세운 판 그대로 이어 가면 카메라가 달라 붓이 면을 빗나간다(실제로 그렇게 한 번 0획이 났다).
+  if (!FIXTURE) { FIXTURE = (await buildFixtureText(page)).text; await bootWith(page, '') }
   await applyFixture(page, FIXTURE)
   await page.click('#btn-paint')
   await page.waitForTimeout(100)
@@ -111,6 +114,16 @@ test('§1 — 구간 크기 스윕(1·2·4·8·전량): 한 구간 최대 · 한
   }
   await bakeWithSlicePts(page, null, 'S1/app')
   const appPts = await page.evaluate(() => (window as any).__b2.diag.paintSlicePtsForTest())
+  // ⚠ **반복**(#14 — 변동폭 없이 비를 주장하지 않는다 · 리뷰어 [10]): 전/후 두 자리를 세 번씩 더 돈다.
+  //   이 기계는 74가 「같은 팔의 순위가 네 실행에서 뒤집혔다」를 실측한 바로 그 기계다.
+  const reps: { pre: number[]; post: number[]; preMs: number[]; postMs: number[] } = { pre: [], post: [], preMs: [], postMs: [] }
+  for (let k = 0; k < 3; k++) {
+    const a = await bakeWithSlicePts(page, 'inf', `S1/rep${k}/pre`)
+    const b = await bakeWithSlicePts(page, null, `S1/rep${k}/post`)
+    reps.pre.push(a.bake.commitMsMax); reps.post.push(b.bake.commitMsMax)
+    reps.preMs.push(a.bake.ms); reps.postMs.push(b.bake.ms)
+  }
+  const ratios = reps.pre.map((v, i) => Math.round((reps.post[i]! / v) * 1000) / 1000)
   const pre = rows[0] as any
   const now = (rows.find(r => (r as any).slicePts === appPts) ?? rows[rows.length - 1]) as any
   OUT.S1_sweep = {
@@ -121,9 +134,50 @@ test('§1 — 구간 크기 스윕(1·2·4·8·전량): 한 구간 최대 · 한
       commitMsMax: [pre.commitMsMax, now.commitMsMax], ms: [pre.ms, now.ms],
       ratio_commitMsMax: Math.round((now.commitMsMax / pre.commitMsMax) * 1000) / 1000,
       ratio_total_ms: Math.round((now.ms / pre.ms) * 1000) / 1000 },
+    repeats: { note: '전/후를 세 번씩 더 돌았다(#14) — 비가 변동폭 밖인가', commitMsMax_pre: reps.pre, commitMsMax_post: reps.post,
+      ms_pre: reps.preMs, ms_post: reps.postMs, ratios,
+      ratio_min: Math.min(...ratios), ratio_max: Math.max(...ratios) },
     note: '픽셀 해시가 다섯 행에서 같다 — 자르는 자리가 그림을 안 바꾼다. 반증(구간마다 세션 끊기)은 gates75 g1-②가 같은 판에서 «갈린다»를 낸다.',
   }
   expect(rows.every(r => (r as any).sameTex), '다섯 행이 같은 그림').toBe(true)
+})
+
+test('§1-c — 단계를 올린 판(512)에서 구간 크기별 비용 — «점 아래는 도장이다»의 값', async ({ page }) => {
+  test.setTimeout(900_000)
+  await bootWith(page, '')
+  // 이 시험 하나만 돌릴 때도 «전체를 돌 때와 같은 길»로 선다(#88): 세우고 → **다시 열고** → 앉힌다.
+  //   세운 판 그대로 이어 가면 카메라가 달라 붓이 면을 빗나간다(실제로 그렇게 한 번 0획이 났다).
+  if (!FIXTURE) { FIXTURE = (await buildFixtureText(page)).text; await bootWith(page, '') }
+  await applyFixture(page, FIXTURE)
+  await page.click('#btn-paint')
+  await page.waitForTimeout(100)
+  await page.evaluate(() => Object.assign((window as any).__b2.app.paintSel, { hex: '#7a4a3a', w: 22, o: 1 }))
+  await drawLongStrokes(page, 2, 40)
+  const z = await zoomToLevel(page, 512, 24)
+  const rows: Record<string, unknown>[] = []
+  let ref: string | null = null
+  for (const v of ['inf', 4, 2, 1] as const) {
+    // ⚠ 단계 512에서 1점 구간은 한 판이 20초를 넘는다 — 기본 상한(90초)에 닿으면 «덜 구워진 그림»을 해시하게 되고
+    //   그러면 항등 게이트가 **틀린 빨강**을 낸다(첫 판이 실제로 그랬다 · 원장의 settle_timeouts가 그 사실을 말했다).
+    const r = await bakeWithSlicePts(page, v as never, `S1c/${v}`, 240_000)
+    const t = sig(r.tex)
+    if (!ref) ref = t
+    rows.push({ slicePts: v, chunkPtsMax: r.bake.chunkPtsMax, strokeMsMax: r.bake.strokeMsMax,
+      commitMsMax: r.bake.commitMsMax, ms: r.bake.ms, settled: r.settled, sameTex: t === ref,
+      levels: r.tex.map(x => x.level).filter((x, i, a) => a.indexOf(x) === i).sort() })
+  }
+  await bakeWithSlicePts(page, null, 'S1c/app')
+  OUT.S1_zoom = {
+    note: '단계 256에서 고른 구간 크기가 «단계»를 올려도 예산 아래인가 — 아니다. 자르는 단위를 더 내리려면 점 아래(도장)로 가야 한다(이월).',
+    zoomLevel: z.maxLevel, rows,
+    budget_idle_ms: 12, budget_touch_ms: 4,
+    all_same_picture: rows.every(r => (r as any).sameTex),
+    settled_all: rows.every(r => (r as any).settled),
+    note_settle: '⚠ `settled: false`인 행은 «다 구워지기 전»에 잰 것이라 그림 비교의 대상이 아니다 — 그 사실을 값으로 남기고 항등 판정에서 뺀다(#105).',
+  }
+  expect(z.maxLevel, '단계가 실제로 올라갔다(#103)').toBeGreaterThanOrEqual(512)
+  expect(rows.filter(r => (r as any).settled).length, '다 구워진 행이 둘 이상이라 견줄 것이 있다').toBeGreaterThanOrEqual(2)
+  expect(rows.filter(r => (r as any).settled).every(r => (r as any).sameTex), '단계가 올라가도 (다 구워진) 설정들이 같은 그림').toBe(true)
 })
 
 test('§1-b — 같은 몸짓을 수리 전(획 단위) ↔ 지금(점 구간)으로: 멈춤·사다리·표식 호출 수', async ({ page }) => {
