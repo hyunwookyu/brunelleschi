@@ -309,7 +309,11 @@ test('⑤ ⛳ 미리보기 == 확정본 — 뗄 때 픽셀 불변(캔버스 해�
     // 인계된 층·캔버스가 정본(획 목록)에서 처음부터 구운 판과 같아야 한다(paint65 ①의 그 자 —
     // 그 자가 실제로 f32/f64 갈림을 잡았다). 이것이 ⑤의 «측정» 몫이다.
     await page.evaluate(() => { (window as any).__b2.diag.rebakePaintTex() })
-    await page.waitForTimeout(250)
+    // ⚠⚠ **고정 ms로 기다리지 않는다**(72의 규약 · web2-75가 그 자리를 깼다): 굽기가 «점 구간»으로
+    //   잘리면서 100점짜리 획의 전량 재굽기가 250ms 안에 안 끝난다 — 그러면 **덜 구워진 판**을
+    //   «다른 그림»으로 읽는다(항등 게이트가 틀린 빨강을 낸다). 다 구워질 때까지 기다린다(상한 있는 대기 #81).
+    await page.waitForTimeout(120)
+    await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 120_000 })
     const rebakeTex = await page.evaluate(() => (window as any).__b2.diag.paintTexHash())
     const handedSame = JSON.stringify(commitTex) === JSON.stringify(rebakeTex)
     rows.push({ tag: t.tag, tex_same: JSON.stringify(draftTex) === JSON.stringify(commitTex), rebake_same: handedSame, scr_changed: scr.changed, scr_maxD: scr.maxD, rebuilds: dStat.rebuilds, full_uploads: dStat.fullUploads, handed: bk.handoverStrokes, bakes: bk.bakes })

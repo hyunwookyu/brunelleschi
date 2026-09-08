@@ -20,6 +20,12 @@
 // 이름을 바꾸는 것은 `docs`의 한 필드를 고치는 일이고 `data`·썸네일을 안 건드린다.
 
 const DB_NAME = 'brunelleschi'
+// ⚠⚠ **판을 올리지 않는다**(web2-75 리뷰어 [6]). 첫 판은 굽힌 그림 캐시의 창고 둘을 여기 더하며
+//   1 → 2로 올렸는데, **판을 올리면 되돌릴 수 없다**: 배포를 되돌리거나 캐시에 묶인 옛 번들이
+//   같은 오리진에서 이 DB를 열면 «낮은 판으로는 못 연다»(VersionError) — 그러면 사람의 그림이
+//   «저장소를 못 열었다»로 사라진 것처럼 보인다(#58의 그 자리와 만난다).
+//   캐시는 **제 DB에 따로 산다**(`core/texcache.ts`의 `brunelleschi-texcache` v1) — 지워도 되는 것을
+//   지우면 안 되는 것과 같은 판에 묶지 않는다(A-3: 단순한 쪽).
 const DB_VERSION = 1
 const DOCS = 'docs'
 const THUMBS = 'thumbs'

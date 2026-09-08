@@ -666,6 +666,79 @@ def scan_unbounded_wait(root: Path) -> list[dict]:
                                "**마감 보고의 「도는 백그라운드 없음」 한 줄**이다")
 
 
+def scan_round_waits(root: Path) -> list[dict]:
+    """**이 라운드가 실행한 대기에 상한 없는 것이 있으면 빨강**(2026-09-08 · web2-75 §0 ㉡).
+
+    73 §0 ㉡이 PITFALLS에 「대기는 동시에 하나 · 20분 상한」을 박았는데 74에서 **또 났다**
+    (「Wait for ledger rerun」 둘이 각각 10시간 8분 · 9시간 58분). 문서로는 안 막힌다 — 그래서 셋을 건다:
+      ㉠ 대기 명령이 상한을 «자기가» 든다(`timeout <초> …` · `node tools/wait.mjs --cap`) — 도구 쪽(web2/tools/wait.mjs)
+      ㉡ 이 검사 — 라운드 블록의 「대기 목록」 표에서 상한 없는 줄을 잡는다(**여기**)
+      ㉢ 착수 표의 「도는 백그라운드 0」을 마감에서 한 번 더 값으로(scan_unbounded_wait ①이 마감 블록을 본다)
+
+    보는 것 둘:
+      ① `web2/NOTES.md`의 **가장 최근 라운드 블록**(`^# web2-NN`)에 「대기 목록」 절이 있고, 그 표의 줄 중
+         대기 동사(sleep · wait · until · poll · Start-Sleep · waitFor)가 있는 줄은 **전부** 상한 표기
+         (`timeout <n>` · `--cap <n>` · `timeout:` · `상한 <n>`)를 든다. 하나라도 없으면 빨강. 절이 없어도 빨강
+         (web2-75부터 — 그 전 블록은 규약이 없었다).
+      ② `stage0/out/waits_web2.jsonl`(wait.mjs가 대기마다 한 줄) — cap_s가 없거나 1200을 넘는 줄은 빨강.
+
+    ⚠⚠ **못 보는 것**(#26): 세션 안에서 «표에 안 적고» 돌린 맨손 대기. 그것은 저장소에 없다. 표에 적는 것이 규약이고,
+    이 검사는 «적힌 것 중 상한 없는 것»과 «절 자체가 없는 것»을 잡는다.
+    반증 조건: 표에 `| sleep 30 | … |` 한 줄을 넣으면 ①이 빨개진다(web2-75 §0에서 실제로 넣어 확인했다).
+    """
+    flags: list[dict] = []
+    n = 0
+    f = root / "web2" / "NOTES.md"
+    try:
+        txt = f.read_text(encoding="utf-8")
+    except Exception:
+        return flags
+    heads = [m for m in re.finditer(r"^# (web2-(\d+))\b.*$", txt, re.M)]
+    if heads:
+        m = heads[-1]
+        nn = int(m.group(2))
+        body = txt[m.start():]
+        if nn >= 75:
+            n += 1
+            sec = re.search(r"^##+ .*대기 목록.*$", body, re.M)
+            if not sec:
+                flags.append({"path": f"web2/NOTES.md:{m.group(1)}", "val": "「대기 목록」 절 없음",
+                              "flag": "**라운드 블록에 「대기 목록」 절이 없다**(web2-75 §0 ㉡) — 이 라운드가 돌린 대기 전부를 "
+                                      "상한과 함께 표로 적어야 검사가 볼 수 있다"})
+            else:
+                rest = body[sec.end():]
+                nxt = re.search(r"^##+ ", rest, re.M)
+                block = rest[:nxt.start()] if nxt else rest
+                WAIT = re.compile(r"sleep|\bwait\b|\buntil\b|\bpoll|Start-Sleep|waitFor|wait\.mjs", re.I)
+                CAP = re.compile(r"timeout\s+\d|--cap\s+\d|timeout:\s*\d|상한\s*\d|timeout\s*=\s*\d", re.I)
+                for line in block.splitlines():
+                    if not line.startswith("|") or set(line.strip()) <= set("|-: "):
+                        continue
+                    if line.startswith("| 대기") or line.startswith("| 명령"):
+                        continue
+                    n += 1
+                    if WAIT.search(line) and not CAP.search(line):
+                        flags.append({"path": f"web2/NOTES.md:{m.group(1)}:대기 목록", "val": line.strip()[:120],
+                                      "flag": "**상한 없는 대기**(web2-75 §0 ㉡ · #81 ㉡ · #95) — 대기 명령은 `timeout <초>` 또는 "
+                                              "`tools/wait.mjs --cap <초>`로만 돈다. 맨손 sleep·wait 고리는 잠금이다"})
+    j = root / "stage0" / "out" / "waits_web2.jsonl"
+    if j.exists():
+        for line in j.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            n += 1
+            try:
+                rec = json.loads(line)
+            except Exception:
+                continue
+            cap = rec.get("cap_s")
+            if not isinstance(cap, (int, float)) or cap > 1200:
+                flags.append({"path": "stage0/out/waits_web2.jsonl", "val": line[:120],
+                              "flag": "**wait.mjs 기록에 상한이 없거나 20분을 넘는다**(web2-75 §0 ㉡)"})
+    return flags + _cover("scan_round_waits", "대기 목록 줄·wait.mjs 기록", n, len(flags),
+                          note="⚠ 표에 안 적힌 맨손 대기는 안 보인다 — 적는 것이 규약이다")
+
+
 def scan_pitfalls_table_last(root: Path) -> list[dict]:
     """**「최근 다섯」 표가 `PITFALLS.md`의 마지막 절인가**(2026-08-20 17차 후속 · #55).
 
@@ -1221,6 +1294,7 @@ def main():
     flags += scan_pitfalls_table_last(ROOT)        # #55: 「최근 다섯」 표가 파일 끝에 있는가
     flags += scan_ledger_guard(ROOT)              # #90: 원장 쓰기 관문(LEDGER=1)이 배선돼 있는가
     flags += scan_unbounded_wait(ROOT)            # #81 ㉤: 마감이 「도는 백그라운드 없음」을 적었는가
+    flags += scan_round_waits(ROOT)               # web2-75 §0 ㉡: 라운드의 대기 전부에 상한이 있는가
     flags += scan_citation_hashes(ROOT, reports)   # #33 값 대조: 인용 해시 ↔ 원장 현재 해시
     flags += scan_cited_values(ROOT, reports)  # #42 ⑥ 존재 대조: 인용한 수치가 원장에 있는가
     PITFALL_CITATIONS.clear()

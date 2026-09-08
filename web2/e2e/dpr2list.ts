@@ -27,7 +27,7 @@ export const DPR2_NEED_RE = /screenshot\(|getImageData\(|readPixels\(|toDataURL\
 
 /** 계측 스펙 넷(§1㉠) — 회귀 시험이 아니라 **추세 측정**이고 워커 수가 그 수를 바꾼다
  *  (#99와 같은 뿌리). 초록 실행에서 빠지고 밤(e2e:night)·원장(e2e:ledger)에만 돈다. */
-export const MEASURE_SPECS = ['cost18', 'cost20', 'cost22', 'brushperf', 'perf65', 'perf66', 'perf72', 'perf73', 'perf74'] as const
+export const MEASURE_SPECS = ['cost18', 'cost20', 'cost22', 'brushperf', 'perf65', 'perf66', 'perf72', 'perf73', 'perf74', 'perf75'] as const
 
 /** 조건이 낸 목록(2026-09-07 · **web2-74**: 조건에 «여는 괄호»가 붙으면서 **panel65가 빠졌다** — 그 스펙의
  *  `getImageData`는 머리주석의 «말»뿐이고(web2-68이 견본 캔버스를 SVG 도구 그림으로 갈면서 픽셀 자가 없어졌다)
@@ -49,6 +49,6 @@ export const DPR2_SPECS = [
   'grain26', 'grain30', 'grain40', 'graphite', 'icons', 'inklayer', 'input',
   'join56', 'level', 'materials', 'mats46', 'mats52', 'nums47', 'own3d', 'paint45',
   'paint48', 'paint50', 'paint54', 'paint59', 'paint62', 'paint64', 'paint65', 'paint66', 'paint67', 'paper', 'papericon31', 'press26', 'rep49', 'rollpose',
-  'roundsave', 'shots62', 'shots63', 'shots64', 'shots65', 'shots66', 'shots67', 'shots68', 'shots69', 'shots70', 'shots71', 'shots72', 'shots73', 'shots74', 'slide40', 'snapghost', 'span57', 'thick55', 'turn31', 'ui34r7', 'underlay', 'view42',
+  'roundsave', 'shots62', 'shots63', 'shots64', 'shots65', 'shots66', 'shots67', 'shots68', 'shots69', 'shots70', 'shots71', 'shots72', 'shots73', 'shots74', 'shots75', 'slide40', 'snapghost', 'span57', 'thick55', 'turn31', 'ui34r7', 'underlay', 'view42',
   'waitfade', 'waitink37', 'yellow', 'yellowfree', 'zones',
 ] as const

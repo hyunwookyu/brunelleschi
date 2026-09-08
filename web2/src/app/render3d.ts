@@ -23,6 +23,7 @@ import { vkey } from '../core/joint'
 import { norm3, add3, mul3, type V3 } from '../core/vec'
 import { markStart, markEnd } from '../core/perfmark'
 import { uvBoxOf, texLevel, texDims, bakeFaceTex, drawDraftOnTex, appendMarkOnTex, draftFeedOnTex, draftFinishOnTex, draftCancelOnTex, draftSupported, rebuildStrokesOnTex, type UvBox, type RepBake } from '../core/facetex'
+import { texCacheKey, peekTexCache, requestTexCache, putTexCache, texCacheOff, noteTexCacheApplied, noteTexCacheWaited, noteTexCacheWriteSkip } from '../core/texcache'
 import { paintLayerAlive, releasePaintLayer, type MarkBox } from '../core/paintseam'
 import { faceHatchSpacingWorld } from '../core/hatch'
 import type { Grade, Stroke, Face } from '../core/types'
@@ -574,9 +575,20 @@ interface PaintTexEntry {
   sigParts?: { lv: string; fam: string; hatch: string; rep: string; texelQ: string; box: string }
   /** web2-72 §2 — 동결 중에 쓰는 «얼린» 무늬 굵기 계단(멈춘 뒤 다시 맞춘다) */
   frozenTexelQ?: number | null
+  /** web2-75 §3 — 이 세션에서 **실제로 구운 적이 있는가**. 굽힌 그림 캐시는 «한 번도 안 구운 자리»에서만
+   *  본다(= 열 때). 세션 안의 재굽기는 «정본에서 다시 만들라»는 뜻이므로 캐시를 안 본다(65·50의 팔이 그것을 잰다). */
+  bakedHere: boolean
+  /** §3 — 캐시 왕복을 기다리기 시작한 시각(상한 C.TEXCACHE_WAIT_MS) */
+  cacheWaitAt?: number
+  /** ⚠⚠ web2-75 §3 — **초안이 이 캔버스에 얹혀 있다.** 그때의 캔버스는 «확정된 그림»이 아니다(그리는 중의 획이 들어 있다).
+   *  그 상태를 캐시에 담으면 **뒤에 그 열쇠로 들어온 사람이 잉크가 더 묻은 그림을 받는다** — 조용히 틀린 그림이다(⛔ 43-1).
+   *  밤 전량이 그것을 잡았다(paint67 ⑤ 「redo — 화면이 칠 «후»와 픽셀로 같다」가 빨강). 굽기가 끝나면 내린다. */
+  draftTouched?: boolean
   /** web2-72 §1 — **이어 굽는 중인 판**. 바탕은 이미 섰고 획을 done개까지 얹었다.
    *  null이면 이어 구울 것이 없다. 이 값이 있는 동안 캔버스는 «온전하지만 덜 채워진» 그림이다. */
-  pending: { sig: string; lv: number; strokes: Stroke[]; sigs: string[]; done: number } | null
+  pending: { sig: string; lv: number; strokes: Stroke[]; sigs: string[]; done: number
+    /** web2-75 §1 — 그 획 «안»의 점 차례(0이면 열린 구간이 없다 — 획 경계에 서 있다) */
+    dotDone: number } | null
 }
 let paintTexes = new Map<string, PaintTexEntry>()
 let paintKey = ''
@@ -618,6 +630,17 @@ export interface PaintBakeStat {
   /** §1 — 이어 굽던 판의 «앞자리»가 갈려 처음부터 다시 구운 횟수(되돌리기·지우개가 그 자리) */ sliceRestarts: number
   /** §1-2 — 면별 칠 색인을 다시 세운 횟수(문서가 갈릴 때마다 한 번) */ indexRebuilds: number
   /** §1-2 — 그 색인을 세우며 훑은 획 수(문서 전체 한 번 — 면마다가 아니다) */ indexScans: number
+  // ── web2-75 §1 표식(D-1 — `bake.commit` 안을 셋으로 가른다: 바탕 · 획 · 점) ───────────────────
+  /** 바탕 굽기(bakeFaceTex(bg) — 흰 + 재료 + 해칭 · 획 0)에 든 ms 합과 한 번의 최대 */ bgMs: number
+  bgMsMax: number
+  /** 이어 굽기에서 획 «하나»(또는 구간 하나)를 얹는 데 든 ms의 최대 — 지시의 「획 하나가 통째」의 자 */ strokeMsMax: number
+  /** 얹은 획의 점 수 최대(uv 점) — 「긴 붓 획 = 도장 수백」의 자 */ strokePtsMax: number
+  /** `bake.commit` 한 호출의 벽시계 최대(ms) — §1 게이트 「단일 호출 최대」의 자(markCounts와 같은 값이어야 한다) */ commitMsMax: number
+  /** 한 호출이 얹은 점 수의 최대(구간 합) — 기계에 안 흔들리는 짝(예산 0에서 pre = 획의 점 수 · post = 구간 크기) */ commitPtsMax: number
+  /** 점 구간으로 얹은 횟수(75) — 수리 전에는 0이다 */ sliceChunks: number
+  /** **한 구간이 먹인 점 수의 최대**(75 게이트의 «기계에 안 흔들리는» 자 — 수리 전에는 획의 점 수 전부) */ chunkPtsMax: number
+  /** 초안이 와서 열려 있던 점 구간을 그 자리에서 끝까지 얹은 횟수와 그 ms(§1-2의 규약) */ sliceFlushes: number
+  sliceFlushMs: number
 }
 const zeroBakeStat = (): PaintBakeStat => ({
   bakes: 0, bakedStrokes: 0, appends: 0, appendStrokes: 0, handoverStrokes: 0,
@@ -627,6 +650,7 @@ const zeroBakeStat = (): PaintBakeStat => ({
   levelUp: 0, levelDown: 0,
   frozenFrames: 0, allocDowns: 0, allocBytes: 0, deferred: 0, sliced: 0, sliceRestarts: 0,
   indexRebuilds: 0, indexScans: 0,
+  bgMs: 0, bgMsMax: 0, strokeMsMax: 0, strokePtsMax: 0, commitMsMax: 0, commitPtsMax: 0, sliceChunks: 0, chunkPtsMax: 0, sliceFlushes: 0, sliceFlushMs: 0,
 })
 let bakeStat: PaintBakeStat = zeroBakeStat()
 export function paintBakeStats(): PaintBakeStat & { entries: number; bytes: number; budget: number; accum: boolean; partial: boolean } {
@@ -781,7 +805,7 @@ function putPaintTex(
   r.paintGroup.add(mesh)
   paintTexes.set(key, {
     canvas, tex, mesh, box, faceId, side, level: 0, base: null, famBits: -1,
-    sigs: [], bakeSig: '', docKey: '', bg: null, tick: 0, evicted: false, pending: null,
+    sigs: [], bakeSig: '', docKey: '', bg: null, tick: 0, evicted: false, pending: null, bakedHere: false,
   })
 }
 
@@ -863,6 +887,28 @@ let bakeIdleMsOverride: number | null = null
 export function setPaintBakeIdleMsForTest(v: number | null): void { bakeIdleMsOverride = v }
 export const paintBakeIdleMsForTest = (): number => bakeIdleMsOverride ?? C.PAINT72_BAKE_MS_IDLE
 /** 반증(D-3) — 시간 분할을 끈다: 한 프레임에 전부 굽는다(pre의 그 차단 시간이 돌아온다) */
+// ── web2-75 §3 — **캐시는 «연 뒤»에만 본다** ────────────────────────────────────────
+// 밤 전량이 그 자리를 잡았다(paint65 ⑤ 「무회귀 트리거가 산다」가 빨강): 되돌리기가 돌아간 상태의 열쇠가
+// 이 세션에서 이미 담긴 것이면 캐시가 **굽기를 대신해 버려** 「트리거가 오면 다시 만든다」가 관찰되지 않는다.
+// 그림은 옳지만 **세션 안의 거동이 74와 달라진다** — 캐시의 몫은 «열기»이지 «편집»이 아니다(§3의 문면 그대로).
+// 그래서 문서가 이 세션에서 한 번이라도 갈리면 그 뒤로는 안 본다. 문서를 새로 열면 다시 켠다.
+let texCacheArmed = true
+let texCacheDocVersion: number | null = null
+/** 문서를 앉힐 때(열기·복원) 다시 켠다 — main의 applyOpen·boot이 부른다 */
+export function armTexCacheForDoc(): void { texCacheArmed = true; texCacheDocVersion = null }
+export const texCacheArmedForTest = (): boolean => texCacheArmed
+
+// ── web2-75 §1 — «점 구간»의 크기와 그 스윕 손잡이 ──────────────────────────────────
+// null이면 앱 상수(C.PAINT75_SLICE_PTS) · Infinity면 «획 하나가 최소 단위»(수리 전 거동 = 빨강 짝)
+let paintSlicePtsOverride: number | null = null
+export function setPaintSlicePtsForTest(v: number | null): void { paintSlicePtsOverride = v }
+export const paintSlicePtsForTest = (): number => paintSlicePtsOverride ?? C.PAINT75_SLICE_PTS
+// ⛳ D-3 반증 — 구간마다 세션을 끊고 «새 획»으로 다시 시작한다(순진한 구현이 하는 짓).
+//   그러면 구간 경계마다 펜 대기·펜 떼기가 끼어 그림이 갈린다 — 픽셀 항등 게이트가 그것을 잡아야 한다.
+let paintSliceBreak = false
+export function setPaintSliceBreakForTest(v: boolean): void { paintSliceBreak = v }
+export const paintSliceBreakForTest = (): boolean => paintSliceBreak
+
 let paintBakeSliceOff = false
 export function setPaintBakeSliceOffForTest(v: boolean): void { paintBakeSliceOff = v }
 export const paintBakeSliceOffForTest = (): boolean => paintBakeSliceOff
@@ -947,6 +993,9 @@ function draftOnlyTargets(app: App): string {
 function syncPaintTex(r: R3D, app: App) {
   const key = `${app.docVersion}|${getHatchMode()}|${draftOnlyTargets(app)}`
   if (key === paintKey) return
+  // §3 — 문서가 이 세션에서 갈리면 캐시를 내린다(위 주석)
+  if (texCacheDocVersion === null) texCacheDocVersion = app.docVersion
+  else if (app.docVersion !== texCacheDocVersion) { texCacheArmed = false }
   paintKey = key
   bakeStat.syncs++
   // web2-65 ② — **항목을 폐기하지 않는다.** 여기서 하는 일은 «어느 (면,쪽)이 서는가»와
@@ -1312,12 +1361,61 @@ function gatePaintTex(r: R3D, app: App) {
         bakeStat.ms += performance.now() - t0
         if (ok) {
           bakeStat.appends++
+          e.draftTouched = false                       // 커밋 인계·얹기가 끝났다 — 확정된 그림
           e.sigs = sigs
           draftRecs.delete(e.canvas)                     // 인계 끝 — 장부를 접는다
           if (dirty) uploadPaintRect(r, e, dirty)      // ④ 부분 업로드 — 더티 사각만
           done = true
         }
         // ok가 false면 층이 도중에 죽었거나 초안 장부가 어긋난 것이다 — 아래 전량 재굽기가 받는다(조용한 갈림 ⛔)
+      }
+      // ── web2-75 §3 — **굽힌 그림 캐시**: 한 번도 안 구운 자리는 «구워 둔 것»이 있는지 먼저 본다 ──
+      //   열기의 99.8%가 굽기다(74 §4). 열쇠는 그 그림이 의존하는 것 전부의 해시(빌드 식별자 · 굽기 열쇠 ·
+      //   획 서명 · 캔버스 크기)라 **틀린 그림을 올리는 길이 없다** — 안 맞으면 캐시가 없고, 없으면 굽는다.
+      //   ⚠ 세션 안의 재굽기(rebake·오염 뒤 복원)는 «정본에서 다시 만들라»는 뜻이므로 캐시를 안 본다(bakedHere).
+      if (!done && texCacheArmed && !texCacheOff() && !e.bakedHere && e.pending === null && e.bg === null) {
+        const dimsC = texDims(e.box, lv)
+        const ck = texCacheKey(bakeSig, sigs, dimsC.w, dimsC.h)
+        const slot = peekTexCache(ck)
+        const nowC = performance.now()
+        if (slot === undefined) {
+          requestTexCache(ck)
+          e.cacheWaitAt = nowC
+          bakePending = true; bakeStat.deferred++; noteTexCacheWaited()
+          e.mesh.visible = sideOk && e.level > 0
+          e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), want: texLevel(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
+          continue                                   // 이 프레임은 «칠 없이» 그린다(§4의 그 규약 그대로)
+        }
+        if (slot === 'pending' && nowC - (e.cacheWaitAt ?? nowC) < C.TEXCACHE_WAIT_MS) {
+          bakePending = true; bakeStat.deferred++; noteTexCacheWaited()
+          e.mesh.visible = sideOk && e.level > 0
+          e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), want: texLevel(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
+          continue
+        }
+        if (slot !== 'pending' && slot !== 'miss' && slot.w === dimsC.w && slot.h === dimsC.h) {
+          // 히트 — 굽지 않고 **그 바이트를 그대로** 올린다(날 RGBA — 왕복이 비트로 같다)
+          if (e.canvas.width !== dimsC.w || e.canvas.height !== dimsC.h) { e.canvas.width = dimsC.w; e.canvas.height = dimsC.h; e.tex.dispose(); bakeStat.texReallocs++ }
+          const gc = e.canvas.getContext('2d')!
+          gc.setTransform(1, 0, 0, 1, 0, 0)
+          gc.globalCompositeOperation = 'copy'
+          gc.globalAlpha = 1
+          gc.putImageData(new ImageData(new Uint8ClampedArray(slot.bytes.slice(0)), slot.w, slot.h), 0, 0)
+          // ⚠ **바탕 사본(e.bg)은 안 세운다**: 캐시는 비트맵만 되살리고 엔진의 «층»은 못 되살린다.
+          //   bg만 있고 층이 비면 초안 세션이 그 사각의 확정 칠을 지운다(조용히 틀린 그림 ⛔).
+          //   그래서 이 면은 다음 새 획에서 전량 재굽기가 된다 — 72가 미리 적어 둔 대가이고 값으로 센다.
+          e.base = null
+          e.sigs = sigs
+          e.bakeSig = bakeSig
+          e.level = lv
+          e.famBits = famBits
+          e.tex.needsUpdate = true
+          bakeStat.uploads++
+          bakeStat.uploadBytes += dimsC.w * dimsC.h * 4
+          noteTexCacheApplied(keyOfEntry(e))
+          e.mesh.visible = sideOk && e.level > 0
+          e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), want: texLevel(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
+          continue
+        }
       }
       if (!done && (e.pending !== null || bakeSig !== e.bakeSig || !sigsArePrefix(sigs, e.sigs) || sigs.length !== e.sigs.length)) {
         // ── §1 **시간 분할 재굽기**: 바탕을 한 번 세우고, 획은 프레임 예산 안에서 «몇 개씩» ──
@@ -1333,7 +1431,10 @@ function gatePaintTex(r: R3D, app: App) {
         //   이미 층에 얹은 획이 지금 목록에 없을 수 있고, 그러면 «조용히 틀린 그림»이 완성된
         //   것으로 표시된다(⛔ 43-1). 열쇠(bakeSig)는 획 목록을 안 들므로 그것만으로는 못 잡는다.
         if (!fresh && pend !== null &&
-            (sigs.length < pend.done || !sigsArePrefix(pend.sigs.slice(0, pend.done), sigs))) {
+            (sigs.length < pend.done || !sigsArePrefix(pend.sigs.slice(0, pend.done), sigs)
+             || (pend.dotDone > 0 && sigs[pend.done] !== pend.sigs[pend.done]))) {
+          // ⚠ 열린 점 구간의 «그 획»이 갈렸으면(되돌리기·지우개가 그 자리) 처음부터다 — 72의 규약 그대로,
+          //   자르는 단위가 점이 되어도 안 바뀐다(지시 §1의 ⚠ 문면).
           fresh = true
           bakeStat.sliceRestarts++
         }
@@ -1345,29 +1446,85 @@ function gatePaintTex(r: R3D, app: App) {
           if (paintAccumOff) e.bg = null
           const w0 = e.canvas.width, h0 = e.canvas.height
           // ⚠⚠ **GPU 저장은 «첫 크기»로 굳는다**(65의 그 실측 — 아래 주석). 크기가 바뀌면 놓는다.
+          const tBg = performance.now()
           bakeFaceTex(e.canvas, rf, e.box, lv, [], e.side === 0 ? 1 : e.side, hatch, e.side === 'e' ? null : rep, e.bg)
+          const dBg = performance.now() - tBg
+          bakeStat.bgMs += dBg; if (dBg > bakeStat.bgMsMax) bakeStat.bgMsMax = dBg
           if (e.canvas.width !== w0 || e.canvas.height !== h0) { e.tex.dispose(); bakeStat.texReallocs++ }
-          pend = { sig: bakeSig, lv, strokes, sigs, done: 0 }
+          pend = { sig: bakeSig, lv, strokes, sigs, done: 0, dotDone: 0 }
           bakeStat.bakes++
         } else {
           pend!.strokes = strokes; pend!.sigs = sigs      // 같은 열쇠 · 목록만 자랐다(그리는 중)
         }
         const P = pend!
         // 누적 얹기와 **같은 함수**로 이어 굽는다(#54 — 두 길이 갈릴 자리가 없다)
+        // ── web2-75 §1 — **자르는 단위가 «획»에서 «점 구간»으로 내려간다** ──────────────────
+        //   72의 예산 검사는 획 «앞»에서만 돌아서 최소 단위가 획 하나였다: 획 하나가 예산보다 크면
+        //   못 끊는다(실측 — 단계 1024에서 획 하나 158.4ms ↔ 예산 4/12ms).
+        //   이제 획 안에서도 `slicePts`마다 예산을 본다. 통로는 **그리는 «중»의 그것**이다
+        //   (초안 세션 draftFeed → draftFinish) — 66이 「미리보기 == 확정본」으로 픽셀 항등을
+        //   이미 세워 둔 길이라 이어 그은 것과 한 번에 그은 것이 같다(#54 · 게이트가 해시로 잰다).
+        //   ⚠ **초안이 이 (면,쪽)에 와 있으면 구간을 열지 않는다**: 열린 구간과 초안 세션이 같은
+        //   캔버스의 층 하나를 두고 다투면 그림이 갈린다(applyPaintDraft가 rebuild로 층을 다시
+        //   세우는 길이 있다). 그때는 획 경계에서만 쉰다.
+        const slicePts = paintSlicePtsOverride ?? C.PAINT75_SLICE_PTS
+        const draftHere = (app.paintDraft ?? []).some(ds => ds.paint !== undefined && ds.paint.f === e.faceId &&
+          (e.side === 'e' ? ds.paint.e === 1 : ds.paint.e === undefined && ds.paint.s === e.side))
+        const chunkOk = !paintBakeSliceOff && !draftHere && e.bg !== null && draftSupported() && Number.isFinite(slicePts)
+        let ptsThisCall = 0
         while (P.done < P.strokes.length) {
-          if (!paintBakeSliceOff && P.done > 0 && performance.now() - t0Frame > budgetMs) break
-          const b = e.bg ? appendMarkOnTex(e.canvas, e.bg, rf, e.box, lv, P.strokes[P.done]!, e.side === 0 ? 1 : e.side) : null
-          if (!b) { P.done = -1; break }                  // 못 얹는다 — 아래에서 전량으로 받는다
-          P.done++
-          bakeStat.bakedStrokes++
+          // 예산은 «구간 앞»에서 본다 — 열린 구간이 없으면 획 경계, 있으면 점 구간 경계다.
+          // ⚠ 초안이 이 (면,쪽)에 와 있는데 구간이 열려 있으면 **예산을 넘겨서라도 그 획을 끝낸다**
+          //   (한 획으로 묶인다) — 열린 구간을 남기면 초안 세션과 층 하나를 두고 다툰다.
+          if (!paintBakeSliceOff && (P.done > 0 || P.dotDone > 0) && !(draftHere && P.dotDone > 0)
+              && performance.now() - t0Frame > budgetMs) break
+          const s1 = P.strokes[P.done]!
+          const nPts = (s1.paint?.uv?.length ?? 0) >> 1
+          if (nPts > bakeStat.strokePtsMax) bakeStat.strokePtsMax = nPts
+          const tS = performance.now()
+          let ok = true
+          if (P.dotDone === 0 && !(chunkOk && nPts > slicePts)) {
+            // 짧은 획(또는 자르기 끔·초안 있음) — 옛 길 그대로 한 번에 얹는다
+            const b = e.bg ? appendMarkOnTex(e.canvas, e.bg, rf, e.box, lv, s1, e.side === 0 ? 1 : e.side) : null
+            if (!b) ok = false
+            else { P.done++; bakeStat.bakedStrokes++; ptsThisCall += nPts; if (nPts > bakeStat.chunkPtsMax) bakeStat.chunkPtsMax = nPts }
+          } else {
+            // 점 구간 — 앞에서부터 `step`만큼 더 먹인다(첫 구간은 점 두 개부터: 자국은 점 하나로 안 선다)
+            const step = chunkOk ? slicePts : nPts
+            const upto = Math.min(nPts, Math.max(2, P.dotDone + step))
+            if (paintSliceBreak && P.dotDone > 0) draftCancelOnTex(e.canvas)   // ⛳ 반증 — 구간마다 세션을 끊는다
+            const fr = draftFeedOnTex(e.canvas, e.bg!, rf, e.box, lv, s1, e.side === 0 ? 1 : e.side, upto)
+            if (fr === null || fr === 'rebuild') ok = false
+            else if (upto >= nPts) {
+              // 마지막 구간 — 펜 떼기까지 완결한다(층의 상태가 «한 번에 얹은 것»과 같아진다)
+              const fb = draftFinishOnTex(e.canvas, e.bg!, rf, e.box, lv, s1, e.side === 0 ? 1 : e.side)
+              if (!fb) ok = false
+              else {
+                const fed = nPts - P.dotDone
+                if (fed > bakeStat.chunkPtsMax) bakeStat.chunkPtsMax = fed
+                ptsThisCall += fed; P.dotDone = 0; P.done++; bakeStat.bakedStrokes++; bakeStat.sliceChunks++
+              }
+            } else {
+              const fed = upto - P.dotDone
+              if (fed > bakeStat.chunkPtsMax) bakeStat.chunkPtsMax = fed
+              ptsThisCall += fed; P.dotDone = upto; bakeStat.sliceChunks++
+            }
+          }
+          const dS = performance.now() - tS
+          if (dS > bakeStat.strokeMsMax) bakeStat.strokeMsMax = dS
+          if (!ok) { draftCancelOnTex(e.canvas); P.done = -1; P.dotDone = 0; break }   // 못 얹는다 — 아래에서 전량으로 받는다
         }
+        if (ptsThisCall > bakeStat.commitPtsMax) bakeStat.commitPtsMax = ptsThisCall
         if (P.done < 0) {
           // 폴백 — 누적이 안 서는 판(반증 스위치·층 죽음): 옛 전량 통로 그대로(조용한 갈림 ⛔)
+          P.dotDone = 0
           bakeFaceTex(e.canvas, rf, e.box, lv, strokes, e.side === 0 ? 1 : e.side, hatch, e.side === 'e' ? null : rep, e.bg)
           bakeStat.bakedStrokes += strokes.length
           P.done = strokes.length
         }
-        bakeStat.ms += performance.now() - t0
+        const dCommit = performance.now() - t0
+        bakeStat.ms += dCommit
+        if (dCommit > bakeStat.commitMsMax) bakeStat.commitMsMax = dCommit
         markEnd('bake.commit')
         bakeStat.uploads++
         bakeStat.uploadBytes += e.canvas.width * e.canvas.height * 4
@@ -1377,6 +1534,13 @@ function gatePaintTex(r: R3D, app: App) {
           e.pending = null
           e.sigs = sigs
           e.bakeSig = bakeSig
+          e.bakedHere = true
+          e.draftTouched = false                       // 이 캔버스는 이제 «확정된 그림»이다
+          // §3 — **담을 값어치가 있는 자리만 담는다**: 획 몇 개짜리 면은 굽는 데 몇 ms도 안 걸리는데
+          //   날 RGBA는 한 면이 256 KB(단계 256)다. 읽기는 그대로이고 이것은 «쓰기»의 문이다.
+          if (sigs.length >= C.TEXCACHE_MIN_STROKES) {
+            queueTexCacheWrite(e, texCacheKey(bakeSig, sigs, e.canvas.width, e.canvas.height))   // 쉴 때 담는다
+          }
         } else {
           e.pending = P                              // 다음 프레임에 이어서
           e.sigs = []
@@ -1421,6 +1585,39 @@ let partialTex: THREE.CanvasTexture | null = null
  *  ⚠ `flipY`가 참이라 전량 업로드에서 캔버스 행 y는 GL 행 H−1−y에 앉는다. 부분도 같은 자리에
  *  앉히려면 도착 y는 `H − (y0 + h)`다(FLIP_Y가 사각 «안»을 다시 뒤집는다).
  *  못 하는 조건(반증 스위치·사각이 전량만 하다·던짐)에서는 전량으로 올린다 — 조용히 안 올리지 않는다. */
+// ── web2-75 §3 — **캐시 쓰기는 «쉴 때»만** ────────────────────────────────────────────
+// 굽기가 끝난 프레임에 `getImageData`(1024²면 몇 ms)를 부르면 방금 자른 그 프레임을 다시 늘린다.
+// 그래서 예약만 하고 `requestIdleCallback`에서 한 번에 두 자리씩 담는다.
+// ⚠ 담기 «직전에» 다시 확인한다 — 그 사이에 그림이 갈렸으면(초안 사본이 얹혔거나 열쇠가 바뀌었으면)
+//   담지 않는다(`writeSkips`). 캐시가 «그때의 그림»과 다른 것을 담으면 그것이 조용히 틀린 그림이다(⛔).
+const texCacheQ = new Map<PaintTexEntry, string>()
+let texCacheIdle = 0
+function queueTexCacheWrite(e: PaintTexEntry, ck: string): void {
+  if (texCacheOff()) return
+  texCacheQ.set(e, ck)
+  if (texCacheIdle !== 0) return
+  const w = window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }
+  const run = () => { texCacheIdle = 0; flushTexCacheQ() }
+  texCacheIdle = w.requestIdleCallback ? w.requestIdleCallback(run, { timeout: 3000 }) : window.setTimeout(run, 0)
+}
+function flushTexCacheQ(): void {
+  let n = 0
+  for (const [e, ck] of [...texCacheQ]) {
+    texCacheQ.delete(e)
+    if (n >= 2) { queueTexCacheWrite(e, ck); continue }        // 한 번에 둘까지 — 나머지는 다음 쉴 때
+    if (!paintTexes.has(keyOfEntry(e))) continue
+    const w0 = e.canvas.width, h0 = e.canvas.height
+    if (w0 === 0 || h0 === 0 || e.base !== null || e.pending !== null || e.evicted || e.draftTouched) { noteTexCacheWriteSkip(); continue }
+    if (texCacheKey(e.bakeSig, e.sigs, w0, h0) !== ck) { noteTexCacheWriteSkip(); continue }
+    n++
+    try {
+      const d = e.canvas.getContext('2d')!.getImageData(0, 0, w0, h0).data
+      void putTexCache(ck, w0, h0, e.level, d.buffer as ArrayBuffer)
+    } catch { noteTexCacheWriteSkip() }
+  }
+}
+const keyOfEntry = (e: PaintTexEntry): string => `${e.faceId}:${e.side}`
+
 function uploadPaintRect(r: R3D, e: PaintTexEntry, b: MarkBox, forDraft = false): void {
   const W = e.canvas.width, H = e.canvas.height
   const x0 = Math.max(0, b.x0), y0 = Math.max(0, b.y0)
@@ -1563,12 +1760,14 @@ function applyPaintDraft(r: R3D, app: App) {
         g.drawImage(e.base, 0, 0)
         e.base = null
         e.tex.needsUpdate = true
+        e.draftTouched = true                      // 되돌려 놓은 캔버스도 굽기가 다시 확인할 때까지는 안 담는다
       }
       // web2-66 — 세션 고아: 초안이 커밋 없이 떠났다(어긋냄 반증·면 이탈). 층의 미완 도장을
       // 걷고 확정 획만으로 되세운다. (커밋된 초안은 gatePaintTex의 인계가 이미 접었다 —
       // 프레임 안에서 gate가 이 함수보다 먼저 돈다.)
       const rec = draftRecs.get(e.canvas)
       if (rec) {
+        e.draftTouched = true                      // §3 — 이 캔버스에 초안이 얹혔다(캐시에 담지 않는다)
         draftRecs.delete(e.canvas)
         draftCancelOnTex(e.canvas)
         if (rf && e.bg && e.level > 0 &&
@@ -1583,9 +1782,26 @@ function applyPaintDraft(r: R3D, app: App) {
       continue
     }
     if (!rf || e.level === 0) continue
+    // ── web2-75 §1 — **열린 점 구간이 있으면 굽기가 물러난다**(backstop) ─────────────────
+    //   굽기가 예산에 걸려 구간을 열어 둔 채 쉰 프레임에 초안이 오면 **둘이 같은 캔버스의 층 하나를 두고 다툰다.**
+    //   ⚠⚠ 첫 판은 여기서 «그 획을 끝까지 얹어» 닫으려 했는데, 그것이 **살아 있는 초안 세션을 깨뜨렸다**
+    //   (paint59 ② cp가 그것으로 빨갰다: 교차 창의 잉크 p95 20 → 13). 굽기는 초안과 다투지 않는다 —
+    //   **제 판을 접고 물러난다.** 층은 초안 쪽이 정본에서 다시 세우고(rebuildAll), 굽기는 다음 프레임에 처음부터 굽는다.
+    const Pf = e.pending
+    if (Pf && Pf.dotDone > 0) {
+      draftCancelOnTex(e.canvas)
+      draftRecs.delete(e.canvas)                 // 초안 장부도 접는다 — 그쪽이 정본에서 다시 세운다
+      e.pending = null
+      e.bakeSig = ''                             // 아직 «그 열쇠의 그림»이 아니다 — 다음 프레임이 전량으로 받는다
+      e.sigs = []
+      e.draftTouched = true
+      bakeStat.sliceRestarts++
+      bakeStat.sliceFlushes++
+    }
     // ── 세션 경로(66 ㉠㉡㉢) — 얼린 확정 구간 + 새 도장만 + 부분 업로드 ────────────────
     const useSess = !paintFreezeOff && !paintAccumOff && e.bg !== null && draftSupported()
     if (!useSess) {
+      e.draftTouched = true                        // §3 — 초안이 캔버스에 얹힌다
       draftAppliedNow += applyDraftFullRedraw(e, rf, mine)
       drew = true
       draftStat.strokes += mine.length
@@ -1657,11 +1873,12 @@ function applyPaintDraft(r: R3D, app: App) {
       return true
     }
     if (step()) {
-      if (dirty) { uploadPaintRect(r, e, dirty, true); drew = true }
+      if (dirty) { e.draftTouched = true; uploadPaintRect(r, e, dirty, true); drew = true }   // §3 — 초안이 얹힌 캔버스다
     } else {
       // 마지막 폴백 — 세션이 못 서는 상태(층·바탕이 죽음): 옛 전량 판으로(조용한 미표시 ⛔)
       draftRecs.delete(e.canvas)
       draftCancelOnTex(e.canvas)
+      e.draftTouched = true
       draftAppliedNow += applyDraftFullRedraw(e, rf, mine)
       drew = true
       draftStat.strokes += mine.length
@@ -1768,6 +1985,7 @@ export function paintTexHashForTest(): { key: string; level: number; hash: numbe
 export function corruptPaintTexForTest(): number {
   let n = 0
   for (const e of paintTexes.values()) {
+    e.draftTouched = true                          // §3 — 오염된 캔버스를 캐시에 담지 않는다(담기 예약이 남아 있을 수 있다)
     const g = e.canvas.getContext('2d')!
     g.fillStyle = C.BLACK_HEX
     g.fillRect(0, 0, Math.max(8, e.canvas.width >> 2), Math.max(8, e.canvas.height >> 2))

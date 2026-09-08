@@ -74,7 +74,9 @@ const texHash = (page: Page) => page.evaluate(() => (window as any).__b2.diag.pa
 /** 굽기가 «실제로 다시 돌았다»를 값으로 — 재굽기 뒤 프레임을 기다린다 */
 const rebakeAndWait = async (page: Page) => {
   await page.evaluate(() => (window as any).__b2.diag.rebakePaintTex())
-  await page.waitForTimeout(250)
+  // web2-75 — 굽기가 점 구간으로 잘리므로 고정 ms가 아니라 «다 구워질 때까지»(상한 있는 대기 #81)
+  await page.waitForTimeout(120)
+  await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 120_000 })
   // web2-72 §1 — 굽기가 **프레임에 나뉘므로** 고정 ms 대기는 「다 구워졌다」를 뜻하지 않는다.
   // 이어 구울 것이 없어질 때까지 기다린다(상한 있는 대기 — #81).
   await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 30_000 })
