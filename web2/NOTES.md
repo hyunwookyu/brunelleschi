@@ -30436,7 +30436,20 @@ bake.commit      6,426.1ms · 357회 · 최대 한 번 861.8ms      ← 문턱�
 
 ### 대기 목록 — 이 라운드가 실행한 대기 전부 (상한 있는 것만 · selfcheck `scan_round_waits`가 이 표를 읽는다)
 
+⚠ **기록은 도구가 남긴다** — `stage0/out/waits_web2.jsonl`(대기마다 한 줄: 무엇을·상한·걸린 시간·종료 코드).
+이 표는 그 파일의 요약이고, selfcheck의 `scan_round_waits`가 **표**를 읽어 상한 없는 줄을 잡는다.
+
 | 명령 | 상한 | 결과 |
 |---|---|---|
-| `node tools/wait.mjs --cap 2 -- node -e "setTimeout(function(){},10000)"` (도구 시험) | --cap 2 | 124 (상한에 걸려 죽였다 — 의도) |
-| `node tools/wait.mjs --cap 2 --every 1 --file ../stage0/out/waits_web2.jsonl --grep 없는글자zzz` (도구 시험) | --cap 2 | 124 |
+| `node tools/wait.mjs --cap 2 -- node -e "setTimeout(…,10000)"` (도구 시험) | --cap 2 | **124**(상한에 걸려 죽였다 — 의도) |
+| `node tools/wait.mjs --cap 2 --every 1 --file … --grep 없는글자zzz` (도구 시험) | --cap 2 | **124** |
+| `node tools/wait.mjs --cap 1200 --every 30 --file … perf75.log --grep "passed\|failed"` (원장 1차) | --cap 1200 | 0 · 300.1s |
+| `node tools/wait.mjs --cap 900 --every 45 --file … perf75b.log` (원장 2차) | --cap 900 | 0 · 585.2s |
+| `node tools/wait.mjs --cap 1200 --every 60 --file … night75.log` (밤 1차 — 중간에 멈춘 그 실행) | --cap 1200 | 0 · 660.1s |
+| `node tools/wait.mjs --cap 1200 --every 60 --file … g75.log` (게이트·사진) | --cap 1200 | 0 · 960.3s |
+| `node tools/wait.mjs --cap 1200 --every 60 --file … perf75c.log` (원장 3차 — 정본) | --cap 1200 | 0 · 360.0s |
+| `node tools/wait.mjs --cap 900 --every 60 --file … perf75c.log` (같은 실행의 마무리) | --cap 900 | 0 · 180.0s |
+| `node tools/wait.mjs --cap 1800 …` (밤 2차) | --cap **1800** | ⛳ **거부됐다 · exit 2** — 「`--cap`은 1..1200이어야 한다(20분 상한 — CLOSING)」. 내가 30분을 달라고 했고 **도구가 규칙을 지켰다**(§0 ㉠이 서 있다는 증거) |
+| `node tools/wait.mjs --cap 1200 --every 90 --file … night75b.log` (밤 2차 — 정본 · 20분씩 나눠서) | --cap 1200 | (마감 표에) |
+
+**상한 없는 대기 0** — `waits_web2.jsonl`의 여덟 줄이 전부 `cap_s`를 든다(selfcheck가 그 파일도 본다).
