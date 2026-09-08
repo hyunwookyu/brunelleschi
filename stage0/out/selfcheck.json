@@ -1,5 +1,5 @@
 {
-  "n_flags": 7079,
+  "n_flags": 7088,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -24494,6 +24494,51 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "perf74_web2_dpr2.json:S2_arms_bake_note.bake_commit_in_arms.①그냥(수리 전 거동)[0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "perf74_web2_dpr2.json:S2_arms_bake_note.bake_commit_in_arms.①그냥(수리 전 거동)[1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "perf74_web2_dpr2.json:S2_arms_bake_note.bake_commit_in_arms.①그냥(수리 전 거동)[2]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "perf74_web2_dpr2.json:S2_arms_bake_note.bake_commit_in_arms.②nothumb[0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "perf74_web2_dpr2.json:S2_arms_bake_note.bake_commit_in_arms.②nothumb[1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "perf74_web2_dpr2.json:S2_arms_bake_note.bake_commit_in_arms.②nothumb[2]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "perf74_web2_dpr2.json:S2_arms_bake_note.bake_commit_in_arms.③nosave[0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "perf74_web2_dpr2.json:S2_arms_bake_note.bake_commit_in_arms.③nosave[1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "perf74_web2_dpr2.json:S2_arms_bake_note.bake_commit_in_arms.③nosave[2]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "persist.json:by_condition.jitter_0.01_erase_0.auto_drift",
       "val": 0,
       "flag": "분포 전체가 0(n=51) → 항등/측정 미작동 확인"
@@ -36156,7 +36201,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 739,
+      "files_scanned": 741,
       "exts_declared": [
         ".md",
         ".py",
@@ -36180,14 +36225,14 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 739,
+      "files_scanned": 741,
       "exts_declared": [
         ".md",
         ".py",
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 53,
+        ".md": 55,
         ".py": 4,
         ".html": 1,
         ".ts": 118
@@ -36243,9 +36288,16 @@
     {
       "scan": "scan_unbounded_wait",
       "unit": "마감 블록·도구 파일",
-      "targets": 29,
+      "targets": 30,
       "hits": 0,
       "note": "⚠ **세션 안에서 즉석으로 만든 대기는 안 보인다** — 저장소에 없기 때문이다. 그 자리를 지키는 것은 **마감 보고의 「도는 백그라운드 없음」 한 줄**이다"
+    },
+    {
+      "scan": "scan_round_waits",
+      "unit": "대기 목록 줄·wait.mjs 기록",
+      "targets": 3,
+      "hits": 0,
+      "note": "⚠ 표에 안 적힌 맨손 대기는 안 보인다 — 적는 것이 규약이다"
     },
     {
       "scan": "scan_citation_hashes",
