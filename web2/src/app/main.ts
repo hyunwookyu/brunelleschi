@@ -20,7 +20,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, setPaintPreviewVectorForTest, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, frameStepStats, resetFrameStepStats, glInfo, glUpload, resetGlUploadStats, setMetrics73OffForTest, metrics73OffForTest, setPaintBakeIdleMsForTest, paintBakeIdleMsForTest, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest, paintBakePending, paintPendingRowsForTest, setPaintPointerDown, setPaintLevelFreezeOffForTest, paintLevelFreezeOffForTest, setPaintBakeSliceOffForTest, paintBakeSliceOffForTest, setPaintSlicePtsForTest, paintSlicePtsForTest, setPaintSliceBreakForTest, paintSliceBreakForTest, setPaintIndexOffForTest, paintIndexOffForTest, paintStrokeListsForTest } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, frameStepStats, resetFrameStepStats, glInfo, glUpload, resetGlUploadStats, setMetrics73OffForTest, metrics73OffForTest, setPaintBakeIdleMsForTest, paintBakeIdleMsForTest, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, paintTexHashForTest, setPaintBlendForTest, paintClampedVisible, paintDraftStats, paintBakeStats, resetPaintBakeStats, setPaintAccumOffForTest, setPaintPartialOffForTest, setPaintTexBudgetForTest, paintDraftFrameStats, resetPaintDraftFrameStats, setPaintFreezeOffForTest, paintFreezeOffForTest, setRepTexelSigOffForTest, paintBakePending, paintPendingRowsForTest, setPaintPointerDown, setPaintLevelFreezeOffForTest, paintLevelFreezeOffForTest, setPaintBakeSliceOffForTest, paintBakeSliceOffForTest, setPaintSlicePtsForTest, paintSlicePtsForTest, setPaintSliceBreakForTest, paintSliceBreakForTest, setPaintIndexOffForTest, paintIndexOffForTest, paintStrokeListsForTest, armTexCacheForDoc, texCacheArmedForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, bootCost, saveFlagsForTest, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, deleteDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -1825,6 +1825,8 @@ function applyOpen(data: NonNullable<ReturnType<typeof parseBrnl>>) {
   //   두르는 것뿐이고 순서는 한 자도 안 바뀐다. 열 때의 15초가 어디로 가는지는 이 이름이 든다.
   markStart('doc.build')
   try {
+    // web2-75 §3 — 문서를 앉힐 때 굽힌 그림 캐시를 다시 켠다(캐시의 몫은 «열기»다 — 편집이 오면 스스로 내려간다)
+    armTexCacheForDoc()
     loadDoc(app, data)
     fitViewToFrame()
     paperbar.sync()
@@ -4516,6 +4518,8 @@ const diag = {
   /** ⛳ 반증·무회귀 — 끄면 «지금과 똑같이» 굽는다 */
   setTexCacheOffForTest: (v: boolean) => { setTexCacheOff(v); invalidate() },
   texCacheOffForTest: () => texCacheOff(),
+  /** §3 — 캐시가 «켜져 있나»(연 뒤에만 본다 · 편집이 오면 내려간다) */
+  texCacheArmedForTest: () => texCacheArmedForTest(),
   /** 저장소의 캐시를 비운다(「캐시 없음」 팔) — 그림은 안 건드린다 */
   clearTexCacheForTest: () => clearTexCache(),
   /** 인메모리 판만 비운다 — 같은 판에서 «두 번째 열기»를 만든다 */

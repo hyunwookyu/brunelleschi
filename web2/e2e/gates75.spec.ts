@@ -6,6 +6,8 @@
 //     g1-② 구간마다 세션을 끊으면(순진한 구현) **픽셀이 갈린다** ↔ 지금 길은 항등이다
 //     g1-③ 이어 굽는 중에 획이 오면 열린 구간을 닫는다 ↔ 안 닫으면 초안 세션과 층을 두고 다툰다
 //     g3   캐시를 지우면 **굽는다**(applied 0) ↔ 두 번째 열기는 캐시에서 온다(bakes 0)
+//     g3-⑤ 초안이 얹힌 캔버스는 **안 담는다** ↔ 담으면 다음 열기가 «잉크가 더 묻은 그림»이 된다(밤이 잡은 결함)
+//     g3-⑥ 캐시는 «연 뒤»에만 본다 ↔ 세션 안의 편집이 오면 내려간다(무회귀 트리거가 산다 — 밤이 잡은 둘째 결함)
 // ⚠ 시간의 절대값에 문을 걸지 않는다(CLOSING · #113) — 이 파일의 문은 전부 «호출 수»·«점 수»·«해시»·«존재»다.
 
 import { test, expect } from '@playwright/test'
@@ -94,6 +96,61 @@ test('g1-③ — 이어 굽는 중에 획이 와도 그림이 전량 재굽기�
   const ref = await bakeWithSlicePts(page, null, 'g1c/ref')
   expect(midTex, '이어 굽는 중에 획이 와도 최종 그림이 전량 재굽기와 같다').toBe(sig(ref.tex))
   console.log('g1c', JSON.stringify({ pendingSeen: pending, sliceFlushes: mid.sliceFlushes, sliceRestarts: mid.sliceRestarts }))
+})
+
+test('g3-⑤ ⛳ 반증 — 초안이 얹힌 캔버스는 캐시에 안 담긴다(담기면 «잉크가 더 묻은 그림»이 뒤에 나온다)', async ({ page }) => {
+  test.setTimeout(600_000)
+  // ⚠⚠ **밤 전량이 잡은 결함의 자리다**(75 · paint67 ⑤ 「redo — 화면이 칠 «후»와 픽셀로 같다」가 빨강이었다):
+  //   초안 세션은 캔버스에 «그리는 중»의 획을 얹는데(66), 그때 `bakeSig`·`sigs`는 아직 **확정된 그림**을 가리킨다.
+  //   그 상태를 쉴 때 담으면 열쇠는 확정본인데 바이트는 초안이 섞인 그림이다 — 조용히 틀린 그림(⛔ 43-1).
+  await bootWith(page, '')
+  await page.evaluate(() => (window as any).__b2.diag.clearTexCacheForTest())
+  const { text } = await buildFixtureText(page)
+  await bootWith(page, '')
+  await page.evaluate(() => (window as any).__b2.diag.clearTexCacheForTest())
+  await applyFixture(page, text)
+  await settleBake(page, 600, 'g3e/seed')
+  await page.click('#btn-paint')
+  await page.waitForTimeout(100)
+  await page.evaluate(() => Object.assign((window as any).__b2.app.paintSel, { hex: '#7a4a3a', w: 22, o: 1 }))
+  // **떼지 않고** 초안을 캔버스에 얹은 채로 쉬게 둔다 — 담기 예약이 그 사이에 돌 수 있는 자리
+  await page.mouse.move(560, 400)
+  await page.mouse.down()
+  await page.mouse.move(700, 430, { steps: 20 })
+  await page.waitForTimeout(1200)
+  const mid = await page.evaluate(() => (window as any).__b2.diag.texCache())
+  await page.mouse.up()
+  await settleBake(page, 600, 'g3e/commit')
+  const after = await page.evaluate(() => (window as any).__b2.diag.texCache())
+  // 담긴 것이 있다면 그것은 **초안이 없는** 상태의 것이어야 한다 — 그 사이의 예약은 건너뛴다(writeSkips)
+  console.log('g3e', JSON.stringify({ midWrites: mid.writes, afterWrites: after.writes, skips: after.writeSkips }))
+  expect(after.errors, '저장소가 죽지 않았다').toBe(0)
+  // 그림이 정본과 같은가 — 전량 재굽기와 견준다(초안이 섞인 것이 담겼다면 다음 열기가 갈린다)
+  const now = sig(await texHash(page))
+  await page.evaluate(() => { (window as any).__b2.diag.rebakePaintTex() })
+  await settleBake(page, 800, 'g3e/ref')
+  expect(sig(await texHash(page)), '초안을 얹었다 뗀 뒤의 그림 == 전량 재굽기').toBe(now)
+})
+
+test('g3-⑥ — 캐시는 «연 뒤»에만 본다: 세션 안의 편집이 오면 내려간다(무회귀 트리거가 산다)', async ({ page }) => {
+  test.setTimeout(600_000)
+  // ⚠ 밤 전량이 잡은 둘째 자리(paint65 ⑤ 「무회귀 트리거가 산다」): 되돌리기가 돌아간 상태의 열쇠가
+  //   이 세션에서 담긴 것이면 캐시가 **굽기를 대신해** 「트리거가 오면 다시 만든다」가 관찰되지 않는다.
+  await bootWith(page, '')
+  const armed0 = await page.evaluate(() => (window as any).__b2.diag.texCacheArmedForTest())
+  const { text } = await buildFixtureText(page)
+  await bootWith(page, '')
+  await applyFixture(page, text)
+  await settleBake(page, 600, 'g3f/seed')
+  const armed1 = await page.evaluate(() => (window as any).__b2.diag.texCacheArmedForTest())
+  await page.click('#btn-paint')
+  await page.waitForTimeout(100)
+  await page.evaluate(() => Object.assign((window as any).__b2.app.paintSel, { hex: '#7a4a3a', w: 18, o: 1 }))
+  await drawLongStrokes(page, 1, 20)
+  const armed2 = await page.evaluate(() => (window as any).__b2.diag.texCacheArmedForTest())
+  console.log('g3f', JSON.stringify({ armed0, armed1, armed2 }))
+  expect(armed1, '문서를 앉힌 뒤에는 켜져 있다(열기의 몫)').toBe(true)
+  expect(armed2, '⛳ 세션 안에서 문서가 갈리면 내려간다 — 그 뒤의 재굽기는 캐시가 아니라 정본이 만든다').toBe(false)
 })
 
 test('g3 — 굽힌 그림 캐시: 두 번째 열기는 캐시에서 온다 · 픽셀 동일 · 열쇠 불일치는 재굽기 · 저장 형식 무변', async ({ page }) => {

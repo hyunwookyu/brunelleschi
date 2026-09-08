@@ -580,6 +580,10 @@ interface PaintTexEntry {
   bakedHere: boolean
   /** §3 — 캐시 왕복을 기다리기 시작한 시각(상한 C.TEXCACHE_WAIT_MS) */
   cacheWaitAt?: number
+  /** ⚠⚠ web2-75 §3 — **초안이 이 캔버스에 얹혀 있다.** 그때의 캔버스는 «확정된 그림»이 아니다(그리는 중의 획이 들어 있다).
+   *  그 상태를 캐시에 담으면 **뒤에 그 열쇠로 들어온 사람이 잉크가 더 묻은 그림을 받는다** — 조용히 틀린 그림이다(⛔ 43-1).
+   *  밤 전량이 그것을 잡았다(paint67 ⑤ 「redo — 화면이 칠 «후»와 픽셀로 같다」가 빨강). 굽기가 끝나면 내린다. */
+  draftTouched?: boolean
   /** web2-72 §1 — **이어 굽는 중인 판**. 바탕은 이미 섰고 획을 done개까지 얹었다.
    *  null이면 이어 구울 것이 없다. 이 값이 있는 동안 캔버스는 «온전하지만 덜 채워진» 그림이다. */
   pending: { sig: string; lv: number; strokes: Stroke[]; sigs: string[]; done: number
@@ -883,6 +887,17 @@ let bakeIdleMsOverride: number | null = null
 export function setPaintBakeIdleMsForTest(v: number | null): void { bakeIdleMsOverride = v }
 export const paintBakeIdleMsForTest = (): number => bakeIdleMsOverride ?? C.PAINT72_BAKE_MS_IDLE
 /** 반증(D-3) — 시간 분할을 끈다: 한 프레임에 전부 굽는다(pre의 그 차단 시간이 돌아온다) */
+// ── web2-75 §3 — **캐시는 «연 뒤»에만 본다** ────────────────────────────────────────
+// 밤 전량이 그 자리를 잡았다(paint65 ⑤ 「무회귀 트리거가 산다」가 빨강): 되돌리기가 돌아간 상태의 열쇠가
+// 이 세션에서 이미 담긴 것이면 캐시가 **굽기를 대신해 버려** 「트리거가 오면 다시 만든다」가 관찰되지 않는다.
+// 그림은 옳지만 **세션 안의 거동이 74와 달라진다** — 캐시의 몫은 «열기»이지 «편집»이 아니다(§3의 문면 그대로).
+// 그래서 문서가 이 세션에서 한 번이라도 갈리면 그 뒤로는 안 본다. 문서를 새로 열면 다시 켠다.
+let texCacheArmed = true
+let texCacheDocVersion: number | null = null
+/** 문서를 앉힐 때(열기·복원) 다시 켠다 — main의 applyOpen·boot이 부른다 */
+export function armTexCacheForDoc(): void { texCacheArmed = true; texCacheDocVersion = null }
+export const texCacheArmedForTest = (): boolean => texCacheArmed
+
 // ── web2-75 §1 — «점 구간»의 크기와 그 스윕 손잡이 ──────────────────────────────────
 // null이면 앱 상수(C.PAINT75_SLICE_PTS) · Infinity면 «획 하나가 최소 단위»(수리 전 거동 = 빨강 짝)
 let paintSlicePtsOverride: number | null = null
@@ -978,6 +993,9 @@ function draftOnlyTargets(app: App): string {
 function syncPaintTex(r: R3D, app: App) {
   const key = `${app.docVersion}|${getHatchMode()}|${draftOnlyTargets(app)}`
   if (key === paintKey) return
+  // §3 — 문서가 이 세션에서 갈리면 캐시를 내린다(위 주석)
+  if (texCacheDocVersion === null) texCacheDocVersion = app.docVersion
+  else if (app.docVersion !== texCacheDocVersion) { texCacheArmed = false }
   paintKey = key
   bakeStat.syncs++
   // web2-65 ② — **항목을 폐기하지 않는다.** 여기서 하는 일은 «어느 (면,쪽)이 서는가»와
@@ -1343,6 +1361,7 @@ function gatePaintTex(r: R3D, app: App) {
         bakeStat.ms += performance.now() - t0
         if (ok) {
           bakeStat.appends++
+          e.draftTouched = false                       // 커밋 인계·얹기가 끝났다 — 확정된 그림
           e.sigs = sigs
           draftRecs.delete(e.canvas)                     // 인계 끝 — 장부를 접는다
           if (dirty) uploadPaintRect(r, e, dirty)      // ④ 부분 업로드 — 더티 사각만
@@ -1354,7 +1373,7 @@ function gatePaintTex(r: R3D, app: App) {
       //   열기의 99.8%가 굽기다(74 §4). 열쇠는 그 그림이 의존하는 것 전부의 해시(빌드 식별자 · 굽기 열쇠 ·
       //   획 서명 · 캔버스 크기)라 **틀린 그림을 올리는 길이 없다** — 안 맞으면 캐시가 없고, 없으면 굽는다.
       //   ⚠ 세션 안의 재굽기(rebake·오염 뒤 복원)는 «정본에서 다시 만들라»는 뜻이므로 캐시를 안 본다(bakedHere).
-      if (!done && !texCacheOff() && !e.bakedHere && e.pending === null && e.bg === null) {
+      if (!done && texCacheArmed && !texCacheOff() && !e.bakedHere && e.pending === null && e.bg === null) {
         const dimsC = texDims(e.box, lv)
         const ck = texCacheKey(bakeSig, sigs, dimsC.w, dimsC.h)
         const slot = peekTexCache(ck)
@@ -1516,6 +1535,7 @@ function gatePaintTex(r: R3D, app: App) {
           e.sigs = sigs
           e.bakeSig = bakeSig
           e.bakedHere = true
+          e.draftTouched = false                       // 이 캔버스는 이제 «확정된 그림»이다
           queueTexCacheWrite(e, texCacheKey(bakeSig, sigs, e.canvas.width, e.canvas.height))   // §3 — 쉴 때 담는다
         } else {
           e.pending = P                              // 다음 프레임에 이어서
@@ -1583,7 +1603,7 @@ function flushTexCacheQ(): void {
     if (n >= 2) { queueTexCacheWrite(e, ck); continue }        // 한 번에 둘까지 — 나머지는 다음 쉴 때
     if (!paintTexes.has(keyOfEntry(e))) continue
     const w0 = e.canvas.width, h0 = e.canvas.height
-    if (w0 === 0 || h0 === 0 || e.base !== null || e.pending !== null || e.evicted) { noteTexCacheWriteSkip(); continue }
+    if (w0 === 0 || h0 === 0 || e.base !== null || e.pending !== null || e.evicted || e.draftTouched) { noteTexCacheWriteSkip(); continue }
     if (texCacheKey(e.bakeSig, e.sigs, w0, h0) !== ck) { noteTexCacheWriteSkip(); continue }
     n++
     try {
@@ -1736,12 +1756,14 @@ function applyPaintDraft(r: R3D, app: App) {
         g.drawImage(e.base, 0, 0)
         e.base = null
         e.tex.needsUpdate = true
+        e.draftTouched = true                      // 되돌려 놓은 캔버스도 굽기가 다시 확인할 때까지는 안 담는다
       }
       // web2-66 — 세션 고아: 초안이 커밋 없이 떠났다(어긋냄 반증·면 이탈). 층의 미완 도장을
       // 걷고 확정 획만으로 되세운다. (커밋된 초안은 gatePaintTex의 인계가 이미 접었다 —
       // 프레임 안에서 gate가 이 함수보다 먼저 돈다.)
       const rec = draftRecs.get(e.canvas)
       if (rec) {
+        e.draftTouched = true                      // §3 — 이 캔버스에 초안이 얹혔다(캐시에 담지 않는다)
         draftRecs.delete(e.canvas)
         draftCancelOnTex(e.canvas)
         if (rf && e.bg && e.level > 0 &&
@@ -1783,6 +1805,7 @@ function applyPaintDraft(r: R3D, app: App) {
     // ── 세션 경로(66 ㉠㉡㉢) — 얼린 확정 구간 + 새 도장만 + 부분 업로드 ────────────────
     const useSess = !paintFreezeOff && !paintAccumOff && e.bg !== null && draftSupported()
     if (!useSess) {
+      e.draftTouched = true                        // §3 — 초안이 캔버스에 얹힌다
       draftAppliedNow += applyDraftFullRedraw(e, rf, mine)
       drew = true
       draftStat.strokes += mine.length
@@ -1854,11 +1877,12 @@ function applyPaintDraft(r: R3D, app: App) {
       return true
     }
     if (step()) {
-      if (dirty) { uploadPaintRect(r, e, dirty, true); drew = true }
+      if (dirty) { e.draftTouched = true; uploadPaintRect(r, e, dirty, true); drew = true }   // §3 — 초안이 얹힌 캔버스다
     } else {
       // 마지막 폴백 — 세션이 못 서는 상태(층·바탕이 죽음): 옛 전량 판으로(조용한 미표시 ⛔)
       draftRecs.delete(e.canvas)
       draftCancelOnTex(e.canvas)
+      e.draftTouched = true
       draftAppliedNow += applyDraftFullRedraw(e, rf, mine)
       drew = true
       draftStat.strokes += mine.length
