@@ -31,7 +31,13 @@ async function boot(page: Page, q = '/?reset') {
   await page.waitForFunction(() => (window as any).__b2.diag.tipsReadyForTest().ready, null, { timeout: 20_000 })
   await page.waitForTimeout(200)
 }
-const settle = (page: Page) => page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
+/** 두 프레임 + **이어 굽기가 끝날 때까지**(web2-75): 굽기가 «점 구간»으로 잘리면서 되돌리기·다시하기 뒤의
+ *  전량 재굽기가 여러 프레임에 걸린다 — 고정 대기로 해시를 읽으면 «덜 채워진 그림»을 «다른 그림»으로 읽는다.
+ *  재는 것은 그대로이고 «언제 재는가»만 정한다(72의 settleBake 규약 · 상한 있는 대기 #81). */
+const settle = async (page: Page) => {
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
+  await page.waitForFunction(() => !(window as never as { __b2: { diag: { paintBakePendingForTest: () => boolean } } }).__b2.diag.paintBakePendingForTest(), null, { timeout: 60_000 })
+}
 const diag = (page: Page) => page.evaluate(() => (window as any).__b2.diag.gesture71ForTest())
 const resetG = (page: Page) => page.evaluate(() => (window as any).__b2.diag.gesture71ResetForTest())
 /** paint67 bigBox — 카메라를 세우고 면 하나(벽)를 세운다 */

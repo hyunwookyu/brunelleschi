@@ -379,6 +379,13 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
   const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   const Y: Record<Instr, number> = { brush: 370, marker: 430, cp: 490, pencil: 550 }
   const W = 20
+/** web2-75 — 굽기가 «점 구간»으로 잘리면서 **고정 ms 뒤의 화면은 «덜 채워진 그림»일 수 있다**.
+   *  이 스펙은 화면 픽셀을 재므로(잉크 창) 재기 «전»에 이어 굽기가 끝나기를 기다린다(상한 있는 대기 #81).
+   *  ⚠ 재는 것은 그대로다 — «언제 재는가»만 정한다(72가 settleBake로 세운 그 규약). */
+  const settlePaint = async (): Promise<void> => {
+    await page.waitForFunction(() => !(window as never as { __b2: { diag: { paintBakePendingForTest: () => boolean } } }).__b2.diag.paintBakePendingForTest(), null, { timeout: 60_000 })
+  }
+
   const cross = async (ins: Instr, press = 0.25) => {
     await pickInstr(page, ins, 20)
     const y = Y[ins]
@@ -389,6 +396,7 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
     for (let k = 1; k <= 10; k++) pts.push({ x: 780 - 20 * k, y: y - 28 + 5.6 * k })
     await penPath(page, pts, press)
     await page.waitForTimeout(200)
+    await settlePaint()
     const c = await inkStats(page, 680 - W / 2, y - W / 2, W, W)
     const bl = await inkStats(page, 600 - W / 2, y - W / 2, W, W)
     const br = await inkStats(page, 760 - W / 2, y - W / 2, W, W)
@@ -404,6 +412,7 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
     for (let k = 0; k <= 10; k++) pts.push({ x: 580 + 20 * k, y })
     await penPath(page, pts, 1.0)
     await page.waitForTimeout(200)
+    await settlePaint()
     const a = await inkStats(page, 640 - W / 2, y - W / 2, W, W)
     const b = await inkStats(page, 720 - W / 2, y - W / 2, W, W)
     return { p95: +((a.p95 + b.p95) / 2).toFixed(1), max: Math.max(a.max, b.max) }
@@ -458,6 +467,7 @@ test('② 자기 교차 — 저압(0.25) 펜 획이 자기 자신과 교차하�
     for (let k = 0; k <= 10; k++) pts.push({ x: 580 + 20 * k, y: yF })
     await penPath(page, pts, 0.25)
     await page.waitForTimeout(150)
+    await settlePaint()
   }
   await pickInstr(page, 'marker', 20)
   await line()

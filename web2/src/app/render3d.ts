@@ -1778,29 +1778,21 @@ function applyPaintDraft(r: R3D, app: App) {
       continue
     }
     if (!rf || e.level === 0) continue
-    // ── web2-75 §1 — **열린 점 구간을 여기서 닫는다**(backstop) ────────────────────────
-    //   굽기가 예산에 걸려 구간을 열어 둔 채 쉰 프레임에 초안이 오면, 초안 세션과 굽기의 구간이
-    //   같은 캔버스의 층 하나를 두고 다툰다. 그때는 그 획을 **그 자리에서 끝까지** 얹는다
-    //   (한 획으로 묶인다 — 값으로 센다: sliceFlushes · sliceFlushMs).
+    // ── web2-75 §1 — **열린 점 구간이 있으면 굽기가 물러난다**(backstop) ─────────────────
+    //   굽기가 예산에 걸려 구간을 열어 둔 채 쉰 프레임에 초안이 오면 **둘이 같은 캔버스의 층 하나를 두고 다툰다.**
+    //   ⚠⚠ 첫 판은 여기서 «그 획을 끝까지 얹어» 닫으려 했는데, 그것이 **살아 있는 초안 세션을 깨뜨렸다**
+    //   (paint59 ② cp가 그것으로 빨갰다: 교차 창의 잉크 p95 20 → 13). 굽기는 초안과 다투지 않는다 —
+    //   **제 판을 접고 물러난다.** 층은 초안 쪽이 정본에서 다시 세우고(rebuildAll), 굽기는 다음 프레임에 처음부터 굽는다.
     const Pf = e.pending
-    if (Pf && Pf.dotDone > 0 && e.bg) {
-      const tF = performance.now()
-      const s1 = Pf.strokes[Pf.done]!
-      const fr = draftFeedOnTex(e.canvas, e.bg, rf, e.box, Pf.lv, s1, side)
-      const fb = fr !== null && fr !== 'rebuild'
-        ? draftFinishOnTex(e.canvas, e.bg, rf, e.box, Pf.lv, s1, side) : null
-      if (fb) {
-        Pf.dotDone = 0; Pf.done++; bakeStat.bakedStrokes++
-        uploadPaintRect(r, e, fb)
-        drew = true
-      } else {
-        // 못 닫았다 — 층을 놓고 다음 프레임에 전량으로 다시 세운다(조용한 갈림 ⛔)
-        draftCancelOnTex(e.canvas)
-        e.pending = null; e.bakeSig = ''; e.sigs = []
-        bakeStat.sliceRestarts++
-      }
+    if (Pf && Pf.dotDone > 0) {
+      draftCancelOnTex(e.canvas)
+      draftRecs.delete(e.canvas)                 // 초안 장부도 접는다 — 그쪽이 정본에서 다시 세운다
+      e.pending = null
+      e.bakeSig = ''                             // 아직 «그 열쇠의 그림»이 아니다 — 다음 프레임이 전량으로 받는다
+      e.sigs = []
+      e.draftTouched = true
+      bakeStat.sliceRestarts++
       bakeStat.sliceFlushes++
-      bakeStat.sliceFlushMs += performance.now() - tF
     }
     // ── 세션 경로(66 ㉠㉡㉢) — 얼린 확정 구간 + 새 도장만 + 부분 업로드 ────────────────
     const useSess = !paintFreezeOff && !paintAccumOff && e.bg !== null && draftSupported()

@@ -103,7 +103,9 @@ const bakeStat = (page: Page) => page.evaluate(() => (window as any).__b2.diag.p
 const bakeReset = (page: Page) => page.evaluate(() => { (window as any).__b2.diag.paintBakeReset() })
 const rebakeAndWait = async (page: Page) => {
   await page.evaluate(() => { (window as any).__b2.diag.rebakePaintTex() })
-  await page.waitForTimeout(300)
+  // web2-75 — 위와 같은 이유(점 구간 자르기) — 고정 ms 대신 다 구워질 때까지
+  await page.waitForTimeout(120)
+  await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 120_000 })
   // web2-72 §1 — 굽기가 **프레임에 나뉘므로** 고정 ms 대기는 「다 구워졌다」를 뜻하지 않는다.
   // 이어 구울 것이 없어질 때까지 기다린다(상한 있는 대기 — #81).
   await page.waitForFunction(() => !(window as any).__b2.diag.paintBakePendingForTest(), null, { timeout: 30_000 })
